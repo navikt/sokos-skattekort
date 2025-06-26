@@ -1,14 +1,7 @@
 # sokos-lavendel
 
-Kan brukes som utgangspunkt for å opprette nye Ktor-backend applikasjoner for Team Motta og Beregne
-
-## Tilpass repo-et
-1. Gi rettighet for å kjøre scriptet `chmod 755 setupTemplate.sh`
-2. Kjør scriptet: 
-   ```
-   ./setupTemplate.sh
-   ```
-3. Fyll inn lavendel (sokos-foo-bar) og artifaktnavn (foo.bar)
+Sokos-lavendel er en erstatning for os-eskatt, som brukte altinn 2 til å hente skattekort. I løpet av høsten 2025 vil skatteetaten tilby et nytt grensesnitt, separat fra altinn, for å 
+tilby samme funksjonalitet.
 
 ## Workflows
 
@@ -27,33 +20,7 @@ Kan brukes som utgangspunkt for å opprette nye Ktor-backend applikasjoner for T
 1. Bygg prosjektet ved å kjøre `./gradlew clean build shadowJar`
 2. Start appen lokalt ved å kjøre main metoden i ***Application.kt***
 3. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
-
-# NB!! Kommer du på noe lurt vi bør ha med i template som default så opprett gjerne en PR 
-  
-## Henvendelser
-
-- Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på github.
-- Interne henvendelser kan sendes via Slack i kanalen [#utbetaling](https://nav-it.slack.com/archives/CKZADNFBP)
-
-```
-Alt under her skal beholdes som en standard dokumentasjon som må fylles ut av utviklere.
-```
-
-# Prosjektnavn
-
-# Innholdsoversikt
-* [1. Funksjonelle krav](#1-funksjonelle-krav)
-* [2. Utviklingsmiljø](#2-utviklingsmiljø)
-* [3. Programvarearkitektur](#3-programvarearkitektur)
-* [4. Deployment](#4-deployment)
-* [5. Autentisering](#5-autentisering)
-* [6. Drift og støtte](#6-drift-og-støtte)
-* [7. Swagger](#7-swagger)
-* [8. Henvendelser](#8-henvendelser)
----
-
-# 1. Funksjonelle Krav
-Hva er oppgaven til denne applikasjonen
+ 
 
 # 2. Utviklingsmiljø
 ### Forutsetninger
@@ -62,10 +29,11 @@ Hva er oppgaven til denne applikasjonen
 * [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
 
 ### Bygge prosjekt
-Hvordan bygger jeg prosjektet.
+1. Bygg prosjektet ved å kjøre `./gradlew clean build shadowJar`
 
 ### Lokal utvikling
-Hvordan kan jeg kjøre lokalt og hva trenger jeg?
+2. Start appen lokalt ved å kjøre main metoden i ***Application.kt***
+3. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
 
 # 3. Programvarearkitektur
 Legg ved skissediagram for hvordan arkitekturen er bygget
@@ -74,12 +42,16 @@ Legg ved skissediagram for hvordan arkitekturen er bygget
 Distribusjon av tjenesten er gjort med bruk av Github Actions.
 [sokos-lavendel CI / CD](https://github.com/navikt/sokos-lavendel/actions)
 
-Push/merge til main branche vil teste, bygge og deploye til produksjonsmiljø og testmiljø.
+Push/merge til main branch vil teste, bygge og deploye til produksjonsmiljø og testmiljø.
 
 # 7. Autentisering
 Applikasjonen bruker [AzureAD](https://docs.nais.io/security/auth/azure-ad/) autentisering
 
 # 6. Drift og støtte
+
+Applikasjonen driftes av utviklerteamet under en devops-modell.
+
+Applikasjonen kjører onprem.
 
 ### Logging
 
@@ -118,9 +90,9 @@ Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) fi
 ---
 
 # 7. Swagger
-Hva er url til Lokal, dev og prod?
+TBD Hva er url til Lokal, dev og prod?
 
 # 8. Henvendelser og tilgang
-   Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på Github.
-   Interne henvendelser kan sendes via Slack i kanalen [#utbetaling](https://nav-it.slack.com/archives/CKZADNFBP)
-
+- Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på github.
+- Funksjonelle interne henvendelser kan sendes via Slack i kanalen [#utbetaling](https://nav-it.slack.com/archives/CKZADNFBP)
+- Utvikler-til-utviklerkontakt internt i NAV skjer på Slack i kanalen TBD

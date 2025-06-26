@@ -38,21 +38,38 @@ tilby samme funksjonalitet.
 3. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
 
 ## Programvarearkitektur
-Legg ved skissediagram for hvordan arkitekturen er bygget
 
 ### Oversikt
 
 ```mermaid
 block-beta
-    db[("Database")]
+    columns 5
+    bestilling space space space Arena
+    space space applikasjon space space
+    avbestilling space space space OppdragZ
+    space space db[("Database")] space space
+    bestilling-->applikasjon
+    avbestilling-->applikasjon
+    applikasjon-->Arena
+    applikasjon-->OppdragZ
+    applikasjon-->db
 ```
 
+Applikasjonen integrerer også med drifts- og observabilitetsverktøy.
+
 ### Interne grensesnitt
-TBD Hva er url til swagger i Lokal, dev og prod?
+Ingen
 
 ### Versjonerte grensesnitt
 
-swagger
+| Funksjon       | Type | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner        | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
+|----------------|------|-------------------|-------------------------------|------------------------------------------|----------------------------------------------------------|
+| bestillinger   | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| avbestillinger | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| Arena          | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| OppdragZ       | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+
+TBD Hva er url til swagger i Lokal, dev og prod?
 
 ### Statemaskin for bestillinger
 

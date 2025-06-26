@@ -69,13 +69,46 @@ Ingen
 | Arena          | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
 | OppdragZ       | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
 
-TBD Hva er url til swagger i Lokal, dev og prod?
+TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
 
 ### Statemaskin for bestillinger
 
+#### bestilling
+```mermaid
+stateDiagram-v2
+    [*]-->ny
+    ny-->bestilt
+    bestilt-->?
+    note right of ?: Avhenger av design på nytt API
+    ?-->mottatt
+    mottatt-->sendtOz
+    sendtOz-->sendtArena
+    sendtArena-->aktiv
+```
 
+#### avbestilling
+
+```mermaid
+stateDiagram-v2
+    aktiv-->?
+    note right of ?: avbestilling sendes dersom ingen flere systemer abonnerer på data
+    ?-->slett
+    slett-->[*]
+```
 
 ### Databaseskjema
+
+```mermaid
+erDiagram
+    aktoer ||--o{ aktoer_bestilt: har
+    aktoer{
+        text status
+    }
+    aktoer_bestilt{
+        text system
+    }
+    aktoer ||--o{ skattekort: har
+```
 
 
 ## Deployment

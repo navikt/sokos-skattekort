@@ -1,4 +1,4 @@
-package no.nav.sokos.prosjektnavn.config
+package no.nav.sokos.lavendel.config
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted

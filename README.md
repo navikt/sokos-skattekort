@@ -1,4 +1,4 @@
-# sokos-ktor-template
+# sokos-lavendel
 
 Kan brukes som utgangspunkt for å opprette nye Ktor-backend applikasjoner for Team Motta og Beregne
 
@@ -8,7 +8,7 @@ Kan brukes som utgangspunkt for å opprette nye Ktor-backend applikasjoner for T
    ```
    ./setupTemplate.sh
    ```
-3. Fyll inn prosjektnavn (sokos-foo-bar) og artifaktnavn (foo.bar)
+3. Fyll inn lavendel (sokos-foo-bar) og artifaktnavn (foo.bar)
 
 ## Workflows
 
@@ -72,7 +72,7 @@ Legg ved skissediagram for hvordan arkitekturen er bygget
 
 # 4. Deployment
 Distribusjon av tjenesten er gjort med bruk av Github Actions.
-[sokos-ktor-template CI / CD](https://github.com/navikt/sokos-ktor-template/actions)
+[sokos-lavendel CI / CD](https://github.com/navikt/sokos-lavendel/actions)
 
 Push/merge til main branche vil teste, bygge og deploye til produksjonsmiljø og testmiljø.
 
@@ -89,24 +89,24 @@ Feilmeldinger og infomeldinger som ikke innheholder sensitive data logges til da
 Sensetive meldinger logges til data view `Securelogs` [sikker-utvikling/logging](https://sikkerhet.nav.no/docs/sikker-utvikling/logging)).
 
 - Filter for Produksjon
-    * application:sokos-ktor-template AND envclass:p
+    * application:sokos-lavendel AND envclass:p
 
 - Filter for Dev
-    * application:sokos-ktor-template AND envclass:q
+    * application:sokos-lavendel AND envclass:q
 
 ### Kubectl
 For dev-gcp:
 ```shell script
 kubectl config use-context dev-gcp
-kubectl get pods -n okonomi | grep sokos-ktor-template
-kubectl logs -f sokos-ktor-template-<POD-ID> --namespace okonomi -c sokos-ktor-template
+kubectl get pods -n okonomi | grep sokos-lavendel
+kubectl logs -f sokos-lavendel-<POD-ID> --namespace okonomi -c sokos-lavendel
 ```
 
 For prod-gcp:
 ```shell script
 kubectl config use-context prod-gcp
-kubectl get pods -n okonomi | grep sokos-ktor-template
-kubectl logs -f sokos-ktor-template-<POD-ID> --namespace okonomi -c sokos-ktor-template
+kubectl get pods -n okonomi | grep sokos-lavendel
+kubectl logs -f sokos-lavendel-<POD-ID> --namespace okonomi -c sokos-lavendel
 ```
 
 ### Alarmer

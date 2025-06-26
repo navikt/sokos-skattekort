@@ -46,6 +46,6 @@
         </else>
     </if>
 
-    <logger name="no.nav.sokos.prosjektnavn" level="INFO"/>
+    <logger name="no.nav.sokos.lavendel" level="INFO"/>
 
 </configuration>

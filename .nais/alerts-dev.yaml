@@ -1,16 +1,16 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: sokos-ktor-template
+  name: sokos-lavendel
   namespace: okonomi
   labels:
     team: okonomi
 spec:
   groups:
-    - name: sokos-ktor-template-alerts
+    - name: sokos-lavendel-alerts
       rules:
-        - alert: sokos-ktor-template er nede
-          expr: kube_deployment_status_replicas_available{deployment="sokos-ktor-template"} == 0
+        - alert: sokos-lavendel er nede
+          expr: kube_deployment_status_replicas_available{deployment="sokos-lavendel"} == 0
           for: 5m
           annotations:
             action: "Sjekk hvorfor applikasjonen er nede"
@@ -18,11 +18,11 @@ spec:
           labels:
             namespace: okonomi
             severity: critical
-            sokos_ktor_template_type: sokos-ktor-template
+            sokos_lavendel_type: sokos-lavendel
             alert_type: custom
 
-        - alert: sokos-ktor-template har restartet flere ganger de siste 5 minuttene!
-          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"sokos-ktor-template"}[5m])) by (container) > 2
+        - alert: sokos-lavendel har restartet flere ganger de siste 5 minuttene!
+          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"sokos-lavendel"}[5m])) by (container) > 2
           for: 5m
           annotations:
             action: "Sjekk hvorfor applikasjonen ikke klarer å restarte"
@@ -30,43 +30,43 @@ spec:
           labels:
             namespace: okonomi
             severity: critical
-            sokos_ktor_template_type: sokos-ktor-template
+            sokos_lavendel_type: sokos-lavendel
             alert_type: custom
 
         - alert: Applikasjonen logger høy andel errors
           expr:
-            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-ktor-template",level="Error"}[15m])
+            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Error"}[15m])
               or vector(0)) -
-              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-ktor-template",level="Error"}[15m]
+              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Error"}[15m]
               offset 15m) or vector(0)) > 5'
           for: 5m
           annotations:
-            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-ktor-template'))),(query:(match_phrase:(cluster:'dev-gcp'))),(query:(match_phrase:(level:'Error')))))|Sjekk loggene>"
-            summary: "`kubectl logs -l app=sokos-ktor-template -n okonomi` for logger"
+            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-lavendel'))),(query:(match_phrase:(cluster:'dev-gcp'))),(query:(match_phrase:(level:'Error')))))|Sjekk loggene>"
+            summary: "`kubectl logs -l app=sokos-lavendel -n okonomi` for logger"
           labels:
             namespace: okonomi
             severity: danger
-            sokos_ktor_template_type: sokos-ktor-template
+            sokos_lavendel_type: sokos-lavendel
             alert_type: custom
 
         - alert: Applikasjonen logger høy andel warnings
           expr:
-            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-ktor-template",level="Warning"}[15m])
+            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Warning"}[15m])
               or vector(0)) -
-              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-ktor-template",level="Warning"}[15m]
+              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Warning"}[15m]
               offset 15m) or vector(0)) > 5'
           for: 5m
           annotations:
-            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-ktor-template'))),(query:(match_phrase:(cluster:'dev-gcp'))),(query:(match_phrase:(level:'Warning')))))|Sjekk loggene>"
-            summary: "`kubectl logs -l app=sokos-ktor-template -n okonomi` for logger"
+            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-lavendel'))),(query:(match_phrase:(cluster:'dev-gcp'))),(query:(match_phrase:(level:'Warning')))))|Sjekk loggene>"
+            summary: "`kubectl logs -l app=sokos-lavendel -n okonomi` for logger"
           labels:
             namespace: okonomi
             severity: warning
-            sokos_ktor_template_type: sokos-ktor-template
+            sokos_lavendel_type: sokos-lavendel
             alert_type: custom
 
-        - alert: sokos-ktor-template har høy andel HTTP serverfeil (5xx responser)
-          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"5.*", app="sokos-ktor-template"}[3m])) > 2
+        - alert: sokos-lavendel har høy andel HTTP serverfeil (5xx responser)
+          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"5.*", app="sokos-lavendel"}[3m])) > 2
           for: 5m
           annotations:
             action: "`kubectl logs {{ $labels.pod }} -n {{ $labels.namespace }}`"
@@ -75,11 +75,11 @@ spec:
           labels:
             namespace: okonomi
             severity: danger
-            sokos_ktor_template_type: sokos-ktor-template
+            sokos_lavendel_type: sokos-lavendel
             alert_type: custom
 
-        - alert: sokos-ktor-template har høy andel HTTP klientfeil (4xx responser)
-          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"4.*", status!~"404", app="sokos-ktor-template"}[3m])) > 2
+        - alert: sokos-lavendel har høy andel HTTP klientfeil (4xx responser)
+          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"4.*", status!~"404", app="sokos-lavendel"}[3m])) > 2
           for: 2m
           annotations:
             action: "`kubectl logs {{ $labels.pod }} -n {{ $labels.namespace }}`"
@@ -88,7 +88,7 @@ spec:
           labels:
             namespace: okonomi
             severity: danger
-            sokos_ktor_template_type: sokos-ktor-template
+            sokos_lavendel_type: sokos-lavendel
             alert_type: custom
 
 ---
@@ -96,20 +96,20 @@ spec:
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
-  name: sokos-ktor-template-slack
+  name: sokos-lavendel-slack
   namespace: okonomi
   labels:
-    alertmanagerConfig: sokos-ktor-template-slack
+    alertmanagerConfig: sokos-lavendel-slack
 spec:
   receivers:
-    - name: sokos-ktor-template-receiver
+    - name: sokos-lavendel-receiver
       slackConfigs:
         - apiURL:
             key: apiUrl
             name: slack-webhook
           channel: '#team-mob-alerts-dev'
           iconEmoji: ':alert:'
-          username: 'Alert dev-gcp (sokos-ktor-template)'
+          username: 'Alert dev-gcp (sokos-lavendel)'
           sendResolved: true
           title: |-
             [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
@@ -127,10 +127,10 @@ spec:
     groupBy:
       - alertname
     matchers:
-      - name: "sokos_ktor_template_type"
+      - name: "sokos_lavendel_type"
         matchType: "="
-        value: "sokos-ktor-template"
+        value: "sokos-lavendel"
     groupInterval: 10s
     groupWait: 5s
-    receiver: sokos-ktor-template-receiver
+    receiver: sokos-lavendel-receiver
     repeatInterval:

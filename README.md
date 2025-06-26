@@ -42,6 +42,11 @@ Legg ved skissediagram for hvordan arkitekturen er bygget
 
 ### Oversikt
 
+```mermaid
+block-beta
+    db[("Database")]
+```
+
 ### Interne grensesnitt
 TBD Hva er url til swagger i Lokal, dev og prod?
 

@@ -22,7 +22,7 @@ tilby samme funksjonalitet.
 3. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
  
 
-# 2. Utviklingsmiljø
+## Utviklingsmiljø
 ### Forutsetninger
 * Java 21
 * [Gradle >= 8.9](https://gradle.org/)
@@ -35,19 +35,35 @@ tilby samme funksjonalitet.
 2. Start appen lokalt ved å kjøre main metoden i ***Application.kt***
 3. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
 
-# 3. Programvarearkitektur
+## Programvarearkitektur
 Legg ved skissediagram for hvordan arkitekturen er bygget
 
-# 4. Deployment
+### Oversikt
+
+### Interne grensesnitt
+TBD Hva er url til swagger i Lokal, dev og prod?
+
+### Versjonerte grensesnitt
+
+swagger
+
+### Statemaskin for bestillinger
+
+
+
+### Databaseskjema
+
+
+## Deployment
 Distribusjon av tjenesten er gjort med bruk av Github Actions.
 [sokos-lavendel CI / CD](https://github.com/navikt/sokos-lavendel/actions)
 
 Push/merge til main branch vil teste, bygge og deploye til produksjonsmiljø og testmiljø.
 
-# 7. Autentisering
+## Autentisering
 Applikasjonen bruker [AzureAD](https://docs.nais.io/security/auth/azure-ad/) autentisering
 
-# 6. Drift og støtte
+## Drift og støtte
 
 Applikasjonen driftes av utviklerteamet under en devops-modell.
 
@@ -67,19 +83,7 @@ Sensetive meldinger logges til data view `Securelogs` [sikker-utvikling/logging]
     * application:sokos-lavendel AND envclass:q
 
 ### Kubectl
-For dev-gcp:
-```shell script
-kubectl config use-context dev-gcp
-kubectl get pods -n okonomi | grep sokos-lavendel
-kubectl logs -f sokos-lavendel-<POD-ID> --namespace okonomi -c sokos-lavendel
-```
-
-For prod-gcp:
-```shell script
-kubectl config use-context prod-gcp
-kubectl get pods -n okonomi | grep sokos-lavendel
-kubectl logs -f sokos-lavendel-<POD-ID> --namespace okonomi -c sokos-lavendel
-```
+TBD
 
 ### Alarmer
 Vi bruker [nais-alerts](https://doc.nais.io/observability/alerts) for å sette opp alarmer. 
@@ -89,10 +93,7 @@ Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) fi
 - [appavn](url)
 ---
 
-# 7. Swagger
-TBD Hva er url til Lokal, dev og prod?
-
-# 8. Henvendelser og tilgang
+## Henvendelser og tilgang
 - Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på github.
 - Funksjonelle interne henvendelser kan sendes via Slack i kanalen [#utbetaling](https://nav-it.slack.com/archives/CKZADNFBP)
 - Utvikler-til-utviklerkontakt internt i NAV skjer på Slack i kanalen TBD

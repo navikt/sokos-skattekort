@@ -1,5 +1,7 @@
 # sokos-lavendel
 
+Innholdsfortegnelse med linker finnes til høyre over dette vinduet, under et ikon som består av tre linjer med en prikk og en strek. Klikk på ikonet for å åpne innholdsfortegnelsen.
+
 Sokos-lavendel er en erstatning for os-eskatt, som brukte altinn 2 til å hente skattekort. I løpet av høsten 2025 vil skatteetaten tilby et nytt grensesnitt, separat fra altinn, for å 
 tilby samme funksjonalitet.
 

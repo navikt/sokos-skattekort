@@ -62,12 +62,12 @@ Ingen
 
 ### Versjonerte grensesnitt
 
-| Funksjon       | Type | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner        | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
-|----------------|------|-------------------|-------------------------------|------------------------------------------|----------------------------------------------------------|
-| bestillinger   | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
-| avbestillinger | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
-| Arena          | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
-| OppdragZ       | MQ   | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| Funksjon       | Type      | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner        | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
+|----------------|-----------|-------------------|-------------------------------|------------------------------------------|----------------------------------------------------------|
+| bestillinger   | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| avbestillinger | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| Arena          | Filområde | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| OppdragZ       | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
 
 TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
 

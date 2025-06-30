@@ -24,6 +24,7 @@ class TaImotOppdragTest : StringSpec({
 
     val connectionFactory: ConnectionFactory = ActiveMQConnectionFactory("vm://0")
     val queue = ActiveMQQueue(queueName)
+    val skattekortbestillingsservice = Skattekortbestillingsservice(connectionFactory)
 
     "ta imot melding på kø" {
         connectionFactory.createConnection().use { connection ->
@@ -36,8 +37,8 @@ class TaImotOppdragTest : StringSpec({
             oppdragssystemet.send(session.createTextMessage(testMessage))
 
             val received = skattekortbestillingsconsumer.receive(1000)
-            // cservice.taImotOppdrag();
-            assert((received as? jakarta.jms.TextMessage)?.text == testMessage)
+            skattekortbestillingsservice.taImotOppdrag(received)
+
         }
     }
 

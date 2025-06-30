@@ -54,6 +54,7 @@ val flywayVersion = "11.10.3"
 val postgresVersion = "42.7.7"
 val vaultVersion = "1.3.10"
 val activemqVersion = "2.41.0"
+val ibmmqVersion = "9.4.3.0"
 
 dependencies {
 
@@ -96,6 +97,9 @@ dependencies {
     // Config
     implementation("com.natpryce:konfig:$natpryceVersion")
     implementation("no.nav:vault-jdbc:$vaultVersion")
+
+    implementation("jakarta.jms:jakarta.jms-api:3.1.0")
+    implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")
 
     // Test
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")

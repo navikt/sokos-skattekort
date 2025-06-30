@@ -38,6 +38,10 @@ class TaImotOppdragTest : StringSpec({
 
             val received = skattekortbestillingsconsumer.receive(1000)
             skattekortbestillingsservice.taImotOppdrag(received)
+
+            // brukeren skal være opprettet
+            // et "oppdrag" på å bestille skattekort skal lagres, klart til neste batch-sending
+            // oppdragz skal registreres som en interessent
         }
     }
 

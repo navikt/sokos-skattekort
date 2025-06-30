@@ -1,6 +1,5 @@
 package no.nav.sokos.lavendel.api
 import com.ibm.mq.jakarta.jms.MQQueue
-import com.zaxxer.hikari.HikariDataSource
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Message
 import jakarta.jms.Queue

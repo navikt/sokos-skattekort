@@ -38,7 +38,6 @@ class TaImotOppdragTest : StringSpec({
 
             val received = skattekortbestillingsconsumer.receive(1000)
             skattekortbestillingsservice.taImotOppdrag(received)
-
         }
     }
 

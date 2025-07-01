@@ -22,14 +22,11 @@ fun main() {
 }
 
 fun Application.module(appConfig: ApplicationConfig = environment.config) {
-    val config = resolveConfig(appConfig)
+    val config: PropertiesConfig.Configuration = resolveConfig(appConfig)
     DatabaseConfig.init(config, isLocal = config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL)
-
-//    val useAuthentication = PropertiesConfig.Configuration().useAuthentication
-    val applicationState = ApplicationState()
-
     DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
 
+    val applicationState = ApplicationState()
     commonConfig()
     applicationLifecycleConfig(applicationState)
     securityConfig()

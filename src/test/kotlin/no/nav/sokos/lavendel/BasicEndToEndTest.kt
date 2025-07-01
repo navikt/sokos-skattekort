@@ -3,9 +3,13 @@ package no.nav.sokos.lavendel
 import java.time.LocalDateTime
 
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.extensions.testcontainers.toDataSource
 import io.kotest.extensions.time.withConstantNow
+import io.kotest.matchers.shouldBe
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.testing.testApplication
+import kotliquery.queryOf
+import kotliquery.sessionOf
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.lavendel.config.CompositeApplicationConfig
@@ -28,6 +32,15 @@ class BasicEndToEndTest :
                             }
                             startApplication()
                             TestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)
+                            val dataSource = container.toDataSource()
+
+                            sessionOf(dataSource).use {
+                                val value: List<String> =
+                                    it.transaction {
+                                        it.run(queryOf("SELECT * FROM aktoer").map { row -> row.string("navn") }.asList)
+                                    }
+                                value shouldBe listOf("Signe Maten")
+                            }
                         }
                     }
                 }

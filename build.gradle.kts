@@ -51,7 +51,7 @@ val hikariVersion = "6.3.0"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.1"
 val flywayVersion = "11.9.1"
-val postgresVersion = "42.7.6"
+val postgresVersion = "42.7.7"
 val vaultVersion = "1.3.10"
 
 dependencies {

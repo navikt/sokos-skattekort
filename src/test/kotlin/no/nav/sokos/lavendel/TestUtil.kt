@@ -5,6 +5,7 @@ import java.sql.ResultSet
 import javax.sql.DataSource
 
 import io.ktor.server.config.MapApplicationConfig
+import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
 import org.testcontainers.containers.PostgreSQLContainer
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -76,4 +77,18 @@ object TestUtil {
             put("USE_AUTHENTICATION", "false")
             put("APPLICATION_PROFILE", "LOCAL")
         }
+
+    fun getOverrides(
+        mQ: EmbeddedActiveMQ,
+        queueName: String,
+    ): MapApplicationConfig {
+        MapApplicationConfig().apply {
+            put("MQ_HOSTNAME", mQ.activeMQServer.configuration.addressSettings)
+            put("MQ_PORT")
+            put("MQ_CHANNEL_NAME")
+            put("MQ_QUEUE_MANAGER_NAME")
+            put("MQ_USERAUTH")
+            put("MQ_BEST_QUEUE", queueName)
+        }
+    }
 }

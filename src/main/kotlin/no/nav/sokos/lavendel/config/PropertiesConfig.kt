@@ -9,11 +9,13 @@ object PropertiesConfig {
         val applicationProperties: ApplicationProperties,
         val securityProperties: SecurityProperties,
         val postgresProperties: PostgresProperties,
+        val mqProperties: MQProperties,
     ) {
         constructor(source: ConfigSource) : this(
             applicationProperties = ApplicationProperties(source),
             securityProperties = SecurityProperties(source),
             postgresProperties = PostgresProperties(source),
+            mqProperties = MQProperties(source),
         )
     }
 
@@ -74,13 +76,22 @@ object PropertiesConfig {
     }
 
     data class MQProperties(
-        val hostname: String = get("MQ_HOSTNAME"),
-        val port: Int = get("MQ_PORT").toInt(),
-        val mqQueueManagerName: String = get("MQ_QUEUE_MANAGER_NAME"),
-        val mqChannelName: String = getOrEmpty("MQ_CHANNEL_NAME"),
-        val userAuth: Boolean = true,
-        val bestilleSkattekortQueueName: String = "bestille-skattekort",
-    )
+        val hostname: String,
+        val port: Int,
+        val mqQueueManagerName: String,
+        val mqChannelName: String,
+        val userAuth: Boolean,
+        val bestilleSkattekortQueueName: String,
+    ) {
+        constructor(source: ConfigSource) : this(
+            hostname = source.get("MQ_HOSTNAME").trim(),
+            port = source.get("MQ_PORT").toInt(),
+            mqChannelName = source.get("MQ_CHANNEL_NAME").trim(),
+            mqQueueManagerName = source.get("MQ_QUEUE_MANAGER_NAME"),
+            userAuth = source.get("MQ_USERAUTH").toBoolean(),
+            bestilleSkattekortQueueName = source.get("MQ_BEST_QUEUE").trim(),
+        )
+    }
 
     enum class Profile {
         LOCAL,

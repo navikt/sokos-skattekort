@@ -1,22 +1,19 @@
 package no.nav.sokos.lavendel.api
 
 import io.kotest.core.spec.style.StringSpec
-import io.ktor.server.config.ApplicationConfig
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Session
 import org.apache.activemq.artemis.api.core.TransportConfiguration
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMAcceptorFactory
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
-
-import no.nav.sokos.lavendel.TestUtil
-import no.nav.sokos.lavendel.config.CompositeApplicationConfig
-import no.nav.sokos.lavendel.config.MQConfig
 
 class TaImotOppdragTest :
     StringSpec({
         val queueName = "bestille.skattekort.queue"
+        val start = System.currentTimeMillis()
         val embedded =
             EmbeddedActiveMQ()
                 .setConfiguration(
@@ -26,16 +23,16 @@ class TaImotOppdragTest :
                         .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name)),
                 )
         embedded.start()
+        println("Tid: " + (start - System.currentTimeMillis()))
+        // val properties = CompositeApplicationConfig(TestUtil.getOverrides(embedded, queueName), ApplicationConfig("application.conf"))
 
-        val properties = CompositeApplicationConfig(TestUtil.getOverrides(embedded), ApplicationConfig("application.conf"))
-
-        MQConfig.init(properties)
-
-        val connectionFactory: ConnectionFactory = MQConfig.connectionFactory
-        val queue = ActiveMQQueue(queueName)
-        val skattekortbestillingsservice = Skattekortbestillingsservice(connectionFactory, queue)
+        // MQConfig.init(configFrom(properties))
 
         "ta imot melding på kø" {
+            val connectionFactory: ConnectionFactory = ActiveMQConnectionFactory("vm://0")
+
+            val queue = ActiveMQQueue(queueName)
+            val skattekortbestillingsservice = Skattekortbestillingsservice(connectionFactory, queue)
             connectionFactory.createConnection().use { connection ->
                 connection.start()
                 val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)

@@ -4,8 +4,9 @@ import java.sql.Connection.TRANSACTION_SERIALIZABLE
 import java.sql.ResultSet
 import javax.sql.DataSource
 
+import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.MapApplicationConfig
-import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
+import org.testcontainers.activemq.ActiveMQContainer
 import org.testcontainers.containers.PostgreSQLContainer
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -79,16 +80,15 @@ object TestUtil {
         }
 
     fun getOverrides(
-        mQ: EmbeddedActiveMQ,
+        container: ActiveMQContainer,
         queueName: String,
-    ): MapApplicationConfig {
+    ): ApplicationConfig =
         MapApplicationConfig().apply {
-            put("MQ_HOSTNAME", mQ.activeMQServer.configuration.addressSettings)
-            put("MQ_PORT")
-            put("MQ_CHANNEL_NAME")
-            put("MQ_QUEUE_MANAGER_NAME")
-            put("MQ_USERAUTH")
+            put("MQ_HOSTNAME", container.host)
+            put("MQ_PORT", container.firstMappedPort.toString())
+            put("MQ_CHANNEL_NAME", "foo")
+            put("MQ_QUEUE_MANAGER_NAME", container.brokerUrl)
+            put("MQ_USERAUTH", "false")
             put("MQ_BEST_QUEUE", queueName)
         }
-    }
 }

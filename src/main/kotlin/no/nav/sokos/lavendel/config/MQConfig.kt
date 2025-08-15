@@ -17,10 +17,7 @@ object MQConfig {
         connectionFactoryPriv
     }
 
-    fun init(
-        properties: PropertiesConfig.Configuration,
-        isLocal: Boolean,
-    ) {
+    fun init(properties: PropertiesConfig.Configuration) {
         this.connectionFactoryPriv =
             MQConnectionFactory().apply {
                 transportType = WMQConstants.WMQ_CM_CLIENT

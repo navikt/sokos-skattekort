@@ -28,7 +28,7 @@ class BasicEndToEndTest :
                                 config = CompositeApplicationConfig(TestUtil.getOverrides(container), ApplicationConfig("application.conf"))
                             }
                             application {
-                                module()
+                                module(isLocal = true)
                             }
                             startApplication()
                             TestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)

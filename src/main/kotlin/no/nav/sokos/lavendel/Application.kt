@@ -10,6 +10,7 @@ import io.ktor.util.AttributeKey
 import no.nav.sokos.lavendel.config.ApplicationState
 import no.nav.sokos.lavendel.config.DatabaseConfig
 import no.nav.sokos.lavendel.config.DatabaseMigrator
+import no.nav.sokos.lavendel.config.MQConfig
 import no.nav.sokos.lavendel.config.PropertiesConfig
 import no.nav.sokos.lavendel.config.applicationLifecycleConfig
 import no.nav.sokos.lavendel.config.commonConfig
@@ -21,10 +22,16 @@ fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
 }
 
-fun Application.module(appConfig: ApplicationConfig = environment.config) {
+fun Application.module(
+    appConfig: ApplicationConfig = environment.config,
+    isLocal: Boolean = false,
+) {
     val config: PropertiesConfig.Configuration = resolveConfig(appConfig)
     DatabaseConfig.init(config, isLocal = config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL)
     DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
+    if (!isLocal) {
+        MQConfig.init(config)
+    }
 
     val applicationState = ApplicationState()
     commonConfig()

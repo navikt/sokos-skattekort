@@ -37,7 +37,7 @@ fun Application.module(
     commonConfig()
     applicationLifecycleConfig(applicationState)
     securityConfig()
-    routingConfig(applicationState)
+    routingConfig(config.applicationProperties.useAuthentication, applicationState)
 }
 
 val ConfigAttributeKey = AttributeKey<PropertiesConfig.Configuration>("config")

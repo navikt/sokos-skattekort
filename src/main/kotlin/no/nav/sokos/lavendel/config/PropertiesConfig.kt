@@ -22,10 +22,12 @@ object PropertiesConfig {
     data class ApplicationProperties(
         val naisAppName: String,
         val profile: Profile,
+        val useAuthentication: Boolean,
     ) {
         constructor(source: ConfigSource) : this(
             naisAppName = source.get("APP_NAME"),
             profile = Profile.valueOf(source.get("APPLICATION_PROFILE")),
+            useAuthentication = source.get("USE_AUTHENTICATION").toBoolean(),
         )
     }
 

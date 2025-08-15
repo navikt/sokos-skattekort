@@ -4,9 +4,7 @@ import java.sql.Connection.TRANSACTION_SERIALIZABLE
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.MapApplicationConfig
-import org.testcontainers.activemq.ActiveMQContainer
 import org.testcontainers.containers.PostgreSQLContainer
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -77,18 +75,5 @@ object TestUtil {
             put("POSTGRES_HOST", container.host)
             put("USE_AUTHENTICATION", "false")
             put("APPLICATION_PROFILE", "LOCAL")
-        }
-
-    fun getOverrides(
-        container: ActiveMQContainer,
-        queueName: String,
-    ): ApplicationConfig =
-        MapApplicationConfig().apply {
-            put("MQ_HOSTNAME", container.host)
-            put("MQ_PORT", container.firstMappedPort.toString())
-            put("MQ_CHANNEL_NAME", "foo")
-            put("MQ_QUEUE_MANAGER_NAME", container.brokerUrl)
-            put("MQ_USERAUTH", "false")
-            put("MQ_BEST_QUEUE", queueName)
         }
 }

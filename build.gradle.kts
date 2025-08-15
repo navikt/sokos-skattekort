@@ -7,7 +7,7 @@ plugins {
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.serialization") version "2.2.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("org.jlleitschuh.gradle.ktlint") version "12.3.0"
+    id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
 }
 
@@ -36,21 +36,21 @@ repositories {
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
 }
 
-val ktorVersion = "3.2.0"
+val ktorVersion = "3.2.2"
 val logbackVersion = "1.5.18"
 val logstashVersion = "8.1"
-val micrometerVersion = "1.15.1"
+val micrometerVersion = "1.15.2"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val natpryceVersion = "1.6.10.0"
 val kotestVersion = "5.9.1"
-val kotlinxSerializationVersion = "1.8.1"
+val kotlinxSerializationVersion = "1.9.0"
 val mockOAuth2ServerVersion = "2.2.1"
-val mockkVersion = "1.14.4"
-val hikariVersion = "6.3.0"
+val mockkVersion = "1.14.5"
+val hikariVersion = "6.3.1"
 val kotliqueryVersion = "1.9.1"
-val testcontainersVersion = "1.21.1"
-val flywayVersion = "11.9.1"
+val testcontainersVersion = "1.21.3"
+val flywayVersion = "11.10.3"
 val postgresVersion = "42.7.7"
 val vaultVersion = "1.3.10"
 

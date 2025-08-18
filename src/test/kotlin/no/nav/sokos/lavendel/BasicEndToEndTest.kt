@@ -17,8 +17,9 @@ import no.nav.sokos.lavendel.config.DatabaseConfig
 
 class BasicEndToEndTest :
     FunSpec({
+
         context("simulering") {
-            val container = TestContainer().container
+            val container = DbTestContainer().container
 
             test("vi kan simulere en enkel AAP-request med et gyldig tabellkort (8010)") {
                 withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {

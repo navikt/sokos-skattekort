@@ -43,16 +43,23 @@ tilby samme funksjonalitet.
 
 ```mermaid
 block-beta
-    columns 5
-    bestilling space space space Arena
-    space space applikasjon space space
-    avbestilling space space space OppdragZ
-    space space db[("Database")] space space
-    bestilling-->applikasjon
-    avbestilling-->applikasjon
-    applikasjon-->Arena
-    applikasjon-->OppdragZ
-    applikasjon-->db
+    columns 7
+    space              space        hent("hent-skattekort") space space             space space
+    Arena_inn("Arena") space        space      space space             space space
+    space              space        bestilling space space             space space 
+    OS_inn("OppdragZ") space        space      space space             space Arena("Arena (SFTP)")
+    space              space        space      space applikasjon       space space 
+    avbestilling       space        space      space space             space OS("OppdragZ")
+    space              space        space      space db[("Database")]  space space 
+    Arena_inn --> bestilling
+    OS_inn --> bestilling
+    space bestilling --> applikasjon
+    space avbestilling --> applikasjon
+    space applikasjon --> Arena
+    space applikasjon --> OS
+    space applikasjon --> db
+    hent --> applikasjon
+
 ```
 
 Applikasjonen integrerer også med drifts- og observabilitetsverktøy.

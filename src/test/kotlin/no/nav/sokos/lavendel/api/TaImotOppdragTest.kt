@@ -1,6 +1,7 @@
 package no.nav.sokos.lavendel.api
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.extensions.testcontainers.toDataSource
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Session
 import org.apache.activemq.artemis.api.core.TransportConfiguration
@@ -10,8 +11,11 @@ import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
+import no.nav.sokos.lavendel.DbTestContainer
+
 class TaImotOppdragTest :
     StringSpec({
+        val db = DbTestContainer().container.toDataSource()
         val queueName = "bestille.skattekort.queue"
         val start = System.currentTimeMillis()
         val embedded =
@@ -32,7 +36,7 @@ class TaImotOppdragTest :
             val connectionFactory: ConnectionFactory = ActiveMQConnectionFactory("vm://0")
 
             val queue = ActiveMQQueue(queueName)
-            val skattekortbestillingsservice = Skattekortbestillingsservice(connectionFactory, queue)
+            val skattekortbestillingsservice = Skattekortbestillingsservice(connectionFactory, queue, db)
             connectionFactory.createConnection().use { connection ->
                 connection.start()
                 val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
@@ -43,7 +47,12 @@ class TaImotOppdragTest :
                 oppdragssystemet.send(session.createTextMessage(testMessage))
 
                 val received = skattekortbestillingsconsumer.receive(1000)
+
+                println("Skal ta imot oppdrag")
+
                 skattekortbestillingsservice.taImotOppdrag(received)
+
+                println("Ferdig med å ta imot oppdrag")
 
                 // brukeren skal være opprettet
                 // et "oppdrag" på å bestille skattekort skal lagres, klart til neste batch-sending

@@ -1,3 +1,0 @@
-SET lock_timeout = '5s';
-
-create index IX_FK_BESTILLING_ID on T1_SKATTEKORT_BESTILLING (BESTILLING_ID)

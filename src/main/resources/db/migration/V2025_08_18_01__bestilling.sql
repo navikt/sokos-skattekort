@@ -1,8 +1,8 @@
 SET lock_timeout = '5s';
 
-CREATE TABLE IF NOT EXISTS SKATTEKORT_BESTILLING
+CREATE TABLE IF NOT EXISTS BESTILLING
 (
-    BESTILLING_ID            NUMBER(38),
+    ID                       NUMBER(38),
     FNR                      CHAR(11) not null,
     INNTEKTSAAR              CHAR(4)  not null,
     SKATTEKORT_IDENTIFIKATOR NUMBER(38),
@@ -15,6 +15,6 @@ CREATE TABLE IF NOT EXISTS SKATTEKORT_BESTILLING
     DATA_MOTTATT             XMLTYPE,
     ERSTATTES_AV_FNR         CHAR(11)     default NULL,
     DATO_OPPRETTET           TIMESTAMP(6) default current_timestamp,
-    constraint PK_SKATTEKORT_BESTILLING
+    constraint PK_BESTILLING
         primary key (FNR, INNTEKTSAAR)
 )

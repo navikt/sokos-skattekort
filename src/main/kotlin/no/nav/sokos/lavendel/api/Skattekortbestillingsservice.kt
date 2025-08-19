@@ -27,7 +27,7 @@ class Skattekortbestillingsservice(
                     it.run(
                         kotliquery
                             .queryOf(
-                                "INSERT INTO SKATTEKORT_BESTILLING (FNR, INNTEKTSAAR) VALUES (?,?)",
+                                "INSERT INTO BESTILLING (FNR, INNTEKTSAAR) VALUES (?,?)",
                                 bestilling.fnr,
                                 bestilling.inntektYear,
                             ).asUpdate,

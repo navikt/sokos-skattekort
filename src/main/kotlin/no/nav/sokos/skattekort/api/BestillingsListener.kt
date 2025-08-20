@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel.api
+package no.nav.sokos.skattekort.api
 
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
@@ -17,7 +17,7 @@ class BestillingsListener(
     // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
     init {
         bestillingsListener.setMessageListener { message: Message ->
-            bestillingsService.taImotOppdrag(message)
+            bestillingsService.taImotOppdrag((message as? jakarta.jms.TextMessage)?.text!!)
             message.acknowledge()
         }
     }

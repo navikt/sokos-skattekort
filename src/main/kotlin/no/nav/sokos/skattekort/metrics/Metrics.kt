@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel.metrics
+package no.nav.sokos.skattekort.metrics
 
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry

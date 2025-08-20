@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel
+package no.nav.sokos.skattekort
 
 import jakarta.jms.Queue
 import jakarta.jms.Session

@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel
+package no.nav.sokos.skattekort
 
 import com.ibm.mq.jakarta.jms.MQQueue
 import io.ktor.server.application.Application
@@ -10,18 +10,18 @@ import io.ktor.util.AttributeKey
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 
-import no.nav.sokos.lavendel.api.BestillingsListener
-import no.nav.sokos.lavendel.api.Skattekortbestillingsservice
-import no.nav.sokos.lavendel.config.ApplicationState
-import no.nav.sokos.lavendel.config.DatabaseConfig
-import no.nav.sokos.lavendel.config.DatabaseMigrator
-import no.nav.sokos.lavendel.config.MQConfig
-import no.nav.sokos.lavendel.config.PropertiesConfig
-import no.nav.sokos.lavendel.config.applicationLifecycleConfig
-import no.nav.sokos.lavendel.config.commonConfig
-import no.nav.sokos.lavendel.config.configFrom
-import no.nav.sokos.lavendel.config.routingConfig
-import no.nav.sokos.lavendel.config.securityConfig
+import no.nav.sokos.skattekort.api.BestillingsListener
+import no.nav.sokos.skattekort.api.Skattekortbestillingsservice
+import no.nav.sokos.skattekort.config.ApplicationState
+import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.DatabaseMigrator
+import no.nav.sokos.skattekort.config.MQConfig
+import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.applicationLifecycleConfig
+import no.nav.sokos.skattekort.config.commonConfig
+import no.nav.sokos.skattekort.config.configFrom
+import no.nav.sokos.skattekort.config.routingConfig
+import no.nav.sokos.skattekort.config.securityConfig
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)

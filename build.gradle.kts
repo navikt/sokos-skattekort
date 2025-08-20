@@ -55,6 +55,7 @@ val postgresVersion = "42.7.7"
 val vaultVersion = "1.3.10"
 val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
+val opentelemetryVersion = "2.19.0-alpha"
 
 dependencies {
 
@@ -67,6 +68,9 @@ dependencies {
     // Ktor client
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-apache-jvm:$ktorVersion")
+
+    // Instrumentation
+    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
 
     // Security
     implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")

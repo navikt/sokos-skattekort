@@ -26,7 +26,10 @@ class JmsTestServer {
                     .setSecurityEnabled(false)
                     .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name)),
             )
+
     val bestillingsQueue: Queue = ActiveMQQueue("bestillings-queue")
+
+    val allQueues = listOf(bestillingsQueue)
     val jmsConnectionFactory = ActiveMQConnectionFactory("vm://0")
 
     fun sendMessage(
@@ -38,6 +41,39 @@ class JmsTestServer {
             val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
             val producer = session.createProducer(queue)
             producer.send(session.createTextMessage(msg))
+            connection.close()
+        }
+    }
+
+    fun assertQueueIsEmpty(queue: Queue) {
+        jmsConnectionFactory.createConnection().use { connection ->
+            connection.start()
+            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+            val browser = session.createBrowser(queue)
+            if (browser.enumeration.hasMoreElements()) {
+                throw AssertionError("Fant flere meldinger i active mq")
+            }
+            connection.close()
+        }
+    }
+
+    fun assertAllQueuesAreEmpty() {
+        jmsConnectionFactory.createConnection().use { connection ->
+            connection.start()
+            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+            val results: List<String> =
+                allQueues
+                    .map { queue: Queue ->
+                        val browser = session.createBrowser(queue)
+                        if (browser.enumeration.hasMoreElements()) {
+                            "Fant melding i kø " + queue.queueName
+                        } else {
+                            null
+                        }
+                    }.filterNotNull()
+            if (!results.isEmpty()) {
+                throw AssertionError("Fant meldinger i active mq: " + results.joinToString(", "))
+            }
             connection.close()
         }
     }

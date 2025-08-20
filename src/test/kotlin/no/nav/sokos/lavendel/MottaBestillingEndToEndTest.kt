@@ -13,7 +13,7 @@ import no.nav.sokos.lavendel.config.DatabaseConfig
 import no.nav.sokos.lavendel.domain.Bestilling
 
 class MottaBestillingEndToEndTest :
-    EndToEndFunSpec({ dbContainer, jmsTestServer ->
+    EndToEndFunSpec({ dbContainer, jmsTestServer, app ->
 
         test("vi kan lagre en bestilling fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {

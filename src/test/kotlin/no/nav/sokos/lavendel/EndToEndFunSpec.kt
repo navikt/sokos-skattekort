@@ -3,6 +3,7 @@ package no.nav.sokos.lavendel
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.toDataSource
 import io.ktor.server.config.ApplicationConfig
+import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import org.testcontainers.containers.PostgreSQLContainer
 
@@ -10,7 +11,7 @@ import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.lavendel.config.CompositeApplicationConfig
 
 abstract class EndToEndFunSpec(
-    body: FunSpec.(dbContainer: PostgreSQLContainer<Nothing>, jmsTestServer: JmsTestServer) -> Unit,
+    body: FunSpec.(dbContainer: PostgreSQLContainer<Nothing>, jmsTestServer: JmsTestServer, app: ApplicationTestBuilder) -> Unit,
 ) : FunSpec({
         val dbContainer = DbTestContainer().container
         val jmsTestServer = JmsTestServer()
@@ -26,6 +27,7 @@ abstract class EndToEndFunSpec(
                         module(testJmsConnectionFactory = jmsTestServer.jmsConnectionFactory, testBestillingsQueue = jmsTestServer.bestillingsQueue)
                     }
                     startApplication()
+                    body(dbContainer, jmsTestServer, this)
                 }
             }
         }
@@ -33,6 +35,4 @@ abstract class EndToEndFunSpec(
         afterTest {
             jmsTestServer.assertAllQueuesAreEmpty()
         }
-
-        body(dbContainer, jmsTestServer)
     })

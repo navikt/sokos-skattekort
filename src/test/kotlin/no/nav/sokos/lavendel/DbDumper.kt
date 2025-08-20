@@ -5,7 +5,7 @@ import java.nio.file.Paths
 import kotlin.io.path.createDirectories
 
 class DbDumper :
-    EndToEndFunSpec({ dbContainer, jmsTestServer ->
+    EndToEndFunSpec({ dbContainer, jmsTestServer, app ->
 
         test("dump databaseskjema") {
             dbContainer.execInContainer(

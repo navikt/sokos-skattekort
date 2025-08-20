@@ -5,7 +5,11 @@ import java.sql.ResultSet
 import javax.sql.DataSource
 
 import io.ktor.server.config.MapApplicationConfig
+import kotliquery.queryOf
+import kotliquery.sessionOf
 import org.testcontainers.containers.PostgreSQLContainer
+
+import no.nav.sokos.lavendel.domain.Bestilling
 
 internal const val API_BASE_PATH = "/api/v1"
 
@@ -75,5 +79,19 @@ object TestUtil {
             put("POSTGRES_HOST", container.host)
             put("USE_AUTHENTICATION", "false")
             put("APPLICATION_PROFILE", "LOCAL")
+        }
+
+    fun storedBestillings(
+        dataSource: DataSource,
+        whereClause: String?,
+    ): List<Bestilling> =
+        sessionOf(dataSource).use {
+            it.transaction {
+                it.run(
+                    queryOf("SELECT fnr, inntektsaar FROM bestilling WHERE " + (whereClause ?: "1=1"))
+                        .map { row -> Bestilling(bestiller = "null", inntektYear = row.string("inntektsaar"), fnr = row.string("fnr")) }
+                        .asList,
+                )
+            }
         }
 }

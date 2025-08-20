@@ -1,55 +1,30 @@
 package no.nav.sokos.lavendel
 
-import java.time.LocalDateTime
-
-import io.kotest.core.spec.style.FunSpec
+import com.zaxxer.hikari.HikariDataSource
+import io.kotest.assertions.withClue
 import io.kotest.extensions.testcontainers.toDataSource
-import io.kotest.extensions.time.withConstantNow
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.ktor.server.config.ApplicationConfig
-import io.ktor.server.testing.testApplication
-import kotliquery.queryOf
-import kotliquery.sessionOf
 
-import no.nav.security.mock.oauth2.withMockOAuth2Server
-import no.nav.sokos.lavendel.config.CompositeApplicationConfig
 import no.nav.sokos.lavendel.config.DatabaseConfig
+import no.nav.sokos.lavendel.domain.Bestilling
 
 class BasicEndToEndTest :
-    FunSpec({
+    ISpec({ dbContainer, jmsTestServer ->
 
-        context("simulering") {
-            val dbContainer = DbTestContainer().container
-            val jmsTestServer = JmsTestServer()
+        test("vi kan lagre en bestilling fra OS") {
+            TestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)
+            val dataSource: HikariDataSource = dbContainer.toDataSource()
 
-            test("vi kan simulere en enkel AAP-request med et gyldig tabellkort (8010)") {
-                withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                    withMockOAuth2Server {
-                        testApplication {
-                            environment {
-                                config = CompositeApplicationConfig(TestUtil.getOverrides(dbContainer), ApplicationConfig("application.conf"))
-                            }
-                            application {
-                                module(testJmsConnectionFactory = jmsTestServer.jmsConnectionFactory, testBestillingsQueue = jmsTestServer.bestillingsQueue)
-                            }
-                            startApplication()
-                            TestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)
-                            val dataSource = dbContainer.toDataSource()
+            val fnr = "15467834260"
 
-                            sessionOf(dataSource).use {
-                                val value: List<String> =
-                                    it.transaction {
-                                        it.run(queryOf("SELECT * FROM aktoer").map { row -> row.string("navn") }.asList)
-                                    }
-                                value shouldBe listOf("Signe Maten")
-                            }
+            jmsTestServer.sendMessage(jmsTestServer.bestillingsQueue, "OS;1994;$fnr")
 
-                            jmsTestServer.sendMessage(jmsTestServer.bestillingsQueue, "OS;1994;15467834260")
+            val rows: List<Bestilling> = TestUtil.storedBestillings(dataSource = dataSource, whereClause = "fnr = '$fnr'")
 
-                            // TODO: Sjekk resultat, for nå sjekker vi bare stdout.
-                        }
-                    }
-                }
+            withClue("Forventet at det er en bestilling i databasen med fnr $fnr") {
+                rows shouldHaveSize 1
+                rows.first().fnr shouldBe fnr
             }
         }
     })

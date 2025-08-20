@@ -7,7 +7,10 @@ import io.ktor.server.routing.routing
 
 import no.nav.sokos.lavendel.config
 
-fun Application.routingConfig(applicationState: ApplicationState) {
+fun Application.routingConfig(
+    useAuthentication: Boolean,
+    applicationState: ApplicationState,
+) {
     routing {
         internalNaisRoutes(applicationState)
         authenticate(config().securityProperties.useAuthentication, AUTHENTICATION_NAME) {

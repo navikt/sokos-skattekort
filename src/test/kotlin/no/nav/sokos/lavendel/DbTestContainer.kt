@@ -4,7 +4,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 
-class TestContainer {
+class DbTestContainer {
     private val dockerImageName = "postgres:16"
     val container =
         PostgreSQLContainer<Nothing>(DockerImageName.parse(dockerImageName)).apply {

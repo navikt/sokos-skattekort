@@ -9,21 +9,25 @@ object PropertiesConfig {
         val applicationProperties: ApplicationProperties,
         val securityProperties: SecurityProperties,
         val postgresProperties: PostgresProperties,
+        val mqProperties: MQProperties,
     ) {
         constructor(source: ConfigSource) : this(
             applicationProperties = ApplicationProperties(source),
             securityProperties = SecurityProperties(source),
             postgresProperties = PostgresProperties(source),
+            mqProperties = MQProperties(source),
         )
     }
 
     data class ApplicationProperties(
         val naisAppName: String,
         val profile: Profile,
+        val useAuthentication: Boolean,
     ) {
         constructor(source: ConfigSource) : this(
             naisAppName = source.get("APP_NAME"),
             profile = Profile.valueOf(source.get("APPLICATION_PROFILE")),
+            useAuthentication = source.get("USE_AUTHENTICATION").toBoolean(),
         )
     }
 
@@ -70,6 +74,24 @@ object PropertiesConfig {
         constructor(source: ConfigSource) : this(
             clientId = source.get("AZURE_APP_CLIENT_ID"),
             wellKnownUrl = source.get("AZURE_APP_WELL_KNOWN_URL"),
+        )
+    }
+
+    data class MQProperties(
+        val hostname: String,
+        val port: Int,
+        val mqQueueManagerName: String,
+        val mqChannelName: String,
+        val userAuth: Boolean,
+        val bestilleSkattekortQueueName: String,
+    ) {
+        constructor(source: ConfigSource) : this(
+            hostname = source.get("MQ_HOSTNAME").trim(),
+            port = source.get("MQ_PORT").toInt(),
+            mqChannelName = source.get("MQ_CHANNEL_NAME").trim(),
+            mqQueueManagerName = source.get("MQ_QUEUE_MANAGER_NAME"),
+            userAuth = source.get("MQ_USERAUTH").toBoolean(),
+            bestilleSkattekortQueueName = source.get("MQ_BEST_QUEUE").trim(),
         )
     }
 

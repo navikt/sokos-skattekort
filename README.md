@@ -37,6 +37,11 @@ tilby samme funksjonalitet.
 2. Start appen lokalt ved å kjøre main metoden i ***Application.kt***
 3. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
 
+### Patching av biblioteker
+
+Vi har ikke testdekning på IBM MQ-bibliotekene (gruppe "com.ibm.mq" i build.gradle.kts) fordi vi kjører activemq i stedet for ibm mq i test-modus.
+Vi må teste oppgradering av dette/disse biblitekene manuelt.
+
 ## Programvarearkitektur
 
 ### Oversikt

@@ -19,21 +19,22 @@ class BasicEndToEndTest :
     FunSpec({
 
         context("simulering") {
-            val container = DbTestContainer().container
+            val dbContainer = DbTestContainer().container
+            val jmsTestServer = JmsTestServer()
 
             test("vi kan simulere en enkel AAP-request med et gyldig tabellkort (8010)") {
                 withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                     withMockOAuth2Server {
                         testApplication {
                             environment {
-                                config = CompositeApplicationConfig(TestUtil.getOverrides(container), ApplicationConfig("application.conf"))
+                                config = CompositeApplicationConfig(TestUtil.getOverrides(dbContainer), ApplicationConfig("application.conf"))
                             }
                             application {
-                                module(isLocal = true)
+                                module(testJmsConnectionFactory = jmsTestServer.jmsConnectionFactory, testBestillingsQueue = jmsTestServer.bestillingsQueue)
                             }
                             startApplication()
                             TestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)
-                            val dataSource = container.toDataSource()
+                            val dataSource = dbContainer.toDataSource()
 
                             sessionOf(dataSource).use {
                                 val value: List<String> =
@@ -42,6 +43,10 @@ class BasicEndToEndTest :
                                     }
                                 value shouldBe listOf("Signe Maten")
                             }
+
+                            jmsTestServer.sendMessage(jmsTestServer.bestillingsQueue, "OS;1994;15467834260")
+
+                            // TODO: Sjekk resultat, for nå sjekker vi bare stdout.
                         }
                     }
                 }

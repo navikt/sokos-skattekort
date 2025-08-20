@@ -1,12 +1,17 @@
 package no.nav.sokos.lavendel
 
+import com.ibm.mq.jakarta.jms.MQQueue
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.AttributeKey
+import jakarta.jms.ConnectionFactory
+import jakarta.jms.Queue
 
+import no.nav.sokos.lavendel.api.BestillingsListener
+import no.nav.sokos.lavendel.api.Skattekortbestillingsservice
 import no.nav.sokos.lavendel.config.ApplicationState
 import no.nav.sokos.lavendel.config.DatabaseConfig
 import no.nav.sokos.lavendel.config.DatabaseMigrator
@@ -24,14 +29,20 @@ fun main() {
 
 fun Application.module(
     appConfig: ApplicationConfig = environment.config,
-    isLocal: Boolean = false,
+    testJmsConnectionFactory: ConnectionFactory? = null,
+    testBestillingsQueue: Queue? = null,
 ) {
     val config: PropertiesConfig.Configuration = resolveConfig(appConfig)
     DatabaseConfig.init(config, isLocal = config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL)
     DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
-    if (!isLocal) {
-        MQConfig.init(config)
-    }
+    val bestillingsService = Skattekortbestillingsservice(DatabaseConfig.dataSource)
+    val bestillingsListener =
+        if (testJmsConnectionFactory == null) {
+            MQConfig.init(config)
+            BestillingsListener(MQConfig.connectionFactory, bestillingsService, MQQueue(config.mqProperties.bestilleSkattekortQueueName))
+        } else {
+            BestillingsListener(testJmsConnectionFactory, bestillingsService, testBestillingsQueue!!)
+        }
 
     val applicationState = ApplicationState()
     commonConfig()

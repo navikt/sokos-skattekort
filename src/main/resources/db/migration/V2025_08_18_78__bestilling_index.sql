@@ -1,3 +1,3 @@
 SET lock_timeout = '5s';
 
-CREATE INDEX ix_fk_bestilling_id ON bestilling (id)
+CREATE INDEX IF NOT EXISTS ix_fk_bestilling_id ON bestilling (id)

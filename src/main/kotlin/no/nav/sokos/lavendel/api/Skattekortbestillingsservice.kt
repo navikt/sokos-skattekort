@@ -1,20 +1,16 @@
 package no.nav.sokos.lavendel.api
 import com.zaxxer.hikari.HikariDataSource
-import jakarta.jms.ConnectionFactory
 import jakarta.jms.Message
-import jakarta.jms.Queue
 import kotliquery.sessionOf
 
-import no.nav.sokos.lavendel.config.MQConfig
 import no.nav.sokos.lavendel.domain.Bestilling
 
+// TODO: Metrikk: bestillinger per system
+// TODO: Metrikk for varsling: tid siden siste mottatte bestilling
+// TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class Skattekortbestillingsservice(
-    connectionFactory: ConnectionFactory = MQConfig.connectionFactory,
-    bestilleSkattekortQueue: Queue,
     db: HikariDataSource,
 ) {
-    private val connectionFactory: ConnectionFactory = connectionFactory
-    private val bestilleSkattekortQueue: Queue = bestilleSkattekortQueue
     private val db: HikariDataSource = db
 
     fun taImotOppdrag(message: Message) {
@@ -22,17 +18,16 @@ class Skattekortbestillingsservice(
         println("Hello, world! Received message: ${message1.text} from Skattekortbestillingsservice")
         val bestilling = parse(message1.text)
         sessionOf(db).use {
-            val value =
-                it.transaction {
-                    it.run(
-                        kotliquery
-                            .queryOf(
-                                "INSERT INTO BESTILLING (FNR, INNTEKTSAAR) VALUES (?,?)",
-                                bestilling.fnr,
-                                bestilling.inntektYear,
-                            ).asUpdate,
-                    )
-                }
+            it.transaction {
+                it.run(
+                    kotliquery
+                        .queryOf(
+                            "INSERT INTO BESTILLING (FNR, INNTEKTSAAR) VALUES (?,?)",
+                            bestilling.fnr,
+                            bestilling.inntektYear,
+                        ).asUpdate,
+                )
+            }
         }
     }
 }

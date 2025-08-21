@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort
 
 import java.time.LocalDateTime
 
+import kotlin.time.Duration.Companion.seconds
+
 import com.zaxxer.hikari.HikariDataSource
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.withClue
@@ -41,7 +43,7 @@ class MottaBestillingEndToEndTest :
 
                         val dataSource: HikariDataSource = dbContainer.toDataSource()
 
-                        eventually {
+                        eventually(1.seconds) {
                             val rows: List<Bestilling> = TestUtil.storedBestillings(dataSource = dataSource, whereClause = "fnr = '$fnr'")
 
                             withClue("Forventet at det er en bestilling i databasen med fnr $fnr") {

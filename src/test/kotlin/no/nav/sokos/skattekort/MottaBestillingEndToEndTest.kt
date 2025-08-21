@@ -3,6 +3,7 @@ package no.nav.sokos.skattekort
 import java.time.LocalDateTime
 
 import com.zaxxer.hikari.HikariDataSource
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.withClue
 import io.kotest.extensions.testcontainers.toDataSource
 import io.kotest.extensions.time.withConstantNow
@@ -39,11 +40,14 @@ class MottaBestillingEndToEndTest :
                         jmsTestServer.sendMessage(jmsTestServer.bestillingsQueue, "OS;1994;$fnr")
 
                         val dataSource: HikariDataSource = dbContainer.toDataSource()
-                        val rows: List<Bestilling> = TestUtil.storedBestillings(dataSource = dataSource, whereClause = "fnr = '$fnr'")
 
-                        withClue("Forventet at det er en bestilling i databasen med fnr $fnr") {
-                            rows shouldHaveSize 1
-                            rows.first().fnr shouldBe fnr
+                        eventually {
+                            val rows: List<Bestilling> = TestUtil.storedBestillings(dataSource = dataSource, whereClause = "fnr = '$fnr'")
+
+                            withClue("Forventet at det er en bestilling i databasen med fnr $fnr") {
+                                rows shouldHaveSize 1
+                                rows.first().fnr shouldBe fnr
+                            }
                         }
                         jmsTestServer.assertQueueIsEmpty(jmsTestServer.bestillingsQueue)
                     }

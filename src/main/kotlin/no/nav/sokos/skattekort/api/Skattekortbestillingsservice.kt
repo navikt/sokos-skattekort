@@ -14,7 +14,7 @@ class Skattekortbestillingsservice(
     private val db: HikariDataSource = db
 
     fun taImotOppdrag(message: String) {
-        TraceUtils.withTracerId {
+        TraceUtils.withSpan {
             println("Hello, world! Received message: $message from Skattekortbestillingsservice")
             val bestilling = parse(message)
             sessionOf(db).use {

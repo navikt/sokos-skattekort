@@ -5,11 +5,14 @@ import java.sql.ResultSet
 import javax.sql.DataSource
 
 import io.ktor.server.config.MapApplicationConfig
+import kotliquery.Row
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import org.testcontainers.containers.PostgreSQLContainer
 
+import no.nav.sokos.skattekort.alt.config.DbListener
 import no.nav.sokos.skattekort.domain.Bestilling
+import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 internal const val API_BASE_PATH = "/api/v1"
 
@@ -93,5 +96,15 @@ object TestUtil {
                         .asList,
                 )
             }
+        }
+
+    fun readFromBestillings(): List<Bestilling> =
+        DbListener.dataSource.transaction { session ->
+            session.list(
+                queryOf("SELECT inntektsaar, fnr FROM bestilling"),
+                { row: Row ->
+                    Bestilling("OS", row.string("inntektsaar"), row.string("fnr"))
+                },
+            )
         }
 }

@@ -16,8 +16,9 @@ class BestillingsListener(
     // TODO: Legg til Opentelemetry trace
     // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
     init {
+        jmsContext.start()
         bestillingsListener.setMessageListener { message: Message ->
-            bestillingsService.taImotOppdrag((message as? jakarta.jms.TextMessage)?.text!!)
+            bestillingsService.taImotOppdrag(message.getBody<String>(String::class.java))
             message.acknowledge()
         }
     }

@@ -8,27 +8,28 @@ metadata:
 spec:
   image: "{{{ image }}}"
   port: 8080
+  webproxy: true
   replicas:
-    min: 2
+    min: 1
     max: 2
     cpuThresholdPercentage: 75
   liveness:
     path: /internal/isAlive
-    initialDelay: 5
+    initialDelay: 10
     timeout: 5
     periodSeconds: 5
     failureThreshold: 30
   readiness:
     path: /internal/isReady
-    initialDelay: 5
+    initialDelay: 10
     periodSeconds: 5
     timeout: 5
   resources:
     limits:
       memory: 4096Mi
     requests:
-      cpu: 2000m
-      memory: 4096Mi
+      cpu: 100m
+      memory: 512Mi
   ingresses:
     - https://sokos-lavendel.intern.nav.no
   prometheus:

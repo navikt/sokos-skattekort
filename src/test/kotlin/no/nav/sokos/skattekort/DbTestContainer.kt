@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel
+package no.nav.sokos.skattekort
 
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait

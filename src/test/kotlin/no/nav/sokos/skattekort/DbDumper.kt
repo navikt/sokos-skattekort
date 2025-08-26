@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel
+package no.nav.sokos.skattekort
 
 import java.nio.file.Paths
 

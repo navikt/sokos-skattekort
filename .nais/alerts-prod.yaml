@@ -1,16 +1,16 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: sokos-lavendel
+  name: sokos-skattekort
   namespace: okonomi
   labels:
     team: okonomi
 spec:
   groups:
-    - name: sokos-lavendel-alerts
+    - name: sokos-skattekort-alerts
       rules:
-        - alert: sokos-lavendel er nede
-          expr: kube_deployment_status_replicas_available{deployment="sokos-lavendel"} == 0
+        - alert: sokos-skattekort er nede
+          expr: kube_deployment_status_replicas_available{deployment="sokos-skattekort"} == 0
           for: 5m
           annotations:
             action: "Sjekk hvorfor applikasjonen er nede"
@@ -18,11 +18,11 @@ spec:
           labels:
             namespace: okonomi
             severity: critical
-            sokos_lavendel_type: sokos-lavendel
+            sokos_skattekort_type: sokos-skattekort
             alert_type: custom
 
-        - alert: sokos-lavendel har restartet flere ganger de siste 5 minuttene!
-          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"sokos-lavendel"}[5m])) by (container) > 2
+        - alert: sokos-skattekort har restartet flere ganger de siste 5 minuttene!
+          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"sokos-skattekort"}[5m])) by (container) > 2
           for: 5m
           annotations:
             action: "Sjekk hvorfor applikasjonen ikke klarer å restarte"
@@ -30,43 +30,43 @@ spec:
           labels:
             namespace: okonomi
             severity: critical
-            sokos_lavendel_type: sokos-lavendel
+            sokos_skattekort_type: sokos-skattekort
             alert_type: custom
 
         - alert: Applikasjonen logger høy andel errors
           expr:
-            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Error"}[15m])
+            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-skattekort",level="Error"}[15m])
               or vector(0)) -
-              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Error"}[15m]
+              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-skattekort",level="Error"}[15m]
               offset 15m) or vector(0)) > 5'
           for: 5m
           annotations:
-            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-lavendel'))),(query:(match_phrase:(cluster:'prod-gcp'))),(query:(match_phrase:(level:'Error')))))|Sjekk loggene>"
-            summary: "`kubectl logs -l app=sokos-lavendel -n okonomi` for logger"
+            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-skattekort'))),(query:(match_phrase:(cluster:'prod-gcp'))),(query:(match_phrase:(level:'Error')))))|Sjekk loggene>"
+            summary: "`kubectl logs -l app=sokos-skattekort -n okonomi` for logger"
           labels:
             namespace: okonomi
             severity: danger
-            sokos_lavendel_type: sokos-lavendel
+            sokos_skattekort_type: sokos-skattekort
             alert_type: custom
 
         - alert: Applikasjonen logger høy andel warnings
           expr:
-            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Warning"}[15m])
+            'sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-skattekort",level="Warning"}[15m])
               or vector(0)) -
-              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-lavendel",level="Warning"}[15m]
+              sum(max_over_time(log_messages_errors{namespace="okonomi",app="sokos-skattekort",level="Warning"}[15m]
               offset 15m) or vector(0)) > 5'
           for: 5m
           annotations:
-            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-lavendel'))),(query:(match_phrase:(cluster:'prod-gcp'))),(query:(match_phrase:(level:'Warning')))))|Sjekk loggene>"
-            summary: "`kubectl logs -l app=sokos-lavendel -n okonomi` for logger"
+            action: "<https://logs.adeo.no/app/discover#/?_g=(time:(from:now-1d,to:now))&_a=(filters:!((query:(match_phrase:(application:'sokos-skattekort'))),(query:(match_phrase:(cluster:'prod-gcp'))),(query:(match_phrase:(level:'Warning')))))|Sjekk loggene>"
+            summary: "`kubectl logs -l app=sokos-skattekort -n okonomi` for logger"
           labels:
             namespace: okonomi
             severity: warning
-            sokos_lavendel_type: sokos-lavendel
+            sokos_skattekort_type: sokos-skattekort
             alert_type: custom
 
-        - alert: sokos-lavendel har høy andel HTTP serverfeil (5xx responser)
-          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"5.*", app="sokos-lavendel"}[3m])) > 2
+        - alert: sokos-skattekort har høy andel HTTP serverfeil (5xx responser)
+          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"5.*", app="sokos-skattekort"}[3m])) > 2
           for: 5m
           annotations:
             action: "`kubectl logs {{ $labels.pod }} -n {{ $labels.namespace }}`"
@@ -75,11 +75,11 @@ spec:
           labels:
             namespace: okonomi
             severity: danger
-            sokos_lavendel_type: sokos-lavendel
+            sokos_skattekort_type: sokos-skattekort
             alert_type: custom
 
-        - alert: sokos-lavendel har høy andel HTTP klientfeil (4xx responser)
-          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"4.*", status!~"404", app="sokos-lavendel"}[3m])) > 2
+        - alert: sokos-skattekort har høy andel HTTP klientfeil (4xx responser)
+          expr: floor(increase(ktor_http_server_requests_seconds_count{status=~"4.*", status!~"404", app="sokos-skattekort"}[3m])) > 2
           for: 5m
           annotations:
             action: "`kubectl logs {{ $labels.pod }} -n {{ $labels.namespace }}`"
@@ -88,7 +88,7 @@ spec:
           labels:
             namespace: okonomi
             severity: danger
-            sokos_lavendel_type: sokos-lavendel
+            sokos_skattekort_type: sokos-skattekort
             alert_type: custom
 
 ---
@@ -96,20 +96,20 @@ spec:
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
-  name: sokos-lavendel-slack
+  name: sokos-skattekort-slack
   namespace: okonomi
   labels:
-    alertmanagerConfig: sokos-lavendel-slack
+    alertmanagerConfig: sokos-skattekort-slack
 spec:
   receivers:
-    - name: sokos-lavendel-receiver
+    - name: sokos-skattekort-receiver
       slackConfigs:
         - apiURL:
             key: apiUrl
             name: slack-webhook
           channel: '#team-mob-alerts-prod'
           iconEmoji: ':alert:'
-          username: 'Alert prod-gcp (sokos-lavendel)'
+          username: 'Alert prod-gcp (sokos-skattekort)'
           sendResolved: true
           title: |-
             [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
@@ -127,10 +127,10 @@ spec:
     groupBy:
       - alertname
     matchers:
-      - name: "sokos_lavendel_type"
+      - name: "sokos_skattekort_type"
         matchType: "="
-        value: "sokos-lavendel"
+        value: "sokos-skattekort"
     groupInterval: 10s
     groupWait: 5s
-    receiver: sokos-lavendel-receiver
+    receiver: sokos-skattekort-receiver
     repeatInterval: 5m

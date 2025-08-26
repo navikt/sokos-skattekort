@@ -1,1 +1,1 @@
-rootProject.name = "sokos-lavendel"
+rootProject.name = "sokos-skattekort"

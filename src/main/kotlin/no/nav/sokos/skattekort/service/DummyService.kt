@@ -1,7 +1,7 @@
-package no.nav.sokos.lavendel.service
+package no.nav.sokos.skattekort.service
 
-import no.nav.sokos.lavendel.domain.DummyDomain
-import no.nav.sokos.lavendel.metrics.Metrics
+import no.nav.sokos.skattekort.domain.DummyDomain
+import no.nav.sokos.skattekort.metrics.Metrics
 
 class DummyService {
     fun sayHello(): DummyDomain {

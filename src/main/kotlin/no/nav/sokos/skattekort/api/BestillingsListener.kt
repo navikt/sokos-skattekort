@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel.api
+package no.nav.sokos.skattekort.api
 
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext

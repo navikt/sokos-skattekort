@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel
+package no.nav.sokos.skattekort
 
 import java.sql.Connection.TRANSACTION_SERIALIZABLE
 import java.sql.ResultSet
@@ -9,7 +9,7 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import org.testcontainers.containers.PostgreSQLContainer
 
-import no.nav.sokos.lavendel.domain.Bestilling
+import no.nav.sokos.skattekort.domain.Bestilling
 
 internal const val API_BASE_PATH = "/api/v1"
 

@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel.config
+package no.nav.sokos.skattekort.config
 
 interface ConfigSource {
     fun get(key: String): String

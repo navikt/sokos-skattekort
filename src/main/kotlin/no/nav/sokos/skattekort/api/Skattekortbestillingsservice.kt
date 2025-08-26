@@ -1,9 +1,9 @@
-package no.nav.sokos.lavendel.api
+package no.nav.sokos.skattekort.api
 import com.zaxxer.hikari.HikariDataSource
 import jakarta.jms.Message
 import kotliquery.sessionOf
 
-import no.nav.sokos.lavendel.domain.Bestilling
+import no.nav.sokos.skattekort.domain.Bestilling
 
 // TODO: Metrikk: bestillinger per system
 // TODO: Metrikk for varsling: tid siden siste mottatte bestilling

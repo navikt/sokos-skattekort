@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel
+package no.nav.sokos.skattekort
 
 import java.time.LocalDateTime
 
@@ -12,9 +12,9 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.testing.testApplication
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
-import no.nav.sokos.lavendel.config.CompositeApplicationConfig
-import no.nav.sokos.lavendel.config.DatabaseConfig
-import no.nav.sokos.lavendel.domain.Bestilling
+import no.nav.sokos.skattekort.config.CompositeApplicationConfig
+import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.domain.Bestilling
 
 class MottaBestillingEndToEndTest :
     EndToEndFunSpec({ dbContainer, jmsTestServer ->

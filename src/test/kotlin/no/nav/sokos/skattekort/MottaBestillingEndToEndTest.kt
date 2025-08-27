@@ -2,7 +2,10 @@ package no.nav.sokos.skattekort
 
 import java.time.LocalDateTime
 
+import kotlin.time.Duration.Companion.seconds
+
 import com.zaxxer.hikari.HikariDataSource
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.withClue
 import io.kotest.extensions.testcontainers.toDataSource
 import io.kotest.extensions.time.withConstantNow
@@ -14,6 +17,7 @@ import io.ktor.server.testing.testApplication
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.CompositeApplicationConfig
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.MQListener
 import no.nav.sokos.skattekort.domain.Bestilling
 
 class MottaBestillingEndToEndTest :
@@ -27,7 +31,7 @@ class MottaBestillingEndToEndTest :
                             config = CompositeApplicationConfig(TestUtil.getOverrides(dbContainer), ApplicationConfig("application.conf"))
                         }
                         application {
-                            module(testJmsConnectionFactory = jmsTestServer.jmsConnectionFactory, testBestillingsQueue = jmsTestServer.bestillingsQueue)
+                            module(testJmsConnectionFactory = MQListener.connectionFactory, testBestillingsQueue = this.bestillingsQueue)
                         }
                         startApplication()
 
@@ -37,13 +41,14 @@ class MottaBestillingEndToEndTest :
                         val fnr = "15467834260"
 
                         jmsTestServer.sendMessage(jmsTestServer.bestillingsQueue, "OS;1994;$fnr")
+                        eventually(1.seconds) {
+                            val dataSource: HikariDataSource = dbContainer.toDataSource()
+                            val rows: List<Bestilling> = TestUtil.storedBestillings(dataSource = dataSource, whereClause = "fnr = '$fnr'")
 
-                        val dataSource: HikariDataSource = dbContainer.toDataSource()
-                        val rows: List<Bestilling> = TestUtil.storedBestillings(dataSource = dataSource, whereClause = "fnr = '$fnr'")
-
-                        withClue("Forventet at det er en bestilling i databasen med fnr $fnr") {
-                            rows shouldHaveSize 1
-                            rows.first().fnr shouldBe fnr
+                            withClue("Forventet at det er en bestilling i databasen med fnr $fnr") {
+                                rows shouldHaveSize 1
+                                rows.first().fnr shouldBe fnr
+                            }
                         }
                         jmsTestServer.assertQueueIsEmpty(jmsTestServer.bestillingsQueue)
                     }

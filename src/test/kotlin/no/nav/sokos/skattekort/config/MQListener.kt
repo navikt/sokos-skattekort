@@ -15,7 +15,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 object MQListener : TestListener {
-    private val server =
+    val server =
         EmbeddedActiveMQ()
             .setConfiguration(
                 ConfigurationImpl()

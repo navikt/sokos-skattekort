@@ -6,27 +6,27 @@ import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-import no.nav.sokos.skattekort.TestUtil.readFromBestillings
+import no.nav.sokos.skattekort.DbTestUtil.readFromBestillings
 import no.nav.sokos.skattekort.api.BestillingsListener
 import no.nav.sokos.skattekort.api.Skattekortbestillingsservice
 import no.nav.sokos.skattekort.config.DbListener
-import no.nav.sokos.skattekort.config.MQListener
+import no.nav.sokos.skattekort.config.JmsListener
 
 class DbOgMqTest :
     FunSpec({
-        extensions(listOf(MQListener, DbListener))
+        extensions(listOf(JmsListener, DbListener))
 
         beforeSpec {
             BestillingsListener(
-                MQListener.connectionFactory,
+                JmsListener.connectionFactory,
                 Skattekortbestillingsservice(DbListener.dataSource),
-                MQListener.bestillingMq,
+                JmsListener.bestillingsQueue,
             )
         }
 
         test("Tester både kø og database") {
 
-            MQListener.sendMessage("OS;1994;11111111111")
+            JmsTestUtil.sendMessage("OS;1994;11111111111")
             eventually(1.seconds) {
                 val result = readFromBestillings()
                 result.size shouldBe 1
@@ -34,5 +34,5 @@ class DbOgMqTest :
             }
         }
 
-        afterTest { TestUtil.deleteAllTables(DbListener.dataSource) }
+        afterTest { DbTestUtil.deleteAllTables(DbListener.dataSource) }
     })

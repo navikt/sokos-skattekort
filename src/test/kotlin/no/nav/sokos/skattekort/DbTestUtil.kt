@@ -16,7 +16,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 internal const val API_BASE_PATH = "/api/v1"
 
-object TestUtil {
+object DbTestUtil {
     fun readFile(fileName: String): String =
         this::class.java.classLoader
             .getResourceAsStream(fileName)
@@ -30,7 +30,7 @@ object TestUtil {
     ) {
         deleteAllTables(dataSource) // Vi vil alltid helst starte med en kjent databasetilstand.
 
-        val sql = TestUtil.readFile(fileToLoad)
+        val sql = DbTestUtil.readFile(fileToLoad)
         val connection = dataSource.connection
         // TODO: close connection
         connection.transactionIsolation = TRANSACTION_SERIALIZABLE

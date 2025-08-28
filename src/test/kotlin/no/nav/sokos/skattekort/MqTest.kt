@@ -5,16 +5,16 @@ import io.kotest.matchers.shouldBe
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 
-import no.nav.sokos.skattekort.config.MQListener
+import no.nav.sokos.skattekort.config.JmsListener
 
 class MqTest :
     FunSpec({
-        extensions(listOf(MQListener))
+        extensions(listOf(JmsListener))
         test("MQ Test") {
-            MQListener.sendMessage("Test message")
+            JmsTestUtil.sendMessage("Test message")
 
-            val jmsContext = MQListener.connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
-            val bestillingsListener = jmsContext.createConsumer(MQListener.bestillingMq)
+            val jmsContext = JmsListener.connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+            val bestillingsListener = jmsContext.createConsumer(JmsListener.bestillingsQueue)
 
             bestillingsListener.setMessageListener { message: Message ->
                 print(message)

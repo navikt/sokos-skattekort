@@ -36,5 +36,5 @@ class DbTest :
             }
         }
 
-        afterTest { TestUtil.deleteAllTables(DbListener.dataSource) }
+        afterTest { DbTestUtil.deleteAllTables(DbListener.dataSource) }
     })

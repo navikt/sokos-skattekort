@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel.config
+package no.nav.sokos.skattekort.config
 
 import kotlinx.serialization.json.Json
 
@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import org.slf4j.event.Level
 
-import no.nav.sokos.lavendel.metrics.Metrics
+import no.nav.sokos.skattekort.metrics.Metrics
 
 fun Application.commonConfig() {
     install(CallLogging) {

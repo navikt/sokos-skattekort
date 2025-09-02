@@ -1,11 +1,11 @@
-package no.nav.sokos.lavendel.config
+package no.nav.sokos.skattekort.config
 
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 
-import no.nav.sokos.lavendel.config
+import no.nav.sokos.skattekort.config
 
 fun Application.routingConfig(
     useAuthentication: Boolean,

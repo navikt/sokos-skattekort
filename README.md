@@ -1,8 +1,8 @@
-# sokos-lavendel
+# sokos-skattekort
 
 Innholdsfortegnelse med linker finnes til høyre over dette vinduet, under et ikon som består av tre linjer med en prikk og en strek. Klikk på ikonet for å åpne innholdsfortegnelsen.
 
-Sokos-lavendel er en erstatning for os-eskatt, som brukte altinn 2 til å hente skattekort. I løpet av høsten 2025 vil skatteetaten tilby et nytt grensesnitt, separat fra altinn, for å 
+Sokos-skattekort er en erstatning for os-eskatt, som brukte altinn 2 til å hente skattekort. I løpet av høsten 2025 vil skatteetaten tilby et nytt grensesnitt, separat fra altinn, for å 
 tilby samme funksjonalitet.
 
 ## Workflows
@@ -76,10 +76,10 @@ Ingen
 
 | Funksjon       | Type      | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner        | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
 |----------------|-----------|-------------------|-------------------------------|------------------------------------------|----------------------------------------------------------|
-| bestillinger   | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
-| avbestillinger | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
-| Arena          | Filområde | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
-| OppdragZ       | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-lavendel-announcements | #utbetaling-sokos-lavendel                               |
+| bestillinger   | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
+| avbestillinger | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
+| Arena          | Filområde | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
+| OppdragZ       | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
 
 TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
 
@@ -125,7 +125,7 @@ erDiagram
 
 ## Deployment
 Distribusjon av tjenesten er gjort med bruk av Github Actions.
-[sokos-lavendel CI / CD](https://github.com/navikt/sokos-lavendel/actions)
+[sokos-skattekort CI / CD](https://github.com/navikt/sokos-skattekort/actions)
 
 Push/merge til main branch vil teste, bygge og deploye til produksjonsmiljø og testmiljø.
 
@@ -146,10 +146,10 @@ Feilmeldinger og infomeldinger som ikke innheholder sensitive data logges til da
 Sensetive meldinger logges til data view `Securelogs` [sikker-utvikling/logging](https://sikkerhet.nav.no/docs/sikker-utvikling/logging)).
 
 - Filter for Produksjon
-    * application:sokos-lavendel AND envclass:p
+    * application:sokos-skattekort AND envclass:p
 
 - Filter for Dev
-    * application:sokos-lavendel AND envclass:q
+    * application:sokos-skattekort AND envclass:q
 
 ### Kubectl
 TBD

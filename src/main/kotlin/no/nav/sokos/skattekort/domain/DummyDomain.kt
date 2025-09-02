@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel.domain
+package no.nav.sokos.skattekort.domain
 
 import kotlinx.serialization.Serializable
 

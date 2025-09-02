@@ -1,4 +1,4 @@
-package no.nav.sokos.lavendel.config
+package no.nav.sokos.skattekort.config
 
 import java.net.URI
 import java.util.concurrent.TimeUnit
@@ -17,7 +17,7 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import mu.KotlinLogging
 
-import no.nav.sokos.lavendel.config
+import no.nav.sokos.skattekort.config
 
 private val logger = KotlinLogging.logger {}
 const val AUTHENTICATION_NAME = "azureAd"

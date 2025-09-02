@@ -33,16 +33,18 @@ fun Application.module(
     testBestillingsQueue: Queue? = null,
 ) {
     val config: PropertiesConfig.Configuration = resolveConfig(appConfig)
-    DatabaseConfig.init(config, isLocal = config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL)
-    DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
-    val bestillingsService = Skattekortbestillingsservice(DatabaseConfig.dataSource)
-    val bestillingsListener =
-        if (testJmsConnectionFactory == null) {
-            MQConfig.init(config)
-            BestillingsListener(MQConfig.connectionFactory, bestillingsService, MQQueue(config.mqProperties.bestilleSkattekortQueueName))
-        } else {
-            BestillingsListener(testJmsConnectionFactory, bestillingsService, testBestillingsQueue!!)
-        }
+    if (config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL) {
+        DatabaseConfig.init(config, isLocal = true)
+        DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
+        val bestillingsService = Skattekortbestillingsservice(DatabaseConfig.dataSource)
+        val bestillingsListener =
+            if (testJmsConnectionFactory == null) {
+                MQConfig.init(config)
+                BestillingsListener(MQConfig.connectionFactory, bestillingsService, MQQueue(config.mqProperties.bestilleSkattekortQueueName))
+            } else {
+                BestillingsListener(testJmsConnectionFactory, bestillingsService, testBestillingsQueue!!)
+            }
+    }
 
     val applicationState = ApplicationState()
     commonConfig()

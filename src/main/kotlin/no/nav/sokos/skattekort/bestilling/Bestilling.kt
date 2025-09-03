@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.domain
+package no.nav.sokos.skattekort.bestilling
 
 data class Bestilling(
     val bestiller: String,

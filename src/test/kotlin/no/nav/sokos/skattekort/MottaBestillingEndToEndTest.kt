@@ -12,9 +12,9 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.testing.testApplication
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
+import no.nav.sokos.skattekort.bestilling.Bestilling
 import no.nav.sokos.skattekort.config.CompositeApplicationConfig
 import no.nav.sokos.skattekort.config.DatabaseConfig
-import no.nav.sokos.skattekort.domain.Bestilling
 
 class MottaBestillingEndToEndTest :
     EndToEndFunSpec({ dbContainer, jmsTestServer ->

@@ -1,9 +1,11 @@
-package no.nav.sokos.skattekort.api
+package no.nav.sokos.skattekort.bestilling
 
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
+
+import no.nav.sokos.skattekort.bestilling.Skattekortbestillingsservice
 
 class BestillingsListener(
     jmsConnectionFactory: ConnectionFactory,

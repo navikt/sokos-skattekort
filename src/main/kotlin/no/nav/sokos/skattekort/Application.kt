@@ -10,8 +10,8 @@ import io.ktor.util.AttributeKey
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 
-import no.nav.sokos.skattekort.api.BestillingsListener
-import no.nav.sokos.skattekort.api.Skattekortbestillingsservice
+import no.nav.sokos.skattekort.bestilling.BestillingsListener
+import no.nav.sokos.skattekort.bestilling.Skattekortbestillingsservice
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.DatabaseMigrator

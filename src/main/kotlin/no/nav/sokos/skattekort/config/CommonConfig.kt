@@ -1,6 +1,8 @@
 package no.nav.sokos.skattekort.config
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -21,6 +23,8 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import org.slf4j.event.Level
 
+import no.nav.sokos.skattekort.LocalDateSerializer
+import no.nav.sokos.skattekort.LocalDateTimeSerializer
 import no.nav.sokos.skattekort.metrics.Metrics
 
 fun Application.commonConfig() {
@@ -36,6 +40,11 @@ fun Application.commonConfig() {
                 ignoreUnknownKeys = true
                 encodeDefaults = true
                 explicitNulls = false
+                serializersModule =
+                    SerializersModule {
+                        contextual(LocalDateSerializer)
+                        contextual(LocalDateTimeSerializer)
+                    }
             },
         )
     }

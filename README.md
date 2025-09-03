@@ -1,9 +1,39 @@
 # sokos-skattekort
 
-Innholdsfortegnelse med linker finnes til høyre over dette vinduet, under et ikon som består av tre linjer med en prikk og en strek. Klikk på ikonet for å åpne innholdsfortegnelsen.
-
 Sokos-skattekort er en erstatning for os-eskatt, som brukte altinn 2 til å hente skattekort. I løpet av høsten 2025 vil skatteetaten tilby et nytt grensesnitt, separat fra altinn, for å 
 tilby samme funksjonalitet.
+
+## Funksjonell workflow
+
+```mermaid
+flowchart TD
+    Start --> ArenaBestilling
+    Start --> OppdragZBestilling
+    Start --> PocBestilling
+    ArenaBestilling -- JMS-bestilling i XML-format --> SkattekortbestillingsService
+    OppdragZBestilling -- JMS-bestilling i copybook-format --> SkattekortbestillingsService
+    PocBestilling -- JMS-bestilling i copybook-format --> SkattekortbestillingsService
+    SkattekortbestillingsService -- bestilling --> BestDb[(BestDb)]
+    SkattekortbestillingsService -- systeminteresse --> Aktoer[(Aktoer)]
+    BestDb -- Samler opp og batcher bestillinger --> Bestiller
+    Bestiller -- Lagrer bestillingsreferanse --> BestDb
+    Bestiller -- eksternt kall --> Skatt
+    Bestiller -- teknisk status --> Micrometer
+    BestDb --> Henter
+    Henter -- eksternt kall --> Skatt
+    Henter -- lagrer bevisdata --> KortDb[(KortDb)]
+    Henter -- teknisk status --> Micrometer
+    KortDb -- feil fra skatt --> AdminGui
+    KortDb -- ok skattekort --> Sender
+    Sender --> SKDb[(SkatteKortDb)]
+    Aktoer -- systeminteresse --> Sender
+    Sender -- hvis arena-interesse, SFTP --> Arena
+    Sender -- alltid, JMS --> OppdragZ
+    Sender -- hvis poc-interesse, JMS? Rest? --> POC
+    SkatteKortDb --> AdminGui
+    BestDb --> AdminGui
+    Aktoer --> AdminGui
+```
 
 ## Workflows
 
@@ -54,12 +84,11 @@ block-beta
     space              space        bestilling space space             space space 
     OS_inn("OppdragZ") space        space      space space             space Arena("Arena (SFTP)")
     space              space        space      space applikasjon       space space 
-    avbestilling       space        space      space space             space OS("OppdragZ")
+    space              space        space      space space             space OS("OppdragZ")
     space              space        space      space db[("Database")]  space space 
     Arena_inn --> bestilling
     OS_inn --> bestilling
     space bestilling --> applikasjon
-    space avbestilling --> applikasjon
     space applikasjon --> Arena
     space applikasjon --> OS
     space applikasjon --> db
@@ -77,7 +106,6 @@ Ingen
 | Funksjon       | Type      | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner        | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
 |----------------|-----------|-------------------|-------------------------------|------------------------------------------|----------------------------------------------------------|
 | bestillinger   | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
-| avbestillinger | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
 | Arena          | Filområde | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
 | OppdragZ       | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                               |
 
@@ -93,33 +121,56 @@ stateDiagram-v2
     bestilt-->?
     note right of ?: Avhenger av design på nytt API
     ?-->mottatt
-    mottatt-->sendtOz
-    sendtOz-->sendtArena
-    sendtArena-->aktiv
-```
-
-#### avbestilling
-
-```mermaid
-stateDiagram-v2
-    aktiv-->?
-    note right of ?: avbestilling sendes dersom ingen flere systemer abonnerer på data
-    ?-->slett
-    slett-->[*]
+    note right of mottatt: Bestillingen kan slettes etter at skattekort er mottatt ok
 ```
 
 ### Databaseskjema
 
+#### Aktør og bestilling
+
 ```mermaid
 erDiagram
-    aktoer ||--o{ aktoer_bestilt: har
+    aktoer ||--o{ aktoer_offnr: har
+    aktoer ||--o{ aktoer_audit: har
+    aktoer ||--o{ aktoer_bestiltfra: har
+    aktoer ||--o{ bestillinger: har
+    bestillinger_batch |o--o{ bestillinger: inneholder
     aktoer{
-        text status
     }
-    aktoer_bestilt{
-        text system
+    aktoer_audit{
+        text tag "Maskinlesbar kategorisering av auditlinjer, for f.eks. å kunne finne alle bestillinger"
+        text informasjon "Menneskelesbar tekst som beskriver endringen"
+        text bruker "Bruker eller system som forårsaket endringen"
     }
+    aktoer_bestiltfra {
+        smallint aar "Årstall for bestilling"
+        text     bestiller "Oppdragz, arena, .... Brukes til å trigge avlevering oå riktig format"
+    }
+    bestillinger {
+        smallint aar
+        text     fnr "Fødselsnummer brukt i bestilling."
+    }
+    bestillinger_batch {
+        text    status "Tracker status på bestilling mot skatteetaten"
+        text    bestillingreferanse "Referanse mottatt fra skatteetaten ved registrert bestilling"
+        text    dialogreferanse "Referanse mottatt fra skatteetaten, til dialogporten"
+    }
+```
+
+#### Skattekort (skisse)
+
+```mermaid
+erDiagram
     aktoer ||--o{ skattekort: har
+    aktoer ||--o{ skattekort_raw: har
+    skattekort {
+        smallint aar 
+    }
+    skattekort_raw {
+        timestamptz  created
+        text         body "Payload mottatt, uten behandling. For debuggingsformål"
+    }
+    TBD
 ```
 
 

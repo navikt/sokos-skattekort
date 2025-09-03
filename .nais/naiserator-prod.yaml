@@ -42,7 +42,11 @@ spec:
   azure:
     application:
       enabled: true
-
+  maskinporten:
+    enabled: true
+    scopes:
+      consumes:
+        - name: "skatteetaten:forskudd"
   env:
     - name: USE_AUTHENTICATION
       value: "true"

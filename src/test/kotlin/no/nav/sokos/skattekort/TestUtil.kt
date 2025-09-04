@@ -9,6 +9,7 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import org.testcontainers.containers.PostgreSQLContainer
 
+import no.nav.sokos.skattekort.aktoer.AktoerId
 import no.nav.sokos.skattekort.bestilling.Bestilling
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -136,8 +137,8 @@ object TestUtil {
         sessionOf(dataSource).use {
             it.transaction {
                 it.run(
-                    queryOf("SELECT fnr, aar FROM bestillinger WHERE " + (whereClause ?: "1=1"))
-                        .map { row -> Bestilling(bestiller = "null", inntektYear = row.string("aar"), fnr = row.string("fnr")) }
+                    queryOf("SELECT aktoer_id, fnr, aar FROM bestillinger WHERE " + (whereClause ?: "1=1"))
+                        .map { row -> Bestilling(aktoer_id = AktoerId(row.long("aktoer_id")), bestiller = "null", inntektYear = row.string("aar"), fnr = row.string("fnr")) }
                         .asList,
                 )
             }

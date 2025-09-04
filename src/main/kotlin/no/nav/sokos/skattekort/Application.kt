@@ -10,6 +10,8 @@ import io.ktor.util.AttributeKey
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 
+import no.nav.sokos.skattekort.aktoer.AktoerRepository
+import no.nav.sokos.skattekort.aktoer.AktoerService
 import no.nav.sokos.skattekort.bestilling.BestillingsListener
 import no.nav.sokos.skattekort.bestilling.Skattekortbestillingsservice
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -36,7 +38,9 @@ fun Application.module(
     if (config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL) {
         DatabaseConfig.init(config, isLocal = true)
         DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
-        val bestillingsService = Skattekortbestillingsservice(DatabaseConfig.dataSource)
+        val aktoerRepository = AktoerRepository()
+        val bestillingsService = Skattekortbestillingsservice(DatabaseConfig.dataSource, aktoerRepository)
+        val aktoerService = AktoerService(DatabaseConfig.dataSource, aktoerRepository)
         val bestillingsListener =
             if (testJmsConnectionFactory == null) {
                 MQConfig.init(config)

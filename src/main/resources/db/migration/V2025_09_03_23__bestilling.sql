@@ -3,10 +3,10 @@ SET lock_timeout = '5s';
 DROP INDEX IF EXISTS ix_fk_bestilling_id;
 DROP TABLE IF EXISTS bestilling;
 
-CREATE OR REPLACE FUNCTION update_dato_oppdatert_column()
+CREATE OR REPLACE FUNCTION update_oppdatert_column()
     RETURNS TRIGGER AS $$
 BEGIN
-    NEW.dato_oppdatert = NOW();
+    NEW.oppdatert = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS bestillinger_batch
     status                   TEXT NOT NULL DEFAULT 'NY',
     bestillingsreferanse     TEXT NULL DEFAULT NULL, -- referansenummer returnert fra skatt på bestillingskall
     dialogreferanse          TEXT NULL DEFAULT NULL, -- referanse til dialogporten. Denne er ikke planlagt brukt enda.
-    dato_oppdatert           TIMESTAMPTZ DEFAULT now()
+    oppdatert           TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS bestillinger
@@ -27,15 +27,15 @@ CREATE TABLE IF NOT EXISTS bestillinger
     fnr                      TEXT NOT NULL,
     aar                      TEXT NOT NULL,
     bestilling_batch_id      BIGINT REFERENCES bestillinger_batch(id) DEFERRABLE NULL,
-    dato_oppdatert           TIMESTAMPTZ DEFAULT now()
+    oppdatert           TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TRIGGER bestillinger_set_dato_oppdatert_on_insert_update
+CREATE TRIGGER bestillinger_set_oppdatert_on_insert_update
     BEFORE INSERT OR UPDATE ON bestillinger
     FOR EACH ROW
-EXECUTE FUNCTION update_dato_oppdatert_column();
+EXECUTE FUNCTION update_oppdatert_column();
 
-CREATE TRIGGER bestillinger_batch_set_dato_oppdatert_on_insert_update
+CREATE TRIGGER bestillinger_batch_set_oppdatert_on_insert_update
     BEFORE INSERT OR UPDATE ON bestillinger_batch
     FOR EACH ROW
-EXECUTE FUNCTION update_dato_oppdatert_column();
+EXECUTE FUNCTION update_oppdatert_column();

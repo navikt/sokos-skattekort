@@ -43,7 +43,7 @@ val micrometerVersion = "1.15.2"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val natpryceVersion = "1.6.10.0"
-val kotestVersion = "5.9.1"
+val kotestVersion = "6.0.0.M17"
 val kotlinxSerializationVersion = "1.9.0"
 val mockOAuth2ServerVersion = "2.2.1"
 val mockkVersion = "1.14.5"
@@ -145,6 +145,8 @@ tasks {
             attributes["Main-Class"] = "no.nav.sokos.skattekort.ApplicationKt"
         }
         finalizedBy(koverHtmlReport)
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        mergeServiceFiles()
     }
 
     withType<Test>().configureEach {

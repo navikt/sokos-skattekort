@@ -1,13 +1,13 @@
-package no.nav.sokos.skattekort.aktoer
+package no.nav.sokos.skattekort.person
 
 import javax.sql.DataSource
 
 import kotliquery.sessionOf
 import kotliquery.using
 
-class AktoerService(
+class PersonService(
     val dataSource: DataSource,
-    val aktoerRepository: AktoerRepository,
+    val personRepository: PersonRepository,
 ) {
     fun list(
         count: Int = 10,
@@ -15,7 +15,7 @@ class AktoerService(
     ): List<Aktoer> =
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
-                aktoerRepository.list(tx, count, startId)
+                personRepository.list(tx, count, startId)
             }
         }
 }

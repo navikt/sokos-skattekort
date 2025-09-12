@@ -12,7 +12,7 @@ class PersonService(
     fun list(
         count: Int = 10,
         startId: String? = null,
-    ): List<Aktoer> =
+    ): List<Person> =
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 personRepository.list(tx, count, startId)

@@ -12,7 +12,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 import no.nav.sokos.skattekort.bestilling.Bestilling
 import no.nav.sokos.skattekort.config.DbListener
-import no.nav.sokos.skattekort.person.AktoerId
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -31,7 +31,7 @@ object DbTestUtil {
     ) {
         deleteAllTables(dataSource) // Vi vil alltid helst starte med en kjent databasetilstand.
 
-        val sql = DbTestUtil.readFile(fileToLoad)
+        val sql = readFile(fileToLoad)
         val connection = dataSource.connection
         connection.transactionIsolation = TRANSACTION_SERIALIZABLE
         connection.autoCommit = false
@@ -139,7 +139,7 @@ object DbTestUtil {
             it.transaction {
                 it.run(
                     queryOf("SELECT person_id, fnr, aar FROM bestillinger WHERE " + (whereClause ?: "1=1"))
-                        .map { row -> Bestilling(person_id = AktoerId(row.long("person_id")), bestiller = "null", inntektYear = row.string("aar"), fnr = row.string("fnr")) }
+                        .map { row -> Bestilling(person_id = PersonId(row.long("person_id")), bestiller = "null", inntektYear = row.string("aar"), fnr = row.string("fnr")) }
                         .asList,
                 )
             }
@@ -150,7 +150,7 @@ object DbTestUtil {
             session.list(
                 queryOf("SELECT aar, fnr FROM bestillinger"),
                 { row: Row ->
-                    Bestilling(AktoerId(1234), "OS", row.string("aar"), row.string("fnr"))
+                    Bestilling(PersonId(1234), "OS", row.string("aar"), row.string("fnr"))
                 },
             )
         }

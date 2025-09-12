@@ -8,15 +8,15 @@ class PersonRepository {
         tx: TransactionalSession,
         offNr: String,
         grunn: String, // Årsak for å lage aktør, hvis nødvendig
-    ): Pair<AktoerId, Boolean> = (internalFindByOffNr(tx, offNr)?.id?.let { aId -> Pair(aId, false) }) ?: Pair(createByOffnr(tx, offNr, grunn), true)
+    ): Pair<PersonId, Boolean> = (internalFindByOffNr(tx, offNr)?.id?.let { aId -> Pair(aId, false) }) ?: Pair(createByOffnr(tx, offNr, grunn), true)
 
     private fun createByOffnr(
         tx: TransactionalSession,
         offNr: String,
         grunn: String,
-    ): AktoerId {
+    ): PersonId {
         val personId =
-            AktoerId(
+            PersonId(
                 tx.updateAndReturnGeneratedKey(
                     queryOf(
                         """INSERT INTO person (flagget) VALUES (:flagget)""".trimMargin(),
@@ -41,7 +41,7 @@ class PersonRepository {
         )
         tx.updateAndReturnGeneratedKey(
             queryOf(
-                """INSERT INTO person_offnr
+                """INSERT INTO person_fnr
                     |(person_id, fnr)
                     |VALUES (:person_id, :fnr)
                 """.trimMargin(),
@@ -57,41 +57,41 @@ class PersonRepository {
     private fun internalFindByOffNr(
         tx: TransactionalSession,
         personIdent: String,
-    ): Aktoer? =
+    ): Person? =
         tx.run(
             queryOf(
                 """SELECT a.* FROM person a 
-                            |LEFT JOIN person_offnr ao ON a.id = ao.person_id 
+                            |LEFT JOIN person_fnr ao ON a.id = ao.person_id 
                             |WHERE ao.fnr = :aktident AND gjelder_fom <= now()
                 """.trimMargin(),
                 mapOf("aktident" to personIdent),
             ).map { row ->
-                val id = AktoerId(row.long("id"))
-                Aktoer(
+                val id = PersonId(row.long("id"))
+                Person(
                     id = id,
                     flagget = row.boolean("flagget"),
-                    offNr = findOffList(tx, id),
+                    fnr = findOffList(tx, id),
                 )
             }.asSingle,
         )
 
     private fun findOffList(
         tx: TransactionalSession,
-        id: AktoerId,
-    ): List<OffNr> =
+        id: PersonId,
+    ): List<Foedselsnummer> =
         tx
             .run(
                 queryOf(
                     """SELECT id, fnr, gjelder_fom 
-                    |FROM person_offnr 
+                    |FROM person_fnr 
                     |WHERE person_id=:aktid 
                     |ORDER BY gjelder_fom DESC
                     """.trimMargin(),
                     mapOf<String, Any>("aktid" to id.id),
                 ).map { row ->
-                    OffNr(
-                        id = OffNrId(row.long("id")),
-                        personIdent = row.string("fnr"),
+                    Foedselsnummer(
+                        id = FoedselsnummerId(row.long("id")),
+                        fnr = row.string("fnr"),
                         gjelderFom = row.localDate("gjelder_fom"),
                     )
                 }.asList,
@@ -101,7 +101,7 @@ class PersonRepository {
         tx: TransactionalSession,
         count: Int,
         startId: String?,
-    ): List<Aktoer> {
+    ): List<Person> {
         val where =
             listOfNotNull(
                 startId?.let { "id > :startId" },
@@ -119,11 +119,11 @@ class PersonRepository {
                     """ ORDER BY id ASC LIMIT :count""",
                 params,
             ).map { row ->
-                val id = AktoerId(row.long("id"))
-                Aktoer(
+                val id = PersonId(row.long("id"))
+                Person(
                     id = id,
                     flagget = row.boolean("flagget"),
-                    offNr = findOffNr(tx, id),
+                    fnr = findOffNr(tx, id),
                 )
             }.asList,
         )
@@ -131,21 +131,21 @@ class PersonRepository {
 
     private fun findOffNr(
         tx: TransactionalSession,
-        id: AktoerId,
-    ): List<OffNr> =
+        id: PersonId,
+    ): List<Foedselsnummer> =
         tx
             .run(
                 queryOf(
-                    """SELECT id, person_ident, gjelder_fom from person_offnr 
+                    """SELECT id, person_ident, gjelder_fom from person_fnr 
                     |WHERE person_id=:aktid 
                     |ORDER BY gjelder_fom DESC
                     """.trimMargin(),
                     mapOf<String, Any>("aktid" to id.id),
                 ).map { row ->
-                    OffNr(
-                        OffNrId(row.long("id")),
+                    Foedselsnummer(
+                        FoedselsnummerId(row.long("id")),
                         gjelderFom = row.localDate("gjelder_fom"),
-                        personIdent = row.string("person_ident"),
+                        fnr = row.string("person_ident"),
                     )
                 }.asList,
             )

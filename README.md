@@ -132,17 +132,17 @@ stateDiagram-v2
 
 ### Databaseskjema
 
-#### Aktør og bestilling
+#### Person og bestilling
 
 ```mermaid
 erDiagram
-    person ||--o{ person_offnr: har
+    person ||--o{ person_fnr: har
     person ||--o{ person_audit: har
     person ||--o{ bestillinger: har
     bestillinger_batch |o--o{ bestillinger: inneholder
     person {
     }
-    person_offnr {
+    person_fnr {
         text person_ident "fnr/pid/dnr etc"
         date gjelder_fom "Når byttet aktøren fra det andre til dette(?)"
     }
@@ -162,7 +162,7 @@ erDiagram
     }
 ```
 
-#### Forespørsel fra bestiller
+#### Forespørsel fra forsystem
 
 ```mermaid
 erDiagram

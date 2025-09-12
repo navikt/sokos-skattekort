@@ -4,13 +4,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @JvmInline
-value class AktoerId(
+value class PersonId(
     val id: Long,
 )
 
 @Serializable
-data class Aktoer(
-    val id: AktoerId,
+data class Person(
+    val id: PersonId,
     val flagget: Boolean,
-    val offNr: List<OffNr>,
+    val fnr: List<Foedselsnummer>,
 )

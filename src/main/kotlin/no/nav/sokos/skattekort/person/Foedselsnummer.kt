@@ -6,14 +6,14 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class OffNr(
-    val id: OffNrId,
+data class Foedselsnummer(
+    val id: FoedselsnummerId,
     @Contextual val gjelderFom: LocalDate,
-    val personIdent: String,
+    val fnr: String,
 )
 
 @Serializable
 @JvmInline
-value class OffNrId(
+value class FoedselsnummerId(
     val id: Long,
 )

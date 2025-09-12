@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.aktoer
+package no.nav.sokos.skattekort.person
 
 enum class AuditTag(
     private val value: String,

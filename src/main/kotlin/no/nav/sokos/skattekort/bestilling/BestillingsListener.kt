@@ -5,11 +5,9 @@ import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
 
-import no.nav.sokos.skattekort.bestilling.Skattekortbestillingsservice
-
 class BestillingsListener(
     jmsConnectionFactory: ConnectionFactory,
-    bestillingsService: Skattekortbestillingsservice,
+    bestillingsService: BestillingsService,
     bestillingsQueue: Queue,
 ) {
     private val jmsContext = jmsConnectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
@@ -19,7 +17,8 @@ class BestillingsListener(
     // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
     init {
         bestillingsListener.setMessageListener { message: Message ->
-            bestillingsService.taImotOppdrag((message as? jakarta.jms.TextMessage)?.text!!)
+            println("Mottatt melding fra kø")
+            bestillingsService.taImotOppdrag(message)
             message.acknowledge()
         }
     }

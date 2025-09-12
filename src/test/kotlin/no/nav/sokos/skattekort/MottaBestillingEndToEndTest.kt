@@ -19,9 +19,9 @@ import no.nav.sokos.skattekort.ApplicationInfrastructureListener.bestillingsQueu
 import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbContainer
 import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbDataSource
 import no.nav.sokos.skattekort.ApplicationInfrastructureListener.jmsConnectionFactory
+import no.nav.sokos.skattekort.bestilling.Bestilling
 import no.nav.sokos.skattekort.config.CompositeApplicationConfig
 import no.nav.sokos.skattekort.config.DatabaseConfig
-import no.nav.sokos.skattekort.domain.Bestilling
 
 class MottaBestillingEndToEndTest :
     FunSpec({

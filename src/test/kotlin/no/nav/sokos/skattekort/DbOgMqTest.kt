@@ -7,10 +7,11 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.DbTestUtil.readFromBestillings
-import no.nav.sokos.skattekort.api.BestillingsListener
-import no.nav.sokos.skattekort.api.Skattekortbestillingsservice
+import no.nav.sokos.skattekort.bestilling.BestillingsListener
+import no.nav.sokos.skattekort.bestilling.BestillingsService
 import no.nav.sokos.skattekort.config.DbListener
 import no.nav.sokos.skattekort.config.JmsListener
+import no.nav.sokos.skattekort.person.PersonRepository
 
 class DbOgMqTest :
     FunSpec({
@@ -19,7 +20,7 @@ class DbOgMqTest :
         beforeSpec {
             BestillingsListener(
                 JmsListener.connectionFactory,
-                Skattekortbestillingsservice(DbListener.dataSource),
+                BestillingsService(DbListener.dataSource, PersonRepository()),
                 JmsListener.bestillingsQueue,
             )
         }

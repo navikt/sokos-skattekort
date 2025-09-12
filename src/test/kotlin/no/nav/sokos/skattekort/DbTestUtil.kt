@@ -10,8 +10,9 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import org.testcontainers.containers.PostgreSQLContainer
 
+import no.nav.sokos.skattekort.bestilling.Bestilling
 import no.nav.sokos.skattekort.config.DbListener
-import no.nav.sokos.skattekort.domain.Bestilling
+import no.nav.sokos.skattekort.person.AktoerId
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -32,7 +33,6 @@ object DbTestUtil {
 
         val sql = DbTestUtil.readFile(fileToLoad)
         val connection = dataSource.connection
-        // TODO: close connection
         connection.transactionIsolation = TRANSACTION_SERIALIZABLE
         connection.autoCommit = false
         connection.prepareStatement(sql).execute()
@@ -65,16 +65,15 @@ object DbTestUtil {
                     results
                 }
         val tablesWithId =
-            tables
-                .map { schemaTable ->
-                    val (schema, table) = schemaTable.split(".")
-                    val resultSet = metadata.getColumns(null, schema, table, "id")
-                    if (resultSet.next()) {
-                        schemaTable
-                    } else {
-                        null // No id column
-                    }
-                }.filterNotNull()
+            tables.mapNotNull { schemaTable ->
+                val (schema, table) = schemaTable.split(".")
+                val resultSet = metadata.getColumns(null, schema, table, "id")
+                if (resultSet.next()) {
+                    schemaTable
+                } else {
+                    null // No id column
+                }
+            }
         tablesWithId.asReversed().forEach { table ->
             connection
                 .prepareStatement(
@@ -139,8 +138,8 @@ object DbTestUtil {
         sessionOf(dataSource).use {
             it.transaction {
                 it.run(
-                    queryOf("SELECT aktoer_id, fnr, aar FROM bestillinger WHERE " + (whereClause ?: "1=1"))
-                        .map { row -> Bestilling(aktoer_id = AktoerId(row.long("aktoer_id")), bestiller = "null", inntektYear = row.string("aar"), fnr = row.string("fnr")) }
+                    queryOf("SELECT person_id, fnr, aar FROM bestillinger WHERE " + (whereClause ?: "1=1"))
+                        .map { row -> Bestilling(person_id = AktoerId(row.long("person_id")), bestiller = "null", inntektYear = row.string("aar"), fnr = row.string("fnr")) }
                         .asList,
                 )
             }
@@ -149,9 +148,9 @@ object DbTestUtil {
     fun readFromBestillings(): List<Bestilling> =
         DbListener.dataSource.transaction { session ->
             session.list(
-                queryOf("SELECT inntektsaar, fnr FROM bestilling"),
+                queryOf("SELECT aar, fnr FROM bestillinger"),
                 { row: Row ->
-                    Bestilling("OS", row.string("inntektsaar"), row.string("fnr"))
+                    Bestilling(AktoerId(1234), "OS", row.string("aar"), row.string("fnr"))
                 },
             )
         }

@@ -10,10 +10,8 @@ import io.ktor.util.AttributeKey
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 
-import no.nav.sokos.skattekort.aktoer.AktoerRepository
-import no.nav.sokos.skattekort.aktoer.AktoerService
 import no.nav.sokos.skattekort.bestilling.BestillingsListener
-import no.nav.sokos.skattekort.bestilling.Skattekortbestillingsservice
+import no.nav.sokos.skattekort.bestilling.BestillingsService
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.DatabaseMigrator
@@ -24,6 +22,8 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.configFrom
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.PersonService
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -38,9 +38,9 @@ fun Application.module(
     if (config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL) {
         DatabaseConfig.init(config, isLocal = true)
         DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
-        val aktoerRepository = AktoerRepository()
-        val bestillingsService = Skattekortbestillingsservice(DatabaseConfig.dataSource, aktoerRepository)
-        val aktoerService = AktoerService(DatabaseConfig.dataSource, aktoerRepository)
+        val personRepository = PersonRepository()
+        val bestillingsService = BestillingsService(DatabaseConfig.dataSource, personRepository)
+        val personService = PersonService(DatabaseConfig.dataSource, personRepository)
         val bestillingsListener =
             if (testJmsConnectionFactory == null) {
                 MQConfig.init(config)

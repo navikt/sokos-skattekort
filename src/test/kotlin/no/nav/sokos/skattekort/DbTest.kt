@@ -15,13 +15,22 @@ class DbTest :
         extensions(listOf(DbListener))
 
         test("db test") {
+
             DbListener.dataSource.transaction { session ->
+                val personId =
+                    session.updateAndReturnGeneratedKey(
+                        queryOf(
+                            """INSERT INTO person DEFAULT VALUES""".trimMargin(),
+                        ),
+                    )!!
+
                 session.update(
                     queryOf(
-                        "INSERT INTO BESTILLING (FNR, INNTEKTSAAR) VALUES (:fnr,:inntektsaar)",
+                        "INSERT INTO bestillinger (person_id, aar, fnr) VALUES (:personid,:aar, :fnr)",
                         mapOf(
+                            "personid" to personId,
+                            "aar" to 1997,
                             "fnr" to "22222222222",
-                            "inntektsaar" to "1997",
                         ),
                     ),
                 )
@@ -30,7 +39,7 @@ class DbTest :
             eventually(1.seconds) {
                 val result =
                     DbListener.dataSource.transaction { session ->
-                        session.run(queryOf("SELECT fnr FROM bestilling").map { it.string(1) }.asSingle)
+                        session.run(queryOf("SELECT fnr FROM bestillinger").map { it.string(1) }.asSingle)
                     }
                 result shouldBe "22222222222"
             }

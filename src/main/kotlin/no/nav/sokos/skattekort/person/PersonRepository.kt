@@ -1,9 +1,9 @@
-package no.nav.sokos.skattekort.aktoer
+package no.nav.sokos.skattekort.person
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
-class AktoerRepository {
+class PersonRepository {
     fun findOrCreateByOffNr(
         tx: TransactionalSession,
         offNr: String,
@@ -15,11 +15,11 @@ class AktoerRepository {
         offNr: String,
         grunn: String,
     ): AktoerId {
-        val aktoerId =
+        val personId =
             AktoerId(
                 tx.updateAndReturnGeneratedKey(
                     queryOf(
-                        """INSERT INTO aktoer (flagget) VALUES (:flagget)""".trimMargin(),
+                        """INSERT INTO person (flagget) VALUES (:flagget)""".trimMargin(),
                         mapOf("flagget" to false),
                     ),
                 )!!,
@@ -27,12 +27,12 @@ class AktoerRepository {
 
         tx.updateAndReturnGeneratedKey(
             queryOf(
-                """INSERT INTO aktoer_audit
-            |(aktoer_id, tag, bruker, informasjon)
-            | VALUES (:aktoer_id, :tag, :bruker, :informasjon)
+                """INSERT INTO person_audit
+            |(person_id, tag, bruker_id, informasjon)
+            | VALUES (:person_id, :tag, :bruker, :informasjon)
                 """.trimMargin(),
                 mapOf(
-                    "aktoer_id" to aktoerId.id,
+                    "person_id" to personId.id,
                     "tag" to AuditTag.OPPRETTET_AKTOER.name,
                     "bruker" to "system",
                     "informasjon" to "Opprettet aktør. Grunn: $grunn",
@@ -41,30 +41,30 @@ class AktoerRepository {
         )
         tx.updateAndReturnGeneratedKey(
             queryOf(
-                """INSERT INTO aktoer_offnr
-                    |(aktoer_id, aktoer_ident)
-                    |VALUES (:aktoer_id, :aktoer_ident)
+                """INSERT INTO person_offnr
+                    |(person_id, fnr)
+                    |VALUES (:person_id, :fnr)
                 """.trimMargin(),
                 mapOf(
-                    "aktoer_id" to aktoerId.id,
-                    "aktoer_ident" to offNr,
+                    "person_id" to personId.id,
+                    "fnr" to offNr,
                 ),
             ),
         )
-        return aktoerId
+        return personId
     }
 
     private fun internalFindByOffNr(
         tx: TransactionalSession,
-        aktoerIdent: String,
+        personIdent: String,
     ): Aktoer? =
         tx.run(
             queryOf(
-                """SELECT a.* FROM aktoer a 
-                            |LEFT JOIN aktoer_offnr ao ON a.id = ao.aktoer_id 
-                            |WHERE ao.aktoer_ident = :aktident AND gjelder_fom <= now()
+                """SELECT a.* FROM person a 
+                            |LEFT JOIN person_offnr ao ON a.id = ao.person_id 
+                            |WHERE ao.fnr = :aktident AND gjelder_fom <= now()
                 """.trimMargin(),
-                mapOf("aktident" to aktoerIdent),
+                mapOf("aktident" to personIdent),
             ).map { row ->
                 val id = AktoerId(row.long("id"))
                 Aktoer(
@@ -82,16 +82,16 @@ class AktoerRepository {
         tx
             .run(
                 queryOf(
-                    """SELECT id, aktoer_ident, gjelder_fom 
-                    |FROM aktoer_offnr 
-                    |WHERE aktoer_id=:aktid 
+                    """SELECT id, fnr, gjelder_fom 
+                    |FROM person_offnr 
+                    |WHERE person_id=:aktid 
                     |ORDER BY gjelder_fom DESC
                     """.trimMargin(),
                     mapOf<String, Any>("aktid" to id.id),
                 ).map { row ->
                     OffNr(
                         id = OffNrId(row.long("id")),
-                        aktoerIdent = row.string("aktoer_ident"),
+                        personIdent = row.string("fnr"),
                         gjelderFom = row.localDate("gjelder_fom"),
                     )
                 }.asList,
@@ -114,7 +114,7 @@ class AktoerRepository {
         return tx.run(
             queryOf(
                 """SELECT * 
-                    |FROM aktoer 
+                    |FROM person 
                 """.trimMargin() + where +
                     """ ORDER BY id ASC LIMIT :count""",
                 params,
@@ -136,8 +136,8 @@ class AktoerRepository {
         tx
             .run(
                 queryOf(
-                    """SELECT id, aktoer_ident, gjelder_fom from aktoer_offnr 
-                    |WHERE aktoer_id=:aktid 
+                    """SELECT id, person_ident, gjelder_fom from person_offnr 
+                    |WHERE person_id=:aktid 
                     |ORDER BY gjelder_fom DESC
                     """.trimMargin(),
                     mapOf<String, Any>("aktid" to id.id),
@@ -145,7 +145,7 @@ class AktoerRepository {
                     OffNr(
                         OffNrId(row.long("id")),
                         gjelderFom = row.localDate("gjelder_fom"),
-                        aktoerIdent = row.string("aktoer_ident"),
+                        personIdent = row.string("person_ident"),
                     )
                 }.asList,
             )

@@ -7,7 +7,6 @@ import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMAcceptorFactory
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory
-import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 /**
  * IBM MQ er et stort beist som er vanskelig å enkelt containerifisere. Vi har
@@ -18,18 +17,15 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
  * - når vi oppgraderer ibm mq-biblioteker må vi teste manuelt
  */
 class JmsTestServer {
-    val jmsTestServer =
+    val jmsTestServer: EmbeddedActiveMQ? =
         EmbeddedActiveMQ()
             .setConfiguration(
                 ConfigurationImpl()
                     .setPersistenceEnabled(false)
                     .setSecurityEnabled(false)
                     .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name)),
-            )
+            ).start()
 
-    val bestillingsQueue: Queue = ActiveMQQueue("bestillings-queue")
-
-    val allQueues = listOf(bestillingsQueue)
     val jmsConnectionFactory = ActiveMQConnectionFactory("vm://0")
 
     fun sendMessage(
@@ -57,28 +53,7 @@ class JmsTestServer {
         }
     }
 
-    fun assertAllQueuesAreEmpty() {
-        jmsConnectionFactory.createConnection().use { connection ->
-            connection.start()
-            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-            val results: List<String> =
-                allQueues
-                    .map { queue: Queue ->
-                        val browser = session.createBrowser(queue)
-                        if (browser.enumeration.hasMoreElements()) {
-                            "Fant melding i kø " + queue.queueName
-                        } else {
-                            null
-                        }
-                    }.filterNotNull()
-            if (!results.isEmpty()) {
-                throw AssertionError("Fant meldinger i active mq: " + results.joinToString(", "))
-            }
-            connection.close()
-        }
-    }
-
     init {
-        jmsTestServer.start()
+        jmsTestServer!!.start()
     }
 }

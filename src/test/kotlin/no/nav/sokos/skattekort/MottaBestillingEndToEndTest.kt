@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.seconds
 
 import com.zaxxer.hikari.HikariDataSource
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
@@ -19,9 +20,10 @@ import no.nav.sokos.skattekort.ApplicationInfrastructureListener.bestillingsQueu
 import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbContainer
 import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbDataSource
 import no.nav.sokos.skattekort.ApplicationInfrastructureListener.jmsConnectionFactory
-import no.nav.sokos.skattekort.bestilling.Bestilling
 import no.nav.sokos.skattekort.config.CompositeApplicationConfig
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.forespoersel.Forespoersel
+import no.nav.sokos.skattekort.forespoersel.Forsystem
 
 class MottaBestillingEndToEndTest :
     FunSpec({
@@ -43,19 +45,26 @@ class MottaBestillingEndToEndTest :
                         DbTestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)
 
                         val fnr = "15467834260"
-
                         JmsTestUtil.sendMessage("OS;1994;$fnr")
+
                         eventually(1.seconds) {
                             val dataSource: HikariDataSource = dbDataSource()
-                            val rows: List<Bestilling> = DbTestUtil.storedBestillings(dataSource = dataSource, whereClause = "fnr = '$fnr'")
+                            val rows: List<Forespoersel> = DbTestUtil.storedForespoersels(dataSource = dataSource)
 
-                            withClue("Forventet at det er en bestilling i databasen med fnr $fnr") {
+                            withClue("Forventet at det er en forespørsel i databasen") {
                                 rows shouldHaveSize 1
-                                rows.first().fnr shouldBe fnr
+                            }
+
+                            val forespoersels = DbTestUtil.storedForespoersels(dataSource)
+
+                            forespoersels shouldHaveSize 1
+                            assertSoftly {
+                                forespoersels.first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                                forespoersels.first().data_mottatt shouldBe "OS;1994;$fnr"
                             }
                         }
-                        JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
                     }
+                    JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
                 }
             }
         }

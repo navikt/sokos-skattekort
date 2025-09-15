@@ -6,6 +6,9 @@ import kotliquery.TransactionalSession
 import kotliquery.sessionOf
 import kotliquery.using
 
+import no.nav.sokos.skattekort.person.Result.CREATED
+import no.nav.sokos.skattekort.person.Result.EXISTS
+
 class PersonService(
     val dataSource: DataSource,
     val personRepository: PersonRepository,
@@ -25,17 +28,15 @@ class PersonService(
         tx: TransactionalSession,
         offNr: String,
         grunn: String, // Årsak for å lage aktør, hvis nødvendig
-    ): Pair<PersonId, Boolean> =
-        (
-            personRepository.internalFindPersonByFnr(tx, offNr)?.id?.let {
-                // Fnr er allerede i databasen, vi returnerer eksisterende person
-                aId ->
-                Pair(aId, false)
-            }
-        ) ?: personRepository.let {
+    ): Pair<PersonId, Result> =
+        personRepository.internalFindPersonByFnr(tx, offNr)?.id?.let {
+            // Fnr er allerede i databasen, vi returnerer eksisterende person
+            aId ->
+            Pair(aId, EXISTS)
+        } ?: personRepository.let {
             // Fnr ikke funnet, ny person opprettes
             _ ->
-            Pair(createPersonIdAndFnr(this.personRepository, tx, offNr, grunn), true)
+            Pair(createPersonIdAndFnr(this.personRepository, tx, offNr, grunn), CREATED)
         }
 
     fun createPersonIdAndFnr(

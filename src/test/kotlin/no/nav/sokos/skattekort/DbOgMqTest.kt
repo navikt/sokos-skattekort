@@ -7,10 +7,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.DbTestUtil.readFromBestillings
-import no.nav.sokos.skattekort.bestilling.BestillingsListener
-import no.nav.sokos.skattekort.bestilling.BestillingsService
 import no.nav.sokos.skattekort.config.DbListener
 import no.nav.sokos.skattekort.config.JmsListener
+import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 
@@ -19,9 +19,9 @@ class DbOgMqTest :
         extensions(listOf(JmsListener, DbListener))
 
         beforeSpec {
-            BestillingsListener(
+            ForespoerselListener(
                 JmsListener.connectionFactory,
-                BestillingsService(DbListener.dataSource, PersonService(DbListener.dataSource, PersonRepository())),
+                ForespoerselService(DbListener.dataSource, PersonService(DbListener.dataSource, PersonRepository())),
                 JmsListener.bestillingsQueue,
             )
         }

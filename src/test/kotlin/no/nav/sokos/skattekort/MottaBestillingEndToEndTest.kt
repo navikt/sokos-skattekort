@@ -10,6 +10,7 @@ import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.ktor.server.config.ApplicationConfig
@@ -22,7 +23,6 @@ import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbDataSource
 import no.nav.sokos.skattekort.ApplicationInfrastructureListener.jmsConnectionFactory
 import no.nav.sokos.skattekort.config.CompositeApplicationConfig
 import no.nav.sokos.skattekort.config.DatabaseConfig
-import no.nav.sokos.skattekort.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 
 class MottaBestillingEndToEndTest :
@@ -49,7 +49,7 @@ class MottaBestillingEndToEndTest :
 
                         eventually(1.seconds) {
                             val dataSource: HikariDataSource = dbDataSource()
-                            val rows: List<Forespoersel> = DbTestUtil.storedForespoersels(dataSource = dataSource)
+                            val rows: List<Triple<Forsystem, String, LocalDateTime>> = DbTestUtil.storedForespoersels(dataSource = dataSource)
 
                             withClue("Forventet at det er en forespørsel i databasen") {
                                 rows shouldHaveSize 1
@@ -59,8 +59,21 @@ class MottaBestillingEndToEndTest :
 
                             forespoersels shouldHaveSize 1
                             assertSoftly {
-                                forespoersels.first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                                forespoersels.first().data_mottatt shouldBe "OS;1994;$fnr"
+                                forespoersels.first().first shouldBe Forsystem.OPPDRAGSSYSTEMET
+                                forespoersels.first().second shouldBe "OS;1994;$fnr"
+                            }
+
+                            val skattekortforespoersler = DbTestUtil.storedSkattekortforespoersler(dataSource = dataSource)
+
+                            skattekortforespoersler shouldHaveSize 1
+                            assertSoftly {
+                                skattekortforespoersler
+                                    .first()
+                                    .person.fnrs
+                                    .map { it.fnr } shouldContain fnr
+                                skattekortforespoersler.first().aar shouldBe 1994
+                                skattekortforespoersler.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                                skattekortforespoersler.first().forespoersel.inntektYear shouldBe 1994
                             }
                         }
                     }

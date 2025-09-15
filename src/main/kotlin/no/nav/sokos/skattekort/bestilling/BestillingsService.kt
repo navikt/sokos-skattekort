@@ -6,14 +6,14 @@ import jakarta.jms.TextMessage
 import kotliquery.queryOf
 import kotliquery.sessionOf
 
-import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.PersonService
 
 // TODO: Metrikk: bestillinger per system
 // TODO: Metrikk for varsling: tid siden siste mottatte bestilling
 // TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingsService(
     val db: HikariDataSource,
-    val personRepository: PersonRepository,
+    val personService: PersonService,
 ) {
     fun taImotOppdrag(message: Message) {
         val message1 = (message as? TextMessage)!!
@@ -21,7 +21,7 @@ class BestillingsService(
         val bestilling: Bestilling = parse(message1.text)
         sessionOf(db, returnGeneratedKey = true).use {
             it.transaction {
-                val (personId, _) = personRepository.findOrCreateByOffNr(it, bestilling.fnr, "Mottatt bestilling på skattekort")
+                val (personId, _) = personService.findOrCreateByOffNr(personService.personRepository, it, bestilling.fnr, "Mottatt bestilling på skattekort")
                 it.run(
                     queryOf(
                         "INSERT INTO bestillinger (person_id, fnr, aar) VALUES (?,?,?) ON CONFLICT DO NOTHING",

@@ -39,8 +39,8 @@ fun Application.module(
         DatabaseConfig.init(config, isLocal = true)
         DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
         val personRepository = PersonRepository()
-        val bestillingsService = BestillingsService(DatabaseConfig.dataSource, personRepository)
         val personService = PersonService(DatabaseConfig.dataSource, personRepository)
+        val bestillingsService = BestillingsService(DatabaseConfig.dataSource, personService)
         val bestillingsListener =
             if (testJmsConnectionFactory == null) {
                 MQConfig.init(config)

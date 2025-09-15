@@ -143,7 +143,7 @@ erDiagram
     person {
     }
     person_fnr {
-        text person_ident "fnr/pid/dnr etc"
+        text fnr "fnr/pid/dnr etc"
         date gjelder_fom "Når byttet aktøren fra det andre til dette(?)"
     }
     person_audit {

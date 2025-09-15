@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.person
 
+import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
@@ -28,7 +29,7 @@ class PersonRepository {
                 Person(
                     id = id,
                     flagget = row.boolean("flagget"),
-                    fnr = findAllFnrForPerson(tx, id),
+                    fnrs = findAllFnrForPerson(tx, id),
                 )
             }.asList,
         )
@@ -95,15 +96,31 @@ class PersonRepository {
                             |WHERE ao.fnr = :personIdent AND gjelder_fom <= now()
                 """.trimMargin(),
                 mapOf("personIdent" to personIdent),
-            ).map { row ->
-                val id = PersonId(row.long("id"))
-                Person(
-                    id = id,
-                    flagget = row.boolean("flagget"),
-                    fnr = findAllFnrForPerson(tx, id),
-                )
-            }.asSingle,
+            ).map { row -> mapPerson(tx, row) }.asSingle,
         )
+
+    fun findPersonById(
+        tx: TransactionalSession,
+        personId: PersonId,
+    ): Person =
+        tx.run(
+            queryOf(
+                """SELECT * FROM person WHERE id = :personId""".trimMargin(),
+                mapOf("personId" to personId.id),
+            ).map { row -> mapPerson(tx, row) }.asSingle,
+        )!!
+
+    private fun mapPerson(
+        tx: TransactionalSession,
+        row: Row,
+    ): Person {
+        val id = PersonId(row.long("id"))
+        return Person(
+            id = id,
+            flagget = row.boolean("flagget"),
+            fnrs = findAllFnrForPerson(tx, id),
+        )
+    }
 
     private fun findAllFnrForPerson(
         tx: TransactionalSession,

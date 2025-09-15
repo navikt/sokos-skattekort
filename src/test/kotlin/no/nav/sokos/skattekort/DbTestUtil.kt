@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort
 
 import java.sql.Connection.TRANSACTION_SERIALIZABLE
 import java.sql.ResultSet
+import java.time.LocalDateTime
 import javax.sql.DataSource
 
 import io.ktor.server.config.MapApplicationConfig
@@ -12,8 +13,9 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 import no.nav.sokos.skattekort.bestilling.Bestilling
 import no.nav.sokos.skattekort.config.DbListener
-import no.nav.sokos.skattekort.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.forespoersel.ForespoerselRepository
+import no.nav.sokos.skattekort.forespoersel.Forsystem
+import no.nav.sokos.skattekort.forespoersel.Skattekortforespoersel
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
@@ -147,7 +149,7 @@ object DbTestUtil {
             }
         }
 
-    fun storedForespoersels(dataSource: DataSource): List<Forespoersel> =
+    fun storedForespoersels(dataSource: DataSource): List<Triple<Forsystem, String, LocalDateTime>> =
         sessionOf(dataSource).use {
             it.transaction {
                 ForespoerselRepository().list(it)
@@ -162,5 +164,12 @@ object DbTestUtil {
                     Bestilling(PersonId(1234), "OS", row.string("aar"), row.string("fnr"))
                 },
             )
+        }
+
+    fun storedSkattekortforespoersler(dataSource: DataSource): List<Skattekortforespoersel> =
+        sessionOf(dataSource).use {
+            it.transaction {
+                ForespoerselRepository().listSkattekortForespoersler(it)
+            }
         }
 }

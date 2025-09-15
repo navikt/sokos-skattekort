@@ -12,5 +12,5 @@ value class PersonId(
 data class Person(
     val id: PersonId,
     val flagget: Boolean,
-    val fnr: List<Foedselsnummer>,
+    val fnrs: List<Foedselsnummer>,
 )

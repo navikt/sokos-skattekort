@@ -1,9 +1,9 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import java.time.LocalDateTime
+import no.nav.sokos.skattekort.person.Person
 
 data class Forespoersel(
     val forsystem: Forsystem,
-    val opprettet: LocalDateTime,
-    val data_mottatt: String,
+    val inntektYear: Int,
+    val persons: List<Person>,
 )

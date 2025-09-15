@@ -17,7 +17,6 @@ class ForespoerselListener(
     // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
     init {
         listener.setMessageListener { message: Message ->
-            println("Mottatt melding fra kø")
             forespoerselService.taImotForespoersel(message)
             message.acknowledge()
         }

@@ -15,7 +15,6 @@ class ForespoerselService(
 ) {
     fun taImotForespoersel(message: Message) {
         val message1 = (message as? TextMessage)!!
-        println("Hello, world! Received message: ${message1.text} from ForespoerselService")
 
         val forespoerselId =
             sessionOf(db, returnGeneratedKey = true).use {
@@ -23,9 +22,26 @@ class ForespoerselService(
                     ForespoerselRepository().create(it, Forsystem.fromMessage(message1.text), message1.text)
                 }
             }
-        val bestilling: Bestilling = parse(message1.text)
 
-        println("Lagret foresørsel med id $forespoerselId")
+        val forespoersel = parse(message1.text)
+
+        sessionOf(db, returnGeneratedKey = true).use {
+            it.transaction {
+                ForespoerselRepository().createSkattekortforespoersler(it, forespoerselId, forespoersel.inntektYear, forespoersel.persons)
+            }
+        }
+
+        val bestilling: Bestilling =
+            Bestilling(
+                forespoersel.persons.first().id,
+                forespoersel.forsystem.kode,
+                forespoersel.inntektYear.toString(),
+                forespoersel.persons
+                    .first()
+                    .fnrs
+                    .first()
+                    .fnr,
+            )
 
         sessionOf(db, returnGeneratedKey = true).use {
             it.transaction {
@@ -44,15 +60,28 @@ class ForespoerselService(
         }
     }
 
-    private fun parse(message: String): Bestilling {
+    private fun parse(message: String): Forespoersel {
         val parts = message.split(";")
         if (parts.size != 3) {
             throw IllegalArgumentException("Invalid message format: $message")
         }
-        val bestiller = parts[0]
-        val inntektYear = parts[1]
-        val fnr = parts[2]
-        println("Parsed message - Bestiller: $bestiller, Inntektsår: $inntektYear, Fnr: $fnr")
-        return Bestilling(null, bestiller, inntektYear, fnr)
+        val forsystem = Forsystem.fromValue(parts[0])
+        val inntektYear = Integer.parseInt(parts[1])
+        val fnrString = parts[2]
+
+        sessionOf(db, returnGeneratedKey = true).use {
+            it.transaction {
+                personService.findOrCreateByOffNr(personService.personRepository, it, fnrString, "Mottatt forespørsel om skattekort fra $forsystem")
+            }
+        }
+
+        val person =
+            sessionOf(db, returnGeneratedKey = true).use {
+                it.transaction {
+                    personService.personRepository.internalFindPersonByFnr(it, fnrString)!!
+                }
+            }
+
+        return Forespoersel(forsystem, inntektYear, listOf(person))
     }
 }

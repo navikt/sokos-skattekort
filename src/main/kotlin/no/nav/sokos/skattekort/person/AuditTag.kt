@@ -3,7 +3,7 @@ package no.nav.sokos.skattekort.person
 enum class AuditTag(
     private val value: String,
 ) {
-    OPPRETTET_AKTOER("OPPRETTET_AKTOER"),
+    OPPRETTET_PERSON("OPPRETTET_PERSON"),
     ;
 
     companion object {

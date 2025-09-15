@@ -12,6 +12,7 @@ import no.nav.sokos.skattekort.bestilling.BestillingsService
 import no.nav.sokos.skattekort.config.DbListener
 import no.nav.sokos.skattekort.config.JmsListener
 import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.PersonService
 
 class DbOgMqTest :
     FunSpec({
@@ -20,7 +21,7 @@ class DbOgMqTest :
         beforeSpec {
             BestillingsListener(
                 JmsListener.connectionFactory,
-                BestillingsService(DbListener.dataSource, PersonRepository()),
+                BestillingsService(DbListener.dataSource, PersonService(DbListener.dataSource, PersonRepository())),
                 JmsListener.bestillingsQueue,
             )
         }

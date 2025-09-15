@@ -1,24 +1,24 @@
-package no.nav.sokos.skattekort.bestilling
+package no.nav.sokos.skattekort.forespoersel
 
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
 
-class BestillingsListener(
+class ForespoerselListener(
     jmsConnectionFactory: ConnectionFactory,
-    bestillingsService: BestillingsService,
-    bestillingsQueue: Queue,
+    forespoerselService: ForespoerselService,
+    forespoerselQueue: Queue,
 ) {
     private val jmsContext = jmsConnectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
-    private val bestillingsListener = jmsContext.createConsumer(bestillingsQueue)
+    private val listener = jmsContext.createConsumer(forespoerselQueue)
 
     // TODO: Legg til Opentelemetry trace
     // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
     init {
-        bestillingsListener.setMessageListener { message: Message ->
+        listener.setMessageListener { message: Message ->
             println("Mottatt melding fra kø")
-            bestillingsService.taImotOppdrag(message)
+            forespoerselService.taImotForespoersel(message)
             message.acknowledge()
         }
     }

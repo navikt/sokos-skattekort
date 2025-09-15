@@ -10,8 +10,6 @@ import io.ktor.util.AttributeKey
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 
-import no.nav.sokos.skattekort.bestilling.BestillingsListener
-import no.nav.sokos.skattekort.bestilling.BestillingsService
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.DatabaseMigrator
@@ -22,6 +20,8 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.configFrom
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 
@@ -40,13 +40,13 @@ fun Application.module(
         DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
         val personRepository = PersonRepository()
         val personService = PersonService(DatabaseConfig.dataSource, personRepository)
-        val bestillingsService = BestillingsService(DatabaseConfig.dataSource, personService)
-        val bestillingsListener =
+        val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
+        val forespoerselListener =
             if (testJmsConnectionFactory == null) {
                 MQConfig.init(config)
-                BestillingsListener(MQConfig.connectionFactory, bestillingsService, MQQueue(config.mqProperties.bestilleSkattekortQueueName))
+                ForespoerselListener(MQConfig.connectionFactory, forespoerselService, MQQueue(config.mqProperties.bestilleSkattekortQueueName))
             } else {
-                BestillingsListener(testJmsConnectionFactory, bestillingsService, testBestillingsQueue!!)
+                ForespoerselListener(testJmsConnectionFactory, forespoerselService, testBestillingsQueue!!)
             }
     }
 

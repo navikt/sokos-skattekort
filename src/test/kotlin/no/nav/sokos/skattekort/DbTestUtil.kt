@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort
 
 import java.sql.Connection.TRANSACTION_SERIALIZABLE
 import java.sql.ResultSet
+import java.time.LocalDateTime
 import javax.sql.DataSource
 
 import io.ktor.server.config.MapApplicationConfig
@@ -10,8 +11,12 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import org.testcontainers.containers.PostgreSQLContainer
 
+import no.nav.sokos.skattekort.bestilling.Bestilling
 import no.nav.sokos.skattekort.config.DbListener
-import no.nav.sokos.skattekort.domain.Bestilling
+import no.nav.sokos.skattekort.forespoersel.ForespoerselRepository
+import no.nav.sokos.skattekort.forespoersel.Forsystem
+import no.nav.sokos.skattekort.forespoersel.Skattekortforespoersel
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -30,12 +35,53 @@ object DbTestUtil {
     ) {
         deleteAllTables(dataSource) // Vi vil alltid helst starte med en kjent databasetilstand.
 
-        val sql = DbTestUtil.readFile(fileToLoad)
+        val sql = readFile(fileToLoad)
         val connection = dataSource.connection
-        // TODO: close connection
         connection.transactionIsolation = TRANSACTION_SERIALIZABLE
         connection.autoCommit = false
         connection.prepareStatement(sql).execute()
+        connection.commit()
+        connection.close()
+        updateIdentitySequences(dataSource)
+    }
+
+    fun updateIdentitySequences(dataSource: DataSource) {
+        val connection = dataSource.connection
+
+        connection.autoCommit = false
+        connection.transactionIsolation = TRANSACTION_SERIALIZABLE
+
+        val metadata = connection.metaData
+
+        val tables =
+            metadata.getTables(null, null, null, arrayOf<String>("TABLE")).use<ResultSet, List<String>> { resultSet ->
+                val results = mutableListOf<String>()
+                while (resultSet.next()) {
+                    val schema = resultSet.getString("TABLE_SCHEM") // Med takk til Sun for ubrukelig tabellnavn
+                    // Aldri plasser tabeller i public. Kommuniser hva slags funksjon tabellene dine holder til i. tabellnavn = domenebegrep, skjema = funksjon
+                    val tableName = resultSet.getString("TABLE_NAME")
+                    if (tableName.uppercase() != "FLYWAY_SCHEMA_HISTORY") {
+                        results.add(schema + "." + tableName)
+                    }
+                }
+                results
+            }
+        val tablesWithId =
+            tables.mapNotNull { schemaTable ->
+                val (schema, table) = schemaTable.split(".")
+                val resultSet = metadata.getColumns(null, schema, table, "id")
+                if (resultSet.next()) {
+                    schemaTable
+                } else {
+                    null // No id column
+                }
+            }
+        tablesWithId.asReversed().forEach { table ->
+            connection
+                .prepareStatement(
+                    "SELECT setval(pg_get_serial_sequence('$table', 'id'), " + "COALESCE((SELECT MAX(id) FROM $table), 0) + 1, " + "false);",
+                ).execute()
+        }
         connection.commit()
         connection.close()
     }
@@ -49,23 +95,22 @@ object DbTestUtil {
         val metadata = connection.metaData
 
         val tables =
-            metadata
-                .getTables(null, null, null, arrayOf<String>("TABLE"))
-                .use<ResultSet, List<String>> { resultSet ->
-                    val results = mutableListOf<String>()
-                    while (resultSet.next()) {
-                        val schema = resultSet.getString("TABLE_SCHEM") // Med takk til Sun for ubrukelig tabellnavn
-                        // Aldri plasser tabeller i public. Kommuniser hva slags funksjon tabellene dine holder til i. tabellnavn = domenebegrep, skjema = funksjon
-                        val tableName = resultSet.getString("TABLE_NAME")
-                        if (tableName.uppercase() != "FLYWAY_SCHEMA_HISTORY") {
-                            results.add(schema + "." + tableName)
-                        }
+            metadata.getTables(null, null, null, arrayOf<String>("TABLE")).use<ResultSet, List<String>> { resultSet ->
+                val results = mutableListOf<String>()
+                while (resultSet.next()) {
+                    val schema = resultSet.getString("TABLE_SCHEM") // Med takk til Sun for ubrukelig tabellnavn
+
+                    val tableName = resultSet.getString("TABLE_NAME")
+                    if (tableName.uppercase() != "FLYWAY_SCHEMA_HISTORY") {
+                        results.add(schema + "." + tableName)
                     }
-                    results
                 }
+                results
+            }
+
         connection.prepareStatement("SET CONSTRAINTS ALL DEFERRED").execute()
         tables.asReversed().forEach { table ->
-            connection.prepareStatement("DELETE FROM $table").execute()
+            connection.prepareStatement("TRUNCATE $table RESTART IDENTITY CASCADE").execute()
         }
         connection.commit()
         connection.close()
@@ -91,20 +136,40 @@ object DbTestUtil {
         sessionOf(dataSource).use {
             it.transaction {
                 it.run(
-                    queryOf("SELECT fnr, inntektsaar FROM bestilling WHERE " + (whereClause ?: "1=1"))
-                        .map { row -> Bestilling(bestiller = "null", inntektYear = row.string("inntektsaar"), fnr = row.string("fnr")) }
-                        .asList,
+                    queryOf("SELECT person_id, fnr, aar FROM bestillinger WHERE " + (whereClause ?: "1=1"))
+                        .map { row ->
+                            Bestilling(
+                                person_id = PersonId(row.long("person_id")),
+                                bestiller = "null",
+                                inntektYear = row.string("aar"),
+                                fnr = row.string("fnr"),
+                            )
+                        }.asList,
                 )
+            }
+        }
+
+    fun storedForespoersels(dataSource: DataSource): List<Triple<Forsystem, String, LocalDateTime>> =
+        sessionOf(dataSource).use {
+            it.transaction {
+                ForespoerselRepository().list(it)
             }
         }
 
     fun readFromBestillings(): List<Bestilling> =
         DbListener.dataSource.transaction { session ->
             session.list(
-                queryOf("SELECT inntektsaar, fnr FROM bestilling"),
+                queryOf("SELECT aar, fnr FROM bestillinger"),
                 { row: Row ->
-                    Bestilling("OS", row.string("inntektsaar"), row.string("fnr"))
+                    Bestilling(PersonId(1234), "OS", row.string("aar"), row.string("fnr"))
                 },
             )
+        }
+
+    fun storedSkattekortforespoersler(dataSource: DataSource): List<Skattekortforespoersel> =
+        sessionOf(dataSource).use {
+            it.transaction {
+                ForespoerselRepository().listSkattekortForespoersler(it)
+            }
         }
 }

@@ -42,6 +42,18 @@ spec:
   azure:
     application:
       enabled: true
+  accessPolicy:
+    inbound:
+      rules:
+        - application: azure-token-generator
+          namespace: nais
+          cluster: dev-gcp
+  maskinporten:
+    enabled: true
+    scopes:
+      consumes:
+        - name: "skatteetaten:forskudd"
+
   env:
     - name: USE_AUTHENTICATION
       value: "true"

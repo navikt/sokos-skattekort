@@ -20,10 +20,9 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.configFrom
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
-import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
-import no.nav.sokos.skattekort.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.person.PersonRepository
-import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.domain.person.PersonService
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -38,16 +37,15 @@ fun Application.module(
     if (config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL) {
         DatabaseConfig.init(config, isLocal = true)
         DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
-        val personRepository = PersonRepository()
-        val personService = PersonService(DatabaseConfig.dataSource, personRepository)
+        val personService = PersonService(DatabaseConfig.dataSource)
         val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
         val forespoerselListener =
             if (testJmsConnectionFactory == null) {
-                MQConfig.init(config)
                 ForespoerselListener(MQConfig.connectionFactory, forespoerselService, MQQueue(config.mqProperties.bestilleSkattekortQueueName))
             } else {
                 ForespoerselListener(testJmsConnectionFactory, forespoerselService, testBestillingsQueue!!)
             }
+        forespoerselListener.start()
     }
 
     val applicationState = ApplicationState()

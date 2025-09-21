@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.config
+package no.nav.sokos.skattekort.listener
 
 import io.kotest.core.listeners.AfterTestListener
 import io.kotest.core.listeners.BeforeSpecListener
@@ -19,22 +19,6 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 import no.nav.sokos.skattekort.JmsTestUtil
 
 object JmsListener : BeforeSpecListener, AfterTestListener {
-    override suspend fun beforeSpec(spec: Spec) {
-        println("jadda")
-        server.start()
-        println("jms status: " + server.activeMQServer.status)
-    }
-
-    override suspend fun afterAny(
-        testCase: TestCase,
-        result: TestResult,
-    ) {
-        super.afterTest(testCase, result)
-        /* Meldinger som ligger igjen etter en test kan få en vilkårlig test mye senere til å feile litt tilfeldig.
-        Det kan ta mye tid å finne ut av, derfor krever vi at tester ikke legger fra seg ting. */
-        JmsTestUtil.assertAllQueuesAreEmpty()
-    }
-
     val server: EmbeddedActiveMQ =
         EmbeddedActiveMQ()
             .setConfiguration(
@@ -50,4 +34,20 @@ object JmsListener : BeforeSpecListener, AfterTestListener {
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }
     val producer: JMSProducer by lazy { jmsContext.createProducer() }
+
+    override suspend fun beforeSpec(spec: Spec) {
+        println("jadda")
+        server.start()
+        println("jms status: " + server.activeMQServer.status)
+    }
+
+    override suspend fun afterAny(
+        testCase: TestCase,
+        result: TestResult,
+    ) {
+        super.afterTest(testCase, result)
+        /* Meldinger som ligger igjen etter en test kan få en vilkårlig test mye senere til å feile litt tilfeldig.
+        Det kan ta mye tid å finne ut av, derfor krever vi at tester ikke legger fra seg ting. */
+        JmsTestUtil.assertAllQueuesAreEmpty()
+    }
 }

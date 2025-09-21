@@ -1,37 +1,43 @@
 package no.nav.sokos.skattekort
 
+import java.time.LocalDate
+
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.config.DbListener
+import no.nav.sokos.skattekort.domain.person.PersonId
+import no.nav.sokos.skattekort.domain.person.PersonRepository
+import no.nav.sokos.skattekort.domain.person.Personidentifikator
+import no.nav.sokos.skattekort.domain.skattekort.Bestilling
+import no.nav.sokos.skattekort.domain.skattekort.BestillingRepository
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
+@OptIn(ExperimentalTime::class)
 class DbTest :
     FunSpec({
         extensions(listOf(DbListener))
 
         test("db test") {
-
             DbListener.dataSource.transaction { session ->
                 val personId =
-                    session.updateAndReturnGeneratedKey(
-                        queryOf(
-                            """INSERT INTO person DEFAULT VALUES""".trimMargin(),
-                        ),
-                    )!!
-
-                session.update(
-                    queryOf(
-                        "INSERT INTO bestillinger (person_id, aar, fnr) VALUES (:personid,:aar, :fnr)",
-                        mapOf(
-                            "personid" to personId,
-                            "aar" to 1997,
-                            "fnr" to "22222222222",
-                        ),
+                    PersonRepository.insert(
+                        tx = session,
+                        fnr = Personidentifikator("22222222222"),
+                        gjelderFom = LocalDate.now(),
+                        informasjon = "",
+                    )
+                BestillingRepository.insert(
+                    session,
+                    Bestilling(
+                        personId = PersonId(personId!!),
+                        fnr = Personidentifikator("22222222222"),
+                        aar = 2023,
                     ),
                 )
             }

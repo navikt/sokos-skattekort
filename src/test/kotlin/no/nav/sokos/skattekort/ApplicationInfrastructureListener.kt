@@ -12,8 +12,8 @@ import jakarta.jms.Queue
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
 import org.testcontainers.containers.PostgreSQLContainer
 
-import no.nav.sokos.skattekort.config.DbListener
-import no.nav.sokos.skattekort.config.JmsListener
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.JmsListener
 
 /*
 Abstraherer management av infrastrukturen en applikasjon trenger. Formålet med denne er å

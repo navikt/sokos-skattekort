@@ -52,7 +52,7 @@ spec:
     enabled: true
     scopes:
       consumes:
-        - name: "skatteetaten:forskudd"
+        - name: "skatteetaten:skattekorttilarbeidsgiver"
 
   env:
     - name: USE_AUTHENTICATION

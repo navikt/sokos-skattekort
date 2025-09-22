@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.person
+package no.nav.sokos.skattekort.domain.person
 
 enum class Result {
     CREATED,

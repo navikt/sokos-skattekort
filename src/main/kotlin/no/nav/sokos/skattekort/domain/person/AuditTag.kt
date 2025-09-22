@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.person
+package no.nav.sokos.skattekort.domain.person
 
 enum class AuditTag(
     private val value: String,
@@ -7,6 +7,6 @@ enum class AuditTag(
     ;
 
     companion object {
-        fun fromValue(value: String): AuditTag = AuditTag.entries.first { it.value == value }
+        fun fromValue(value: String): AuditTag = entries.first { it.value == value }
     }
 }

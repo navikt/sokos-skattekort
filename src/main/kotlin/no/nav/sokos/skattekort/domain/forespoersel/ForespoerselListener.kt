@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.forespoersel
+package no.nav.sokos.skattekort.domain.forespoersel
 
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
@@ -17,8 +17,13 @@ class ForespoerselListener(
     // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
     init {
         listener.setMessageListener { message: Message ->
-            forespoerselService.taImotForespoersel(message)
+            val jmsMessage = message.getBody(String::class.java)
+            forespoerselService.taImotForespoersel(jmsMessage)
             message.acknowledge()
         }
+    }
+
+    fun start() {
+        jmsContext.start()
     }
 }

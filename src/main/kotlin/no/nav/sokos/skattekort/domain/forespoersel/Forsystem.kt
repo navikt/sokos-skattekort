@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.forespoersel
+package no.nav.sokos.skattekort.domain.forespoersel
 
 enum class Forsystem(
     val kode: String,
@@ -8,7 +8,7 @@ enum class Forsystem(
     ;
 
     companion object {
-        fun fromValue(value: String): Forsystem = Forsystem.entries.first { it.kode == value }
+        fun fromValue(value: String): Forsystem = entries.first { it.kode == value }
 
         fun fromMessage(message: String): Forsystem =
             when {

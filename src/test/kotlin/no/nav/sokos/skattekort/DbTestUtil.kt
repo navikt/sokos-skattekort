@@ -2,21 +2,27 @@ package no.nav.sokos.skattekort
 
 import java.sql.Connection.TRANSACTION_SERIALIZABLE
 import java.sql.ResultSet
-import java.time.LocalDateTime
 import javax.sql.DataSource
 
+import kotlin.time.ExperimentalTime
+import kotlin.time.toKotlinInstant
+
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.config.MapApplicationConfig
 import kotliquery.Row
 import kotliquery.queryOf
-import kotliquery.sessionOf
 import org.testcontainers.containers.PostgreSQLContainer
 
-import no.nav.sokos.skattekort.bestilling.Bestilling
-import no.nav.sokos.skattekort.config.DbListener
-import no.nav.sokos.skattekort.forespoersel.ForespoerselRepository
-import no.nav.sokos.skattekort.forespoersel.Forsystem
-import no.nav.sokos.skattekort.forespoersel.Skattekortforespoersel
-import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.domain.forespoersel.Forespoersel
+import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselRepository
+import no.nav.sokos.skattekort.domain.forespoersel.Skattekortforespoersel
+import no.nav.sokos.skattekort.domain.forespoersel.SkattekortforespoerselRepository
+import no.nav.sokos.skattekort.domain.person.PersonId
+import no.nav.sokos.skattekort.domain.person.Personidentifikator
+import no.nav.sokos.skattekort.domain.skattekort.Bestilling
+import no.nav.sokos.skattekort.domain.skattekort.BestillingBatchId
+import no.nav.sokos.skattekort.domain.skattekort.BestillingId
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 internal const val API_BASE_PATH = "/api/v1"
@@ -31,7 +37,7 @@ object DbTestUtil {
 
     fun loadDataSet(
         fileToLoad: String,
-        dataSource: DataSource,
+        dataSource: HikariDataSource,
     ) {
         deleteAllTables(dataSource) // Vi vil alltid helst starte med en kjent databasetilstand.
 
@@ -129,47 +135,52 @@ object DbTestUtil {
             put("APPLICATION_PROFILE", "LOCAL")
         }
 
+    @OptIn(ExperimentalTime::class)
     fun storedBestillings(
-        dataSource: DataSource,
+        dataSource: HikariDataSource,
         whereClause: String?,
     ): List<Bestilling> =
-        sessionOf(dataSource).use {
-            it.transaction {
-                it.run(
-                    queryOf("SELECT person_id, fnr, aar FROM bestillinger WHERE " + (whereClause ?: "1=1"))
-                        .map { row ->
-                            Bestilling(
-                                person_id = PersonId(row.long("person_id")),
-                                bestiller = "null",
-                                inntektYear = row.string("aar"),
-                                fnr = row.string("fnr"),
-                            )
-                        }.asList,
-                )
-            }
+        dataSource.transaction {
+            it.run(
+                queryOf("SELECT * FROM bestillinger WHERE " + (whereClause ?: "1=1"))
+                    .map { row ->
+                        Bestilling(
+                            id = BestillingId(row.long("id")),
+                            personId = PersonId(row.long("person_id")),
+                            fnr = Personidentifikator(row.string("fnr")),
+                            aar = row.int("aar"),
+                            bestillingBatchId = BestillingBatchId(row.long("bestilling_batch_id")),
+                            oppdatert = row.instant("oppdatert").toKotlinInstant(),
+                        )
+                    }.asList,
+            )
         }
 
-    fun storedForespoersels(dataSource: DataSource): List<Triple<Forsystem, String, LocalDateTime>> =
-        sessionOf(dataSource).use {
-            it.transaction {
-                ForespoerselRepository().list(it)
-            }
+    fun storedForespoersels(dataSource: HikariDataSource): List<Forespoersel> =
+        dataSource.transaction { session ->
+            ForespoerselRepository.getAllForespoersel(session)
         }
 
+    @OptIn(ExperimentalTime::class)
     fun readFromBestillings(): List<Bestilling> =
         DbListener.dataSource.transaction { session ->
             session.list(
-                queryOf("SELECT aar, fnr FROM bestillinger"),
+                queryOf("SELECT * FROM bestillinger"),
                 { row: Row ->
-                    Bestilling(PersonId(1234), "OS", row.string("aar"), row.string("fnr"))
+                    Bestilling(
+                        id = BestillingId(row.long("id")),
+                        personId = PersonId(row.long("person_id")),
+                        fnr = Personidentifikator(row.string("fnr")),
+                        aar = row.int("aar"),
+                        bestillingBatchId = BestillingBatchId(row.long("bestilling_batch_id")),
+                        oppdatert = row.instant("oppdatert").toKotlinInstant(),
+                    )
                 },
             )
         }
 
-    fun storedSkattekortforespoersler(dataSource: DataSource): List<Skattekortforespoersel> =
-        sessionOf(dataSource).use {
-            it.transaction {
-                ForespoerselRepository().listSkattekortForespoersler(it)
-            }
+    fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Skattekortforespoersel> =
+        dataSource.transaction { session ->
+            SkattekortforespoerselRepository.getAllSkattekortforespoersel(session)
         }
 }

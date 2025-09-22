@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 
-import no.nav.sokos.skattekort.config.JmsListener
+import no.nav.sokos.skattekort.listener.JmsListener
 
 class MqTest :
     FunSpec({

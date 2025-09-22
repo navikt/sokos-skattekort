@@ -4,10 +4,10 @@ import com.ibm.msg.client.jakarta.jms.JmsConstants
 import jakarta.jms.Queue
 import jakarta.jms.Session
 
-import no.nav.sokos.skattekort.config.JmsListener
-import no.nav.sokos.skattekort.config.JmsListener.allQueues
-import no.nav.sokos.skattekort.config.JmsListener.bestillingsQueue
-import no.nav.sokos.skattekort.config.JmsListener.producer
+import no.nav.sokos.skattekort.listener.JmsListener
+import no.nav.sokos.skattekort.listener.JmsListener.allQueues
+import no.nav.sokos.skattekort.listener.JmsListener.bestillingsQueue
+import no.nav.sokos.skattekort.listener.JmsListener.producer
 
 object JmsTestUtil {
     fun sendMessage(

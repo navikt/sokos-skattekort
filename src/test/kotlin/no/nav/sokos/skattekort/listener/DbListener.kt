@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.config
+package no.nav.sokos.skattekort.listener
 
 import com.zaxxer.hikari.HikariDataSource
 import io.kotest.core.listeners.AfterSpecListener
@@ -9,7 +9,18 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 
+import no.nav.sokos.skattekort.config.DatabaseMigrator
+
 object DbListener : BeforeSpecListener, AfterSpecListener {
+    val container: PostgreSQLContainer<Nothing> =
+        PostgreSQLContainer<Nothing>(DockerImageName.parse("postgres:latest")).apply {
+            withReuse(false)
+            withUsername("test-admin")
+            waitingFor(Wait.defaultWaitStrategy())
+        }
+
+    val dataSource: HikariDataSource by lazy { container.toDataSource() }
+
     override suspend fun beforeSpec(spec: Spec) {
         super.beforeSpec(spec)
 
@@ -22,12 +33,4 @@ object DbListener : BeforeSpecListener, AfterSpecListener {
 
     override suspend fun afterSpec(spec: Spec) {
     }
-
-    val container: PostgreSQLContainer<Nothing> =
-        PostgreSQLContainer<Nothing>(DockerImageName.parse("postgres:latest")).apply {
-            withReuse(false)
-            withUsername("test-admin")
-            waitingFor(Wait.defaultWaitStrategy())
-        }
-    val dataSource: HikariDataSource by lazy { container.toDataSource() }
 }

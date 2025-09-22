@@ -1,16 +1,16 @@
-package no.nav.sokos.skattekort.person
+package no.nav.sokos.skattekort.domain.person
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 @JvmInline
 value class PersonId(
-    val id: Long,
+    val value: Long,
 )
 
 @Serializable
 data class Person(
-    val id: PersonId,
+    val id: PersonId? = null,
     val flagget: Boolean,
-    val fnrs: List<Foedselsnummer>,
+    val foedselsnummer: Foedselsnummer,
 )

@@ -1,10 +1,44 @@
 package no.nav.sokos.skattekort.config
 
+import java.io.File
+
+import com.typesafe.config.ConfigFactory
+import io.ktor.server.config.ApplicationConfig
+import io.ktor.server.config.HoconApplicationConfig
+import io.ktor.server.config.getAs
+
 interface ConfigSource {
     fun get(key: String): String
 }
 
 object PropertiesConfig {
+    private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
+
+    fun initEnvConfig(applicationConfig: ApplicationConfig? = null) {
+        val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV")
+        val config =
+            when {
+                environment == null || environment.lowercase() == "local" -> {
+                    val defaultConfig = ConfigFactory.parseFile(File("defaults.properties"))
+                    ConfigFactory.parseResources("application-local.conf").withFallback(defaultConfig)
+                }
+
+                else -> ConfigFactory.parseResources("application-${environment.lowercase()}.conf")
+            }
+
+        envConfig = applicationConfig?.let { external ->
+            HoconApplicationConfig(config.withFallback(ConfigFactory.parseMap(external.toMap())).resolve())
+        } ?: HoconApplicationConfig(config.resolve())
+    }
+
+    fun getApplicationProperties(): ApplicationProperties = envConfig.property("application").getAs<ApplicationProperties>()
+
+    fun getPostgresProperties(): PostgresProperties? = envConfig.propertyOrNull("application.postgres")?.getAs<PostgresProperties>()
+
+    fun getMQProperties(): MQProperties? = envConfig.propertyOrNull("application.mq")?.getAs<MQProperties>()
+
+    fun getOrEmpty(key: String): String = envConfig.propertyOrNull(key)?.getString() ?: ""
+
     data class Configuration(
         val applicationProperties: ApplicationProperties,
         val securityProperties: SecurityProperties,

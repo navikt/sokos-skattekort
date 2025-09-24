@@ -5,15 +5,13 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 
-import no.nav.sokos.skattekort.config
-
 fun Application.routingConfig(
     useAuthentication: Boolean,
     applicationState: ApplicationState,
 ) {
     routing {
         internalNaisRoutes(applicationState)
-        authenticate(config().securityProperties.useAuthentication, AUTHENTICATION_NAME) {
+        authenticate(useAuthentication, AUTHENTICATION_NAME) {
         }
     }
 }

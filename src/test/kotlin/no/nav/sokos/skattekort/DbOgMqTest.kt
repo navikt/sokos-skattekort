@@ -11,21 +11,21 @@ import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.domain.person.PersonService
 import no.nav.sokos.skattekort.domain.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.JmsListener
+import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class DbOgMqTest :
     FunSpec({
-        extensions(listOf(JmsListener, DbListener))
+        extensions(listOf(MQListener, DbListener))
 
         val forespoerselListener: ForespoerselListener by lazy {
             ForespoerselListener(
-                JmsListener.connectionFactory,
+                MQListener.connectionFactory,
                 ForespoerselService(
                     dataSource = DbListener.dataSource,
                     personService = PersonService(DbListener.dataSource),
                 ),
-                JmsListener.bestillingsQueue,
+                MQListener.bestillingsQueue,
             )
         }
 

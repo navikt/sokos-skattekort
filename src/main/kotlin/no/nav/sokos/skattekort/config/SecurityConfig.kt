@@ -31,7 +31,7 @@ fun Application.securityConfig(
 
     authentication {
         jwt(AUTHENTICATION_NAME) {
-            realm = PropertiesConfig.ApplicationProperties().naisAppName
+            realm = PropertiesConfig.getApplicationProperties().naisAppName
             verifier(
                 jwkProvider = jwkProvider,
                 issuer = openIdMetadata.issuer,

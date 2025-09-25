@@ -4,24 +4,24 @@ import com.ibm.msg.client.jakarta.jms.JmsConstants
 import jakarta.jms.Queue
 import jakarta.jms.Session
 
-import no.nav.sokos.skattekort.listener.JmsListener
-import no.nav.sokos.skattekort.listener.JmsListener.allQueues
-import no.nav.sokos.skattekort.listener.JmsListener.bestillingsQueue
-import no.nav.sokos.skattekort.listener.JmsListener.producer
+import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.MQListener.allQueues
+import no.nav.sokos.skattekort.listener.MQListener.bestillingsQueue
+import no.nav.sokos.skattekort.listener.MQListener.producer
 
 object JmsTestUtil {
     fun sendMessage(
         msg: String,
         queue: Queue = bestillingsQueue, // Vi bør fjerne defaulten her dersom vi ender opp med flere køer
     ) {
-        JmsListener.jmsContext.createContext(JmsConstants.SESSION_TRANSACTED).use { context ->
+        MQListener.jmsContext.createContext(JmsConstants.SESSION_TRANSACTED).use { context ->
             val message = context.createTextMessage(msg)
             producer.send(queue, message)
         }
     }
 
     fun assertQueueIsEmpty(queue: Queue) {
-        JmsListener.connectionFactory.createConnection().use { connection ->
+        MQListener.connectionFactory.createConnection().use { connection ->
             connection.start()
             val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
             val browser = session.createBrowser(queue)
@@ -33,7 +33,7 @@ object JmsTestUtil {
     }
 
     fun assertAllQueuesAreEmpty() {
-        JmsListener.connectionFactory.createConnection().use { connection ->
+        MQListener.connectionFactory.createConnection().use { connection ->
             connection.start()
             val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
             val results: List<String> =

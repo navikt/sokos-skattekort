@@ -31,14 +31,14 @@ object DatabaseConfig {
         dataSource: HikariDataSource =
             initDataSource(
                 hikariConfig = initHikariConfig("postgres-admin-pool"),
-                role = PropertiesConfig.PostgresProperties().adminRole,
+                role = PropertiesConfig.getPostgresProperties().adminRole,
             ),
     ) {
         dataSource.use { connection ->
             Flyway
                 .configure()
                 .dataSource(connection)
-                .initSql("""SET ROLE "${PropertiesConfig.PostgresProperties().adminRole}"""")
+                .initSql("""SET ROLE "${PropertiesConfig.getPostgresProperties().adminRole}"""")
                 .lockRetryCount(-1)
                 .validateMigrationNaming(true)
                 .sqlMigrationSeparator("__")
@@ -51,7 +51,7 @@ object DatabaseConfig {
     }
 
     private fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
-        val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.PostgresProperties()
+        val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
         return HikariConfig().apply {
             poolName = poolname
             maximumPoolSize = 5
@@ -60,7 +60,7 @@ object DatabaseConfig {
             transactionIsolation = "TRANSACTION_SERIALIZABLE"
             this.dataSource =
                 PGSimpleDataSource().apply {
-                    if (PropertiesConfig.isLocal()) {
+                    if (PropertiesConfig.isLocal() || PropertiesConfig.isTest()) {
                         user = postgresProperties.adminUsername
                         password = postgresProperties.adminPassword
                     }
@@ -76,14 +76,14 @@ object DatabaseConfig {
 
     private fun initDataSource(
         hikariConfig: HikariConfig = initHikariConfig(),
-        role: String = PropertiesConfig.PostgresProperties().userRole,
+        role: String = PropertiesConfig.getPostgresProperties().userRole,
     ): HikariDataSource =
         when {
-            PropertiesConfig.isLocal() -> HikariDataSource(hikariConfig)
+            PropertiesConfig.isLocal() || PropertiesConfig.isTest() -> HikariDataSource(hikariConfig)
             else ->
                 HikariCPVaultUtil.createHikariDataSourceWithVaultIntegration(
                     hikariConfig,
-                    PropertiesConfig.PostgresProperties().vaultMountPath,
+                    PropertiesConfig.getPostgresProperties().vaultMountPath,
                     role,
                 )
         }

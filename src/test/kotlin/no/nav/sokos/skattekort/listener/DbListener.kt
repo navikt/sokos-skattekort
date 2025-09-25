@@ -18,6 +18,7 @@ object DbListener : BeforeSpecListener, AfterSpecListener {
         PostgreSQLContainer<Nothing>(DockerImageName.parse("postgres:latest")).apply {
             withReuse(false)
             withUsername("test-admin")
+            withPassword("test-password")
             waitingFor(Wait.defaultWaitStrategy())
             start()
         }

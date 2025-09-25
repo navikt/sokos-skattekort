@@ -17,26 +17,24 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.testApplication
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
+import no.nav.sokos.skattekort.TestUtil.configureTestApplication
 import no.nav.sokos.skattekort.TestUtil.configureTestEnvironment
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.domain.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.JmsListener
+import no.nav.sokos.skattekort.listener.MQListener
 
 class MottaBestillingEndToEndTest :
     FunSpec({
-        extensions(DbListener, JmsListener)
+        extensions(DbListener, MQListener)
 
         test("vi kan lagre en bestilling fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 withMockOAuth2Server {
                     testApplication {
                         configureTestEnvironment()
-
-                        application {
-                            module()
-                        }
+                        configureTestApplication()
                         startApplication()
 
                         // JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())

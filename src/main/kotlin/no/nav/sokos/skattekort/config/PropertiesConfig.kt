@@ -28,6 +28,39 @@ object PropertiesConfig {
 
     fun getOrEmpty(key: String): String = envConfig.propertyOrNull(key)?.getString() ?: ""
 
+    fun getApplicationProperties(): ApplicationProperties =
+        ApplicationProperties(
+            naisAppName = getOrEmpty("NAIS_APP_NAME"),
+            environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
+            useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
+        )
+
+    fun getPostgresProperties(): PostgresProperties =
+        PostgresProperties(
+            name = getOrEmpty("POSTGRES_NAME"),
+            host = getOrEmpty("POSTGRES_HOST"),
+            port = getOrEmpty("POSTGRES_PORT"),
+            username = getOrEmpty("POSTGRES_USER_USERNAME"),
+            password = getOrEmpty("POSTGRES_USER_PASSWORD"),
+            adminUsername = getOrEmpty("POSTGRES_ADMIN_USERNAME"),
+            adminPassword = getOrEmpty("POSTGRES_ADMIN_PASSWORD"),
+            adminRole = "${getOrEmpty("POSTGRES_NAME")}-admin",
+            userRole = "${getOrEmpty("POSTGRES_NAME")}-user",
+            vaultMountPath = getOrEmpty("VAULT_MOUNTPATH"),
+        )
+
+    fun getMQProperties(): MQProperties =
+        MQProperties(
+            hostname = getOrEmpty("MQ_HOSTNAME"),
+            port = getOrEmpty("MQ_PORT").ifBlank { "0" }.toInt(),
+            mqQueueManagerName = getOrEmpty("MQ_QUEUE_MANAGER_NAME"),
+            mqChannelName = getOrEmpty("MQ_CHANNEL_NAME"),
+            serviceUsername = getOrEmpty("MQ_SERVICE_USERNAME"),
+            servicePassword = getOrEmpty("MQ_SERVICE_PASSWORD"),
+            userAuth = true,
+            fraForSystemQueue = getOrEmpty("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -36,33 +69,33 @@ object PropertiesConfig {
     )
 
     data class ApplicationProperties(
-        val naisAppName: String = getOrEmpty("NAIS_APP_NAME"),
-        val environment: Environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
-        val useAuthentication: Boolean = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
+        val naisAppName: String,
+        val environment: Environment,
+        val useAuthentication: Boolean,
     )
 
     data class PostgresProperties(
-        val name: String = getOrEmpty("POSTGRES_NAME"),
-        val host: String = getOrEmpty("POSTGRES_HOST"),
-        val port: String = getOrEmpty("POSTGRES_PORT"),
-        val username: String = getOrEmpty("POSTGRES_USER_USERNAME"),
-        val password: String = getOrEmpty("POSTGRES_USER_PASSWORD"),
-        val adminUsername: String = getOrEmpty("POSTGRES_ADMIN_USERNAME"),
-        val adminPassword: String = getOrEmpty("POSTGRES_ADMIN_PASSWORD"),
-        val adminRole: String = "$name-admin",
-        val userRole: String = "$name-user",
-        val vaultMountPath: String = getOrEmpty("VAULT_MOUNTPATH"),
+        val name: String,
+        val host: String,
+        val port: String,
+        val username: String,
+        val password: String,
+        val adminUsername: String,
+        val adminPassword: String,
+        val adminRole: String,
+        val userRole: String,
+        val vaultMountPath: String,
     )
 
     data class MQProperties(
-        val hostname: String = getOrEmpty("MQ_HOSTNAME"),
-        val port: Int = getOrEmpty("MQ_PORT").toInt(),
-        val mqQueueManagerName: String = getOrEmpty("MQ_QUEUE_MANAGER_NAME"),
-        val mqChannelName: String = getOrEmpty("MQ_CHANNEL_NAME"),
-        val serviceUsername: String = getOrEmpty("MQ_SERVICE_USERNAME"),
-        val servicePassword: String = getOrEmpty("MQ_SERVICE_PASSWORD"),
+        val hostname: String,
+        val port: Int,
+        val mqQueueManagerName: String,
+        val mqChannelName: String,
+        val serviceUsername: String,
+        val servicePassword: String,
         val userAuth: Boolean = true,
-        val fraForSystemQueue: String = getOrEmpty("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+        val fraForSystemQueue: String,
     )
 
     enum class Environment {
@@ -72,5 +105,7 @@ object PropertiesConfig {
         PROD,
     }
 
-    fun isLocal() = ApplicationProperties().environment == Environment.LOCAL
+    fun isLocal() = getApplicationProperties().environment == Environment.LOCAL
+
+    fun isTest() = getApplicationProperties().environment == Environment.TEST
 }

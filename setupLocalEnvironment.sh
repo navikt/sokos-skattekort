@@ -9,7 +9,7 @@ kubectl config use-context dev-fss
 kubectl config set-context --current --namespace=okonomi
 
 # Get AZURE system variables
-envValue=$(kubectl exec -it $(kubectl get pods | grep sokos-skattekort | cut -f1 -d' ') -c sokos-skattekort -- env | egrep "^AZURE"| sort)
+envValue=$(kubectl exec -it $(kubectl get pods | grep sokos-skattekort | cut -f1 -d' ') -c sokos-skattekort -- env | egrep "^AZURE|^MASKINPORTEN"| sort)
 
 # Set AZURE as local environment variables
 rm -f defaults.properties

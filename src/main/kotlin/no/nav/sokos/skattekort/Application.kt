@@ -1,72 +1,43 @@
 package no.nav.sokos.skattekort
 
-import com.ibm.mq.jakarta.jms.MQQueue
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.util.AttributeKey
-import jakarta.jms.ConnectionFactory
-import jakarta.jms.Queue
 
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
-import no.nav.sokos.skattekort.config.DatabaseMigrator
-import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
-import no.nav.sokos.skattekort.config.configFrom
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.domain.person.PersonService
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
 }
 
-fun Application.module(
-    appConfig: ApplicationConfig = environment.config,
-    testJmsConnectionFactory: ConnectionFactory? = null,
-    testBestillingsQueue: Queue? = null,
-) {
-    val config: PropertiesConfig.Configuration = resolveConfig(appConfig)
-    if (config.applicationProperties.profile == PropertiesConfig.Profile.LOCAL) {
-        DatabaseConfig.init(config, isLocal = true)
-        DatabaseMigrator(DatabaseConfig.adminDataSource, config().postgresProperties.adminRole)
-        val personService = PersonService(DatabaseConfig.dataSource)
-        val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
-        val forespoerselListener =
-            if (testJmsConnectionFactory == null) {
-                ForespoerselListener(MQConfig.connectionFactory, forespoerselService, MQQueue(config.mqProperties.bestilleSkattekortQueueName))
-            } else {
-                ForespoerselListener(testJmsConnectionFactory, forespoerselService, testBestillingsQueue!!)
-            }
-        forespoerselListener.start()
+private val logger = mu.KotlinLogging.logger {}
+
+fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
+    PropertiesConfig.initEnvConfig(applicationConfig)
+    val applicationProperties = PropertiesConfig.getApplicationProperties()
+    val useAuthentication = applicationProperties.useAuthentication
+    if (applicationProperties.environment == PropertiesConfig.Environment.TEST) {
+        DatabaseConfig.migrate()
+
+        // Kan ikke start opp MQ under TEST pga EmbeddedActiveMQ start opp ikke med MQConfig innstillinger
+        // val personService = PersonService(DatabaseConfig.dataSource)
+        // val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
+        // val forespoerselListener = ForespoerselListener(MQConfig.connectionFactory, forespoerselService, MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue))
+        // forespoerselListener.start()
     }
 
     val applicationState = ApplicationState()
     commonConfig()
-    applicationLifecycleConfig(applicationState)
-    securityConfig()
-    routingConfig(config.applicationProperties.useAuthentication, applicationState)
+    securityConfig(useAuthentication)
+    routingConfig(useAuthentication, applicationState)
+    applicationLifecycleConfig(ApplicationState())
+
+    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 }
-
-val ConfigAttributeKey = AttributeKey<PropertiesConfig.Configuration>("config")
-
-fun Application.config(): PropertiesConfig.Configuration = this.attributes[ConfigAttributeKey]
-
-fun ApplicationCall.config(): PropertiesConfig.Configuration = this.application.config()
-
-fun Application.resolveConfig(appConfig: ApplicationConfig = environment.config): PropertiesConfig.Configuration =
-    if (attributes.contains(ConfigAttributeKey)) {
-        // Bruk config hvis den allerede er satt
-        this.config()
-    } else {
-        configFrom(appConfig).also {
-            attributes.put(ConfigAttributeKey, it)
-        }
-    }

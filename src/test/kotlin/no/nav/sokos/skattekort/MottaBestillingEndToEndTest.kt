@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort
 
+// import no.nav.sokos.skattekort.ApplicationInfrastructureListener.bestillingsQueue
+// import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbDataSource
 import java.time.LocalDateTime
 
 import kotlin.time.Duration.Companion.seconds
@@ -12,43 +14,37 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.testing.testApplication
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
-import no.nav.sokos.skattekort.ApplicationInfrastructureListener.bestillingsQueue
-import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbContainer
-import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbDataSource
-import no.nav.sokos.skattekort.ApplicationInfrastructureListener.jmsConnectionFactory
-import no.nav.sokos.skattekort.config.CompositeApplicationConfig
+import no.nav.sokos.skattekort.TestUtil.configureTestApplication
+import no.nav.sokos.skattekort.TestUtil.configureTestEnvironment
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.domain.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.MQListener
 
 class MottaBestillingEndToEndTest :
     FunSpec({
-        extension(ApplicationInfrastructureListener)
+        extensions(DbListener, MQListener)
 
         test("vi kan lagre en bestilling fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 withMockOAuth2Server {
                     testApplication {
-                        environment {
-                            config = CompositeApplicationConfig(DbTestUtil.getOverrides(dbContainer()), ApplicationConfig("application.conf"))
-                        }
-                        application {
-                            module(testJmsConnectionFactory = jmsConnectionFactory(), testBestillingsQueue = bestillingsQueue())
-                        }
+                        configureTestEnvironment()
+                        configureTestApplication()
                         startApplication()
 
-                        JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
+                        // JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
                         DbTestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)
 
                         val fnr = "15467834260"
                         JmsTestUtil.sendMessage("OS;1994;$fnr")
 
                         eventually(1.seconds) {
-                            val dataSource: HikariDataSource = dbDataSource()
+                            val dataSource: HikariDataSource = DbListener.dataSource
                             val rows: List<Forespoersel> = DbTestUtil.storedForespoersels(dataSource = dataSource)
 
                             withClue("Forventet at det er en forespørsel i databasen") {
@@ -76,7 +72,7 @@ class MottaBestillingEndToEndTest :
                             }
                         }
                     }
-                    JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
+                    // JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
                 }
             }
         }

@@ -5,11 +5,6 @@ import java.io.File
 import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.HoconApplicationConfig
-import io.ktor.server.config.getAs
-
-interface ConfigSource {
-    fun get(key: String): String
-}
 
 object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
@@ -31,39 +26,53 @@ object PropertiesConfig {
         } ?: HoconApplicationConfig(config.resolve())
     }
 
-    fun getApplicationProperties(): ApplicationProperties = envConfig.property("application").getAs<ApplicationProperties>()
-
-    fun getPostgresProperties(): PostgresProperties? = envConfig.propertyOrNull("application.postgres")?.getAs<PostgresProperties>()
-
-    fun getMQProperties(): MQProperties? = envConfig.propertyOrNull("application.mq")?.getAs<MQProperties>()
-
     fun getOrEmpty(key: String): String = envConfig.propertyOrNull(key)?.getString() ?: ""
 
-    data class Configuration(
-        val applicationProperties: ApplicationProperties,
-        val securityProperties: SecurityProperties,
-        val postgresProperties: PostgresProperties,
-        val mqProperties: MQProperties,
-    ) {
-        constructor(source: ConfigSource) : this(
-            applicationProperties = ApplicationProperties(source),
-            securityProperties = SecurityProperties(source),
-            postgresProperties = PostgresProperties(source),
-            mqProperties = MQProperties(source),
+    fun getApplicationProperties(): ApplicationProperties =
+        ApplicationProperties(
+            naisAppName = getOrEmpty("NAIS_APP_NAME"),
+            environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
+            useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
         )
-    }
+
+    fun getPostgresProperties(): PostgresProperties =
+        PostgresProperties(
+            name = getOrEmpty("POSTGRES_NAME"),
+            host = getOrEmpty("POSTGRES_HOST"),
+            port = getOrEmpty("POSTGRES_PORT"),
+            username = getOrEmpty("POSTGRES_USER_USERNAME"),
+            password = getOrEmpty("POSTGRES_USER_PASSWORD"),
+            adminUsername = getOrEmpty("POSTGRES_ADMIN_USERNAME"),
+            adminPassword = getOrEmpty("POSTGRES_ADMIN_PASSWORD"),
+            adminRole = "${getOrEmpty("POSTGRES_NAME")}-admin",
+            userRole = "${getOrEmpty("POSTGRES_NAME")}-user",
+            vaultMountPath = getOrEmpty("VAULT_MOUNTPATH"),
+        )
+
+    fun getMQProperties(): MQProperties =
+        MQProperties(
+            hostname = getOrEmpty("MQ_HOSTNAME"),
+            port = getOrEmpty("MQ_PORT").ifBlank { "0" }.toInt(),
+            mqQueueManagerName = getOrEmpty("MQ_QUEUE_MANAGER_NAME"),
+            mqChannelName = getOrEmpty("MQ_CHANNEL_NAME"),
+            serviceUsername = getOrEmpty("MQ_SERVICE_USERNAME"),
+            servicePassword = getOrEmpty("MQ_SERVICE_PASSWORD"),
+            userAuth = true,
+            fraForSystemQueue = getOrEmpty("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+        )
+
+    data class AzureAdProperties(
+        val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
+        val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
+        val tenantId: String = getOrEmpty("AZURE_APP_TENANT_ID"),
+        val clientSecret: String = getOrEmpty("AZURE_APP_CLIENT_SECRET"),
+    )
 
     data class ApplicationProperties(
         val naisAppName: String,
-        val profile: Profile,
+        val environment: Environment,
         val useAuthentication: Boolean,
-    ) {
-        constructor(source: ConfigSource) : this(
-            naisAppName = source.get("APP_NAME"),
-            profile = Profile.valueOf(source.get("APPLICATION_PROFILE")),
-            useAuthentication = source.get("USE_AUTHENTICATION").toBoolean(),
-        )
-    }
+    )
 
     data class PostgresProperties(
         val name: String,
@@ -76,62 +85,27 @@ object PropertiesConfig {
         val adminRole: String,
         val userRole: String,
         val vaultMountPath: String,
-    ) {
-        constructor(source: ConfigSource) : this(
-            name = source.get("POSTGRES_NAME"),
-            host = source.get("POSTGRES_HOST"),
-            port = source.get("POSTGRES_PORT"),
-            username = source.get("POSTGRES_USER_USERNAME").trim(),
-            password = source.get("POSTGRES_USER_PASSWORD").trim(),
-            adminUsername = source.get("POSTGRES_ADMIN_USERNAME").trim(),
-            adminPassword = source.get("POSTGRES_ADMIN_PASSWORD").trim(),
-            adminRole = "${source.get("POSTGRES_NAME")}-admin",
-            userRole = "${source.get("POSTGRES_NAME")}-user",
-            vaultMountPath = source.get("VAULT_MOUNTPATH"),
-        )
-    }
-
-    data class SecurityProperties(
-        val useAuthentication: Boolean,
-        val azureAdProperties: AzureAdProperties,
-    ) {
-        constructor(source: ConfigSource) : this(
-            useAuthentication = source.get("USE_AUTHENTICATION").toBoolean(),
-            azureAdProperties = AzureAdProperties(source),
-        )
-    }
-
-    data class AzureAdProperties(
-        val clientId: String,
-        val wellKnownUrl: String,
-    ) {
-        constructor(source: ConfigSource) : this(
-            clientId = source.get("AZURE_APP_CLIENT_ID"),
-            wellKnownUrl = source.get("AZURE_APP_WELL_KNOWN_URL"),
-        )
-    }
+    )
 
     data class MQProperties(
         val hostname: String,
         val port: Int,
         val mqQueueManagerName: String,
         val mqChannelName: String,
-        val userAuth: Boolean,
-        val bestilleSkattekortQueueName: String,
-    ) {
-        constructor(source: ConfigSource) : this(
-            hostname = source.get("MQ_HOSTNAME").trim(),
-            port = source.get("MQ_PORT").toInt(),
-            mqChannelName = source.get("MQ_CHANNEL_NAME").trim(),
-            mqQueueManagerName = source.get("MQ_QUEUE_MANAGER_NAME"),
-            userAuth = source.get("MQ_USERAUTH").toBoolean(),
-            bestilleSkattekortQueueName = source.get("MQ_BEST_QUEUE").trim(),
-        )
-    }
+        val serviceUsername: String,
+        val servicePassword: String,
+        val userAuth: Boolean = true,
+        val fraForSystemQueue: String,
+    )
 
-    enum class Profile {
+    enum class Environment {
         LOCAL,
+        TEST,
         DEV,
         PROD,
     }
+
+    fun isLocal() = getApplicationProperties().environment == Environment.LOCAL
+
+    fun isTest() = getApplicationProperties().environment == Environment.TEST
 }

@@ -6,21 +6,21 @@ import kotlin.io.path.createDirectories
 
 import io.kotest.core.spec.style.FunSpec
 
-import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbContainer
+import no.nav.sokos.skattekort.listener.DbListener
 
 class DbDumper :
     FunSpec({
-        extension(ApplicationInfrastructureListener)
+        extension(DbListener)
 
         test("dump databaseskjema") {
-            dbContainer().execInContainer(
+            DbListener.container.execInContainer(
                 "/usr/bin/pg_dump",
-                "--username=${dbContainer().username}",
+                "--username=${DbListener.container.username}",
                 "--schema-only",
-                "${dbContainer().databaseName}",
+                "${DbListener.container.databaseName}",
                 "--file=/tmp/pg_dump.sql",
             )
             Paths.get("build/dbschema").createDirectories()
-            dbContainer().copyFileFromContainer("/tmp/pg_dump.sql", "build/dbschema/pg_dump.sql")
+            DbListener.container.copyFileFromContainer("/tmp/pg_dump.sql", "build/dbschema/pg_dump.sql")
         }
     })

@@ -18,7 +18,9 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
 
-object JmsListener : BeforeSpecListener, AfterTestListener {
+const val MQ_FRA_FORSYSTEM_ALT_QUEUE = "QA.Q1_OS_ESKATT.FRA_FORSYSTEM_ALT"
+
+object MQListener : BeforeSpecListener, AfterTestListener {
     val server: EmbeddedActiveMQ =
         EmbeddedActiveMQ()
             .setConfiguration(
@@ -29,7 +31,7 @@ object JmsListener : BeforeSpecListener, AfterTestListener {
             )!!
 
     val connectionFactory: ConnectionFactory by lazy { ActiveMQConnectionFactory("vm:localhost?create=false") }
-    val bestillingsQueue: Queue = ActiveMQQueue("bestillings-queue")
+    val bestillingsQueue: Queue = ActiveMQQueue(MQ_FRA_FORSYSTEM_ALT_QUEUE)
     val allQueues: List<Queue> = listOf(bestillingsQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }

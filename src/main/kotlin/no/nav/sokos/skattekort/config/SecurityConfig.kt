@@ -22,11 +22,10 @@ const val AUTHENTICATION_NAME = "azureAd"
 
 fun Application.securityConfig(
     useAuthentication: Boolean,
-    azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.getAzureAdProperties(),
+    azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties(),
 ) {
     if (!useAuthentication) return
 
-    logger.info(marker = TEAM_LOGS_MARKER) { "Authentication is enabled: $azureAdProperties" }
     val openIdMetadata: OpenIdMetadata = wellKnowConfig(azureAdProperties.wellKnownUrl)
     val jwkProvider = cachedJwkProvider(openIdMetadata.jwksUri)
 

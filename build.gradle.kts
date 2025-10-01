@@ -144,7 +144,7 @@ tasks {
         enabled = true
         archiveFileName.set("app.jar")
         manifest {
-            attributes["Main-Class"] = "no.nav.sokos.trekk.ApplicationKt"
+            attributes["Main-Class"] = "no.nav.sokos.skattekort.ApplicationKt"
         }
         finalizedBy(koverHtmlReport)
 

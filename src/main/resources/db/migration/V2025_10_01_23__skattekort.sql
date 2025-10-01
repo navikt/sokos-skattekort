@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS skattekort_del
     type                 TEXT NOT NULL,  -- 'frikort', 'tabell', 'prosent'
     frikort_beloep       INT NULL, -- null for ikke-frikort
     tabell_nummer        TEXT NULL, -- null for ikke-tabellkort
-    prosentsats          SMALLINT NULL, -- null for frikort, satt for prosent og tabell.
+    prosentsats          DECIMAL(5,2) NULL, -- null for frikort, satt for prosent og tabell. Kan være desimaltall for kildeskattytere. yttrykker marginalprosent for tabellkort
     antall_mnd_for_trekk DECIMAL(3,1) NULL -- null for frikort, typisk 12 eller 10.5
 );
 CREATE INDEX IF NOT EXISTS skattekort_del_skattekort_id ON skattekort_del(skattekort_id);

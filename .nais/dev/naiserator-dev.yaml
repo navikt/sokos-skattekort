@@ -65,5 +65,5 @@ spec:
       value: "true"
     - name: JDK_JAVA_OPTIONS
       value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
-    - name: ENVIRONMENT
+    - name: APPLICATION_ENV
       value: DEV

@@ -11,8 +11,8 @@ fun Application.routingConfig(
 ) {
     routing {
         internalNaisRoutes(applicationState)
-        authenticate(useAuthentication, AUTHENTICATION_NAME) {
-        }
+//        authenticate(useAuthentication, AUTHENTICATION_NAME) {
+//        }
     }
 }
 

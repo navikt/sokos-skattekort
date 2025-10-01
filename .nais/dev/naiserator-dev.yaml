@@ -15,13 +15,13 @@ spec:
     cpuThresholdPercentage: 75
   liveness:
     path: /internal/isAlive
-    initialDelay: 10
+    initialDelay: 5
     timeout: 5
     periodSeconds: 5
     failureThreshold: 30
   readiness:
     path: /internal/isReady
-    initialDelay: 10
+    initialDelay: 5
     periodSeconds: 5
     timeout: 5
   resources:
@@ -31,7 +31,7 @@ spec:
       cpu: 100m
       memory: 512Mi
   ingresses:
-    - https://sokos-skattekort.intern.nav.no
+    - https://sokos-skattekort.intern.dev.nav.no
   prometheus:
     enabled: true
     path: /internal/metrics
@@ -42,11 +42,20 @@ spec:
   azure:
     application:
       enabled: true
+  accessPolicy:
+    inbound:
+      rules:
+        - application: azure-token-generator
+          namespace: nais
+          cluster: dev-gcp
   maskinporten:
     enabled: true
     scopes:
       consumes:
-        - name: "skatteetaten:forskudd"
+        - name: "skatteetaten:skattekorttilarbeidsgiver"
+
   env:
     - name: USE_AUTHENTICATION
       value: "true"
+    - name: JDK_JAVA_OPTIONS
+      value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)

@@ -9,6 +9,7 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.routingConfig
@@ -36,6 +37,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     val applicationState = ApplicationState()
     commonConfig()
+
+    logger.info(marker = TEAM_LOGS_MARKER) { "Authentication is enabled: ${PropertiesConfig.AzureAdProperties()}" }
+
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
     applicationLifecycleConfig(applicationState)

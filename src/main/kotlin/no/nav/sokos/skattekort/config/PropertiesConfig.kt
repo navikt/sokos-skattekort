@@ -35,6 +35,14 @@ object PropertiesConfig {
             useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
         )
 
+    fun getAzureAdProperties(): AzureAdProperties =
+        AzureAdProperties(
+            clientId = getOrEmpty("AZURE_APP_CLIENT_ID"),
+            wellKnownUrl = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
+            tenantId = getOrEmpty("AZURE_APP_TENANT_ID"),
+            clientSecret = getOrEmpty("AZURE_APP_CLIENT_SECRET"),
+        )
+
     fun getPostgresProperties(): PostgresProperties =
         PostgresProperties(
             name = getOrEmpty("POSTGRES_NAME"),
@@ -62,10 +70,10 @@ object PropertiesConfig {
         )
 
     data class AzureAdProperties(
-        val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
-        val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
-        val tenantId: String = getOrEmpty("AZURE_APP_TENANT_ID"),
-        val clientSecret: String = getOrEmpty("AZURE_APP_CLIENT_SECRET"),
+        val clientId: String,
+        val wellKnownUrl: String,
+        val tenantId: String,
+        val clientSecret: String,
     )
 
     data class ApplicationProperties(

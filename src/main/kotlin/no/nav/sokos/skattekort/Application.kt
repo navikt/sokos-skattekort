@@ -37,7 +37,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
-    applicationLifecycleConfig(ApplicationState())
+    applicationLifecycleConfig(applicationState)
 
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 }

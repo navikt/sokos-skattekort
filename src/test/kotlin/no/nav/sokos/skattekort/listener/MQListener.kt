@@ -38,9 +38,7 @@ object MQListener : BeforeSpecListener, AfterTestListener {
     val producer: JMSProducer by lazy { jmsContext.createProducer() }
 
     override suspend fun beforeSpec(spec: Spec) {
-        println("jadda")
         server.start()
-        println("jms status: " + server.activeMQServer.status)
     }
 
     override suspend fun afterAny(

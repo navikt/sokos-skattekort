@@ -4,6 +4,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
@@ -15,7 +16,7 @@ fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
 }
 
-private val logger = mu.KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
     PropertiesConfig.initEnvConfig(applicationConfig)
@@ -35,7 +36,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     commonConfig()
     // 7securityConfig(useAuthentication)
     // routingConfig(useAuthentication, applicationState)
-    applicationLifecycleConfig(ApplicationState())
+    applicationLifecycleConfig(applicationState)
 
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 }

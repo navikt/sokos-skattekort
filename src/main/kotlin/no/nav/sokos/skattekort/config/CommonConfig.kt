@@ -2,13 +2,17 @@ package no.nav.sokos.skattekort.config
 
 import kotlinx.serialization.json.Json
 
+import com.auth0.jwt.JWT
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.request.header
 import io.ktor.server.request.path
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
@@ -26,6 +30,7 @@ import org.slf4j.event.Level
 import no.nav.sokos.skattekort.metrics.Metrics
 
 val TEAM_LOGS_MARKER = MarkerFactory.getMarker("TEAM_LOGS")
+private const val X_KALLENDE_SYSTEM = "x-kallende-system"
 
 private val logger = KotlinLogging.logger {}
 
@@ -33,6 +38,7 @@ fun Application.commonConfig() {
     install(CallLogging) {
         logger = no.nav.sokos.skattekort.config.logger
         level = Level.INFO
+        mdc(X_KALLENDE_SYSTEM) { it.extractCallingSystemFromJwtToken() }
         filter { call -> call.request.path().startsWith("/api") }
         disableDefaultColors()
     }
@@ -89,4 +95,18 @@ fun Routing.internalNaisRoutes(
             call.respondText(Metrics.prometheusMeterRegistry.scrape())
         }
     }
+}
+
+private fun ApplicationCall.extractCallingSystemFromJwtToken(): String {
+    val token = request.header(HttpHeaders.Authorization)?.removePrefix("Bearer ")
+    return token?.let {
+        runCatching {
+            JWT.decode(it)
+        }.onFailure {
+            logger.warn("Failed to decode token: ", it)
+        }.getOrNull()
+            ?.let { it.claims["azp_name"]?.asString() ?: it.claims["client_id"]?.asString() }
+            ?.split(":")
+            ?.last()
+    } ?: "Ukjent"
 }

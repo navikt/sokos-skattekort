@@ -22,7 +22,13 @@ object PropertiesConfig {
             }
 
         envConfig = applicationConfig?.let { external ->
-            HoconApplicationConfig(config.withFallback(ConfigFactory.parseMap(external.toMap())).resolve())
+            HoconApplicationConfig(
+                config
+                    .withFallback(ConfigFactory.systemEnvironment())
+                    .withFallback(ConfigFactory.systemProperties())
+                    .withFallback(ConfigFactory.parseMap(external.toMap()))
+                    .resolve(),
+            )
         } ?: HoconApplicationConfig(
             config
                 .withFallback(ConfigFactory.systemEnvironment())

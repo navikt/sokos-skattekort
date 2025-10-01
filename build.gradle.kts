@@ -1,4 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -6,9 +5,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.serialization") version "2.2.0"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
+
+    application
 }
 
 group = "no.nav.sokos"
@@ -120,6 +120,10 @@ configurations.ktlint {
     resolutionStrategy.force("ch.qos.logback:logback-classic:$logbackVersion")
 }
 
+application {
+    mainClass.set("no.nav.sokos.skattekort.ApplicationKt")
+}
+
 sourceSets {
     main {
         java {
@@ -140,17 +144,6 @@ tasks {
         dependsOn("ktlintFormat")
     }
 
-    withType<ShadowJar>().configureEach {
-        enabled = true
-        archiveFileName.set("app.jar")
-        manifest {
-            attributes["Main-Class"] = "no.nav.sokos.skattekort.ApplicationKt"
-        }
-        finalizedBy(koverHtmlReport)
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        mergeServiceFiles()
-    }
-
     withType<Test>().configureEach {
         useJUnitPlatform()
 
@@ -165,11 +158,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "8.14"
-    }
-
-    ("jar") {
-        enabled = false
+        gradleVersion = "9.1.0"
     }
 
     ("build") {

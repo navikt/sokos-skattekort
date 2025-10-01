@@ -23,7 +23,12 @@ object PropertiesConfig {
 
         envConfig = applicationConfig?.let { external ->
             HoconApplicationConfig(config.withFallback(ConfigFactory.parseMap(external.toMap())).resolve())
-        } ?: HoconApplicationConfig(config.resolve())
+        } ?: HoconApplicationConfig(
+            config
+                .withFallback(ConfigFactory.systemEnvironment())
+                .withFallback(ConfigFactory.systemProperties())
+                .resolve(),
+        )
     }
 
     fun getOrEmpty(key: String): String = envConfig.propertyOrNull(key)?.getString() ?: ""

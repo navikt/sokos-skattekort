@@ -35,6 +35,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         // forespoerselListener.start()
     }
 
+    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
+
     val applicationState = ApplicationState()
     commonConfig()
 
@@ -43,6 +45,4 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
     applicationLifecycleConfig(applicationState)
-
-    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 }

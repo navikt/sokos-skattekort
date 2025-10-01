@@ -40,6 +40,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val applicationState = ApplicationState()
     commonConfig()
 
+    logger.info(marker = TEAM_LOGS_MARKER) { "Application properties: $applicationProperties" }
     logger.info(marker = TEAM_LOGS_MARKER) { "Authentication is enabled: ${PropertiesConfig.AzureAdProperties()}" }
 
     securityConfig(useAuthentication)

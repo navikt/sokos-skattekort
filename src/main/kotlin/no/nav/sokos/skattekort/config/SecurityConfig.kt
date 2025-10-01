@@ -26,6 +26,7 @@ fun Application.securityConfig(
 ) {
     if (!useAuthentication) return
 
+    logger.info(marker = TEAM_LOGS_MARKER) { "Authentication is enabled: ${PropertiesConfig.AzureAdProperties()}" }
     val openIdMetadata: OpenIdMetadata = wellKnowConfig(azureAdProperties.wellKnownUrl)
     val jwkProvider = cachedJwkProvider(openIdMetadata.jwksUri)
 

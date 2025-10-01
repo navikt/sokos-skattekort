@@ -10,8 +10,6 @@ import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
-import no.nav.sokos.skattekort.config.routingConfig
-import no.nav.sokos.skattekort.config.securityConfig
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -35,8 +33,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     val applicationState = ApplicationState()
     commonConfig()
-    securityConfig(useAuthentication)
-    routingConfig(useAuthentication, applicationState)
+    // securityConfig(useAuthentication)
+    // routingConfig(useAuthentication, applicationState)
     applicationLifecycleConfig(ApplicationState())
 
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }

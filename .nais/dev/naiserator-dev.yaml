@@ -59,6 +59,7 @@ spec:
     scopes:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
+        - name: "altinn:authentication/systemregister.write"
 
   env:
     - name: USE_AUTHENTICATION

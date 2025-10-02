@@ -41,6 +41,8 @@ object PropertiesConfig {
 
     fun getOrEmpty(key: String): String = envConfig.propertyOrNull(key)?.getString() ?: ""
 
+    fun get(key: String): String = envConfig.property(key).getString()
+
     fun getApplicationProperties(): ApplicationProperties =
         ApplicationProperties(
             naisAppName = getOrEmpty("NAIS_APP_NAME"),
@@ -57,7 +59,7 @@ object PropertiesConfig {
             password = getOrEmpty("POSTGRES_USER_PASSWORD"),
             adminUsername = getOrEmpty("POSTGRES_ADMIN_USERNAME"),
             adminPassword = getOrEmpty("POSTGRES_ADMIN_PASSWORD"),
-            adminRole = "${getOrEmpty("POSTGRES_NAME")}-admin",
+            adminRole = "${get("POSTGRES_NAME")}-admin",
             userRole = "${getOrEmpty("POSTGRES_NAME")}-user",
             vaultMountPath = getOrEmpty("VAULT_MOUNTPATH"),
         )

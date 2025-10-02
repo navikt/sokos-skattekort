@@ -33,12 +33,13 @@ object DatabaseConfig {
                 hikariConfig = initHikariConfig("postgres-admin-pool"),
                 role = PropertiesConfig.getPostgresProperties().adminRole,
             ),
+        adminRole: String = PropertiesConfig.getPostgresProperties().adminRole,
     ) {
         dataSource.use { connection ->
             Flyway
                 .configure()
                 .dataSource(connection)
-                .initSql("""SET ROLE "${PropertiesConfig.getPostgresProperties().adminRole}"""")
+                .initSql("""SET ROLE "$adminRole"""")
                 .lockRetryCount(-1)
                 .validateMigrationNaming(true)
                 .sqlMigrationSeparator("__")

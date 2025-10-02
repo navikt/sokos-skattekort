@@ -43,7 +43,7 @@ flowchart TD
     1. Denne workflow trigges når kode pushes i `main` branch
 3. [Build/test PR](.github/workflows/build-pr.yaml) -> For å bygge og teste alle PR som blir opprettet og gjør en sjekk på branch prefix og title
     1. Denne workflow kjøres kun når det opprettes pull requester
-4. [Security](.github/workflows/security.yaml) -> For å skanne kode og docker image for sårbarheter. Kjøres hver morgen kl 06:00
+4. [Security](.github/workflows/codeql-trivy-scan.yaml) -> For å skanne kode og docker image for sårbarheter. Kjøres hver morgen kl 06:00
     1. Denne kjøres når [Deploy application](.github/workflows/deploy.yaml) har kjørt ferdig
 5. [Deploy application manual](.github/workflows/manual-deploy.yaml) -> For å deploye applikasjonen manuelt til ulike miljøer
     1. Denne workflow trigges manuelt basert på branch og miljø

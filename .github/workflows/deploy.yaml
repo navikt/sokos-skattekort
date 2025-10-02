@@ -35,7 +35,6 @@ jobs:
     uses: navikt/mob-gha-workflows/.github/workflows/gradle-assemble-build-push-image.yaml@main
     secrets: inherit
     with:
-      gradle-task: './gradlew build shadowJar -x test --configuration-cache'
       image-suffix: 'dev'
       dockerfile: './.nais/dev/Dockerfile'
 
@@ -45,7 +44,6 @@ jobs:
 #    uses: navikt/mob-gha-workflows/.github/workflows/gradle-assemble-build-push-image.yaml@main
 #    secrets: inherit
 #    with:
-#      gradle-task: './gradlew build shadowJar -x test --configuration-cache'
 #      dockerfile: './.nais/prod/Dockerfile'
 
   deploy-dev:

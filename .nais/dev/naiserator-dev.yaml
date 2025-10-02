@@ -8,7 +8,6 @@ metadata:
 spec:
   image: "{{{ image }}}"
   port: 8080
-  webproxy: true
   replicas:
     min: 1
     max: 2
@@ -48,6 +47,13 @@ spec:
         - application: azure-token-generator
           namespace: nais
           cluster: dev-gcp
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
+  webproxy: true
+  vault:
+    enabled: true
   maskinporten:
     enabled: true
     scopes:
@@ -57,3 +63,7 @@ spec:
   env:
     - name: USE_AUTHENTICATION
       value: "true"
+    - name: JDK_JAVA_OPTIONS
+      value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
+    - name: APPLICATION_ENV
+      value: DEV

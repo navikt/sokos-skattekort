@@ -24,9 +24,13 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     PropertiesConfig.initEnvConfig(applicationConfig)
     val applicationProperties = PropertiesConfig.getApplicationProperties()
     val useAuthentication = applicationProperties.useAuthentication
-    if (applicationProperties.environment == PropertiesConfig.Environment.TEST) {
-        DatabaseConfig.migrate()
 
+    val applicationState = ApplicationState()
+    applicationLifecycleConfig(applicationState)
+
+    DatabaseConfig.migrate()
+
+    if (applicationProperties.environment == PropertiesConfig.Environment.TEST) {
         // Kan ikke start opp MQ under TEST pga EmbeddedActiveMQ start opp ikke med MQConfig innstillinger
         // val personService = PersonService(DatabaseConfig.dataSource)
         // val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
@@ -36,9 +40,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 
-    val applicationState = ApplicationState()
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
-    applicationLifecycleConfig(applicationState)
 }

@@ -36,15 +36,18 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     DatabaseConfig.migrate()
     val personService = PersonService(DatabaseConfig.dataSource)
     val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
-    val forespoerselListener =
-        ForespoerselListener(
-            jmsConnectionFactory = MQConfig.connectionFactory,
-            forespoerselService = forespoerselService,
-            forespoerselQueue = MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue),
-        )
 
-    if (applicationProperties.mqListenerEnabled) {
-        forespoerselListener.start()
+    if (!PropertiesConfig.isTest()) {
+        val forespoerselListener =
+            ForespoerselListener(
+                jmsConnectionFactory = MQConfig.connectionFactory,
+                forespoerselService = forespoerselService,
+                forespoerselQueue = MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue),
+            )
+
+        if (applicationProperties.mqListenerEnabled) {
+            forespoerselListener.start()
+        }
     }
 
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication, mqListenerEnabled: ${applicationProperties.mqListenerEnabled}" }

@@ -1,14 +1,14 @@
 package no.nav.sokos.skattekort
 
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.testing.TestApplicationBuilder
+import jakarta.jms.ConnectionFactory
+import jakarta.jms.Queue
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
-import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.domain.person.PersonService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 
@@ -32,16 +32,15 @@ object TestUtil {
 
     fun TestApplicationBuilder.configureTestApplication() {
         application {
+            dependencies {
+                provide<ConnectionFactory> { MQListener.getConnectionFactory() }
+                provide<Queue>(name = "forespoerselQueue") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                }
+            }
             module()
 
-            val personService = PersonService(DatabaseConfig.dataSource)
-            val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
-            val forespoerselListener =
-                ForespoerselListener(
-                    jmsConnectionFactory = MQListener.connectionFactory,
-                    forespoerselService = forespoerselService,
-                    forespoerselQueue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue),
-                )
+            val forespoerselListener: ForespoerselListener by dependencies
             forespoerselListener.start()
         }
     }

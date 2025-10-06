@@ -1,14 +1,18 @@
 package no.nav.sokos.skattekort.domain.forespoersel
 
+import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
     jmsConnectionFactory: ConnectionFactory,
     forespoerselService: ForespoerselService,
-    forespoerselQueue: Queue,
+    @Named("forespoerselQueue") forespoerselQueue: Queue,
 ) {
     private val jmsContext = jmsConnectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
     private val listener = jmsContext.createConsumer(forespoerselQueue)
@@ -25,5 +29,6 @@ class ForespoerselListener(
 
     fun start() {
         jmsContext.start()
+        logger.info { "Forespoersel started, listening on $listener" }
     }
 }

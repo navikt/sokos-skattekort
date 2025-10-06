@@ -48,6 +48,7 @@ object PropertiesConfig {
             naisAppName = getOrEmpty("NAIS_APP_NAME"),
             environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
             useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
+            mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
         )
 
     fun getPostgresProperties(): PostgresProperties =
@@ -87,6 +88,7 @@ object PropertiesConfig {
         val naisAppName: String,
         val environment: Environment,
         val useAuthentication: Boolean,
+        val mqListenerEnabled: Boolean,
     )
 
     data class PostgresProperties(

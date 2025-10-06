@@ -38,7 +38,7 @@ object TestUtil {
             val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
             val forespoerselListener =
                 ForespoerselListener(
-                    jmsConnectionFactory = MQListener.connectionFactory,
+                    jmsConnectionFactory = MQListener.getConnectionFactory(),
                     forespoerselService = forespoerselService,
                     forespoerselQueue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue),
                 )

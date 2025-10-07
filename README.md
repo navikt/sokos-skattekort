@@ -172,6 +172,7 @@ private fun createJwtAssertion(issuer: String): String {
     additionalClaims.forEach { (key, value) ->
         jwt.withClaim(key, value)
     }
+    //Magic ends
 
     return jwt.sign(Algorithm.RSA256(null, maskinportenPropertoes.rsaKey?.toRSAPrivateKey()))
 }

@@ -21,7 +21,7 @@ object JmsTestUtil {
     }
 
     fun assertQueueIsEmpty(queue: Queue) {
-        MQListener.connectionFactory.createConnection().use { connection ->
+        MQListener.getConnectionFactory().createConnection().use { connection ->
             connection.start()
             val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
             val browser = session.createBrowser(queue)
@@ -33,7 +33,7 @@ object JmsTestUtil {
     }
 
     fun assertAllQueuesAreEmpty() {
-        MQListener.connectionFactory.createConnection().use { connection ->
+        MQListener.getConnectionFactory().createConnection().use { connection ->
             connection.start()
             val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
             val results: List<String> =

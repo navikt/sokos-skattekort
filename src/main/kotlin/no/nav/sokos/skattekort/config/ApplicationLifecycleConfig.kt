@@ -3,6 +3,7 @@ package no.nav.sokos.skattekort.config
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ServerReady
 import io.ktor.server.application.log
 
 fun Application.applicationLifecycleConfig(applicationState: ApplicationState) {
@@ -10,6 +11,12 @@ fun Application.applicationLifecycleConfig(applicationState: ApplicationState) {
         applicationState.ready = true
 
         application.log.info("Server is started")
+    }
+
+    monitor.subscribe(ServerReady) { application ->
+        applicationState.ready = true
+
+        application.log.info("Server is ready")
     }
 
     monitor.subscribe(ApplicationStopped) { application ->

@@ -30,15 +30,19 @@ object MQListener : BeforeSpecListener, AfterTestListener {
                     .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name)),
             )!!
 
-    val connectionFactory: ConnectionFactory by lazy { ActiveMQConnectionFactory("vm:localhost?create=false") }
+    private lateinit var connectionFactory: ConnectionFactory
+
     val bestillingsQueue: Queue = ActiveMQQueue(MQ_FRA_FORSYSTEM_ALT_QUEUE)
     val allQueues: List<Queue> = listOf(bestillingsQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }
     val producer: JMSProducer by lazy { jmsContext.createProducer() }
 
+    fun getConnectionFactory(): ConnectionFactory = connectionFactory
+
     override suspend fun beforeSpec(spec: Spec) {
         server.start()
+        connectionFactory = ActiveMQConnectionFactory("vm:localhost?create=false")
     }
 
     override suspend fun afterAny(

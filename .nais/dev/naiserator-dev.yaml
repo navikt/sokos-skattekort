@@ -51,15 +51,17 @@ spec:
       rules:
         - application: logging
           namespace: nais-system
-  webproxy: true
-  vault:
-    enabled: true
   maskinporten:
     enabled: true
     scopes:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
         - name: "altinn:authentication/systemregister.write"
+  webproxy: true
+  vault:
+    enabled: true
+  envFrom:
+    - secret: sokos-skattekort-mq-credentials
 
   env:
     - name: USE_AUTHENTICATION

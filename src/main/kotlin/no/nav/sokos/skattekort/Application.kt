@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort
 
+import com.ibm.mq.jakarta.jms.MQQueue
 import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
@@ -8,11 +9,15 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.domain.person.PersonService
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -24,21 +29,30 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     PropertiesConfig.initEnvConfig(applicationConfig)
     val applicationProperties = PropertiesConfig.getApplicationProperties()
     val useAuthentication = applicationProperties.useAuthentication
-    if (applicationProperties.environment == PropertiesConfig.Environment.TEST) {
-        DatabaseConfig.migrate()
-
-        // Kan ikke start opp MQ under TEST pga EmbeddedActiveMQ start opp ikke med MQConfig innstillinger
-        // val personService = PersonService(DatabaseConfig.dataSource)
-        // val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
-        // val forespoerselListener = ForespoerselListener(MQConfig.connectionFactory, forespoerselService, MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue))
-        // forespoerselListener.start()
-    }
-
-    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 
     val applicationState = ApplicationState()
+    applicationLifecycleConfig(applicationState)
+
+    DatabaseConfig.migrate()
+    val personService = PersonService(DatabaseConfig.dataSource)
+    val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
+
+    if (!PropertiesConfig.isTest()) {
+        val forespoerselListener =
+            ForespoerselListener(
+                jmsConnectionFactory = MQConfig.connectionFactory,
+                forespoerselService = forespoerselService,
+                forespoerselQueue = MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue),
+            )
+
+        if (applicationProperties.mqListenerEnabled) {
+            forespoerselListener.start()
+        }
+    }
+
+    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication, mqListenerEnabled: ${applicationProperties.mqListenerEnabled}" }
+
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
-    applicationLifecycleConfig(applicationState)
 }

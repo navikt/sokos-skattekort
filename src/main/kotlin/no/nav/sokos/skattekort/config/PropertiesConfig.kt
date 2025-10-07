@@ -73,7 +73,7 @@ object PropertiesConfig {
             mqChannelName = getOrEmpty("MQ_CHANNEL_NAME"),
             serviceUsername = getOrEmpty("MQ_SERVICE_USERNAME"),
             servicePassword = getOrEmpty("MQ_SERVICE_PASSWORD"),
-            userAuth = true,
+            userAuth = getOrEmpty("MQ_USER_AUTH").toBoolean(),
             fraForSystemQueue = getOrEmpty("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
         )
 

@@ -182,16 +182,39 @@ erDiagram
 ```mermaid
 erDiagram
     person ||--o{ skattekort: har
-    person ||--o{ skattekort_raw: har
+    person ||--o{ skattekort_data: har
+    skattekort ||--o{ skattekort_del: har
+    skattekort ||--o{ skattekort_tilleggsopplysning: har
     skattekort {
-        smallint aar
+        smallint inntektsaar
+        date utstedt_dato "Felt satt av skatteetaten"
+        text identifikator "Skatteetatens id for skattekortet"
+        text kilde "Angir kilde for skattekortet: skatt, syntetisert, manuelt"
+        timestamptz opprettet "Vår egen dato for oppretting av skattekortet"
     }
-    skattekort_raw {
+    skattekort_del {
+        text trekk_kode "PENSJON, PENSJON_FRA_NAV, etc. Satt av skatteetaten, angir bruksområde for skattekortdelen"
+        text type "frikort, tabell, prosent"
+        int frikort_beloep "Beløpsgrense for frikort, eller null dersom ikke frikort eller ingen grense"
+        text tabell_nummer "Tabellangivelse. Tabeller oppdateres en gang pr år"
+        decimal prosentsats "Prosentsats, kan være en fraksjonell prosent for kildeskatt"
+        decimal antall_mnd_for_trekk "Antall måneder trekk skal utføres for, typisk 12, 10.5"
+    }
+    skattekort_tilleggsopplysning {
+        text opplysning "kildeskattPaaPensjon, kildeskattPaaLoenn etc"
+    }
+    skattekort_data {
         timestamptz created
-        text body "Payload mottatt, uten behandling. For debuggingsformål"
+        text data_mottatt "Payload mottatt, uten behandling. For debuggingsformål"
+        smallint aar
+        timestamptz opprettet
     }
-    TBD
+    
 ```
+
+Designnotater:
+- vi kan få skattekort uten skattekort-deler. Det gjelder typisk personer som har tilleggsopplysninger.
+- tanken bak skattekort-tabellen er at den er immuterbar
 
 ## Deployment
 

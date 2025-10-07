@@ -116,6 +116,105 @@ Ingen
 
 TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
 
+### Maskinporten og systembrukere
+
+```mermaid
+sequenceDiagram
+    Sokos-skattekort-MPClient ->>+ Maskinporten: Jeg vil ha et maskinportentoken med systembruker 312978083 på
+    Maskinporten ->> Sokos-skattekort-MPClient: Her er en jwt-token, med systembruker også!
+    Sokos-skattekort-MPClient ->> Skatteetaten: Ping? Her er maskinporten-token
+    Skatteetaten ->> Sokos-skattekort-MPClient: Pong
+```
+
+```mermaid
+block-beta
+columns 7
+nais space:2 mpclient["maskinporten#dash;client"] space:2 space
+space:7
+mpa1["Maskinporten admin 1"] space:2 system space:2 sr[("Digdir systemregister")]
+space:7
+mpa2["Maskinporten admin 2"] space:2 su["System user"] space:2 space
+space:7
+user["Adm.dir. for org"] space:5
+
+nais -- "configures" --> mpclient
+mpa1 -- "altinn#colon;authentication#sol;systemregister.write" --> system
+mpa2 -- "altinn#colon;authentication#sol;systemuser.request.write" --> su
+system --> sr
+
+system --> mpclient
+su --> system
+user --> su
+```
+
+```kotlin
+private fun createJwtAssertion(issuer: String): String {
+    val jwt =
+        JWT
+            .create()
+            .withIssuer(maskinportenPropertoes.clientId)
+            .withAudience(issuer)
+            .withClaim("scope", maskinportenPropertoes.scopes)
+            .withExpiresAt(
+                Date(
+                    Instant
+                        .now()
+                        .plus(timeLimit)
+                        .toEpochMilli(),
+                ),
+            ).withIssuedAt(Date())
+            .withKeyId(maskinportenPropertoes.rsaKey?.keyID)
+            .withJWTId(UUID.randomUUID().toString())
+
+    //Magic is here
+    val additionalClaims = getSystembrukerClaim(maskinportenPropertoes.systemuserOrg)
+
+    additionalClaims.forEach { (key, value) ->
+        jwt.withClaim(key, value)
+    }
+
+    return jwt.sign(Algorithm.RSA256(null, maskinportenPropertoes.rsaKey?.toRSAPrivateKey()))
+}
+fun getSystembrukerClaim(orgNr: String) =
+    mapOf(
+        "authorization_details" to
+            listOf(
+                mapOf(
+                    "type" to "urn:altinn:systemuser",
+                    "systemuser_org" to
+                        mapOf(
+                            "authority" to "iso6523-actorid-upis",
+                            "ID" to "0192:$orgNr",
+                        ),
+                    //"externalRef" to "$systemuserRef" hvis det finnes flere systembrukere for systemet (utestet)
+                ),
+            ),
+    )
+```
+
+#### Morsomme lenker
+
+System som er opprettet:
+https://platform.tt02.altinn.no/authentication/api/v1/systemregister/889640782_nav_okonomi (edited)
+
+Denne er offentlig tilgjengelig, åpent for alle, men viser ikke uuid til tilknyttede maskinporten-klienter
+
+Opprette systembruker som daglig leder: https://authn.ui.tt02.altinn.no/authfront/ui/auth/creation
+
+Dokumentasjon for å lage system: https://docs.altinn.studio/nb/api/authentication/systemuserapi/systemregister/create/
+
+Dokumentasjon for systembrukere: https://docs.altinn.studio/nb/api/authentication/systemuserapi/systemuser/
+
+Hente systembrukere for et system: https://docs.altinn.studio/nb/api/authentication/systemuserapi/systemuser/external/#list-opp-alle-systembrukere-for-en-system
+
+Systembruker-dok fra skatteetaten: https://skatteetaten.github.io/api-dokumentasjon/om/systembruker
+
+
+
+Orgnr for systembruker i test:
+ - Orgnr: 312978083
+ - Fnr: 07916598100 (Daglig leder, brukes for å godkjenne)
+
 ### Statemaskin for bestillinger
 
 #### bestilling

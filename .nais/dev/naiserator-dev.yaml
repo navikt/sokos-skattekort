@@ -60,7 +60,7 @@ spec:
   webproxy: true
   vault:
     enabled: true
-  envfrom:
+  envFrom:
     - secret: sokos-skattekort-mq-credentials
 
   env:

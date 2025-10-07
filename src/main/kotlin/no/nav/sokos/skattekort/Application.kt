@@ -11,6 +11,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
@@ -42,18 +43,17 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 
-    // Kan ikke start opp MQ under TEST pga EmbeddedActiveMQ start opp ikke med MQConfig innstillinger
-    if (applicationProperties.environment == PropertiesConfig.Environment.TEST) {
-        DatabaseConfig.migrate()
-        dependencies {
-            provide { DatabaseConfig.dataSource }
-            provide<Queue>(name = "forespoerselQueue") {
-                MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
-            }
-            provide(PersonService::class)
-            provide(ForespoerselService::class)
-            provide(ForespoerselListener::class)
+    DatabaseConfig.migrate()
+
+    dependencies {
+        provide { DatabaseConfig.dataSource }
+        provide { MQConfig.connectionFactory }
+        provide<Queue>(name = "forespoerselQueue") {
+            MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
+        provide(PersonService::class)
+        provide(ForespoerselService::class)
+        provide(ForespoerselListener::class)
     }
 
     commonConfig()

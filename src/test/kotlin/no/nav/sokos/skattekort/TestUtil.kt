@@ -8,7 +8,6 @@ import jakarta.jms.Queue
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 
@@ -39,9 +38,6 @@ object TestUtil {
                 }
             }
             module()
-
-            val forespoerselListener: ForespoerselListener by dependencies
-            forespoerselListener.start()
         }
     }
 }

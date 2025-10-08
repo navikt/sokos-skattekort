@@ -209,10 +209,11 @@ erDiagram
         smallint aar
         timestamptz opprettet
     }
-    
+
 ```
 
 Designnotater:
+
 - vi kan få skattekort uten skattekort-deler. Det gjelder typisk personer som har tilleggsopplysninger.
 - tanken bak skattekort-tabellen er at den er immuterbar
 
@@ -264,3 +265,52 @@ Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) fi
 - Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på github.
 - Funksjonelle interne henvendelser kan sendes via Slack i kanalen [#utbetaling](https://nav-it.slack.com/archives/CKZADNFBP)
 - Utvikler-til-utviklerkontakt internt i NAV skjer på Slack i kanalen TBD
+
+```mermaid
+
+```
+
+```mermaid
+flowchart TD
+    A[Mottatt forespørsel på kø] --> F(Opprett Forespørsel)
+    A --> SF(Opprett Skattekortforespørsel = Abonnement 
+                for hvert fnr)
+SF -->|Mangler skattekort, OG det finnes ikke bestilling|B(Opprett Bestilling for fnr)
+SF --> U(Opprett Utsending for Fnr til gitt forsystem)
+```
+
+```mermaid
+erDiagram
+    Forespoersler ||--|{ Abonnementer: ""
+    FNR ||--|{ Abonnementer: ""
+    FNR |{--|| Personer: ""
+    FNR ||--|{ Skattekort: ""
+    Bestillinger |{--o| Bestillingsbatch: ""
+    Abonnementer ||--o| Utsendinger: ""
+
+    Forespoersler {
+        string request
+        string forsystem
+    }
+
+    Abonnementer {
+    }
+
+    Skattekort {
+        int aar
+        string SKATTEKORTET
+    }
+
+    Bestillinger {
+        string fnr UK
+    }
+
+    Bestillingsbatch {
+        string bestillingsreferanse
+    }
+
+    Utsendinger {
+        string fnr
+        string forsystem
+    }
+```

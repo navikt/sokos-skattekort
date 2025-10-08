@@ -22,13 +22,7 @@ import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.domain.person.PersonService
 
 fun main() {
-    embeddedServer(Netty, port = 8080) {
-        module()
-        if (PropertiesConfig.getApplicationProperties().environment == PropertiesConfig.Environment.TEST) {
-            val forespoerselListener: ForespoerselListener by dependencies
-            forespoerselListener.start()
-        }
-    }.start(wait = true)
+    embeddedServer(Netty, port = 8080, module = Application::module).start(true)
 }
 
 private val logger = KotlinLogging.logger {}
@@ -55,6 +49,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
     }
+
+    val forespoerselListener: ForespoerselListener by dependencies
+    forespoerselListener.start()
 
     commonConfig()
     securityConfig(useAuthentication)

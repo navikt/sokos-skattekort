@@ -1,14 +1,16 @@
 package no.nav.sokos.skattekort
 
+import javax.sql.DataSource
+
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.plugins.di.DI
+import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.testing.TestApplicationBuilder
+import jakarta.jms.ConnectionFactory
+import jakarta.jms.Queue
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
-import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.domain.person.PersonService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 
@@ -31,18 +33,26 @@ object TestUtil {
     }
 
     fun TestApplicationBuilder.configureTestApplication() {
-        application {
-            module()
+        install(DI) {
+            onShutdown = { dependencyKey, instance ->
+                when (instance) {
+                    // Vi ønsker ikke DataSource eller ConnectionFactory lukket automatisk under testApplication kjøring.
+                    // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
+                    is DataSource -> {}
+                    is ConnectionFactory -> {}
+                    is AutoCloseable -> instance.close()
+                }
+            }
+        }
 
-            val personService = PersonService(DatabaseConfig.dataSource)
-            val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
-            val forespoerselListener =
-                ForespoerselListener(
-                    jmsConnectionFactory = MQListener.connectionFactory,
-                    forespoerselService = forespoerselService,
-                    forespoerselQueue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue),
-                )
-            forespoerselListener.start()
+        application {
+            dependencies {
+                provide<ConnectionFactory> { MQListener.connectionFactory }
+                provide<Queue>(name = "forespoerselQueue") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                }
+            }
+            module()
         }
     }
 }

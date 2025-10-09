@@ -11,6 +11,7 @@ import no.nav.sokos.skattekort.listener.MQListener
 class MqTest :
     FunSpec({
         extensions(listOf(MQListener))
+
         test("MQ Test") {
             println("Waiting for message...${PropertiesConfig.getMQProperties().fraForSystemQueue}")
 

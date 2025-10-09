@@ -13,15 +13,15 @@ import kotliquery.Row
 import kotliquery.queryOf
 import org.testcontainers.containers.PostgreSQLContainer
 
+import no.nav.sokos.skattekort.domain.forespoersel.Abonnement
+import no.nav.sokos.skattekort.domain.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.domain.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselRepository
-import no.nav.sokos.skattekort.domain.forespoersel.Skattekortforespoersel
-import no.nav.sokos.skattekort.domain.forespoersel.SkattekortforespoerselRepository
 import no.nav.sokos.skattekort.domain.person.PersonId
 import no.nav.sokos.skattekort.domain.person.Personidentifikator
 import no.nav.sokos.skattekort.domain.skattekort.Bestilling
-import no.nav.sokos.skattekort.domain.skattekort.BestillingBatchId
 import no.nav.sokos.skattekort.domain.skattekort.BestillingId
+import no.nav.sokos.skattekort.domain.skattekort.BestillingsbatchId
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
@@ -148,8 +148,8 @@ object DbTestUtil {
                             id = BestillingId(row.long("id")),
                             personId = PersonId(row.long("person_id")),
                             fnr = Personidentifikator(row.string("fnr")),
-                            aar = row.int("aar"),
-                            bestillingBatchId = BestillingBatchId(row.long("bestilling_batch_id")),
+                            inntektsaar = row.int("inntektsaar"),
+                            bestillingsbatchId = BestillingsbatchId(row.long("bestillingsbatch_id")),
                             oppdatert = row.instant("oppdatert").toKotlinInstant(),
                         )
                     }.asList,
@@ -171,16 +171,16 @@ object DbTestUtil {
                         id = BestillingId(row.long("id")),
                         personId = PersonId(row.long("person_id")),
                         fnr = Personidentifikator(row.string("fnr")),
-                        aar = row.int("aar"),
-                        bestillingBatchId = BestillingBatchId(row.long("bestilling_batch_id")),
+                        inntektsaar = row.int("inntektsaar"),
+                        bestillingsbatchId = BestillingsbatchId(row.long("bestillingsbatch_id")),
                         oppdatert = row.instant("oppdatert").toKotlinInstant(),
                     )
                 },
             )
         }
 
-    fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Skattekortforespoersel> =
+    fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Abonnement> =
         dataSource.transaction { session ->
-            SkattekortforespoerselRepository.getAllSkattekortforespoersel(session)
+            AbonnementRepository.getAllAbonnementer(session)
         }
 }

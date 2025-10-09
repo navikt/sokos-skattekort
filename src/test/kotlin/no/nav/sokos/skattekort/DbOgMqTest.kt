@@ -36,7 +36,7 @@ class DbOgMqTest :
             DbListener.dataSource.transaction { session ->
                 val result = BestillingRepository.getAllBestilling(session)
                 result.size shouldBe 1
-                result.first().aar shouldBe 1994
+                result.first().inntektsaar shouldBe 1994
             }
         }
 

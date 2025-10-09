@@ -181,6 +181,6 @@ object DbTestUtil {
 
     fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Abonnement> =
         dataSource.transaction { session ->
-            AbonnementRepository.getAllSkattekortforespoersel(session)
+            AbonnementRepository.getAllAbonnementer(session)
         }
 }

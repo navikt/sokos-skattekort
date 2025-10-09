@@ -14,7 +14,7 @@ import no.nav.sokos.skattekort.domain.person.Person
 import no.nav.sokos.skattekort.domain.person.PersonId
 import no.nav.sokos.skattekort.domain.person.Personidentifikator
 
-object SkattekortforespoerselRepository {
+object AbonnementRepository {
     fun insertBatch(
         tx: TransactionalSession,
         forespoerselId: Long,
@@ -23,7 +23,7 @@ object SkattekortforespoerselRepository {
     ) {
         tx.batchPreparedNamedStatement(
             """
-            |INSERT INTO forespoersel_skattekort (forespoersel_id, person_id, aar)
+            |INSERT INTO abonnementer (forespoersel_id, person_id, aar)
             |VALUES (:forespoersel_id, :person_id, :aar)
             """.trimMargin(),
             personListe.map { person ->
@@ -36,30 +36,30 @@ object SkattekortforespoerselRepository {
         )
     }
 
-    fun getAllSkattekortforespoersel(tx: TransactionalSession): List<Skattekortforespoersel> =
+    fun getAllSkattekortforespoersel(tx: TransactionalSession): List<Abonnement> =
         tx.list(
             queryOf(
                 """
                 |SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.aar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
-                |FROM forespoersel_skattekort fs
-                |LEFT JOIN forespoersel f ON f.id = fs.forespoersel_id
-                |LEFT JOIN person p ON p.id = fs.person_id
+                |FROM abonnementer fs
+                |LEFT JOIN forespoersler f ON f.id = fs.forespoersel_id
+                |LEFT JOIN personer p ON p.id = fs.person_id
                 |LEFT JOIN LATERAL (
                 |   SELECT id, gjelder_fom, fnr
-                |   FROM person_fnr
+                |   FROM foedselsnumre
                 |   WHERE person_id = p.id
                 |   ORDER BY gjelder_fom DESC, id DESC
                 |   LIMIT 1
                 |) pf ON TRUE 
                 """.trimMargin(),
             ),
-            mapToSkattekortforespoersel,
+            mapToAbonnement,
         )
 
     @OptIn(ExperimentalTime::class)
-    private val mapToSkattekortforespoersel: (Row) -> Skattekortforespoersel = { row ->
-        Skattekortforespoersel(
-            id = SkattekortforespoerselId(row.long("id")),
+    private val mapToAbonnement: (Row) -> Abonnement = { row ->
+        Abonnement(
+            id = AbonnementId(row.long("id")),
             forespoersel =
                 Forespoersel(
                     id = ForespoerselId(row.long("forespoersel_id")),
@@ -74,7 +74,7 @@ object SkattekortforespoerselRepository {
                     flagget = row.boolean("flagget"),
                     foedselsnummer =
                         Foedselsnummer(
-                            id = FoedselsnummerId(row.long("person_fnr_id")),
+                            id = FoedselsnummerId(row.long("id")),
                             personId = PersonId(row.long("person_id")),
                             fnr = Personidentifikator(row.string("fnr")),
                             gjelderFom = row.localDate("gjelder_fom").toKotlinLocalDate(),

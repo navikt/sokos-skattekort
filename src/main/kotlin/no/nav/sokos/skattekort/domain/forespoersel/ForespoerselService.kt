@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private const val FORESPOERSEL_DELIMITER = ";"
 private const val FORSYSTEM = "SKATTEKORT"
-private const val INNTEKTSAAR = "INNTEKTSAAR"
+private const val AAR = "AAR"
 private const val FNR = "FNR"
 
 class ForespoerselService(
@@ -29,17 +29,18 @@ class ForespoerselService(
                     informasjon = "Mottatt forespørsel på skattekort",
                 )
 
+            print("Forespørsel mottatt: $message for personId=${person.id}")
             val forespoerselId =
                 ForespoerselRepository.insert(
                     tx = session,
                     forsystem = forespoerselMap[FORSYSTEM] as Forsystem,
                     dataMottatt = message,
                 )
-
-            SkattekortforespoerselRepository.insertBatch(
+            print("Lagret forespørsel med id=$forespoerselId")
+            AbonnementRepository.insertBatch(
                 tx = session,
                 forespoerselId = forespoerselId,
-                aar = forespoerselMap[INNTEKTSAAR] as Int,
+                aar = forespoerselMap[AAR] as Int,
                 personListe = listOf(person),
             )
 
@@ -49,7 +50,7 @@ class ForespoerselService(
                     Bestilling(
                         personId = person.id!!,
                         fnr = person.foedselsnummer.fnr,
-                        aar = forespoerselMap[INNTEKTSAAR] as Int,
+                        aar = forespoerselMap[AAR] as Int,
                     ),
             )
         }
@@ -57,16 +58,14 @@ class ForespoerselService(
 
     private fun parseForespoersel(message: String): Map<String, Any> {
         val parts = message.split(FORESPOERSEL_DELIMITER)
-        if (parts.size != 3) {
-            throw IllegalArgumentException("Invalid message format: $message")
-        }
+        require(parts.size == 3) { "Invalid message format: $message" }
         val forsystem = Forsystem.fromValue(parts[0])
-        val inntektYear = Integer.parseInt(parts[1])
+        val aar = Integer.parseInt(parts[1])
         val fnrString = parts[2]
 
         return mapOf(
             FORSYSTEM to forsystem,
-            INNTEKTSAAR to inntektYear,
+            AAR to aar,
             FNR to Personidentifikator(fnrString),
         )
     }

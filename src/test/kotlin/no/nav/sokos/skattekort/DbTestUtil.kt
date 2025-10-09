@@ -13,10 +13,10 @@ import kotliquery.Row
 import kotliquery.queryOf
 import org.testcontainers.containers.PostgreSQLContainer
 
+import no.nav.sokos.skattekort.domain.forespoersel.Abonnement
+import no.nav.sokos.skattekort.domain.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.domain.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselRepository
-import no.nav.sokos.skattekort.domain.forespoersel.Skattekortforespoersel
-import no.nav.sokos.skattekort.domain.forespoersel.SkattekortforespoerselRepository
 import no.nav.sokos.skattekort.domain.person.PersonId
 import no.nav.sokos.skattekort.domain.person.Personidentifikator
 import no.nav.sokos.skattekort.domain.skattekort.Bestilling
@@ -179,8 +179,8 @@ object DbTestUtil {
             )
         }
 
-    fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Skattekortforespoersel> =
+    fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Abonnement> =
         dataSource.transaction { session ->
-            SkattekortforespoerselRepository.getAllSkattekortforespoersel(session)
+            AbonnementRepository.getAllSkattekortforespoersel(session)
         }
 }

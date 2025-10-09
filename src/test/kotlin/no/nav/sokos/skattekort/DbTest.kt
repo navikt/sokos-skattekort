@@ -37,7 +37,7 @@ class DbTest :
                     Bestilling(
                         personId = PersonId(personId!!),
                         fnr = Personidentifikator("22222222222"),
-                        aar = 2023,
+                        inntektsaar = 2023,
                     ),
                 )
             }

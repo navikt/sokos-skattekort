@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private const val FORESPOERSEL_DELIMITER = ";"
 private const val FORSYSTEM = "SKATTEKORT"
-private const val AAR = "AAR"
+private const val INNTEKTSAAR = "INNTEKTSAAR"
 private const val FNR = "FNR"
 
 class ForespoerselService(
@@ -29,18 +29,16 @@ class ForespoerselService(
                     informasjon = "Mottatt forespørsel på skattekort",
                 )
 
-            print("Forespørsel mottatt: $message for personId=${person.id}")
             val forespoerselId =
                 ForespoerselRepository.insert(
                     tx = session,
                     forsystem = forespoerselMap[FORSYSTEM] as Forsystem,
                     dataMottatt = message,
                 )
-            print("Lagret forespørsel med id=$forespoerselId")
             AbonnementRepository.insertBatch(
                 tx = session,
                 forespoerselId = forespoerselId,
-                aar = forespoerselMap[AAR] as Int,
+                inntektsaar = forespoerselMap[INNTEKTSAAR] as Int,
                 personListe = listOf(person),
             )
 
@@ -50,7 +48,7 @@ class ForespoerselService(
                     Bestilling(
                         personId = person.id!!,
                         fnr = person.foedselsnummer.fnr,
-                        aar = forespoerselMap[AAR] as Int,
+                        inntektsaar = forespoerselMap[INNTEKTSAAR] as Int,
                     ),
             )
         }
@@ -60,12 +58,12 @@ class ForespoerselService(
         val parts = message.split(FORESPOERSEL_DELIMITER)
         require(parts.size == 3) { "Invalid message format: $message" }
         val forsystem = Forsystem.fromValue(parts[0])
-        val aar = Integer.parseInt(parts[1])
+        val inntektsaar = Integer.parseInt(parts[1])
         val fnrString = parts[2]
 
         return mapOf(
             FORSYSTEM to forsystem,
-            AAR to aar,
+            INNTEKTSAAR to inntektsaar,
             FNR to Personidentifikator(fnrString),
         )
     }

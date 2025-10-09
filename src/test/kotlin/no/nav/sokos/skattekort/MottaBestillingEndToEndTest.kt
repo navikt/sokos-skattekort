@@ -59,9 +59,9 @@ class MottaBestillingEndToEndTest :
                                 skattekortforespoersler
                                     .first()
                                     .person.foedselsnummer.fnr.value shouldBe fnr
-                                skattekortforespoersler.first().aar shouldBe 1994
+                                skattekortforespoersler.first().inntektsaar shouldBe 1994
                                 skattekortforespoersler.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                                skattekortforespoersler.first().aar shouldBe 1994
+                                skattekortforespoersler.first().inntektsaar shouldBe 1994
                             }
                         }
                     }

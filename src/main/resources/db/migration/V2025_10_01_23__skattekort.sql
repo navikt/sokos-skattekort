@@ -50,4 +50,3 @@ CREATE TABLE IF NOT EXISTS skattekort_data
     opprettet    TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS skattekort_data_person_id ON skattekort_data (person_id);
-CREATE INDEX IF NOT EXISTS skattekort_data_fnr ON skattekort_data (fnr);

@@ -24,6 +24,7 @@ import no.nav.sokos.skattekort.domain.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.MQListener.bestillingsQueue
 
 class MottaBestillingEndToEndTest :
     FunSpec({
@@ -72,7 +73,7 @@ class MottaBestillingEndToEndTest :
                             }
                         }
                     }
-                    // JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
+                    JmsTestUtil.assertQueueIsEmpty(bestillingsQueue)
                 }
             }
         }

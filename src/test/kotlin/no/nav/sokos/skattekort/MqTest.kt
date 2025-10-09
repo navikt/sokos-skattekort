@@ -11,12 +11,13 @@ import no.nav.sokos.skattekort.listener.MQListener
 class MqTest :
     FunSpec({
         extensions(listOf(MQListener))
+
         test("MQ Test") {
             println("Waiting for message...${PropertiesConfig.getMQProperties().fraForSystemQueue}")
 
             JmsTestUtil.sendMessage("Test message")
 
-            val jmsContext = MQListener.getConnectionFactory().createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+            val jmsContext = MQListener.connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
             val bestillingsListener = jmsContext.createConsumer(MQListener.bestillingsQueue)
 
             bestillingsListener.setMessageListener { message: Message ->

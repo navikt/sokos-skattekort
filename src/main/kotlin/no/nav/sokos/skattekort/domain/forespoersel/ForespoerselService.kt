@@ -35,11 +35,10 @@ class ForespoerselService(
                     forsystem = forespoerselMap[FORSYSTEM] as Forsystem,
                     dataMottatt = message,
                 )
-
-            SkattekortforespoerselRepository.insertBatch(
+            AbonnementRepository.insertBatch(
                 tx = session,
                 forespoerselId = forespoerselId,
-                aar = forespoerselMap[INNTEKTSAAR] as Int,
+                inntektsaar = forespoerselMap[INNTEKTSAAR] as Int,
                 personListe = listOf(person),
             )
 
@@ -49,7 +48,7 @@ class ForespoerselService(
                     Bestilling(
                         personId = person.id!!,
                         fnr = person.foedselsnummer.fnr,
-                        aar = forespoerselMap[INNTEKTSAAR] as Int,
+                        inntektsaar = forespoerselMap[INNTEKTSAAR] as Int,
                     ),
             )
         }
@@ -57,16 +56,14 @@ class ForespoerselService(
 
     private fun parseForespoersel(message: String): Map<String, Any> {
         val parts = message.split(FORESPOERSEL_DELIMITER)
-        if (parts.size != 3) {
-            throw IllegalArgumentException("Invalid message format: $message")
-        }
+        require(parts.size == 3) { "Invalid message format: $message" }
         val forsystem = Forsystem.fromValue(parts[0])
-        val inntektYear = Integer.parseInt(parts[1])
+        val inntektsaar = Integer.parseInt(parts[1])
         val fnrString = parts[2]
 
         return mapOf(
             FORSYSTEM to forsystem,
-            INNTEKTSAAR to inntektYear,
+            INNTEKTSAAR to inntektsaar,
             FNR to Personidentifikator(fnrString),
         )
     }

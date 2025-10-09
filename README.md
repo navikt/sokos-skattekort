@@ -162,36 +162,10 @@ erDiagram
     }
 ```
 
-#### Forespørsel fra forsystem
+Designnotater:
 
-```mermaid
-erDiagram
-    forespoersel {
-        text request "Xml, copybook, ..."
-        text bestiller "Oppdragz, arena, .... Brukes til å trigge avlevering oå riktig format"
-    }
-    forespoersel_skattekort {
-        smallint aar "Årstall for bestilling"
-        text fnr
-    }
-    forespoersel ||--o{ forespoersel_skattekort: har
-```
-
-#### Skattekort (skisse)
-
-```mermaid
-erDiagram
-    person ||--o{ skattekort: har
-    person ||--o{ skattekort_raw: har
-    skattekort {
-        smallint aar
-    }
-    skattekort_raw {
-        timestamptz created
-        text body "Payload mottatt, uten behandling. For debuggingsformål"
-    }
-    TBD
-```
+- vi kan få skattekort uten skattekort-deler. Det gjelder typisk personer som har tilleggsopplysninger.
+- tanken bak skattekort-tabellen er at den er immuterbar
 
 ## Deployment
 
@@ -241,3 +215,91 @@ Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) fi
 - Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på github.
 - Funksjonelle interne henvendelser kan sendes via Slack i kanalen [#utbetaling](https://nav-it.slack.com/archives/CKZADNFBP)
 - Utvikler-til-utviklerkontakt internt i NAV skjer på Slack i kanalen TBD
+
+```mermaid
+
+```
+
+```mermaid
+flowchart TD
+    A[Mottatt forespørsel på kø] --> F(Opprett Forespørsel)
+    A --> SF(Opprett Abonnement for hvert fnr)
+    SF -->|Mangler skattekort, OG det finnes ikke bestilling| B(Opprett Bestilling for fnr)
+    SF --> U(Opprett Utsending for Fnr til gitt forsystem)
+```
+
+```mermaid
+erDiagram
+    Forespoersler ||--|{ Abonnementer: ""
+    Personer ||--|{ Skattekort: ""
+    Foedselsnummer }|--|| Personer: ""
+    Bestillinger |{--o| Bestillingsbatcher: ""
+    Abonnementer ||--o| Utsendinger: ""
+    Personer ||--|{ Abonnementer: ""
+    Forespoersler {
+        string request
+        string forsystem
+    }
+
+    Foedselsnummer {
+        string fnr UK
+        date gjelder_fom
+    }
+
+    Abonnementer {
+        string fnr
+    }
+
+    Skattekort {
+    }
+
+    Bestillinger {
+        string fnr UK
+        int aar
+    }
+
+    Bestillingsbatcher {
+        string bestillingsreferanse UK
+        int aar
+    }
+
+    Utsendinger {
+        string fnr
+        string forsystem
+    }
+```
+
+#### Skattekort (skisse)
+
+```mermaid
+erDiagram
+    person ||--o{ skattekort: har
+    person ||--o{ skattekort_data: har
+    skattekort ||--o{ skattekort_deler: har
+    skattekort ||--o{ skattekort_tilleggsopplysninger: har
+    skattekort {
+        smallint inntektsaar
+        date utstedt_dato "Felt satt av skatteetaten"
+        text identifikator "Skatteetatens id for skattekortet"
+        text kilde "Angir kilde for skattekortet: skatt, syntetisert, manuelt"
+        timestamptz opprettet "Vår egen dato for oppretting av skattekortet"
+    }
+    skattekort_deler {
+        text trekk_kode "PENSJON, PENSJON_FRA_NAV, etc. Satt av skatteetaten, angir bruksområde for skattekortdelen"
+        text type "frikort, tabell, prosent"
+        int frikort_beloep "Beløpsgrense for frikort, eller null dersom ikke frikort eller ingen grense"
+        text tabell_nummer "Tabellangivelse. Tabeller oppdateres en gang pr år"
+        decimal prosentsats "Prosentsats, kan være en fraksjonell prosent for kildeskatt"
+        decimal antall_mnd_for_trekk "Antall måneder trekk skal utføres for, typisk 12, 10.5"
+    }
+    skattekort_tilleggsopplysninger {
+        text opplysning "kildeskattPaaPensjon, kildeskattPaaLoenn etc"
+    }
+    skattekort_data {
+        timestamptz created
+        text data_mottatt "Payload mottatt, uten behandling. For debuggingsformål"
+        smallint aar
+        timestamptz opprettet
+    }
+
+```

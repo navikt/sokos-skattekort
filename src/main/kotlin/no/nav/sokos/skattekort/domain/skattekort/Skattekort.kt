@@ -14,7 +14,7 @@ data class Skattekort
         val id: SkattekortId? = null,
         val personId: PersonId,
         val fnr: Personidentifikator,
-        val aar: Int,
+        val inntektsaar: Int,
         val dataMottatt: String,
         val opprettet: Instant = Clock.System.now(),
     )

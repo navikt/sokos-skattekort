@@ -4,15 +4,15 @@ import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.domain.person.Person
 
-data class Skattekortforespoersel(
-    val id: SkattekortforespoerselId? = null,
+data class Abonnement(
+    val id: AbonnementId? = null,
     val forespoersel: Forespoersel,
-    val aar: Int,
+    val inntektsaar: Int,
     val person: Person,
 )
 
 @Serializable
 @JvmInline
-value class SkattekortforespoerselId(
+value class AbonnementId(
     val value: Long,
 )

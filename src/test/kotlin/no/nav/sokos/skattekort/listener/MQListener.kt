@@ -5,7 +5,6 @@ import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.spec.Spec
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
-import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
 import jakarta.jms.JMSProducer
 import jakarta.jms.Queue
@@ -30,24 +29,18 @@ object MQListener : BeforeSpecListener, AfterTestListener {
                     .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name)),
             )!!
 
-    private lateinit var connectionFactory: ActiveMQConnectionFactory
+    val connectionFactory: ActiveMQConnectionFactory by lazy {
+        ActiveMQConnectionFactory("vm:localhost?create=false")
+    }
 
     val bestillingsQueue: Queue = ActiveMQQueue(MQ_FRA_FORSYSTEM_ALT_QUEUE)
     val allQueues: List<Queue> = listOf(bestillingsQueue)
 
-    val jmsContext: JMSContext by lazy { getConnectionFactory().createContext() }
+    val jmsContext: JMSContext by lazy { connectionFactory.createContext() }
     val producer: JMSProducer by lazy { jmsContext.createProducer() }
-
-    fun getConnectionFactory(): ConnectionFactory {
-        if (connectionFactory.serverLocator.isClosed) {
-            connectionFactory = ActiveMQConnectionFactory("vm:localhost?create=false")
-        }
-        return connectionFactory
-    }
 
     override suspend fun beforeSpec(spec: Spec) {
         server.start()
-        connectionFactory = ActiveMQConnectionFactory("vm:localhost?create=false")
     }
 
     override suspend fun afterAny(

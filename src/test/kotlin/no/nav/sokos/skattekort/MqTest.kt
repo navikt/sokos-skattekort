@@ -17,7 +17,7 @@ class MqTest :
 
             JmsTestUtil.sendMessage("Test message")
 
-            val jmsContext = MQListener.getConnectionFactory().createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+            val jmsContext = MQListener.connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
             val bestillingsListener = jmsContext.createConsumer(MQListener.bestillingsQueue)
 
             bestillingsListener.setMessageListener { message: Message ->

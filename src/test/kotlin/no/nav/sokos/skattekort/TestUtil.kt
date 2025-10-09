@@ -1,6 +1,9 @@
 package no.nav.sokos.skattekort
 
+import javax.sql.DataSource
+
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.testing.TestApplicationBuilder
 import jakarta.jms.ConnectionFactory
@@ -30,9 +33,21 @@ object TestUtil {
     }
 
     fun TestApplicationBuilder.configureTestApplication() {
+        install(DI) {
+            onShutdown = { dependencyKey, instance ->
+                when (instance) {
+                    // Vi ønsker ikke DataSource eller ConnectionFactory lukket automatisk under testApplication kjøring.
+                    // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
+                    is DataSource -> {}
+                    is ConnectionFactory -> {}
+                    is AutoCloseable -> instance.close()
+                }
+            }
+        }
+
         application {
             dependencies {
-                provide<ConnectionFactory> { MQListener.getConnectionFactory() }
+                provide<ConnectionFactory> { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
                 }

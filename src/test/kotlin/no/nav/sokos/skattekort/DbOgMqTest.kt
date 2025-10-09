@@ -20,7 +20,7 @@ class DbOgMqTest :
 
         val forespoerselListener: ForespoerselListener by lazy {
             ForespoerselListener(
-                MQListener.getConnectionFactory(),
+                MQListener.connectionFactory,
                 ForespoerselService(
                     dataSource = DbListener.dataSource,
                     personService = PersonService(DbListener.dataSource),

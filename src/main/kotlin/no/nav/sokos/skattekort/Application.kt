@@ -5,6 +5,8 @@ import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.di.dependencies
+import jakarta.jms.Queue
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -26,31 +28,30 @@ fun main() {
 private val logger = KotlinLogging.logger {}
 
 fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
+    val applicationState = ApplicationState()
+    applicationLifecycleConfig(applicationState)
+
     PropertiesConfig.initEnvConfig(applicationConfig)
     val applicationProperties = PropertiesConfig.getApplicationProperties()
     val useAuthentication = applicationProperties.useAuthentication
 
-    val applicationState = ApplicationState()
-    applicationLifecycleConfig(applicationState)
+    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 
     DatabaseConfig.migrate()
-    val personService = PersonService(DatabaseConfig.dataSource)
-    val forespoerselService = ForespoerselService(DatabaseConfig.dataSource, personService)
 
-    if (!PropertiesConfig.isTest()) {
-        val forespoerselListener =
-            ForespoerselListener(
-                jmsConnectionFactory = MQConfig.connectionFactory,
-                forespoerselService = forespoerselService,
-                forespoerselQueue = MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue),
-            )
-
-        if (applicationProperties.mqListenerEnabled) {
-            forespoerselListener.start()
+    dependencies {
+        provide { DatabaseConfig.dataSource }
+        provide { MQConfig.connectionFactory }
+        provide<Queue>(name = "forespoerselQueue") {
+            MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
+        provide(PersonService::class)
+        provide(ForespoerselService::class)
+        provide(ForespoerselListener::class)
     }
 
-    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication, mqListenerEnabled: ${applicationProperties.mqListenerEnabled}" }
+    val forespoerselListener: ForespoerselListener by dependencies
+    forespoerselListener.start()
 
     commonConfig()
     securityConfig(useAuthentication)

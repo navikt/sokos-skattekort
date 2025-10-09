@@ -8,7 +8,7 @@ import io.ktor.server.application.log
 
 fun Application.applicationLifecycleConfig(applicationState: ApplicationState) {
     monitor.subscribe(ApplicationStarted) { application ->
-        applicationState.ready = true
+        applicationState.alive = true
 
         application.log.info("Server is started")
     }
@@ -30,6 +30,6 @@ fun Application.applicationLifecycleConfig(applicationState: ApplicationState) {
 }
 
 class ApplicationState(
-    var ready: Boolean = true,
-    var alive: Boolean = true,
+    var ready: Boolean = false,
+    var alive: Boolean = false,
 )

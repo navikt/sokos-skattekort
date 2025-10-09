@@ -1,6 +1,6 @@
 package no.nav.sokos.skattekort
 
-import com.ibm.msg.client.jakarta.jms.JmsConstants
+import jakarta.jms.JMSContext.SESSION_TRANSACTED
 import jakarta.jms.Queue
 import jakarta.jms.Session
 
@@ -14,14 +14,14 @@ object JmsTestUtil {
         msg: String,
         queue: Queue = bestillingsQueue, // Vi bør fjerne defaulten her dersom vi ender opp med flere køer
     ) {
-        MQListener.jmsContext.createContext(JmsConstants.SESSION_TRANSACTED).use { context ->
+        MQListener.jmsContext.createContext(SESSION_TRANSACTED).use { context ->
             val message = context.createTextMessage(msg)
             producer.send(queue, message)
         }
     }
 
     fun assertQueueIsEmpty(queue: Queue) {
-        MQListener.getConnectionFactory().createConnection().use { connection ->
+        MQListener.connectionFactory.createConnection().use { connection ->
             connection.start()
             val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
             val browser = session.createBrowser(queue)
@@ -33,7 +33,7 @@ object JmsTestUtil {
     }
 
     fun assertAllQueuesAreEmpty() {
-        MQListener.getConnectionFactory().createConnection().use { connection ->
+        MQListener.connectionFactory.createConnection().use { connection ->
             connection.start()
             val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
             val results: List<String> =

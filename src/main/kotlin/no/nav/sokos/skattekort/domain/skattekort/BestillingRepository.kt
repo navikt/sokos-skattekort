@@ -28,12 +28,12 @@ object BestillingRepository {
         tx.updateAndReturnGeneratedKey(
             queryOf(
                 """
-                    |INSERT INTO bestillinger (person_id, aar, fnr) 
-                    |VALUES (:personId, :aar, :fnr)
+                    |INSERT INTO bestillinger (person_id, inntektsaar, fnr) 
+                    |VALUES (:personId, :inntektsaar, :fnr)
                 """.trimMargin(),
                 mapOf(
                     "personId" to bestilling.personId.value,
-                    "aar" to bestilling.aar,
+                    "inntektsaar" to bestilling.inntektsaar,
                     "fnr" to bestilling.fnr.value,
                 ),
             ),
@@ -45,8 +45,8 @@ object BestillingRepository {
             id = BestillingId(row.long("id")),
             personId = PersonId(row.long("person_id")),
             fnr = Personidentifikator(row.string("fnr")),
-            aar = row.int("aar"),
-            bestillingBatchId = row.longOrNull("bestilling_batch_id")?.let { BestillingBatchId(it) },
+            inntektsaar = row.int("inntektsaar"),
+            bestillingsbatchId = row.longOrNull("bestillingsbatch_id")?.let { BestillingsbatchId(it) },
             oppdatert = row.instant("oppdatert").toKotlinInstant(),
         )
     }

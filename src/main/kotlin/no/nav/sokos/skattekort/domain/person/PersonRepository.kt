@@ -21,11 +21,11 @@ object PersonRepository {
         return tx.list(
             queryOf(
                 """
-                    |SELECT p.id as person_id, p.flagget, pf.id as person_fnr_id, pf.gjelder_fom, pf.fnr
-                    |FROM person p 
+                    |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
+                    |FROM personer p 
                     |LEFT JOIN LATERAL (
                     |   SELECT id, gjelder_fom, fnr
-                    |   FROM person_fnr
+                    |   FROM foedselsnumre
                     |   WHERE person_id = p.id
                     |   ORDER BY gjelder_fom DESC, id DESC
                     |   LIMIT 1
@@ -50,11 +50,11 @@ object PersonRepository {
         tx.single(
             queryOf(
                 """
-                    |SELECT p.id as person_id, p.flagget, pf.id as person_fnr_id, pf.gjelder_fom, pf.fnr
-                    |FROM person p 
+                    |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
+                    |FROM personer p 
                     |LEFT JOIN LATERAL (
                     |   SELECT id, gjelder_fom, fnr
-                    |   FROM person_fnr
+                    |   FROM foedselsnumre
                     |   WHERE person_id = p.id
                     |   ORDER BY gjelder_fom DESC, id DESC
                     |   LIMIT 1
@@ -73,11 +73,11 @@ object PersonRepository {
         tx.single(
             queryOf(
                 """
-                    |SELECT p.id as person_id, p.flagget, pf.id as person_fnr_id, pf.gjelder_fom, pf.fnr
-                    |FROM person p 
+                    |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
+                    |FROM personer p 
                     |LEFT JOIN LATERAL (
                     |   SELECT id, gjelder_fom, fnr
-                    |   FROM person_fnr
+                    |   FROM foedselsnumre
                     |   WHERE person_id = p.id
                     |   ORDER BY gjelder_fom DESC, id DESC
                     |   LIMIT 1
@@ -99,7 +99,7 @@ object PersonRepository {
             tx.updateAndReturnGeneratedKey(
                 queryOf(
                     """
-                    |INSERT INTO person (flagget) VALUES (:flagget)
+                    |INSERT INTO personer (flagget) VALUES (:flagget)
                     """.trimMargin(),
                     mapOf("flagget" to false),
                 ),
@@ -108,7 +108,7 @@ object PersonRepository {
         tx.execute(
             queryOf(
                 """
-                    |INSERT INTO person_fnr (person_id, gjelder_fom, fnr)
+                    |INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
                     |    VALUES (:personId, :gjelderFom, :fnr);
                     |    
                     |INSERT INTO person_audit(person_id, bruker_id, opprettet, tag, informasjon)
@@ -129,14 +129,14 @@ object PersonRepository {
 
     private val mapToPerson: (Row) -> Person = { row ->
         Person(
-            id = PersonId(row.long("PERSON_ID").toLong()),
-            flagget = row.boolean("FLAGGET"),
+            id = PersonId(row.long("person_id").toLong()),
+            flagget = row.boolean("flagget"),
             foedselsnummer =
                 Foedselsnummer(
-                    id = FoedselsnummerId(row.long("PERSON_FNR_ID").toLong()),
-                    personId = PersonId(row.long("PERSON_ID").toLong()),
-                    fnr = Personidentifikator(row.string("FNR")),
-                    gjelderFom = row.localDate("GJELDER_FOM").toKotlinLocalDate(),
+                    id = FoedselsnummerId(row.long("foedselsnummer_id").toLong()),
+                    personId = PersonId(row.long("person_id").toLong()),
+                    fnr = Personidentifikator(row.string("fnr")),
+                    gjelderFom = row.localDate("gjelder_fom").toKotlinLocalDate(),
                 ),
         )
     }

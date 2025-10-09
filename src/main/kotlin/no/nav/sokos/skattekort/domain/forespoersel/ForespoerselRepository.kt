@@ -17,7 +17,7 @@ object ForespoerselRepository {
             tx.updateAndReturnGeneratedKey(
                 queryOf(
                     """
-                    INSERT INTO forespoersel (forsystem, data_mottatt)
+                    INSERT INTO forespoersler (forsystem, data_mottatt)
                     VALUES (:forsystem, :data_mottatt)
                     """.trimIndent(),
                     mapOf(
@@ -37,7 +37,7 @@ object ForespoerselRepository {
         tx.list(
             queryOf(
                 """
-                SELECT * FROM forespoersel
+                SELECT * FROM forespoersler
                 ORDER BY id ASC
                 LIMIT :count OFFSET :offset
                 """.trimIndent(),
@@ -53,7 +53,7 @@ object ForespoerselRepository {
         tx.single(
             queryOf(
                 """
-                SELECT * FROM forespoersel WHERE id = :id
+                SELECT * FROM forespoersler WHERE id = :id
                 """.trimIndent(),
                 mapOf("id" to id),
             ),

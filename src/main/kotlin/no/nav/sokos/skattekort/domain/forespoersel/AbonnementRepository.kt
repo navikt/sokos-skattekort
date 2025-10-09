@@ -36,11 +36,11 @@ object AbonnementRepository {
         )
     }
 
-    fun getAllSkattekortforespoersel(tx: TransactionalSession): List<Abonnement> =
+    fun getAllAbonnementer(tx: TransactionalSession): List<Abonnement> =
         tx.list(
             queryOf(
                 """
-                |SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.aar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
+                |SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.inntektsaar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
                 |FROM abonnementer fs
                 |LEFT JOIN forespoersler f ON f.id = fs.forespoersel_id
                 |LEFT JOIN personer p ON p.id = fs.person_id

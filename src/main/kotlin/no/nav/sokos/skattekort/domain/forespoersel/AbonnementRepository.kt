@@ -18,19 +18,19 @@ object AbonnementRepository {
     fun insertBatch(
         tx: TransactionalSession,
         forespoerselId: Long,
-        aar: Int,
+        inntektsaar: Int,
         personListe: List<Person>,
     ) {
         tx.batchPreparedNamedStatement(
             """
-            |INSERT INTO abonnementer (forespoersel_id, person_id, aar)
-            |VALUES (:forespoersel_id, :person_id, :aar)
+            |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
+            |VALUES (:forespoersel_id, :person_id, :inntektsaar)
             """.trimMargin(),
             personListe.map { person ->
                 mapOf(
                     "forespoersel_id" to forespoerselId,
                     "person_id" to person.id!!.value,
-                    "aar" to aar,
+                    "inntektsaar" to inntektsaar,
                 )
             },
         )
@@ -67,7 +67,7 @@ object AbonnementRepository {
                     forsystem = Forsystem.fromValue(row.string("forsystem")),
                     opprettet = row.instant("opprettet").toKotlinInstant(),
                 ),
-            aar = row.int("aar"),
+            inntektsaar = row.int("inntektsaar"),
             person =
                 Person(
                     id = PersonId(row.long("person_id")),

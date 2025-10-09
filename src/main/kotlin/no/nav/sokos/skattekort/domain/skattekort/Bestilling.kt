@@ -14,8 +14,8 @@ data class Bestilling
         val id: BestillingId? = null,
         val personId: PersonId,
         val fnr: Personidentifikator,
-        val aar: Int,
-        val bestillingBatchId: BestillingBatchId? = null,
+        val inntektsaar: Int,
+        val bestillingsbatchId: BestillingsbatchId? = null,
         val oppdatert: Instant = Clock.System.now(),
     )
 

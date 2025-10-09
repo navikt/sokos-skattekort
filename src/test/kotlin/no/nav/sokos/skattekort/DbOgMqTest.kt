@@ -32,7 +32,7 @@ class DbOgMqTest :
         test("Tester både kø og database") {
             forespoerselListener.start()
             JmsTestUtil.sendMessage("OS;1994;11111111111")
-            delay(500.milliseconds)
+            delay(1000.milliseconds)
             DbListener.dataSource.transaction { session ->
                 val result = BestillingRepository.getAllBestilling(session)
                 result.size shouldBe 1

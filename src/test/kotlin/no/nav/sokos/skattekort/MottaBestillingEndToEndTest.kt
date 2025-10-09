@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort
 
 // import no.nav.sokos.skattekort.ApplicationInfrastructureListener.bestillingsQueue
 // import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbDataSource
+
 import java.time.LocalDateTime
 
 import kotlin.time.Duration.Companion.seconds
@@ -9,7 +10,6 @@ import kotlin.time.Duration.Companion.seconds
 import com.zaxxer.hikari.HikariDataSource
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
-import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldHaveSize
@@ -20,7 +20,6 @@ import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.TestUtil.configureTestApplication
 import no.nav.sokos.skattekort.TestUtil.configureTestEnvironment
 import no.nav.sokos.skattekort.config.DatabaseConfig
-import no.nav.sokos.skattekort.domain.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
@@ -45,12 +44,6 @@ class MottaBestillingEndToEndTest :
 
                         eventually(1.seconds) {
                             val dataSource: HikariDataSource = DbListener.dataSource
-                            val rows: List<Forespoersel> = DbTestUtil.storedForespoersels(dataSource = dataSource)
-
-                            withClue("Forventet at det er en forespørsel i databasen") {
-                                rows shouldHaveSize 1
-                            }
-
                             val forespoersels = DbTestUtil.storedForespoersels(dataSource)
 
                             forespoersels shouldHaveSize 1

@@ -233,9 +233,9 @@ erDiagram
     Forespoersler ||--|{ Abonnementer: ""
     Personer ||--|{ Skattekort: ""
     Foedselsnummer }|--|| Personer: ""
-    Bestillinger |{--o| Bestillingsbatch: ""
+    Bestillinger |{--o| Bestillingsbatcher: ""
     Abonnementer ||--o| Utsendinger: ""
-    Personer ||--|| Abonnementer: ""
+    Personer ||--|{ Abonnementer: ""
     Forespoersler {
         string request
         string forsystem
@@ -247,6 +247,7 @@ erDiagram
     }
 
     Abonnementer {
+        string fnr
     }
 
     Skattekort {
@@ -257,7 +258,7 @@ erDiagram
         int aar
     }
 
-    Bestillingsbatch {
+    Bestillingsbatcher {
         string bestillingsreferanse UK
         int aar
     }

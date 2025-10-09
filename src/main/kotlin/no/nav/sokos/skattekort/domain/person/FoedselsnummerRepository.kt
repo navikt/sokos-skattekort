@@ -7,7 +7,7 @@ import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.util.SQLUtils.asMap
 
-object FoedseslsnummerRepository {
+object FoedselsnummerRepository {
     fun insert(
         tx: TransactionalSession,
         foedselsnummer: Foedselsnummer,
@@ -15,7 +15,7 @@ object FoedseslsnummerRepository {
         tx.updateAndReturnGeneratedKey(
             queryOf(
                 """
-                INSERT INTO person_fnr (person_id, gjelder_fom, fnr) 
+                INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr) 
                 VALUES (:personId, :gjelderFom, :fnr)
                 """.trimIndent(),
                 foedselsnummer.asMap(),
@@ -28,7 +28,7 @@ object FoedseslsnummerRepository {
     ): List<Foedselsnummer> =
         tx.list(
             queryOf(
-                """SELECT * from person_fnr 
+                """SELECT * from foedselsnumre 
                     WHERE person_id=:personIdent
                     ORDER BY gjelder_fom DESC
                 """.trimMargin(),

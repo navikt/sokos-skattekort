@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class BestillingBatch
     @OptIn(ExperimentalTime::class)
     constructor(
-        val id: BestillingBatchId? = null,
+        val id: BestillingsbatchId? = null,
         val status: String,
         val bestillingsreferanse: String,
         val oppdatert: Instant,
@@ -16,6 +16,6 @@ data class BestillingBatch
 
 @Serializable
 @JvmInline
-value class BestillingBatchId(
+value class BestillingsbatchId(
     val id: Long,
 )

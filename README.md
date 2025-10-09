@@ -282,9 +282,8 @@ SF --> U(Opprett Utsending for Fnr til gitt forsystem)
 ```mermaid
 erDiagram
     Forespoersler ||--|{ Abonnementer: ""
-    FNR ||--|{ Abonnementer: ""
-    FNR |{--|| Personer: ""
-    FNR ||--|{ Skattekort: ""
+    Personer |{--|| FNR: ""
+    FNR ||--}o Skattekort: ""
     Bestillinger |{--o| Bestillingsbatch: ""
     Abonnementer ||--o| Utsendinger: ""
 
@@ -294,6 +293,7 @@ erDiagram
     }
 
     Abonnementer {
+        string fnr
     }
 
     Skattekort {
@@ -303,10 +303,12 @@ erDiagram
 
     Bestillinger {
         string fnr UK
+        int aar
     }
 
     Bestillingsbatch {
-        string bestillingsreferanse
+        string bestillingsreferanse UK
+        int aar
     }
 
     Utsendinger {

@@ -56,7 +56,7 @@ class MottaBestillingEndToEndTest :
                             val skattekortforespoersler = DbTestUtil.storedSkattekortforespoersler(dataSource = dataSource)
 
                             skattekortforespoersler shouldHaveSize 1
-                            assertSoftly {
+                            assertSoftly("Det skal ha blitt opprettet et abonnement") {
                                 skattekortforespoersler
                                     .first()
                                     .person.foedselsnummer.fnr.value shouldBe fnr
@@ -67,7 +67,7 @@ class MottaBestillingEndToEndTest :
 
                             val utsendinger = DbTestUtil.storedUtsendingerAsText(dataSource)
 
-                            assertSoftly {
+                            assertSoftly("Det skal ha blitt opprettet en utsending") {
                                 utsendinger shouldHaveSize 1
                                 utsendinger.first() shouldBe "1" + "-" + fnr + "-" + Forsystem.OPPDRAGSSYSTEMET.kode + "-" + "1994"
                             }

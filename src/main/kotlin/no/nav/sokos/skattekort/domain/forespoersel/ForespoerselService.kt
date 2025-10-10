@@ -44,8 +44,6 @@ class ForespoerselService(
                     personListe = listOf(person),
                 )
 
-            println("forespoerselMap = $forespoerselMap")
-
             // Flyttes inn i Service/Repoklasse når denne finnes.
             session.batchPreparedNamedStatement(
                 """
@@ -67,9 +65,7 @@ class ForespoerselService(
                 },
             )
 
-            // Opprett bestilling for et subsett av personer i forespørselen som vi
-            // ikke har skattekort for fra før
-            // OG ikke har bestilling på fra før.
+            // Vi sier det er greit at vi har duplikate bestillinger
             BestillingRepository.insert(
                 tx = session,
                 bestilling =

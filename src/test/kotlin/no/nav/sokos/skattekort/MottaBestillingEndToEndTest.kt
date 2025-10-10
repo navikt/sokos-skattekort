@@ -29,7 +29,7 @@ class MottaBestillingEndToEndTest :
     FunSpec({
         extensions(DbListener, MQListener)
 
-        test("vi kan lagre en bestilling fra OS") {
+        test("vi kan håndtere en forespørsel fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 withMockOAuth2Server {
                     testApplication {

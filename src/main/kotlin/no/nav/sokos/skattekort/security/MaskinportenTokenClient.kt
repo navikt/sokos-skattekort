@@ -35,7 +35,7 @@ class MaskinportenTokenClient(
     private val mutex = Mutex()
     private val timeLimit = Duration.ofSeconds(60)
     private val tokenCache = AtomicReference<AccessToken?>(null)
-    private val maskinportenPropertoes: PropertiesConfig.MaskinportenPropertoes = PropertiesConfig.getMaskinportenProperties()
+    private val maskinportenProperties: PropertiesConfig.MaskinportenProperties = PropertiesConfig.getMaskinportenProperties()
 
     suspend fun getAccessToken(): String =
         mutex.withLock {
@@ -90,7 +90,7 @@ class MaskinportenTokenClient(
                 .issueTime(Date.from(Instant.now()))
                 .expirationTime(Date.from(Instant.now().plus(timeLimit)))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("scope", maskinportenPropertoes.scopes)
+                .claim("scope", maskinportenProperties.scopes)
                 .apply { additionalClaims.forEach { (key, value) -> claim(key, value) } }
                 .build(),
         ).apply {

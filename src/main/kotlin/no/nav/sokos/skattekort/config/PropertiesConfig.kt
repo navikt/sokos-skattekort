@@ -78,7 +78,7 @@ object PropertiesConfig {
             fraForSystemQueue = getOrEmpty("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
         )
 
-    fun getMaskinportenProperties(): MaskinportenPropertoes =
+    fun getMaskinportenProperties(): MaskinportenProperties =
         MaskinportenProperties(
             clientId = getOrEmpty("MASKINPORTEN_CLIENT_ID"),
             wellKnownUrl = getOrEmpty("MASKINPORTEN_WELL_KNOWN_URL"),

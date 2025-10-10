@@ -15,11 +15,13 @@ import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
+import no.nav.sokos.skattekort.config.httpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.domain.person.PersonService
+import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -40,11 +42,13 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     DatabaseConfig.migrate()
 
     dependencies {
+        provide { httpClient }
         provide { DatabaseConfig.dataSource }
         provide { MQConfig.connectionFactory }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
+        provide(MaskinportenTokenClient::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)

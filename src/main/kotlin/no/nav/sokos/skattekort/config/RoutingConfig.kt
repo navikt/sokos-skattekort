@@ -6,7 +6,7 @@ import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 
-import no.nav.sokos.skattekort.api.maksinportenTokenApi
+import no.nav.sokos.skattekort.api.maskinportenTokenApi
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 fun Application.routingConfig(

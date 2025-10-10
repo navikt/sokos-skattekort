@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.domain.forespoersel
 import kotlin.time.ExperimentalTime
 
 import com.zaxxer.hikari.HikariDataSource
-import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.domain.person.PersonService
 import no.nav.sokos.skattekort.domain.person.Personidentifikator
@@ -37,7 +36,7 @@ class ForespoerselService(
                     dataMottatt = message,
                 )
 
-            val abonnementId: List<Long?> =
+            val abonnementIdList: List<Long?> =
                 AbonnementRepository.insertBatchAndReturnKeys(
                     tx = session,
                     forespoerselId = forespoerselId,
@@ -45,21 +44,11 @@ class ForespoerselService(
                     personListe = listOf(person),
                 )
 
-            val fnr = (forespoerselMap[FNR] as Personidentifikator).value
-            val forsystem = (forespoerselMap[FORSYSTEM] as Forsystem).kode
-            val inntektsaar = forespoerselMap[INNTEKTSAAR] as Int
-
             println("forespoerselMap = $forespoerselMap")
 
-            // TODO bruke insertBatch
-            // Unngå duplikater? Eller la det være flere hvis forsystemene skulle ha bestilt flere ganger?
-            // Hvis vi beholder alle, kan vi se om et forsystem har bestilt flere ganger og kunne oppdage feilsituasjon
-            // Hvis vi sørger for at det bare er en, så skjuler vi den informasjonen.
-            // Det er trivielt å slette alle duplikate utsendinger når vi gjør en utsending.
             // Flyttes inn i Service/Repoklasse når denne finnes.
-            session.updateAndReturnGeneratedKey(
-                queryOf(
-                    """
+            session.batchPreparedNamedStatement(
+                """
                     |INSERT INTO utsendinger (
                     |abonnement_id,
                     |fnr,
@@ -67,14 +56,15 @@ class ForespoerselService(
                     |inntektsaar
                     |)
                     |VALUES (:abonnement_id, :fnr, :forsystem, :inntektsaar)
-                    """.trimMargin(),
+                """.trimMargin(),
+                abonnementIdList.map { abonnementId ->
                     mapOf(
-                        "abonnement_id" to abonnementId.first(),
+                        "abonnement_id" to abonnementId,
                         "fnr" to (forespoerselMap[FNR] as Personidentifikator).value,
                         "forsystem" to (forespoerselMap[FORSYSTEM] as Forsystem).kode,
                         "inntektsaar" to forespoerselMap[INNTEKTSAAR],
-                    ),
-                ),
+                    )
+                },
             )
 
             // Opprett bestilling for et subsett av personer i forespørselen som vi

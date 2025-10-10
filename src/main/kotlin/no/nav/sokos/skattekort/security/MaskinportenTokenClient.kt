@@ -80,7 +80,7 @@ class MaskinportenTokenClient(
         SignedJWT(
             JWSHeader
                 .Builder(JWSAlgorithm.RS256)
-                .keyID(maskinportenPropertoes.rsaKey?.keyID)
+                .keyID(maskinportenProperties.rsaKey?.keyID)
                 .type(JOSEObjectType.JWT)
                 .build(),
             JWTClaimsSet

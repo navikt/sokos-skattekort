@@ -8,7 +8,7 @@ import io.ktor.server.routing.route
 
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
-fun Route.maksinportenTokenApi(maskinportenTokenClient: MaskinportenTokenClient) {
+fun Route.maskinportenTokenApi(maskinportenTokenClient: MaskinportenTokenClient) {
     route("api/v1") {
         get("maskinportToken") {
             call.respond(HttpStatusCode.OK, maskinportenTokenClient.getAccessToken())

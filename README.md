@@ -231,7 +231,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    B[Plukk ut n Bestillinger] --> SKD(Få en bestillingsreferanse fra SKD) --> BB(Opprett Bestillingsbatch)
+    B["Plukk ut n Bestillinger (unike på fnr/inntektsår)"] --> BB(Opprett Bestillingsbatch og få bestillingsreferanse fra SKD) --> OB(Oppdater Bestillinger med Bestillingsbatchid)
 ```
 
 ## Prosess 3: Hent skattekort fra skatteetaten

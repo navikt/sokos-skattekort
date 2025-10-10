@@ -53,16 +53,16 @@ class MottaBestillingEndToEndTest :
                                 forespoersels.first().dataMottatt shouldBe "OS;1994;$fnr"
                             }
 
-                            val skattekortforespoersler = DbTestUtil.storedSkattekortforespoersler(dataSource = dataSource)
+                            val abonnementList = DbTestUtil.storedAbonnements(dataSource = dataSource)
 
-                            skattekortforespoersler shouldHaveSize 1
+                            abonnementList shouldHaveSize 1
                             assertSoftly("Det skal ha blitt opprettet et abonnement") {
-                                skattekortforespoersler
+                                abonnementList
                                     .first()
                                     .person.foedselsnummer.fnr.value shouldBe fnr
-                                skattekortforespoersler.first().inntektsaar shouldBe 1994
-                                skattekortforespoersler.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                                skattekortforespoersler.first().inntektsaar shouldBe 1994
+                                abonnementList.first().inntektsaar shouldBe 1994
+                                abonnementList.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                                abonnementList.first().inntektsaar shouldBe 1994
                             }
 
                             val utsendinger = DbTestUtil.storedUtsendingerAsText(dataSource)

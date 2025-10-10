@@ -179,7 +179,7 @@ object DbTestUtil {
             )
         }
 
-    fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Abonnement> =
+    fun storedAbonnements(dataSource: HikariDataSource): List<Abonnement> =
         dataSource.transaction { session ->
             AbonnementRepository.getAllAbonnementer(session)
         }

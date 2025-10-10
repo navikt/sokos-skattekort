@@ -94,7 +94,7 @@ class MaskinportenTokenClient(
                 .apply { additionalClaims.forEach { (key, value) -> claim(key, value) } }
                 .build(),
         ).apply {
-            sign(RSASSASigner(maskinportenPropertoes.rsaKey?.toRSAPrivateKey()))
+            sign(RSASSASigner(maskinportenProperties.rsaKey?.toRSAPrivateKey()))
         }.serialize()
 
     private fun getSystembrukerClaim(orgNr: String) =

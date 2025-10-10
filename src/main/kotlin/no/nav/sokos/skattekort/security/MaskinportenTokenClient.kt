@@ -85,7 +85,7 @@ class MaskinportenTokenClient(
                 .build(),
             JWTClaimsSet
                 .Builder()
-                .issuer(maskinportenPropertoes.clientId)
+                .issuer(maskinportenProperties.clientId)
                 .audience(audience)
                 .issueTime(Date.from(Instant.now()))
                 .expirationTime(Date.from(Instant.now().plus(timeLimit)))

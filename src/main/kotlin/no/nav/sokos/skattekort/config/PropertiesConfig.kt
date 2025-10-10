@@ -84,7 +84,7 @@ object PropertiesConfig {
             wellKnownUrl = getOrEmpty("MASKINPORTEN_WELL_KNOWN_URL"),
             rsaKey = RSAKey.parse(getOrEmpty("MASKINPORTEN_CLIENT_JWK")),
             scopes = getOrEmpty("MASKINPORTEN_SCOPES"),
-            systemuserOrg = "312978083",
+            systemBrukerClaim = getOrEmpty("MASKINPORTEN_SYSTEM_BRUKER_CLAIM"),
         )
 
     data class AzureAdProperties(
@@ -130,7 +130,7 @@ object PropertiesConfig {
         val wellKnownUrl: String,
         val rsaKey: RSAKey?,
         val scopes: String,
-        val systemuserOrg: String,
+        val systemBrukerClaim: String,
     )
 
     enum class Environment {

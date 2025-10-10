@@ -50,8 +50,8 @@ class MaskinportenTokenClient(
         }
 
     private suspend fun getMaskinportenToken(): AccessToken {
-        val openIdConfiguration = client.get(maskinportenPropertoes.wellKnownUrl).body<OpenIdConfiguration>()
-        val jwtAssertion = getJwtAssertion(openIdConfiguration.issuer, getSystembrukerClaim(maskinportenPropertoes.systemBrukerClaim))
+        val openIdConfiguration = client.get(maskinportenProperties.wellKnownUrl).body<OpenIdConfiguration>()
+        val jwtAssertion = getJwtAssertion(openIdConfiguration.issuer, getSystembrukerClaim(maskinportenProperties.systemBrukerClaim))
         val response =
             client
                 .submitForm(

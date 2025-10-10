@@ -2,8 +2,12 @@ package no.nav.sokos.skattekort.config
 
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
+import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
+
+import no.nav.sokos.skattekort.api.maskinportenTokenApi
+import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 fun Application.routingConfig(
     useAuthentication: Boolean,
@@ -11,8 +15,11 @@ fun Application.routingConfig(
 ) {
     routing {
         internalNaisRoutes(applicationState)
-//        authenticate(useAuthentication, AUTHENTICATION_NAME) {
-//        }
+        // TODO: Midlertidig kode for testing. Må ikke puttes i produksjon!
+        authenticate(useAuthentication, AUTHENTICATION_NAME) {
+            val maskinportenTokenClient: MaskinportenTokenClient by dependencies
+            maskinportenTokenApi(maskinportenTokenClient)
+        }
     }
 }
 

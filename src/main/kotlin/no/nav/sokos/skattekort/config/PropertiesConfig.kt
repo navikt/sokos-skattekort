@@ -125,7 +125,7 @@ object PropertiesConfig {
         val fraForSystemQueue: String,
     )
 
-    data class MaskinportenPropertoes(
+    data class MaskinportenProperties(
         val clientId: String,
         val wellKnownUrl: String,
         val rsaKey: RSAKey?,

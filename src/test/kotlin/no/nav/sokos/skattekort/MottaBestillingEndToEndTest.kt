@@ -64,6 +64,13 @@ class MottaBestillingEndToEndTest :
                                 skattekortforespoersler.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
                                 skattekortforespoersler.first().inntektsaar shouldBe 1994
                             }
+
+                            val utsendinger = DbTestUtil.storedUtsendingerAsText(dataSource)
+
+                            assertSoftly {
+                                utsendinger shouldHaveSize 1
+                                utsendinger.first() shouldBe "1" + "-" + fnr + "-" + Forsystem.OPPDRAGSSYSTEMET.kode + "-" + "1994"
+                            }
                         }
                     }
                     JmsTestUtil.assertQueueIsEmpty(bestillingsQueue)

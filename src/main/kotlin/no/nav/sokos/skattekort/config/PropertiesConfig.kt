@@ -79,7 +79,7 @@ object PropertiesConfig {
         )
 
     fun getMaskinportenProperties(): MaskinportenPropertoes =
-        MaskinportenPropertoes(
+        MaskinportenProperties(
             clientId = getOrEmpty("MASKINPORTEN_CLIENT_ID"),
             wellKnownUrl = getOrEmpty("MASKINPORTEN_WELL_KNOWN_URL"),
             rsaKey = RSAKey.parse(getOrEmpty("MASKINPORTEN_CLIENT_JWK")),

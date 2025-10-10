@@ -15,6 +15,26 @@ import no.nav.sokos.skattekort.domain.person.PersonId
 import no.nav.sokos.skattekort.domain.person.Personidentifikator
 
 object AbonnementRepository {
+    fun insertBatchAndReturnKeys(
+        tx: TransactionalSession,
+        forespoerselId: Long,
+        inntektsaar: Int,
+        personListe: List<Person>,
+    ): List<Long> =
+        personListe.map { person ->
+            tx.updateAndReturnGeneratedKey(
+                queryOf(
+                    """
+                |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
+                |VALUES (?, ?, ?)
+                    """.trimMargin(),
+                    forespoerselId,
+                    person.id!!.value,
+                    inntektsaar,
+                ),
+            ) as Long
+        }
+
     fun insertBatch(
         tx: TransactionalSession,
         forespoerselId: Long,

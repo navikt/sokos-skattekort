@@ -15,10 +15,10 @@ fun Application.routingConfig(
 ) {
     routing {
         internalNaisRoutes(applicationState)
-        //TODO: Midlertidig kode for testing. Må ikke puttes i produksjon!
+        // TODO: Midlertidig kode for testing. Må ikke puttes i produksjon!
         authenticate(useAuthentication, AUTHENTICATION_NAME) {
             val maskinportenTokenClient: MaskinportenTokenClient by dependencies
-            maksinportenTokenApi(maskinportenTokenClient)
+            maskinportenTokenApi(maskinportenTokenClient)
         }
     }
 }

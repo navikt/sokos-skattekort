@@ -37,6 +37,7 @@ repositories {
 }
 
 val ktorVersion = "3.2.2"
+val nimbusVersion = "10.4.1"
 val logbackVersion = "1.5.18"
 val logstashVersion = "8.1"
 val micrometerVersion = "1.15.2"
@@ -71,8 +72,8 @@ dependencies {
     implementation("io.ktor:ktor-client-apache-jvm:$ktorVersion")
 
     // Security
-    implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktorVersion")
+    implementation("com.nimbusds:nimbus-jose-jwt:$nimbusVersion")
 
     // Database
     implementation("com.zaxxer:HikariCP:$hikariVersion")

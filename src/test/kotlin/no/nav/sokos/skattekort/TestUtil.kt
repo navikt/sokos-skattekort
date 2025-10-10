@@ -6,6 +6,7 @@ import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.testing.TestApplicationBuilder
+import io.mockk.mockk
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
@@ -13,6 +14,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 object TestUtil {
     fun TestApplicationBuilder.configureTestEnvironment() {
@@ -47,6 +49,7 @@ object TestUtil {
 
         application {
             dependencies {
+                provide { mockk<MaskinportenTokenClient>() }
                 provide<ConnectionFactory> { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)

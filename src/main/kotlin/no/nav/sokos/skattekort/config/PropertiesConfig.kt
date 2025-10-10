@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.config
 
 import java.io.File
 
+import com.nimbusds.jose.jwk.RSAKey
 import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.HoconApplicationConfig
@@ -77,6 +78,15 @@ object PropertiesConfig {
             fraForSystemQueue = getOrEmpty("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
         )
 
+    fun getMaskinportenProperties(): MaskinportenProperties =
+        MaskinportenProperties(
+            clientId = getOrEmpty("MASKINPORTEN_CLIENT_ID"),
+            wellKnownUrl = getOrEmpty("MASKINPORTEN_WELL_KNOWN_URL"),
+            rsaKey = RSAKey.parse(getOrEmpty("MASKINPORTEN_CLIENT_JWK")),
+            scopes = getOrEmpty("MASKINPORTEN_SCOPES"),
+            systemBrukerClaim = getOrEmpty("MASKINPORTEN_SYSTEM_BRUKER_CLAIM"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -113,6 +123,14 @@ object PropertiesConfig {
         val servicePassword: String,
         val userAuth: Boolean = true,
         val fraForSystemQueue: String,
+    )
+
+    data class MaskinportenProperties(
+        val clientId: String,
+        val wellKnownUrl: String,
+        val rsaKey: RSAKey?,
+        val scopes: String,
+        val systemBrukerClaim: String,
     )
 
     enum class Environment {

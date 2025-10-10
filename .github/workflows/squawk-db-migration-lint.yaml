@@ -1,0 +1,16 @@
+name: Squawk DB migration lint
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/main/resources/db/migration/*.sql'
+
+jobs:
+  squawk-db-migration-lint:
+    permissions:
+      contents: read
+      pull-requests: write
+    name: Run DB migration lint
+    uses: navikt/mob-gha-workflows/.github/workflows/squawk-migration-lint.yaml@main
+

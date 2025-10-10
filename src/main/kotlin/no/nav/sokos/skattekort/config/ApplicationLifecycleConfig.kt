@@ -7,25 +7,20 @@ import io.ktor.server.application.ServerReady
 import io.ktor.server.application.log
 
 fun Application.applicationLifecycleConfig(applicationState: ApplicationState) {
-    monitor.subscribe(ApplicationStarted) { application ->
+    monitor.subscribe(ApplicationStarted) {
         applicationState.alive = true
-
-        application.log.info("Server is started")
+        it.log.info("Application is started")
     }
 
-    monitor.subscribe(ServerReady) { application ->
+    monitor.subscribe(ServerReady) {
         applicationState.ready = true
-
-        application.log.info("Server is ready")
+        it.log.info("Server is ready")
     }
 
-    monitor.subscribe(ApplicationStopped) { application ->
+    monitor.subscribe(ApplicationStopped) {
+        applicationState.alive = false
         applicationState.ready = false
-
-        application.log.info("Server is stopped")
-        // Release resources and unsubscribe from events
-        application.monitor.unsubscribe(ApplicationStarted) {}
-        application.monitor.unsubscribe(ApplicationStopped) {}
+        it.log.info("Application is stopped")
     }
 }
 

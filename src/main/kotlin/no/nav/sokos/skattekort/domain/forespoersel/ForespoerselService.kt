@@ -34,8 +34,8 @@ class ForespoerselService(
                     dataMottatt = message,
                 )
 
-            val abonnementIdList: List<Long?> =
-                AbonnementRepository.insertBatchAndReturnKeys(
+            val abonnementIdList: List<Int> =
+                AbonnementRepository.insertBatch(
                     tx = session,
                     forespoerselId = forespoerselId,
                     inntektsaar = abonnement.inntektsaar,

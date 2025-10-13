@@ -276,7 +276,9 @@ flowchart TD
     S -->|Ja| S2[Status: Har Skattekort]
     A -->|Nei| S3[Status: Aldri forespurt]
     BB -->|Nei| B{Finnes Bestilling?} -->|Ja| S5[Status: Venter på at Batchtoget skal gå]
-    B -->|Nei| S4["Feil: Vi har ikke skattekort og heller ikke planlagt å bestille det ¯\_(ツ)_/¯"]
+    B -->|Nei| S4["Feil som må håndteres: 
+                    Vi har et abonnnement, men har ikke skattekort
+og heller ikke planlagt å bestille det"]
 
 ```
 

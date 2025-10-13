@@ -179,8 +179,16 @@ object DbTestUtil {
             )
         }
 
-    fun storedSkattekortforespoersler(dataSource: HikariDataSource): List<Abonnement> =
+    fun storedAbonnements(dataSource: HikariDataSource): List<Abonnement> =
         dataSource.transaction { session ->
             AbonnementRepository.getAllAbonnementer(session)
+        }
+
+    fun storedUtsendingerAsText(dataSource: HikariDataSource): List<String> =
+        dataSource.transaction { session ->
+            session.list(
+                queryOf("SELECT concat(abonnement_id, '-', fnr, '-', forsystem, '-', inntektsaar) as s FROM utsendinger"),
+                { row: Row -> row.string("s") },
+            )
         }
 }

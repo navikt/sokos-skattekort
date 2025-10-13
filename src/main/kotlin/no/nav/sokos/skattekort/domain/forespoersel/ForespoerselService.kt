@@ -11,9 +11,6 @@ import no.nav.sokos.skattekort.domain.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private const val FORESPOERSEL_DELIMITER = ";"
-private const val FORSYSTEM = "SKATTEKORT"
-private const val INNTEKTSAAR = "INNTEKTSAAR"
-private const val FNR = "FNR"
 
 class ForespoerselService(
     private val dataSource: HikariDataSource,
@@ -22,49 +19,81 @@ class ForespoerselService(
     @OptIn(ExperimentalTime::class)
     fun taImotForespoersel(message: String) {
         dataSource.transaction { session ->
-            val forespoerselMap = parseForespoersel(message)
+            val abonnementList = parseForespoersel(message)
+            val abonnement = abonnementList.first()
             val person =
                 personService.findOrCreatePersonByFnr(
-                    fnr = forespoerselMap[FNR] as Personidentifikator,
+                    fnr = abonnement.person.foedselsnummer.fnr,
                     informasjon = "Mottatt forespørsel på skattekort",
                 )
 
             val forespoerselId =
                 ForespoerselRepository.insert(
                     tx = session,
-                    forsystem = forespoerselMap[FORSYSTEM] as Forsystem,
+                    forsystem = abonnement.forespoersel.forsystem,
                     dataMottatt = message,
                 )
-            AbonnementRepository.insertBatch(
-                tx = session,
-                forespoerselId = forespoerselId,
-                inntektsaar = forespoerselMap[INNTEKTSAAR] as Int,
-                personListe = listOf(person),
+
+            val abonnementIdList: List<Int> =
+                AbonnementRepository.insertBatch(
+                    tx = session,
+                    forespoerselId = forespoerselId,
+                    inntektsaar = abonnement.inntektsaar,
+                    personListe = listOf(person),
+                )
+
+            // Flyttes inn i Service/Repoklasse når denne finnes.
+            session.batchPreparedNamedStatement(
+                """
+                    |INSERT INTO utsendinger (
+                    |abonnement_id,
+                    |fnr,
+                    |forsystem,
+                    |inntektsaar
+                    |)
+                    |VALUES (:abonnement_id, :fnr, :forsystem, :inntektsaar)
+                """.trimMargin(),
+                abonnementIdList.map { abonnementId ->
+                    mapOf(
+                        "abonnement_id" to abonnementId,
+                        "fnr" to abonnement.person.foedselsnummer.fnr.value,
+                        "forsystem" to abonnement.forespoersel.forsystem.kode,
+                        "inntektsaar" to abonnement.inntektsaar,
+                    )
+                },
             )
 
+            // Vi sier det er greit at vi har duplikate bestillinger
             BestillingRepository.insert(
                 tx = session,
                 bestilling =
                     Bestilling(
                         personId = person.id!!,
                         fnr = person.foedselsnummer.fnr,
-                        inntektsaar = forespoerselMap[INNTEKTSAAR] as Int,
+                        inntektsaar = abonnement.inntektsaar,
                     ),
             )
         }
     }
 
-    private fun parseForespoersel(message: String): Map<String, Any> {
+    @OptIn(ExperimentalTime::class)
+    private fun parseForespoersel(message: String): List<Abonnement> {
         val parts = message.split(FORESPOERSEL_DELIMITER)
         require(parts.size == 3) { "Invalid message format: $message" }
         val forsystem = Forsystem.fromValue(parts[0])
         val inntektsaar = Integer.parseInt(parts[1])
         val fnrString = parts[2]
-
-        return mapOf(
-            FORSYSTEM to forsystem,
-            INNTEKTSAAR to inntektsaar,
-            FNR to Personidentifikator(fnrString),
+        val forespoersel = Forespoersel(forsystem = forsystem, dataMottatt = message)
+        return listOf(
+            Abonnement(
+                forespoersel = forespoersel,
+                inntektsaar = inntektsaar,
+                person =
+                    personService.findOrCreatePersonByFnr(
+                        fnr = Personidentifikator(fnrString),
+                        informasjon = "Mottatt forespørsel på skattekort",
+                    ),
+            ),
         )
     }
 }

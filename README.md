@@ -216,17 +216,73 @@ Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) fi
 - Funksjonelle interne henvendelser kan sendes via Slack i kanalen [#utbetaling](https://nav-it.slack.com/archives/CKZADNFBP)
 - Utvikler-til-utviklerkontakt internt i NAV skjer på Slack i kanalen TBD
 
-```mermaid
-
-```
+## Prosess 1: Motta forespørsler og opprette Personer, Abonnementer, Bestillinger og Utsendinger
 
 ```mermaid
 flowchart TD
-    A[Mottatt forespørsel på kø] --> F(Opprett Forespørsel)
+    A[Mottatt forespørsel på kø] --> F(Lagre Forespørsel)
+    A --> P(Hent eller opprett Person for hvert fnr)
     A --> SF(Opprett Abonnement for hvert fnr)
-    SF -->|Mangler skattekort, OG det finnes ikke bestilling| B(Opprett Bestilling for fnr)
+    SF -->|Mangler skattekort| B(Opprett Bestilling for fnr)
     SF --> U(Opprett Utsending for Fnr til gitt forsystem)
 ```
+
+## Prosess 2: Bestille skattekort fra skatteetaten
+
+```mermaid
+flowchart TD
+    B["Plukk ut n Bestillinger (unike på fnr/inntektsår)"] --> BB(Opprett Bestillingsbatch og få bestillingsreferanse fra SKD) --> OB(Oppdater Bestillinger med Bestillingsbatchid)
+```
+
+## Prosess 3: Hent skattekort fra skatteetaten
+
+```mermaid
+flowchart TD
+    BB[Ta tak i en passende Bestillingsbatch] --> HS(Kall HentSkattekort hos Skatteetaten for aktuell bestillingsreferanse)
+    HS -->|For hver Bestilling| SK{Har vi fått skattekort?} -->|Ja| L(Lagre Skattekort i databasen) --> SLETT(Slett bestillinger som vi har fått skattekort for)
+    SK -->|Nei| RESET(Slett bestillingsbatchid fra bestilling)
+    SK -->|Feil FNR| FLAGG(Flagg FNR) --> SKRIK(Rop høyt et sted så noen hører) --> SLETT2(Slett Bestillinger, Utsendinger og Abonnementer som feilet)
+```
+
+## Prosess 4: Send skattekort til Forsystem
+
+```mermaid
+flowchart TD
+    U(Hent utsendinger som skal til Forsystem) -->|For hvert unike fnr| S(Hent de skattekortene vi har)
+    S --> SO(Send skattekort til Forsystem) --> SLETT(Slett Utsendinger som vi har sendt Skattekort for)
+```
+
+## Prosess 5: Motta oppdaterte skattekort
+
+```mermaid
+flowchart TD
+    SKD(Sjekk om SKD har oppdatert noen skattekort) --> L(Lagre Skattekort i databasen)
+    L --> A(Sjekk hvilke Abonnementer som finnes for Fnr)
+    A --> U(Opprett Utsending til alle forsystemer som abonnerer på fnr)
+```
+
+## Prosess 7: Slette gamle data
+
+1. Delete from skattekort where inntektsaar < currentYear - 1
+2. Delete from abonnementer where inntektsaar < currentYear - 1
+3. Delete from person where not exists (select 1 from abonnementer where abonnementer.fnr = person.fnr)
+4. etc
+
+## Prosess 8: Sjekk bestillingsstatus for FNR og inntektsår
+
+```mermaid
+flowchart TD
+    S{Finnes Skattekort?} -->|Nei| A{Finnes Abonnement} -->|Ja| BB{Finnes bestillingsbatch} -->|Ja| S1[Status: Venter på svar fra Skatteetaten]
+    S -->|Ja| S2[Status: Har Skattekort]
+    A -->|Nei| S3[Status: Aldri forespurt]
+    BB -->|Nei| B{Finnes Bestilling?} -->|Ja| S5[Status: Venter på at Batchtoget skal gå]
+    B -->|Nei| S4["Feil som må håndteres: 
+                    Vi har et abonnnement, men har ikke skattekort
+og heller ikke planlagt å bestille det"]
+
+```
+
+## Relasjonsmodell
 
 ```mermaid
 erDiagram
@@ -255,17 +311,18 @@ erDiagram
 
     Bestillinger {
         string fnr UK
-        int aar
+        int inntektsaar
     }
 
     Bestillingsbatcher {
         string bestillingsreferanse UK
-        int aar
+        int inntektsaar
     }
 
     Utsendinger {
         string fnr
         string forsystem
+        int inntektsaar
     }
 ```
 

@@ -19,7 +19,6 @@ import io.ktor.server.testing.testApplication
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.TestUtil.configureTestApplication
 import no.nav.sokos.skattekort.TestUtil.configureTestEnvironment
-import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
@@ -37,8 +36,8 @@ class MottaBestillingEndToEndTest :
                         configureTestApplication()
                         startApplication()
 
-                        // JmsTestUtil.assertQueueIsEmpty(bestillingsQueue())
-                        DbTestUtil.loadDataSet("basicendtoendtest/basicdata.sql", DatabaseConfig.dataSource)
+                        // Last inn SQL testdata
+                        DbListener.loadDataSet("basicendtoendtest/basicdata.sql")
 
                         val fnr = "15467834260"
                         JmsTestUtil.sendMessage("OS;1994;$fnr")

@@ -21,14 +21,14 @@ object UtsendingRepository {
             .batchPreparedStatement(
                 """
                 INSERT INTO utsendinger (abonnement_id, fnr, inntektsaar, forsystem)
-                VALUES (?, ?, ?, ?)
+                VALUES (:abonnementId, :fnr, :inntektsaar, :forsystem)
                 """.trimIndent(),
                 utsendingList.map {
                     listOf(
-                        it.abonnementId.value,
-                        it.fnr.value,
-                        it.inntektsaar,
-                        it.forsystem.kode,
+                        "abonnementId" to it.abonnementId.value,
+                        "fnr" to it.fnr.value,
+                        "innteksaar" to it.inntektsaar,
+                        "forsystem" to it.forsystem.kode,
                     )
                 },
             ).orEmpty()
@@ -40,22 +40,15 @@ object UtsendingRepository {
         tx.execute(
             queryOf(
                 """
-                DELETE FROM utsendinger WHERE id = ?
+                DELETE FROM utsendinger WHERE id = :id
                 """.trimIndent(),
-                id.value,
+                listOf("id" to id.value),
             ),
         )
     }
 
-    fun getAllUtsendinger(session: Session): List<Utsending> {
-        val sql =
-            StringBuilder(
-                """
-                SELECT id, abonnement_id, fnr, inntektsaar, forsystem, opprettet
-                FROM utsendinger
-                """.trimIndent(),
-            )
-        return session.list(
+    fun getAllUtsendinger(session: Session): List<Utsending> =
+        session.list(
             queryOf(
                 """
                 SELECT id, abonnement_id, fnr, inntektsaar, forsystem, opprettet
@@ -64,7 +57,6 @@ object UtsendingRepository {
             ),
             extractor = mapToUtsending,
         )
-    }
 
     @OptIn(ExperimentalTime::class)
     private val mapToUtsending: (Row) -> Utsending = { row ->

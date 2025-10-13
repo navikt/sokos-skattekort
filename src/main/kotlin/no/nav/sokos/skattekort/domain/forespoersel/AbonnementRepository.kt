@@ -26,11 +26,13 @@ object AbonnementRepository {
                 queryOf(
                     """
                 |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
-                |VALUES (?, ?, ?)
+                |VALUES (:forespoersel_id, :person_id, :inntektsaar)
                     """.trimMargin(),
-                    forespoerselId,
-                    person.id!!.value,
-                    inntektsaar,
+                    mapOf(
+                        "forespoersel_id" to forespoerselId,
+                        "person_id" to person.id!!.value,
+                        "inntektsaar" to inntektsaar,
+                    ),
                 ),
             ) as Long
         }

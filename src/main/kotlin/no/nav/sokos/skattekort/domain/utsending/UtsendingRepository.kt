@@ -1,16 +1,8 @@
 package no.nav.sokos.skattekort.domain.utsending
 
-import kotlin.time.ExperimentalTime
-import kotlin.time.toKotlinInstant
-
-import kotliquery.Row
 import kotliquery.Session
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-
-import no.nav.sokos.skattekort.domain.forespoersel.AbonnementId
-import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
-import no.nav.sokos.skattekort.domain.person.Personidentifikator
 
 object UtsendingRepository {
     fun insertBatch(
@@ -55,18 +47,6 @@ object UtsendingRepository {
                 FROM utsendinger
                 """.trimIndent(),
             ),
-            extractor = mapToUtsending,
+            extractor = { row -> Utsending(row) },
         )
-
-    @OptIn(ExperimentalTime::class)
-    private val mapToUtsending: (Row) -> Utsending = { row ->
-        Utsending(
-            id = row.long("id")?.let { UtsendingId(it) },
-            abonnementId = AbonnementId(row.long("abonnement_id")),
-            fnr = Personidentifikator(row.string("fnr")),
-            inntektsaar = row.int("inntektsaar"),
-            forsystem = Forsystem.fromValue(row.string("forsystem")),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
-        )
-    }
 }

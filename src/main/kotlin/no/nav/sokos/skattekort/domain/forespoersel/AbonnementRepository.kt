@@ -20,7 +20,7 @@ object AbonnementRepository {
         forespoerselId: Long,
         inntektsaar: Int,
         personListe: List<Person>,
-    ) {
+    ): List<Int> =
         tx.batchPreparedNamedStatement(
             """
             |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
@@ -34,7 +34,6 @@ object AbonnementRepository {
                 )
             },
         )
-    }
 
     fun getAllAbonnementer(tx: TransactionalSession): List<Abonnement> =
         tx.list(

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSkattekortBestilling xmlns="urn:no:nav:eskattekort:bestilling:v1">
+    <bestiller>ARENA</bestiller>
+    <inntektsaar>2017</inntektsaar>
+    <brukere>
+        <!--1 to 300000 repetitions:-->
+        <fnr>12345678901</fnr>
+        <fnr>12345678902</fnr>
+        <fnr>12345678903</fnr>
+        <fnr>12345678904</fnr>
+    </brukere>
+    <antallForsok>0</antallForsok>
+</eSkattekortBestilling>

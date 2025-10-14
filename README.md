@@ -118,80 +118,8 @@ TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
 
 ### Maskinporten og systembrukere
 
-```mermaid
-sequenceDiagram
-    Sokos-skattekort-MPClient ->>+ Maskinporten: Jeg vil ha et maskinportentoken med systembruker 312978083 på
-    Maskinporten ->> Sokos-skattekort-MPClient: Her er en jwt-token, med systembruker også!
-    Sokos-skattekort-MPClient ->> Skatteetaten: Ping? Her er maskinporten-token
-    Skatteetaten ->> Sokos-skattekort-MPClient: Pong
-```
-
-```mermaid
-block-beta
-columns 7
-nais space:2 mpclient["maskinporten#dash;client"] space:2 space
-space:7
-mpa1["Maskinporten admin 1"] space:2 system space:2 sr[("Digdir systemregister")]
-space:7
-mpa2["Maskinporten admin 2"] space:2 su["System user"] space:2 space
-space:7
-user["Adm.dir. for org"] space:5
-
-nais -- "configures" --> mpclient
-mpa1 -- "altinn#colon;authentication#sol;systemregister.write" --> system
-mpa2 -- "altinn#colon;authentication#sol;systemuser.request.write" --> su
-system --> sr
-
-system --> mpclient
-su --> system
-user --> su
-```
-
-```kotlin
-private fun createJwtAssertion(issuer: String): String {
-    val jwt =
-        JWT
-            .create()
-            .withIssuer(maskinportenPropertoes.clientId)
-            .withAudience(issuer)
-            .withClaim("scope", maskinportenPropertoes.scopes)
-            .withExpiresAt(
-                Date(
-                    Instant
-                        .now()
-                        .plus(timeLimit)
-                        .toEpochMilli(),
-                ),
-            ).withIssuedAt(Date())
-            .withKeyId(maskinportenPropertoes.rsaKey?.keyID)
-            .withJWTId(UUID.randomUUID().toString())
-
-    //Magic is here
-    val additionalClaims = getSystembrukerClaim(maskinportenPropertoes.systemuserOrg)
-
-    additionalClaims.forEach { (key, value) ->
-        jwt.withClaim(key, value)
-    }
-    //Magic ends
-
-    return jwt.sign(Algorithm.RSA256(null, maskinportenPropertoes.rsaKey?.toRSAPrivateKey()))
-}
-fun getSystembrukerClaim(orgNr: String) =
-    mapOf(
-        "authorization_details" to
-            listOf(
-                mapOf(
-                    "type" to "urn:altinn:systemuser",
-                    "systemuser_org" to
-                        mapOf(
-                            "authority" to "iso6523-actorid-upis",
-                            "ID" to "0192:$orgNr",
-                        ),
-                    //"externalRef" to "$systemuserRef" hvis det finnes flere systembrukere for systemet (utestet)
-                ),
-            ),
-    )
-```
+Systembrukere er objekter som eies på NAV-nivå, og føringer/ideer fra NAV sentralt har fått oss til å håndtere systembrukere
+som [delt konfigurasjon](https://confluence.adeo.no/x/Av8ML) i seksjon utbetaling.
 
 #### Morsomme lenker
 

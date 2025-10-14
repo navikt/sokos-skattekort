@@ -121,29 +121,6 @@ TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
 Systembrukere er objekter som eies på NAV-nivå, og føringer/ideer fra NAV sentralt har fått oss til å håndtere systembrukere
 som [delt konfigurasjon](https://confluence.adeo.no/x/Av8ML) i seksjon utbetaling.
 
-#### Morsomme lenker
-
-System som er opprettet:
-https://platform.tt02.altinn.no/authentication/api/v1/systemregister/889640782_nav_okonomi (edited)
-
-Denne er offentlig tilgjengelig, åpent for alle, men viser ikke uuid til tilknyttede maskinporten-klienter
-
-Opprette systembruker som daglig leder: https://authn.ui.tt02.altinn.no/authfront/ui/auth/creation
-
-Dokumentasjon for å lage system: https://docs.altinn.studio/nb/api/authentication/systemuserapi/systemregister/create/
-
-Dokumentasjon for systembrukere: https://docs.altinn.studio/nb/api/authentication/systemuserapi/systemuser/
-
-Hente systembrukere for et system: https://docs.altinn.studio/nb/api/authentication/systemuserapi/systemuser/external/#list-opp-alle-systembrukere-for-en-system
-
-Systembruker-dok fra skatteetaten: https://skatteetaten.github.io/api-dokumentasjon/om/systembruker
-
-
-
-Orgnr for systembruker i test:
- - Orgnr: 312978083
- - Fnr: 07916598100 (Daglig leder, brukes for å godkjenne)
-
 ### Statemaskin for bestillinger
 
 #### bestilling

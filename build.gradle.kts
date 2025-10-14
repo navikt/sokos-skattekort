@@ -105,6 +105,9 @@ dependencies {
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")
 
+    // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
+    implementation("org.apache.commons:commons-lang3:3.18.0")
+
     // Test
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
@@ -115,6 +118,8 @@ dependencies {
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
+
+    testImplementation("org.xmlunit:xmlunit-matchers:2.10.4")
 }
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5

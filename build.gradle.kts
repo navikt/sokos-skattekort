@@ -118,8 +118,6 @@ dependencies {
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
-
-    testImplementation("org.xmlunit:xmlunit-matchers:2.10.4")
 }
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5

@@ -116,6 +116,11 @@ Ingen
 
 TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
 
+### Maskinporten og systembrukere
+
+Systembrukere er objekter som eies på NAV-nivå, og føringer/ideer fra NAV sentralt har fått oss til å håndtere systembrukere
+som [delt konfigurasjon](https://confluence.adeo.no/x/Av8ML) i seksjon utbetaling.
+
 ### Statemaskin for bestillinger
 
 #### bestilling

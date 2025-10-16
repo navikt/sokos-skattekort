@@ -15,24 +15,24 @@ import no.nav.sokos.skattekort.domain.person.PersonId
 import no.nav.sokos.skattekort.domain.person.Personidentifikator
 
 object AbonnementRepository {
-    fun insertBatch(
+    fun insert(
         tx: TransactionalSession,
         forespoerselId: Long,
         inntektsaar: Int,
-        personListe: List<Person>,
-    ): List<Int> =
-        tx.batchPreparedNamedStatement(
-            """
-            |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
-            |VALUES (:forespoersel_id, :person_id, :inntektsaar)
-            """.trimMargin(),
-            personListe.map { person ->
+        personId: Long,
+    ): Long? =
+        tx.updateAndReturnGeneratedKey(
+            queryOf(
+                """
+                |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
+                |VALUES (:forespoerselId, :personId, :inntektsaar)
+                """.trimMargin(),
                 mapOf(
-                    "forespoersel_id" to forespoerselId,
-                    "person_id" to person.id!!.value,
+                    "forespoerselId" to forespoerselId,
+                    "personId" to personId,
                     "inntektsaar" to inntektsaar,
-                )
-            },
+                ),
+            ),
         )
 
     fun getAllAbonnementer(tx: TransactionalSession): List<Abonnement> =

@@ -18,9 +18,9 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.httpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.domain.person.PersonService
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 fun main() {

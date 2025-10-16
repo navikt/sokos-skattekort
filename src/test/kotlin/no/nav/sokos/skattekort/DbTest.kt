@@ -10,12 +10,12 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.domain.person.PersonId
-import no.nav.sokos.skattekort.domain.person.PersonRepository
-import no.nav.sokos.skattekort.domain.person.Personidentifikator
-import no.nav.sokos.skattekort.domain.skattekort.Bestilling
-import no.nav.sokos.skattekort.domain.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.person.PersonRepository
+import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.Bestilling
+import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 @OptIn(ExperimentalTime::class)

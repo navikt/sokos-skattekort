@@ -31,8 +31,8 @@ class ForespoerselService(
         dataSource.transaction { tx ->
             val foerespoerselInput =
                 when {
-                    message.startsWith("<") -> parseArenaMessage(message)
-                    else -> parseOppdragssystemetMessage(message)
+                    message.startsWith("<") -> parseXmlMessage(message)
+                    else -> parseCopybookMessage(message)
                 }
 
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $foerespoerselInput" }
@@ -98,7 +98,7 @@ class ForespoerselService(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun parseArenaMessage(message: String): FoerespoerselInput {
+    private fun parseXmlMessage(message: String): FoerespoerselInput {
         val eSkattekortBestilling = xmlMapper.readValue<ESkattekortBestilling>(message)
         val forsystem =
             when (eSkattekortBestilling.bestiller) {
@@ -114,7 +114,7 @@ class ForespoerselService(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun parseOppdragssystemetMessage(message: String): FoerespoerselInput {
+    private fun parseCopybookMessage(message: String): FoerespoerselInput {
         val parts = message.split(FORESPOERSEL_DELIMITER)
         require(parts.size == 3) { "Invalid message format: $message" }
         val forsystem = Forsystem.fromValue(parts[0])

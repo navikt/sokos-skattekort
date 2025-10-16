@@ -31,7 +31,7 @@ object PersonRepository {
                     |   LIMIT 1
                     |) pf ON TRUE
                     |$where 
-                    |ORDER BY id ASC 
+                    |ORDER BY p.id ASC 
                     |LIMIT :count
                 """.trimMargin(),
                 listOfNotNull(

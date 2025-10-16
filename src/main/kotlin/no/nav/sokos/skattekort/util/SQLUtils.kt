@@ -19,9 +19,19 @@ object SQLUtils {
         return props.keys.associateWith { props[it]?.get(this) }
     }
 
+    inline fun <reified T : Any> HikariDataSource.withTx(
+        existing: TransactionalSession?,
+        crossinline action: (TransactionalSession) -> T,
+    ): T =
+        if (existing != null) {
+            action(existing)
+        } else {
+            this.transaction { action(it) }
+        }
+
     fun <A> HikariDataSource.transaction(operation: (TransactionalSession) -> A): A =
-        using(sessionOf(this, returnGeneratedKey = true)) { session ->
-            session.transaction { tx ->
+        using(sessionOf(this, returnGeneratedKey = true)) { tx ->
+            tx.transaction { tx ->
                 operation(tx)
             }
         }

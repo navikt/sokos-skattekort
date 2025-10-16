@@ -12,22 +12,19 @@ object ForespoerselRepository {
         tx: TransactionalSession,
         forsystem: Forsystem,
         dataMottatt: String,
-    ): Long {
-        val key =
-            tx.updateAndReturnGeneratedKey(
-                queryOf(
-                    """
-                    INSERT INTO forespoersler (forsystem, data_mottatt)
-                    VALUES (:forsystem, :data_mottatt)
-                    """.trimIndent(),
-                    mapOf(
-                        "forsystem" to forsystem.kode,
-                        "data_mottatt" to dataMottatt,
-                    ),
+    ): Long =
+        tx.updateAndReturnGeneratedKey(
+            queryOf(
+                """
+                INSERT INTO forespoersler (forsystem, data_mottatt)
+                VALUES (:forsystem, :data_mottatt)
+                """.trimIndent(),
+                mapOf(
+                    "forsystem" to forsystem.kode,
+                    "data_mottatt" to dataMottatt,
                 ),
-            ) ?: throw IllegalStateException("Failed to insert forespoersel")
-        return key
-    }
+            ),
+        ) ?: throw IllegalStateException("Failed to insert forespoersel")
 
     fun getAllForespoersel(
         tx: TransactionalSession,

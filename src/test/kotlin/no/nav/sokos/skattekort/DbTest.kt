@@ -50,6 +50,4 @@ class DbTest :
                 result shouldBe "22222222222"
             }
         }
-
-        afterTest { DbTestUtil.deleteAllTables(DbListener.dataSource) }
     })

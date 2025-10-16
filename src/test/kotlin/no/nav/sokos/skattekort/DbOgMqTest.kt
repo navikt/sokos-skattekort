@@ -39,6 +39,4 @@ class DbOgMqTest :
                 result.first().inntektsaar shouldBe 1994
             }
         }
-
-        afterTest { DbTestUtil.deleteAllTables(DbListener.dataSource) }
     })

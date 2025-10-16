@@ -3,97 +3,134 @@ package no.nav.sokos.skattekort.domain.forespoersel
 import kotlin.time.ExperimentalTime
 
 import com.zaxxer.hikari.HikariDataSource
+import kotliquery.TransactionalSession
+import mu.KotlinLogging
+import tools.jackson.module.kotlin.readValue
 
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.config.xmlMapper
+import no.nav.sokos.skattekort.domain.forespoersel.arena.Applikasjon
+import no.nav.sokos.skattekort.domain.forespoersel.arena.ESkattekortBestilling
 import no.nav.sokos.skattekort.domain.person.PersonService
 import no.nav.sokos.skattekort.domain.person.Personidentifikator
 import no.nav.sokos.skattekort.domain.skattekort.Bestilling
 import no.nav.sokos.skattekort.domain.skattekort.BestillingRepository
+import no.nav.sokos.skattekort.domain.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.domain.utsending.Utsending
+import no.nav.sokos.skattekort.domain.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private const val FORESPOERSEL_DELIMITER = ";"
+private val logger = KotlinLogging.logger { }
 
 class ForespoerselService(
     private val dataSource: HikariDataSource,
     private val personService: PersonService,
 ) {
-    @OptIn(ExperimentalTime::class)
     fun taImotForespoersel(message: String) {
-        dataSource.transaction { session ->
-            val abonnementList = parseForespoersel(message)
-            val abonnement = abonnementList.first()
-            val person =
-                personService.findOrCreatePersonByFnr(
-                    fnr = abonnement.person.foedselsnummer.fnr,
-                    informasjon = "Mottatt forespørsel på skattekort",
-                )
+        dataSource.transaction { tx ->
+            val foerespoerselInput =
+                when {
+                    message.startsWith("<") -> parseArenaMessage(message)
+                    else -> parseOppdragssystemetMessage(message)
+                }
 
-            val forespoerselId =
+            logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $foerespoerselInput" }
+
+            val foerespoerselId =
                 ForespoerselRepository.insert(
-                    tx = session,
-                    forsystem = abonnement.forespoersel.forsystem,
+                    tx = tx,
+                    forsystem = foerespoerselInput.forsystem,
                     dataMottatt = message,
                 )
-
-            val abonnementIdList: List<Int> =
-                AbonnementRepository.insertBatch(
-                    tx = session,
-                    forespoerselId = forespoerselId,
-                    inntektsaar = abonnement.inntektsaar,
-                    personListe = listOf(person),
-                )
-
-            // Flyttes inn i Service/Repoklasse når denne finnes.
-            session.batchPreparedNamedStatement(
-                """
-                    |INSERT INTO utsendinger (
-                    |abonnement_id,
-                    |fnr,
-                    |forsystem,
-                    |inntektsaar
-                    |)
-                    |VALUES (:abonnement_id, :fnr, :forsystem, :inntektsaar)
-                """.trimMargin(),
-                abonnementIdList.map { abonnementId ->
-                    mapOf(
-                        "abonnement_id" to abonnementId,
-                        "fnr" to abonnement.person.foedselsnummer.fnr.value,
-                        "forsystem" to abonnement.forespoersel.forsystem.kode,
-                        "inntektsaar" to abonnement.inntektsaar,
-                    )
-                },
-            )
-
-            // Vi sier det er greit at vi har duplikate bestillinger
-            BestillingRepository.insert(
-                tx = session,
-                bestilling =
-                    Bestilling(
-                        personId = person.id!!,
-                        fnr = person.foedselsnummer.fnr,
-                        inntektsaar = abonnement.inntektsaar,
-                    ),
-            )
+            createBestillingAndUtsending(tx, foerespoerselId, foerespoerselInput)
         }
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun parseForespoersel(message: String): List<Abonnement> {
+    private fun createBestillingAndUtsending(
+        tx: TransactionalSession,
+        foerespoerselId: Long,
+        foerespoerselInput: FoerespoerselInput,
+    ) {
+        var bestllingCount = 0
+        foerespoerselInput.fnrList.map { fnr ->
+            val person =
+                personService.findOrCreatePersonByFnr(
+                    tx = tx,
+                    fnr = Personidentifikator(fnr),
+                    informasjon = "Mottatt forespørsel: $foerespoerselId, forsystem: ${foerespoerselInput.forsystem.name} på skattekort",
+                )
+
+            val abonnementId =
+                AbonnementRepository.insert(
+                    tx = tx,
+                    forespoerselId = foerespoerselId,
+                    inntektsaar = foerespoerselInput.inntektsaar,
+                    personId = person.id!!.value,
+                )
+
+            SkattekortRepository.findAllByPersonId(tx, person.id, foerespoerselInput.inntektsaar).ifEmpty {
+                BestillingRepository.insert(
+                    tx = tx,
+                    bestilling =
+                        Bestilling(
+                            personId = person.id,
+                            fnr = Personidentifikator(fnr),
+                            inntektsaar = foerespoerselInput.inntektsaar,
+                        ),
+                )
+                bestllingCount++
+            }
+
+            UtsendingRepository.insert(
+                tx = tx,
+                utsending =
+                    Utsending(
+                        abonnementId = AbonnementId(abonnementId!!),
+                        fnr = Personidentifikator(fnr),
+                        inntektsaar = foerespoerselInput.inntektsaar,
+                        forsystem = foerespoerselInput.forsystem,
+                    ),
+            )
+        }
+        logger.info { "FoerespoerselId: $foerespoerselId med total: ${foerespoerselInput.fnrList.size} abonnement(er)/utsending(er), $bestllingCount bestilling(er)" }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun parseArenaMessage(message: String): FoerespoerselInput {
+        val eSkattekortBestilling = xmlMapper.readValue<ESkattekortBestilling>(message)
+        val forsystem =
+            when (eSkattekortBestilling.bestiller) {
+                Applikasjon.ARENA -> Forsystem.ARENA
+                Applikasjon.OS -> Forsystem.OPPDRAGSSYSTEMET
+            }
+
+        return FoerespoerselInput(
+            forsystem = forsystem,
+            inntektsaar = eSkattekortBestilling.inntektsaar.toInt(),
+            fnrList = eSkattekortBestilling.brukere,
+        )
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun parseOppdragssystemetMessage(message: String): FoerespoerselInput {
         val parts = message.split(FORESPOERSEL_DELIMITER)
         require(parts.size == 3) { "Invalid message format: $message" }
         val forsystem = Forsystem.fromValue(parts[0])
         val inntektsaar = Integer.parseInt(parts[1])
         val fnrString = parts[2]
-        val forespoersel = Forespoersel(forsystem = forsystem, dataMottatt = message)
-        return listOf(
-            Abonnement(
-                forespoersel = forespoersel,
-                inntektsaar = inntektsaar,
-                person =
-                    personService.findOrCreatePersonByFnr(
-                        fnr = Personidentifikator(fnrString),
-                        informasjon = "Mottatt forespørsel på skattekort",
-                    ),
-            ),
+
+        return FoerespoerselInput(
+            forsystem = forsystem,
+            inntektsaar = inntektsaar,
+            fnrList = listOf(fnrString),
         )
     }
+
+    private data class FoerespoerselInput(
+        val forsystem: Forsystem,
+        val inntektsaar: Int,
+        val fnrList: List<String>,
+    )
 }

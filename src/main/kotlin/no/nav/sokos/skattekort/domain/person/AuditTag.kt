@@ -4,6 +4,7 @@ enum class AuditTag(
     private val value: String,
 ) {
     OPPRETTET_PERSON("OPPRETTET_PERSON"),
+    MOTTATT_FORESPOERSEL("MOTTATT_FORESPOERSEL"),
     ;
 
     companion object {

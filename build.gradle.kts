@@ -105,6 +105,9 @@ dependencies {
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")
 
+    // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
+    implementation("org.apache.commons:commons-lang3:3.18.0")
+
     // Test
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")

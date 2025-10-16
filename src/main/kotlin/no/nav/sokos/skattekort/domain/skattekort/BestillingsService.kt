@@ -21,9 +21,9 @@ class BestillingsService(
     val bestillingsbatchRepository: BestillingBatchRepository,
     val skatteetatenClient: SkatteetatenClient,
 ) {
-    fun opprettBestillingsbatch() {
-        dataSource.transaction { tx ->
-            {
+    suspend fun opprettBestillingsbatch() {
+        val (bestillings, request) =
+            dataSource.transaction { tx ->
                 val bestillings =
                     bestillingRepository
                         .getAllBestilling(tx)
@@ -51,19 +51,24 @@ class BestillingsService(
                                     ),
                             ),
                     )
-
-                val response = skatteetatenClient.bestillSkattekort(request)
-
-                val bestillingsbatchId =
-                    bestillingsbatchRepository.insert(
-                        tx,
-                        status = "SENDT_SKATTEETATEN",
-                        bestillingsreferanse = response.bestillingsreferanse,
-                        request = request,
-                    )
-
-                bestillingRepository.updateBestillingsWithBatchId(tx, bestillings.map { it.id!!.id }, bestillingsbatchId)
+                bestillings to request
             }
+
+        val response = skatteetatenClient.bestillSkattekort(request)
+
+        dataSource.transaction { tx ->
+            val bestillingsbatchId =
+                bestillingsbatchRepository.insert(
+                    tx,
+                    status = "SENDT_SKATTEETATEN",
+                    bestillingsreferanse = response.bestillingsreferanse,
+                    request = request,
+                )
+            bestillingRepository.updateBestillingsWithBatchId(
+                tx,
+                bestillings.map { it.id!!.id },
+                bestillingsbatchId,
+            )
         }
     }
 }

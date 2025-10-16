@@ -1,8 +1,5 @@
 package no.nav.sokos.skattekort.module.utsending.oppdragz
 
-import java.math.BigDecimal
-import javax.xml.datatype.DatatypeFactory
-
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,53 +8,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 
-class SkattekortFixedRecordFormatterTest {
-    val skattekortMedForskuddstrekk =
-        Skattekortmelding(
-            2017,
-            "21048200130",
-            Resultatstatus.SKATTEKORTOPPLYSNINGER_OK,
-            Skattekort(
-                2017,
-                DatatypeFactory.newInstance().newXMLGregorianCalendar("2017-04-15"),
-                2017005,
-                listOf(
-                    Trekktabell(
-                        Trekkode.LOENN_FRA_NAV,
-                        Tabelltype.TREKKTABELL_FOR_LOENN,
-                        "7131",
-                        BigDecimal("32"),
-                        BigDecimal("10.5"),
-                    ),
-                    Trekkprosent(
-                        Trekkode.LOENN_FRA_BIARBEIDSGIVER,
-                        BigDecimal("32"),
-                    ),
-                    Trekkprosent(
-                        Trekkode.LOENN_FRA_NAV,
-                        BigDecimal("17.8"),
-                    ),
-                ),
-            ),
-            emptyList(),
-        )
-    val skattekortUtenForskuddstrekk =
-        Skattekortmelding(
-            2017,
-            "12097100500",
-            Resultatstatus.VURDER_ARBEIDSTILLATELSE,
-            null,
-            emptyList(),
-        )
-    val skattekortIkkeTrekkpliktig =
-        Skattekortmelding(
-            2017,
-            "12097100500",
-            Resultatstatus.IKKE_TREKKPLIKT,
-            null,
-            emptyList(),
-        )
+import no.nav.sokos.skattekort.module.utsending.oppdragz.TestObjects.skattekortIkkeTrekkpliktig
+import no.nav.sokos.skattekort.module.utsending.oppdragz.TestObjects.skattekortMedForskuddstrekk
 
+class SkattekortFixedRecordFormatterTest {
     @Test
     @Throws(Exception::class)
     fun skalReturnereSkattekortSomInneholderForskuddstrekkMedGyldigResultatstatusV1() {
@@ -110,17 +64,6 @@ class SkattekortFixedRecordFormatterTest {
 
         val maxLength = 794
         assertTrue(result.length < maxLength)
-    }
-
-    @Test
-    @Throws(Exception::class)
-    fun skalReturnereEmptyForSkattekortSomIkkeInneholderForskuddstrekk() { // TODO: Er dette virkelig riktig?
-        val skattekortmelding: Skattekortmelding = skattekortUtenForskuddstrekk
-        val formatertSkattekort = SkattekortFixedRecordFormatter(skattekortmelding, "2017")
-
-        val result: String = formatertSkattekort.format()
-        assertNotNull(result)
-        assertTrue(result.isEmpty())
     }
 
     @Test

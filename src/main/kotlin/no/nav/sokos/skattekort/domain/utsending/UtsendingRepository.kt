@@ -1,29 +1,27 @@
 package no.nav.sokos.skattekort.domain.utsending
 
-import kotliquery.Session
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 object UtsendingRepository {
-    fun insertBatch(
+    fun insert(
         tx: TransactionalSession,
-        utsendingList: List<Utsending>,
-    ): List<Int> =
-        tx
-            .batchPreparedStatement(
+        utsending: Utsending,
+    ): Long? =
+        tx.updateAndReturnGeneratedKey(
+            queryOf(
                 """
                 INSERT INTO utsendinger (abonnement_id, fnr, inntektsaar, forsystem)
                 VALUES (:abonnementId, :fnr, :inntektsaar, :forsystem)
                 """.trimIndent(),
-                utsendingList.map {
-                    listOf(
-                        "abonnementId" to it.abonnementId.value,
-                        "fnr" to it.fnr.value,
-                        "innteksaar" to it.inntektsaar,
-                        "forsystem" to it.forsystem.kode,
-                    )
-                },
-            ).orEmpty()
+                mapOf(
+                    "abonnementId" to utsending.abonnementId.value,
+                    "fnr" to utsending.fnr.value,
+                    "inntektsaar" to utsending.inntektsaar,
+                    "forsystem" to utsending.forsystem.kode,
+                ),
+            ),
+        )
 
     fun delete(
         tx: TransactionalSession,
@@ -39,8 +37,8 @@ object UtsendingRepository {
         )
     }
 
-    fun getAllUtsendinger(session: Session): List<Utsending> =
-        session.list(
+    fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> =
+        tx.list(
             queryOf(
                 """
                 SELECT id, abonnement_id, fnr, inntektsaar, forsystem, opprettet

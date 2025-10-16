@@ -1,5 +1,8 @@
 package no.nav.sokos.skattekort
 
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.stream.Collectors
 import javax.sql.DataSource
 
 import io.ktor.server.config.MapApplicationConfig
@@ -17,6 +20,14 @@ import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 object TestUtil {
+    fun readFile(filename: String): String {
+        val inputStream = this::class.java.getResourceAsStream(filename)!!
+        return BufferedReader(InputStreamReader(inputStream))
+            .lines()
+            .parallel()
+            .collect(Collectors.joining("\n"))
+    }
+
     fun TestApplicationBuilder.configureTestEnvironment() {
         environment {
             System.setProperty("APPLICATION_ENV", "TEST")

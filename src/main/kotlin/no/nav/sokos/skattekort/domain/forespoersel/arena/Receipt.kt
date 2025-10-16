@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.domain.arena
+package no.nav.sokos.skattekort.domain.forespoersel.arena
 
 data class Receipt(
     val receiptId: Int,

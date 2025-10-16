@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.listener
 
 import io.kotest.core.listeners.AfterTestListener
 import io.kotest.core.listeners.BeforeSpecListener
-import io.kotest.core.spec.Spec
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
 import jakarta.jms.JMSContext
@@ -27,7 +26,7 @@ object MQListener : BeforeSpecListener, AfterTestListener {
                     .setPersistenceEnabled(false)
                     .setSecurityEnabled(false)
                     .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name)),
-            )!!
+            ).start()
 
     val connectionFactory: ActiveMQConnectionFactory by lazy {
         ActiveMQConnectionFactory("vm:localhost?create=false")
@@ -38,10 +37,6 @@ object MQListener : BeforeSpecListener, AfterTestListener {
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }
     val producer: JMSProducer by lazy { jmsContext.createProducer() }
-
-    override suspend fun beforeSpec(spec: Spec) {
-        server.start()
-    }
 
     override suspend fun afterAny(
         testCase: TestCase,

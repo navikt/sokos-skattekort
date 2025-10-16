@@ -2,11 +2,8 @@ package no.nav.sokos.skattekort
 
 import java.time.LocalDateTime
 
-import kotlin.time.Duration.Companion.seconds
-
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
-import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldHaveSize
@@ -17,6 +14,7 @@ import io.ktor.server.testing.testApplication
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.TestUtil.configureTestApplication
 import no.nav.sokos.skattekort.TestUtil.configureTestEnvironment
+import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
 import no.nav.sokos.skattekort.domain.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
@@ -29,12 +27,6 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 class MottaBestillingEndToEndTest :
     FunSpec({
         extensions(DbListener, MQListener)
-
-        val eventuallyConfiguration =
-            eventuallyConfig {
-                initialDelay = 1.seconds
-                retries = 3
-            }
 
         test("vi kan håndtere en forespørsel fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {

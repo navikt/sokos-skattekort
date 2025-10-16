@@ -2,8 +2,12 @@ package no.nav.sokos.skattekort.skatteetaten
 
 import kotlinx.serialization.json.Json
 
-class SkatteetatenClient {
-    fun bestillSkattekort(request: SkatteetatenBestillSkattekortRequest): SkatteetatenBestillSkattekortResponse {
+import no.nav.sokos.skattekort.security.MaskinportenTokenClient
+
+class SkatteetatenClient(
+    private val maskinportenTokenClient: MaskinportenTokenClient,
+) {
+    suspend fun bestillSkattekort(request: SkatteetatenBestillSkattekortRequest): SkatteetatenBestillSkattekortResponse {
         val url = "https://api-test.sits.no/api/forskudd/bestillSkattekort/"
         val client =
             java.net.http.HttpClient
@@ -16,6 +20,7 @@ class SkatteetatenClient {
                 .newBuilder()
                 .uri(java.net.URI.create(url))
                 .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer ${maskinportenTokenClient.getAccessToken()}")
                 .POST(
                     java.net.http.HttpRequest.BodyPublishers
                         .ofString(requestBody),

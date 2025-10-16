@@ -39,6 +39,22 @@ object BestillingRepository {
             ),
         )
 
+    fun updateBestillingsWithBatchId(
+        tx: TransactionalSession,
+        bestillingsIds: List<Long>,
+        bestillingsbatchId: Long,
+    ) {
+        if (bestillingsIds.isEmpty()) return
+        tx.batchPreparedNamedStatement(
+            """
+            UPDATE bestillinger
+            SET bestillingsbatch_id = :bestillingsbatchId
+            WHERE id = :id
+            """.trimIndent(),
+            bestillingsIds.map { mapOf("id" to it, "bestillingsbatchId" to bestillingsbatchId) },
+        )
+    }
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(

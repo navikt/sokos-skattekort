@@ -15,13 +15,13 @@ import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.TestUtil.configureTestApplication
 import no.nav.sokos.skattekort.TestUtil.configureTestEnvironment
 import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
-import no.nav.sokos.skattekort.domain.forespoersel.AbonnementRepository
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselRepository
-import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
-import no.nav.sokos.skattekort.domain.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.MQListener.bestillingsQueue
+import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class MottaBestillingEndToEndTest :

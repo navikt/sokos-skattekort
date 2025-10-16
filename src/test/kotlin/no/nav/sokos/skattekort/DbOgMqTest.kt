@@ -1,11 +1,10 @@
 package no.nav.sokos.skattekort
 
-import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.delay
-
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
+import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.domain.person.PersonService
@@ -32,13 +31,13 @@ class DbOgMqTest :
         test("Tester både kø og database") {
             forespoerselListener.start()
             JmsTestUtil.sendMessage("OS;1994;11111111111")
-            delay(500.milliseconds)
-            DbListener.dataSource.transaction { session ->
-                val result = BestillingRepository.getAllBestilling(session)
-                result.size shouldBe 1
-                result.first().inntektsaar shouldBe 1994
+
+            eventually(eventuallyConfiguration) {
+                DbListener.dataSource.transaction { session ->
+                    val result = BestillingRepository.getAllBestilling(session)
+                    result.size shouldBe 1
+                    result.first().inntektsaar shouldBe 1994
+                }
             }
         }
-
-        afterTest { DbTestUtil.deleteAllTables(DbListener.dataSource) }
     })

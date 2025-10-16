@@ -36,17 +36,17 @@ repositories {
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
 }
 
-val ktorVersion = "3.2.2"
+val ktorVersion = "3.3.1"
 val nimbusVersion = "10.4.1"
 val logbackVersion = "1.5.18"
 val logstashVersion = "8.1"
 val micrometerVersion = "1.15.2"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
-val natpryceVersion = "1.6.10.0"
 val kotestVersion = "6.0.0.M17"
 val kotlinxSerializationVersion = "1.9.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
+val jacksonVersion = "3.0.0"
 val mockOAuth2ServerVersion = "2.2.1"
 val mockkVersion = "1.14.5"
 val hikariVersion = "6.3.1"
@@ -88,6 +88,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
+    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
+    implementation("tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
+
     // Monitorering
     implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
     implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
@@ -99,7 +103,6 @@ dependencies {
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
 
     // Config
-    implementation("com.natpryce:konfig:$natpryceVersion")
     implementation("no.nav:vault-jdbc:$vaultVersion")
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
@@ -144,7 +147,6 @@ kotlin {
 }
 
 tasks {
-
     withType<KotlinCompile>().configureEach {
         dependsOn("ktlintFormat")
     }

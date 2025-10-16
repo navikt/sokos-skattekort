@@ -3,39 +3,44 @@ package no.nav.sokos.skattekort.domain.person
 import java.time.LocalDate
 
 import com.zaxxer.hikari.HikariDataSource
-import kotliquery.sessionOf
-import kotliquery.using
+import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.util.SQLUtils.withTx
 
 private val logger = KotlinLogging.logger { }
 
 class PersonService(
     private val dataSource: HikariDataSource,
 ) {
-    fun list(
-        count: Int = 10,
+    fun getPersonList(
+        count: Int = 30,
         startId: String? = null,
+        tx: TransactionalSession? = null,
     ): List<Person> =
-        using(sessionOf(dataSource)) { session ->
-            session.transaction { tx ->
-                PersonRepository.getAllPersonById(tx, count, startId)
-            }
+        dataSource.withTx(tx) { session ->
+            PersonRepository.getAllPersonById(session, count, startId)
         }
 
     fun findOrCreatePersonByFnr(
         fnr: Personidentifikator,
-        informasjon: String, // Årsak for å lage aktør, hvis nødvendig
+        informasjon: String?,
+        tx: TransactionalSession,
     ): Person =
-        dataSource.transaction { session ->
-            PersonRepository.findPersonByFnr(session, fnr) ?: run {
-                val personId = PersonRepository.insert(session, fnr, LocalDate.now(), informasjon)
-                if (personId == null) {
-                    logger.error { "Kan ikke opprettet person med fnr: xxxx" }
-                    throw PersonException("Kan ikke opprettet person med fnr: xxxx")
-                }
-                PersonRepository.findPersonById(session, PersonId(personId))
+        PersonRepository.findPersonByFnr(tx, fnr)?.let { person ->
+            informasjon?.let {
+                AuditRepository.insert(tx, AuditTag.MOTTATT_FORESPOERSEL, person.id!!, informasjon)
             }
+            person
+        } ?: run {
+            val personId =
+                PersonRepository.insert(tx, fnr, LocalDate.now(), informasjon ?: "")
+                    ?: run {
+                        logger.error(marker = TEAM_LOGS_MARKER) { "Kan ikke opprettet person med fnr: $fnr" }
+                        throw PersonException("Kan ikke opprettet person med fnr: xxxx")
+                    }
+            logger.info(marker = TEAM_LOGS_MARKER) { "Opprett person fnr: $fnr" }
+            PersonRepository.findPersonById(tx, PersonId(personId))
         }
 }

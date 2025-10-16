@@ -1,28 +1,28 @@
 package no.nav.sokos.skattekort
 
-// import no.nav.sokos.skattekort.ApplicationInfrastructureListener.bestillingsQueue
-// import no.nav.sokos.skattekort.ApplicationInfrastructureListener.dbDataSource
-
 import java.time.LocalDateTime
 
-import kotlin.time.Duration.Companion.seconds
-
-import com.zaxxer.hikari.HikariDataSource
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.testApplication
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.TestUtil.configureTestApplication
 import no.nav.sokos.skattekort.TestUtil.configureTestEnvironment
+import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
+import no.nav.sokos.skattekort.domain.forespoersel.AbonnementRepository
+import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.domain.forespoersel.Forsystem
+import no.nav.sokos.skattekort.domain.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.MQListener.bestillingsQueue
+import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class MottaBestillingEndToEndTest :
     FunSpec({
@@ -42,36 +42,43 @@ class MottaBestillingEndToEndTest :
                         val fnr = "15467834260"
                         JmsTestUtil.sendMessage("OS;1994;$fnr")
 
-                        eventually(1.seconds) {
-                            val dataSource: HikariDataSource = DbListener.dataSource
-                            val forespoersels = DbTestUtil.storedForespoersels(dataSource)
+                        eventually(eventuallyConfiguration) {
+                            DbListener.dataSource.transaction { tx ->
+                                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
 
-                            forespoersels shouldHaveSize 1
-                            assertSoftly {
-                                forespoersels.first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                                forespoersels.first().dataMottatt shouldBe "OS;1994;$fnr"
-                            }
+                                forespoerselList shouldHaveSize 1
+                                assertSoftly {
+                                    forespoerselList.first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                                    forespoerselList.first().dataMottatt shouldBe "OS;1994;$fnr"
+                                }
 
-                            val abonnementList = DbTestUtil.storedAbonnements(dataSource = dataSource)
+                                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
 
-                            abonnementList shouldHaveSize 1
-                            assertSoftly("Det skal ha blitt opprettet et abonnement") {
-                                abonnementList
-                                    .first()
-                                    .person.foedselsnummer.fnr.value shouldBe fnr
-                                abonnementList.first().inntektsaar shouldBe 1994
-                                abonnementList.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                                abonnementList.first().inntektsaar shouldBe 1994
-                            }
+                                abonnementList shouldHaveSize 1
+                                assertSoftly("Det skal ha blitt opprettet et abonnement") {
+                                    abonnementList
+                                        .first()
+                                        .person.foedselsnummer.fnr.value shouldBe fnr
+                                    abonnementList.first().inntektsaar shouldBe 1994
+                                    abonnementList.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                                    abonnementList.first().inntektsaar shouldBe 1994
+                                }
 
-                            val utsendinger = DbTestUtil.storedUtsendingerAsText(dataSource)
+                                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
 
-                            assertSoftly("Det skal ha blitt opprettet en utsending") {
-                                utsendinger shouldHaveSize 1
-                                utsendinger.first() shouldBe "1" + "-" + fnr + "-" + Forsystem.OPPDRAGSSYSTEMET.kode + "-" + "1994"
+                                assertSoftly("Det skal ha blitt opprettet en utsending") {
+                                    utsendingList shouldHaveSize 1
+                                    val utsending = utsendingList.first()
+                                    utsending.id shouldNotBe null
+                                    utsending.abonnementId shouldBe abonnementList.first().id
+                                    utsending.fnr.value shouldBe fnr
+                                    utsending.inntektsaar shouldBe 1994
+                                    utsending.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                                }
                             }
                         }
                     }
+
                     JmsTestUtil.assertQueueIsEmpty(bestillingsQueue)
                 }
             }

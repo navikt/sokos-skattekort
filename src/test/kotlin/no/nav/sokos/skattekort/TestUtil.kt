@@ -1,7 +1,13 @@
 package no.nav.sokos.skattekort
 
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.stream.Collectors
 import javax.sql.DataSource
 
+import kotlin.time.Duration.Companion.seconds
+
+import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.dependencies
@@ -17,6 +23,20 @@ import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 object TestUtil {
+    val eventuallyConfiguration =
+        eventuallyConfig {
+            initialDelay = 1.seconds
+            retries = 3
+        }
+
+    fun readFile(filename: String): String {
+        val inputStream = this::class.java.getResourceAsStream(filename)!!
+        return BufferedReader(InputStreamReader(inputStream))
+            .lines()
+            .parallel()
+            .collect(Collectors.joining("\n"))
+    }
+
     fun TestApplicationBuilder.configureTestEnvironment() {
         environment {
             System.setProperty("APPLICATION_ENV", "TEST")

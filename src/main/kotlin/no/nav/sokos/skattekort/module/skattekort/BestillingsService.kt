@@ -60,7 +60,6 @@ class BestillingsService(
             val bestillingsbatchId =
                 bestillingsbatchRepository.insert(
                     tx,
-                    status = "SENDT_SKATTEETATEN",
                     bestillingsreferanse = response.bestillingsreferanse,
                     request = request,
                 )

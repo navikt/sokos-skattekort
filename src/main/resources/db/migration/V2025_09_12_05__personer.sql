@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS bestillingsbatcher
     status               TEXT                                                NOT NULL DEFAULT 'NY',
     bestillingsreferanse TEXT                                                NULL     DEFAULT NULL, -- referansenummer returnert fra skatt på bestillingskall
     oppdatert            TIMESTAMPTZ                                                  DEFAULT now(),
-    data_sendt           TEXT                                                NOT NULL
+    data_sendt           JSON                                                NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS bestillinger

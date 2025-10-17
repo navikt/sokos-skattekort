@@ -33,7 +33,7 @@ object BestillingBatchRepository {
             queryOf(
                 """
                     |INSERT INTO bestillingsbatcher (bestillingsreferanse, data_sendt) 
-                    |VALUES (:bestillingsreferanse, :dataSendt)
+                    |VALUES (:bestillingsreferanse, (CAST (:dataSendt AS JSON)))
                 """.trimMargin(),
                 mapOf(
                     "bestillingsreferanse" to bestillingsreferanse,

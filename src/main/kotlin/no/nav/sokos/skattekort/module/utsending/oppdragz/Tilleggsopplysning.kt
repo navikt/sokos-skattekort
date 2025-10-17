@@ -10,6 +10,16 @@ enum class Tilleggsopplysning(
     ;
 
     companion object {
-        fun fromValue(value: String): Tilleggsopplysning = Tilleggsopplysning.entries.first { it.value == value }
+        fun fromValue(value: String): Tilleggsopplysning {
+            if (value.equals("kildeskattPaaPensjon")) {
+                return Tilleggsopplysning.KILDESKATTPENSJONIST // TODO: Sjekk med Endre at dette er faktisk det de forventer...
+            }
+            try {
+                return Tilleggsopplysning.entries.first { it.value == value }
+            } catch (e: NoSuchElementException) {
+                println("Tilleggsopplysning feilet: $value")
+                throw e
+            }
+        }
     }
 }

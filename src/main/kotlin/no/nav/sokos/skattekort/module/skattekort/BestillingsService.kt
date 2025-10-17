@@ -45,7 +45,7 @@ class BestillingsService(
                                 arbeidsgiver =
                                     listOf(
                                         Arbeidsgiver(
-                                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator("889640782"),
+                                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator("312978083"),
                                             arbeidstakeridentifikator = bestillings.map { it.fnr }.map { it.value },
                                         ),
                                     ),

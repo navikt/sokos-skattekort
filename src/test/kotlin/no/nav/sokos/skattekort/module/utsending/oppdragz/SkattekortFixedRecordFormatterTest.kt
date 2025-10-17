@@ -1,85 +1,88 @@
 package no.nav.sokos.skattekort.module.utsending.oppdragz
 
-import org.hamcrest.CoreMatchers
-import org.hamcrest.MatcherAssert.assertThat
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNotNull
+import javax.xml.datatype.DatatypeFactory
 
-import no.nav.sokos.skattekort.module.utsending.oppdragz.TestObjects.skattekortIkkeTrekkpliktig
-import no.nav.sokos.skattekort.module.utsending.oppdragz.TestObjects.skattekortMedForskuddstrekk
+import kotlin.test.assertEquals
+import kotlinx.serialization.json.Json
 
-class SkattekortFixedRecordFormatterTest {
-    @Test
-    @Throws(Exception::class)
-    fun skalReturnereSkattekortSomInneholderForskuddstrekkMedGyldigResultatstatusV1() {
-        val skattekortmelding: Skattekortmelding = skattekortMedForskuddstrekk
-        val formatertSkattekort = SkattekortFixedRecordFormatter(skattekortmelding, "2017")
+import io.kotest.core.spec.style.FunSpec
 
-        val result: String = formatertSkattekort.format()
-        assertEquals(
-            "21048200130skattekortopplysningerOK                20172017-04-152017005                                                     2Trekktabell loennFraNAV                                            7131032,00       10,5TrekkprosentloennFraNAV                                                017,80           ",
-            result,
+import no.nav.sokos.skattekort.TestUtil.readFile
+import no.nav.sokos.skattekort.module.bestilling.svar.Arbeidstaker
+import no.nav.sokos.skattekort.module.bestilling.svar.Forskuddstrekk
+import no.nav.sokos.skattekort.module.bestilling.svar.Root
+import no.nav.sokos.skattekort.module.bestilling.svar.Skattekort
+
+fun arbeidstakerConverter(a: Arbeidstaker): Skattekortmelding =
+    Skattekortmelding(
+        a.inntektsaar.toLong(),
+        a.arbeidstakeridentifikator,
+        Resultatstatus.fromValue(a.resultatForSkattekort),
+        skattekortConverter(a.skattekort, a.inntektsaar.toLong()),
+        a.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+    )
+
+fun skattekortConverter(
+    s: Skattekort?,
+    inntektsaar: Long,
+): no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekort? =
+    if (s != null) {
+        Skattekort(
+            inntektsaar,
+            DatatypeFactory.newInstance().newXMLGregorianCalendar(s.utstedtDato),
+            s.skattekortidentifikator,
+            s.forskuddstrekk.map { forskuddstrekkConverter(it) },
         )
-
-        assertNotNull(result)
-        assertFalse(result.isEmpty())
-
-        val prosentsats = result.substring(197, 203)
-
-        val expLength = 6
-        assertThat(expLength, CoreMatchers.equalTo(prosentsats.length))
-
-        val expValue = "032,00"
-        assertEquals(expValue, prosentsats)
-
-        val maxLength = 794
-        assertTrue(result.length < maxLength)
+    } else {
+        null
     }
 
-    @Test
-    @Throws(Exception::class)
-    fun skalReturnereSkattekortSomInneholderForskuddstrekkMedGyldigResultatstatusV2() {
-        val skattekortmelding: Skattekortmelding = skattekortMedForskuddstrekk
-        val formatertSkattekort = SkattekortFixedRecordFormatter(skattekortmelding, "2018")
-
-        val result: String = formatertSkattekort.format()
-
-        assertNotNull(result)
-        assertFalse(result.isEmpty())
-        assertEquals(
-            "21048200130skattekortopplysningerOK                20182017-04-152017005                                                     2Trekktabell loennFraNAV                                            7131032,00       10,5TrekkprosentloennFraNAV                                                017,80           ",
-            result,
+fun forskuddstrekkConverter(f: Forskuddstrekk): no.nav.sokos.skattekort.module.utsending.oppdragz.Forskuddstrekk =
+    if (f.trekkprosent != null) {
+        Trekkprosent(
+            Trekkode.fromValue(f.trekkode),
+            f.trekkprosent.prosentsats,
         )
-
-        val prosentsats = result.substring(197, 203)
-
-        val expLength = 6
-        assertThat(expLength, CoreMatchers.equalTo(prosentsats.length))
-
-        val expValue = "032,00"
-        assertEquals(expValue, prosentsats)
-
-        val maxLength = 794
-        assertTrue(result.length < maxLength)
+    } else if (f.trekktabell != null) {
+        Trekktabell(
+            Trekkode.fromValue(f.trekkode),
+            Tabelltype.TREKKTABELL_FOR_LOENN,
+            f.trekktabell.tabellnummer,
+            f.trekktabell.prosentsats,
+        )
+    } else {
+        Frikort(Trekkode.fromValue(f.trekkode), f.frikort?.frikortbeloep)
     }
 
-    @Test
-    @Throws(Exception::class)
-    fun skalReturnereSkattekortForIkkeTrekkpliktigSomIkkeInneholderForskuddstrekk() {
-        val skattekortmelding = skattekortIkkeTrekkpliktig
+/*
+Denne testen er drevet av to sett data:
+- et sett med skattekort som skatt sier inneholder et bredt utvalg av data
+- et sett med referansedata som er laget ved å kjøre settet med skattekort gjennom serialiseringen til gamel os-eskatt
 
-        val formatertSkattekort = SkattekortFixedRecordFormatter(skattekortmelding, "2017")
+Forhåpentligvis vil dette gjenskape den gamle oppførselen bra.
 
-        val result = formatertSkattekort.format()
-        assertEquals(
-            "12097100500ikkeTrekkplikt                          20172017-01-01                                                            1Frikort     loennFraNAV                                                                 ",
-            result,
-        )
-
-        val maxLength = 794
-        assertTrue(result.length < maxLength)
-    }
-}
+Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringen, gjør endringen, lager et nytt testdatasett,
+og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
+ */
+class SkattekortFixedRecordFormatterDuplicatorTest :
+    FunSpec({
+        test("gå gjennom alle skattekort og sjekk at vi får et stabilt svar") {
+            val arbeidstakere: List<Arbeidstaker> =
+                Json
+                    .decodeFromString<Root>(readFile("/oppdragz/skattekortsvar.json"))
+                    .arbeidsgiver
+                    .flatMap { it.arbeidstaker }
+            val referanseverdier: Map<String, String> = Json.decodeFromString(readFile("/oppdragz/skattekortreferanser.json"))
+            val nyeReferanseVerdier: Map<String, String> =
+                arbeidstakere
+                    .map { arbeidstaker ->
+                        val skattekortmelding = arbeidstakerConverter(arbeidstaker)
+                        val nyFormatering = SkattekortFixedRecordFormatter(skattekortmelding, "2025").format()
+                        val gammelFormatering = referanseverdier.get(arbeidstaker.arbeidstakeridentifikator)
+                        assertEquals(nyFormatering, gammelFormatering)
+                        Pair(arbeidstaker.arbeidstakeridentifikator, nyFormatering)
+                    }.toMap()
+            // Kommentert ut for enkel oppdatering av referansedataene når vi eventuelt endrer serialiseringen
+            // File("src/test/resources/oppdragz/skattekortreferanser.json").writeText(Json { prettyPrint = true }.encodeToString(nyeReferanseVerdier))
+        }
+    })

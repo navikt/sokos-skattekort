@@ -5,12 +5,12 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselListener
-import no.nav.sokos.skattekort.domain.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.domain.person.PersonService
-import no.nav.sokos.skattekort.domain.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class DbOgMqTest :

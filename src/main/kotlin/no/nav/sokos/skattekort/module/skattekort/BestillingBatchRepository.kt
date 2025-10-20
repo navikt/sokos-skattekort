@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.domain.skattekort
+package no.nav.sokos.skattekort.module.skattekort
 
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
@@ -8,8 +8,6 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.module.skattekort.BestillingBatch
-import no.nav.sokos.skattekort.module.skattekort.BestillingsbatchId
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenBestillSkattekortRequest
 
 object BestillingBatchRepository {

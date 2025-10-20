@@ -1,9 +1,7 @@
-package no.nav.sokos.skattekort.domain.bestilling
+package no.nav.sokos.skattekort.module.skattekort
 
 import com.zaxxer.hikari.HikariDataSource
 
-import no.nav.sokos.skattekort.domain.skattekort.BestillingBatchRepository
-import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.skatteetaten.Arbeidsgiver
 import no.nav.sokos.skattekort.skatteetaten.ArbeidsgiverIdentifikator
 import no.nav.sokos.skattekort.skatteetaten.ForespoerselOmSkattekortTilArbeidsgiver

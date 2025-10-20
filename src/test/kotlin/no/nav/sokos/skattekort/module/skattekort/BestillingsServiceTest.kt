@@ -8,8 +8,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.domain.bestilling.BestillingsService
-import no.nav.sokos.skattekort.domain.skattekort.BestillingBatchRepository
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenBestillSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient

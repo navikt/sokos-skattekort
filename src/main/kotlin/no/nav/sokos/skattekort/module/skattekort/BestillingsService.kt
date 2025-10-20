@@ -52,6 +52,10 @@ class BestillingsService(
                 bestillings to request
             }
 
+        if (bestillings.isEmpty()) {
+            // Ingenting å gjøre
+            return
+        }
         val response = skatteetatenClient.bestillSkattekort(request)
 
         dataSource.transaction { tx ->

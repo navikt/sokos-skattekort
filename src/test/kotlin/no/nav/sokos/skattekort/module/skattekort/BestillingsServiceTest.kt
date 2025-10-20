@@ -28,7 +28,7 @@ class BestillingsServiceTest :
 
             coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
                 SkatteetatenBestillSkattekortResponse(
-                    dialogReferanse = "some-dialog-ref",
+                    dialogreferanse = "some-dialog-ref",
                     bestillingsreferanse = bestillingsreferanse,
                 )
 

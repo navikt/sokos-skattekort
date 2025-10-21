@@ -11,6 +11,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.JobTaskConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
@@ -22,7 +23,6 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
-import no.nav.sokos.skattekort.scheduler.BestillSkattekortScheduler
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 
@@ -67,12 +67,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     routingConfig(useAuthentication, applicationState)
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
-        val bestillingsService: BestillingsService by dependencies
-        val scheduler = BestillSkattekortScheduler(bestillingsService)
-        scheduler.scheduleBestillingBatch(PropertiesConfig.SchedulerProperties().cronExpression)
-
-        this.monitor.subscribe(io.ktor.server.application.ApplicationStopping) {
-            scheduler.stop()
-        }
+        JobTaskConfig.scheduler().start()
     }
 }

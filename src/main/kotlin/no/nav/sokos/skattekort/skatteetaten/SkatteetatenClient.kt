@@ -1,7 +1,6 @@
 package no.nav.sokos.skattekort.skatteetaten
 
-import kotlinx.serialization.json.Json
-
+import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
@@ -11,23 +10,21 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
-import no.nav.sokos.skattekort.config.httpClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 class SkatteetatenClient(
     private val maskinportenTokenClient: MaskinportenTokenClient,
+    private val client: HttpClient,
 ) {
     suspend fun bestillSkattekort(request: SkatteetatenBestillSkattekortRequest): SkatteetatenBestillSkattekortResponse {
         // Flyttes til nais-config når vi skal ha forskjellige miljøer
         val url = "https://api-test.sits.no/api/forskudd/bestillSkattekort/"
 
-        val requestBody = Json.encodeToString(request)
-
         val response =
-            httpClient.post(url) {
+            client.post(url) {
                 contentType(ContentType.Application.Json)
                 bearerAuth(maskinportenTokenClient.getAccessToken())
-                setBody(requestBody)
+                setBody(request)
             }
 
         if (!response.status.isSuccess()) {

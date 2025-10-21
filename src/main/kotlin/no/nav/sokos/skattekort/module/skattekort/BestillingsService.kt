@@ -15,15 +15,13 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 // TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingsService(
     val dataSource: HikariDataSource,
-    val bestillingRepository: BestillingRepository,
-    val bestillingsbatchRepository: BestillingBatchRepository,
     val skatteetatenClient: SkatteetatenClient,
 ) {
     suspend fun opprettBestillingsbatch() {
         val (bestillings, request) =
             dataSource.transaction { tx ->
                 val bestillings =
-                    bestillingRepository
+                    BestillingRepository
                         .getAllBestilling(tx)
                         .filter { it.bestillingsbatchId == null }
                         .take(500)
@@ -60,12 +58,12 @@ class BestillingsService(
 
         dataSource.transaction { tx ->
             val bestillingsbatchId =
-                bestillingsbatchRepository.insert(
+                BestillingBatchRepository.insert(
                     tx,
                     bestillingsreferanse = response.bestillingsreferanse,
                     request = request,
                 )
-            bestillingRepository.updateBestillingsWithBatchId(
+            BestillingRepository.updateBestillingsWithBatchId(
                 tx,
                 bestillings.map { it.id!!.id },
                 bestillingsbatchId,

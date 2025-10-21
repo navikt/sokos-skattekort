@@ -41,6 +41,7 @@ val nimbusVersion = "10.4.1"
 val logbackVersion = "1.5.18"
 val logstashVersion = "8.1"
 val micrometerVersion = "1.15.2"
+val dbSchedulerVersion = "16.2.0"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val kotestVersion = "6.0.0.M17"
@@ -58,6 +59,7 @@ val postgresVersion = "42.7.7"
 val vaultVersion = "1.3.10"
 val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
+val opentelemetryVersion = "2.20.1-alpha"
 
 dependencies {
 
@@ -114,6 +116,12 @@ dependencies {
 
     // Cron Utils
     implementation("com.cronutils:cron-utils:$cronUtilsVersion")
+
+    // Scheduler
+    implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
+
+    // Opentelemetry
+    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
 
     // Test
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")

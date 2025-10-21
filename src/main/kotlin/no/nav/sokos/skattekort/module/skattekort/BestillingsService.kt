@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import kotlinx.coroutines.runBlocking
+
 import com.zaxxer.hikari.HikariDataSource
 
 import no.nav.sokos.skattekort.skatteetaten.Arbeidsgiver
@@ -17,7 +19,7 @@ class BestillingsService(
     val dataSource: HikariDataSource,
     val skatteetatenClient: SkatteetatenClient,
 ) {
-    suspend fun opprettBestillingsbatch() {
+    fun opprettBestillingsbatch() {
         val (bestillings, request) =
             dataSource.transaction { tx ->
                 val bestillings =
@@ -54,20 +56,22 @@ class BestillingsService(
             // Ingenting å gjøre
             return
         }
-        val response = skatteetatenClient.bestillSkattekort(request)
+        runBlocking {
+            val response = skatteetatenClient.bestillSkattekort(request)
 
-        dataSource.transaction { tx ->
-            val bestillingsbatchId =
-                BestillingBatchRepository.insert(
+            dataSource.transaction { tx ->
+                val bestillingsbatchId =
+                    BestillingBatchRepository.insert(
+                        tx,
+                        bestillingsreferanse = response.bestillingsreferanse,
+                        request = request,
+                    )
+                BestillingRepository.updateBestillingsWithBatchId(
                     tx,
-                    bestillingsreferanse = response.bestillingsreferanse,
-                    request = request,
+                    bestillings.map { it.id!!.id },
+                    bestillingsbatchId,
                 )
-            BestillingRepository.updateBestillingsWithBatchId(
-                tx,
-                bestillings.map { it.id!!.id },
-                bestillingsbatchId,
-            )
+            }
         }
     }
 }

@@ -50,6 +50,7 @@ val jacksonVersion = "3.0.0"
 val mockOAuth2ServerVersion = "2.2.1"
 val mockkVersion = "1.14.5"
 val hikariVersion = "6.3.1"
+val cronUtilsVersion = "9.2.1"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.3"
 val flywayVersion = "11.10.3"
@@ -110,6 +111,9 @@ dependencies {
 
     // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
     implementation("org.apache.commons:commons-lang3:3.18.0")
+
+    // Cron Utils
+    implementation("com.cronutils:cron-utils:$cronUtilsVersion")
 
     // Test
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")

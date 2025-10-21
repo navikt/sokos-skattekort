@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.utsending.arena
+package no.nav.sokos.skattekort.module.utsending
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
@@ -7,8 +7,8 @@ import kotlinx.datetime.format.byUnicodePattern
 
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortDel
-import no.nav.sokos.skattekort.module.skattekort.SkattekortTileggsopplysning
 import no.nav.sokos.skattekort.module.skattekort.SkattekortType
+import no.nav.sokos.skattekort.module.skattekort.Tileggsopplysning
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Trekkode
 
@@ -28,16 +28,12 @@ private const val MAX_LENGDE_FRIKORT_BELOP = 6
 private const val MAX_LENGDE_FNR = 17
 
 object CopybookUtils {
-    fun skattekortToArenaCopybookFormat(
-        skattekort: Skattekort,
-        skattekortDelList: List<SkattekortDel>,
-        skattekortTileggsopplysningList: List<SkattekortTileggsopplysning>,
-    ): String {
-        val skattekortDel = findSkattekortDel(skattekortDelList) ?: return ""
+    fun skattekortToArenaCopybookFormat(skattekort: Skattekort): String {
+        val skattekortDel = findSkattekortDel(skattekort.skattekortDelList) ?: return ""
 
         return StringBuilder()
             .append(formatRecordType())
-            .append(formatSkattekommune(skattekortTileggsopplysningList))
+            .append(formatSkattekommune(skattekort.tileggsopplysningList))
             .append(formatArbeidstakeridentifikator(skattekort))
             .append(formatForskuddsform(skattekortDel))
             .append(formatNyTrekkmnd())
@@ -66,12 +62,12 @@ object CopybookUtils {
 
     private fun formatRecordType() = RECORD_TYPE.padEnd(2, EMPTY_SPACE)
 
-    private fun formatSkattekommune(skattekortTileggsopplysningList: List<SkattekortTileggsopplysning>): String {
+    private fun formatSkattekommune(tileggsopplysningList: List<Tileggsopplysning>): String {
         val tilleggsopplysning =
             when {
-                skattekortTileggsopplysningList.isEmpty() -> DEFAULT_OPPHOLD_OPPLYSNING
-                OPPHOLD_I_TILTAKSSONE.value == skattekortTileggsopplysningList.first().opplysning -> OPPHOLD_TILTAKSSONE
-                OPPHOLD_PA_SVALBARD == skattekortTileggsopplysningList.first().opplysning -> OPPHOLD_PA_SVALBARD
+                tileggsopplysningList.isEmpty() -> DEFAULT_OPPHOLD_OPPLYSNING
+                OPPHOLD_I_TILTAKSSONE.value == tileggsopplysningList.first().opplysning -> OPPHOLD_TILTAKSSONE
+                OPPHOLD_PA_SVALBARD == tileggsopplysningList.first().opplysning -> OPPHOLD_PA_SVALBARD
                 else -> DEFAULT_OPPHOLD_OPPLYSNING
             }
         return tilleggsopplysning.padEnd(4, EMPTY_SPACE)

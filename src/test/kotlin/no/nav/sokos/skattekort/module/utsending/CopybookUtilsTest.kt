@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.utsending.arena
+package no.nav.sokos.skattekort.module.utsending
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -11,7 +11,7 @@ class CopybookUtilsTest :
         val skattekortDelList = TestData.getSkatteDelListTestData()
         val skattekortTileggsopplysningList = TestData.getSkattekortTileggsopplysningListTestData()
 
-        test("SkattekortToCopybookFormat with tabell") {
+        test("skattekortToArenaCopybookFormat med tabell trekk") {
             val result =
                 CopybookUtils.skattekortToArenaCopybookFormat(
                     skattekort,
@@ -28,5 +28,25 @@ class CopybookUtilsTest :
                 "2025" +
                 "      " +
                 "/n"
+        }
+
+        test("skattekortToArenaCopybookFormat med opphold tiltakssone") {
+            val result =
+                CopybookUtils.skattekortToArenaCopybookFormat(
+                    skattekort,
+                    listOf(tabellDel),
+                    listOf(oppholdTiltak),
+                )
+            result.substring(2, 6) shouldBe "5444"
+        }
+
+        test("skattekortToArenaCopybookFormat med opphold svalbard") {
+            val result =
+                CopybookUtils.skattekortToArenaCopybookFormat(
+                    skattekort,
+                    listOf(tabellDel),
+                    listOf(oppholdSvalbard),
+                )
+            result.substring(2, 6) shouldBe "2100"
         }
     })

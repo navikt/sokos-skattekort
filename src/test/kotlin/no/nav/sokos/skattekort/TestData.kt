@@ -13,9 +13,9 @@ import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortDel
 import no.nav.sokos.skattekort.module.skattekort.SkattekortDelId
 import no.nav.sokos.skattekort.module.skattekort.SkattekortId
-import no.nav.sokos.skattekort.module.skattekort.SkattekortTileggsopplysning
 import no.nav.sokos.skattekort.module.skattekort.SkattekortTileggsopplysningId
 import no.nav.sokos.skattekort.module.skattekort.SkattekortType
+import no.nav.sokos.skattekort.module.skattekort.Tileggsopplysning
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Trekkode
 
@@ -67,7 +67,7 @@ object TestData {
 
     fun getSkattekortTileggsopplysningListTestData() =
         listOf(
-            SkattekortTileggsopplysning(
+            Tileggsopplysning(
                 id = SkattekortTileggsopplysningId(1L),
                 skattekortId = SkattekortId(1L),
                 opplysning = Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE.value,

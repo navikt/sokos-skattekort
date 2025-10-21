@@ -22,6 +22,8 @@ data class Skattekort
         val inntektsaar: Int,
         val kilde: String,
         val opprettet: Instant = Clock.System.now(),
+        val skattekortDelList: List<SkattekortDel> = emptyList(),
+        val tileggsopplysningList: List<Tileggsopplysning> = emptyList(),
     ) {
         @OptIn(ExperimentalTime::class)
         constructor(row: Row) : this(
@@ -38,5 +40,34 @@ data class Skattekort
 @Serializable
 @JvmInline
 value class SkattekortId(
+    val value: Long,
+)
+
+data class SkattekortDel(
+    val id: SkattekortDelId? = null,
+    val skattekortId: SkattekortId,
+    val trekkKode: String,
+    val skattekortType: SkattekortType,
+    val frikortBeloep: Int? = null,
+    val tabellNummer: String? = null,
+    val prosentsats: Double? = null,
+    val antallMndForTrekk: Double? = null,
+)
+
+@Serializable
+@JvmInline
+value class SkattekortDelId(
+    val value: Long,
+)
+
+data class Tileggsopplysning(
+    val id: SkattekortTileggsopplysningId? = null,
+    val skattekortId: SkattekortId,
+    val opplysning: String,
+)
+
+@Serializable
+@JvmInline
+value class SkattekortTileggsopplysningId(
     val value: Long,
 )

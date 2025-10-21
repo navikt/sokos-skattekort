@@ -21,6 +21,7 @@ import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 fun main() {
@@ -48,10 +49,14 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
+        provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
+            MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+        }
         provide(MaskinportenTokenClient::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
+        provide(UtsendingService::class)
     }
 
     val forespoerselListener: ForespoerselListener by dependencies

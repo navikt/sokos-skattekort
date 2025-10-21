@@ -9,10 +9,10 @@ private const val UTF_8_WITH_PUA = 1208
 
 object MQConfig {
     val connectionFactory: ConnectionFactory by lazy {
-        initConncetionFactory(PropertiesConfig.getMQProperties())
+        initConnectionFactory(PropertiesConfig.getMQProperties())
     }
 
-    fun initConncetionFactory(properties: PropertiesConfig.MQProperties) =
+    fun initConnectionFactory(properties: PropertiesConfig.MQProperties) =
         MQConnectionFactory().apply {
             transportType = WMQConstants.WMQ_CM_CLIENT
             queueManager = properties.mqQueueManagerName

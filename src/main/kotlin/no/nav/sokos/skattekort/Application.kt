@@ -21,8 +21,6 @@ import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.module.skattekort.BestillingBatchRepository
-import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
@@ -57,8 +55,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(ForespoerselService::class)
         provide(BestillingsService::class)
         provide(ForespoerselListener::class)
-        provide { BestillingRepository }
-        provide { BestillingBatchRepository }
         provide(SkatteetatenClient::class)
     }
 

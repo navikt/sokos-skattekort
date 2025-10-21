@@ -20,7 +20,7 @@ class BestillingsServiceTest :
         val skatteetatenClient = mockk<SkatteetatenClient>()
 
         val bestillingsService: BestillingsService by lazy {
-            BestillingsService(DbListener.dataSource, BestillingRepository, BestillingBatchRepository, skatteetatenClient)
+            BestillingsService(DbListener.dataSource, skatteetatenClient)
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {

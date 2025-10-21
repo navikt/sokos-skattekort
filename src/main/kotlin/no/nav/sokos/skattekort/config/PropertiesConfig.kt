@@ -125,6 +125,11 @@ object PropertiesConfig {
         val fraForSystemQueue: String,
     )
 
+    data class SchedulerProperties(
+        val enabled: Boolean = getOrEmpty("SCHEDULER_ENABLED").toBoolean(),
+        val cronExpression: String = getOrEmpty("SCHEDULER_CRON_EXPRESSION"),
+    )
+
     data class MaskinportenProperties(
         val clientId: String,
         val wellKnownUrl: String,

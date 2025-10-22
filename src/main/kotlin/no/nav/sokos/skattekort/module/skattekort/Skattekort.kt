@@ -24,11 +24,11 @@ data class Skattekort
         val inntektsaar: Int,
         val kilde: String,
         val opprettet: Instant = Clock.System.now(),
-        val deler: List<SkattekortDel> = emptyList(),
-        val tilleggsopplysning: List<Tilleggsopplysning> = emptyList(),
+        val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
+        val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
     ) {
         @OptIn(ExperimentalTime::class)
-        constructor(row: Row, deler: List<SkattekortDel>?, tilleggsopplysning: List<Tilleggsopplysning>) : this(
+        constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
             id = SkattekortId(row.long("id")),
             personId = PersonId(row.long("person_id")),
             utstedtDato = row.localDate("utstedt_dato").toKotlinLocalDate(),
@@ -36,6 +36,8 @@ data class Skattekort
             inntektsaar = row.int("inntektsaar"),
             kilde = row.string("kilde"),
             opprettet = row.instant("opprettet").toKotlinInstant(),
+            forskuddstrekkList = forskuddstrekkList,
+            tilleggsopplysningList = tilleggsopplysningList,
         )
     }
 
@@ -45,15 +47,9 @@ value class SkattekortId(
     val value: Long,
 )
 
-@Serializable
-@JvmInline
-value class SkattekortDelId(
-    val value: Long,
-)
-
-interface SkattekortDel {
+interface Forskuddstrekk {
     companion object {
-        fun create(row: Row): SkattekortDel {
+        fun create(row: Row): Forskuddstrekk {
             val type = row.string("type")
             return when (type) {
                 "frikort" ->
@@ -61,12 +57,14 @@ interface SkattekortDel {
                         trekkode = row.string("trekk_kode"),
                         frikortBeloep = row.int("frikort_beloep"),
                     )
+
                 "prosent" ->
                     Prosentkort(
                         trekkode = row.string("trekk_kode"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
+
                 "tabell" ->
                     Tabellkort(
                         trekkode = row.string("trekk_kode"),
@@ -74,6 +72,7 @@ interface SkattekortDel {
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
+
                 else -> throw IllegalStateException("Ukjent type for skattekort-del med id ${row.long("id")}")
             }
         }
@@ -83,20 +82,20 @@ interface SkattekortDel {
 data class Frikort(
     val trekkode: String,
     val frikortBeloep: Int,
-) : SkattekortDel
+) : Forskuddstrekk
 
 data class Tabellkort(
     val trekkode: String,
     val tabellNummer: String,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal,
-) : SkattekortDel
+) : Forskuddstrekk
 
 data class Prosentkort(
     val trekkode: String,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal? = null,
-) : SkattekortDel
+) : Forskuddstrekk
 
 data class Tilleggsopplysning(
     val opplysning: String,

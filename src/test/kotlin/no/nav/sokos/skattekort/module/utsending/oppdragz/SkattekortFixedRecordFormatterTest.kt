@@ -8,10 +8,10 @@ import kotlinx.serialization.json.Json
 import io.kotest.core.spec.style.FunSpec
 
 import no.nav.sokos.skattekort.TestUtil.readFile
-import no.nav.sokos.skattekort.module.bestilling.svar.Arbeidstaker
-import no.nav.sokos.skattekort.module.bestilling.svar.Forskuddstrekk
-import no.nav.sokos.skattekort.module.bestilling.svar.Root
-import no.nav.sokos.skattekort.module.bestilling.svar.Skattekort
+import no.nav.sokos.skattekort.skatteetaten.svar.Arbeidstaker
+import no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk
+import no.nav.sokos.skattekort.skatteetaten.svar.Root
+import no.nav.sokos.skattekort.skatteetaten.svar.Skattekort
 
 fun arbeidstakerConverter(a: Arbeidstaker): Skattekortmelding =
     Skattekortmelding(

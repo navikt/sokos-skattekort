@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort
 
 import com.ibm.mq.jakarta.jms.MQQueue
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
@@ -11,6 +12,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.JobTaskConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
@@ -23,6 +25,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
+import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 
@@ -61,6 +64,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(UtsendingService::class)
         provide(BestillingsService::class)
         provide(SkatteetatenClient::class)
+        provide(ScheduledTaskService::class)
     }
 
     val forespoerselListener: ForespoerselListener by dependencies
@@ -69,4 +73,16 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
+
+    if (PropertiesConfig.SchedulerProperties().enabled) {
+        val bestillingsService: BestillingsService by dependencies
+        val scheduledTaskService: ScheduledTaskService by dependencies
+        val dataSource: HikariDataSource by dependencies
+        JobTaskConfig
+            .scheduler(
+                bestillingsService,
+                scheduledTaskService,
+                dataSource,
+            ).start()
+    }
 }

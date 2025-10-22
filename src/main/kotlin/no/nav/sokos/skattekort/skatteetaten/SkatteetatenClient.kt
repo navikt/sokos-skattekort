@@ -10,12 +10,11 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
-import no.nav.sokos.skattekort.config.httpClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 class SkatteetatenClient(
-    private val maskinportenTokenClient: MaskinportenTokenClient = MaskinportenTokenClient(httpClient),
-    private val client: HttpClient = httpClient,
+    private val maskinportenTokenClient: MaskinportenTokenClient,
+    private val client: HttpClient,
 ) {
     suspend fun bestillSkattekort(request: SkatteetatenBestillSkattekortRequest): SkatteetatenBestillSkattekortResponse {
         // Flyttes til nais-config når vi skal ha forskjellige miljøer

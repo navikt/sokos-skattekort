@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 
 import com.zaxxer.hikari.HikariDataSource
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.skatteetaten.Arbeidsgiver
 import no.nav.sokos.skattekort.skatteetaten.ArbeidsgiverIdentifikator
 import no.nav.sokos.skattekort.skatteetaten.ForespoerselOmSkattekortTilArbeidsgiver
@@ -16,8 +17,8 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 // TODO: Metrikk for varsling: tid siden siste mottatte bestilling
 // TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingsService(
-    val dataSource: HikariDataSource,
-    val skatteetatenClient: SkatteetatenClient,
+    val dataSource: HikariDataSource = DatabaseConfig.dataSource,
+    val skatteetatenClient: SkatteetatenClient = SkatteetatenClient(),
 ) {
     fun opprettBestillingsbatch() {
         val (bestillings, request) =

@@ -64,8 +64,8 @@ spec:
     - secret: sokos-skattekort-mq-credentials
 
   env:
-    - name: SCHEDULER_CRON_EXPRESSION
-      value: "17 * * * * *"
+    - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
+      value: "0 * * * * *"
     - name: SCHEDULER_ENABLED
       value: "true"
     - name: USE_AUTHENTICATION

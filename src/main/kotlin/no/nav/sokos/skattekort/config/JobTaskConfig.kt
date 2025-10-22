@@ -14,12 +14,10 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
-import no.nav.sokos.skattekort.security.MaskinportenTokenClient
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 
 private val logger = KotlinLogging.logger { }
-private const val JOB_TASK_SEND_BESTILLING_BATCH = "send-bestilling"
+private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
 
 object JobTaskConfig {
     fun scheduler(dataSource: HikariDataSource = DatabaseConfig.dataSource): Scheduler =
@@ -28,15 +26,11 @@ object JobTaskConfig {
             .enableImmediateExecution()
             .registerShutdownHook()
             .startTasks(
-                sendBestillingBatch(),
+                recurringSendBestillingBatchTask(),
             ).build()
 
-    fun sendBestillingBatch(
-        bestillingsService: BestillingsService =
-            BestillingsService(
-                dataSource = DatabaseConfig.dataSource,
-                skatteetatenClient = SkatteetatenClient(MaskinportenTokenClient(httpClient), httpClient),
-            ),
+    fun recurringSendBestillingBatchTask(
+        bestillingsService: BestillingsService = BestillingsService(),
         scheduledTaskService: ScheduledTaskService = ScheduledTaskService(),
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {

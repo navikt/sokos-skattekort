@@ -40,30 +40,28 @@ object SkattekortRepository {
             ),
             extractor = { row ->
                 val id = SkattekortId(row.long("id"))
-                Skattekort(row, skattekortDeler(tx, id), tilleggsopplysninger(tx, id))
+                Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id), findAllTilleggsopplysningBySkattekortId(tx, id))
             },
         )
 
-    fun skattekortDeler(
+    fun findAllForskuddstrekkBySkattekortId(
         tx: TransactionalSession,
         id: SkattekortId,
-    ): List<SkattekortDel> =
+    ): List<Forskuddstrekk> =
         tx.list(
             queryOf(
                 """
-                SELECT * FROM skattekort_del 
-                WHERE skattekort_id = :skId
+                SELECT * FROM forskuddstrekk 
+                WHERE skattekort_id = :skattekkortId
                 """.trimIndent(),
                 mapOf(
-                    "skId" to id.value,
+                    "skattekkortId" to id.value,
                 ),
             ),
-            extractor = { row ->
-                SkattekortDel.create(row)
-            },
+            extractor = { row -> mapToForskuddstrekk(row) },
         )
 
-    private fun tilleggsopplysninger(
+    private fun findAllTilleggsopplysningBySkattekortId(
         tx: TransactionalSession,
         id: SkattekortId,
     ): List<Tilleggsopplysning> =
@@ -71,10 +69,10 @@ object SkattekortRepository {
             queryOf(
                 """
                 SELECT * FROM skattekort_tilleggsopplysning 
-                WHERE skattekort_id = :skId
+                WHERE skattekort_id = :skattekkortId
                 """.trimIndent(),
                 mapOf(
-                    "skId" to id.value,
+                    "skattekkortId" to id.value,
                 ),
             ),
             extractor = { row ->

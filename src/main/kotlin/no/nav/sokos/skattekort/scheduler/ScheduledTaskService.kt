@@ -5,33 +5,35 @@ import kotlin.time.Instant
 
 import com.zaxxer.hikari.HikariDataSource
 
-import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 @OptIn(ExperimentalTime::class)
 class ScheduledTaskService(
-    private val dataSource: HikariDataSource = DatabaseConfig.dataSource,
-    private val scheduledTaskRepository: ScheduledTaskRepository = ScheduledTaskRepository(dataSource),
+    private val dataSource: HikariDataSource,
 ) {
-    fun getScheduledTaskInformation(): List<JobTaskInfo> {
-        val scheduledTaskMap = scheduledTaskRepository.getLastScheduledTask()
-        return scheduledTaskRepository.getAllScheduledTasks().map {
-            JobTaskInfo(
-                it.taskInstance,
-                it.taskName,
-                Instant.fromEpochMilliseconds(it.executionTime.toInstant().toEpochMilli()),
-                it.picked,
-                it.pickedBy,
-                it.lastFailure?.let { failure -> Instant.fromEpochMilliseconds(failure.toInstant().toEpochMilli()) },
-                it.lastSuccess?.let { lastSuccess -> Instant.fromEpochMilliseconds(lastSuccess.toInstant().toEpochMilli()) },
-                scheduledTaskMap[it.taskName]?.ident,
-            )
+    fun getScheduledTaskInformation(): List<JobTaskInfo> =
+        dataSource.transaction { tx ->
+            val scheduledTaskMap = ScheduledTaskRepository.getLastScheduledTask(tx)
+            ScheduledTaskRepository.getAllScheduledTasks(tx).map {
+                JobTaskInfo(
+                    it.taskInstance,
+                    it.taskName,
+                    Instant.fromEpochMilliseconds(it.executionTime.toInstant().toEpochMilli()),
+                    it.picked,
+                    it.pickedBy,
+                    it.lastFailure?.let { failure -> Instant.fromEpochMilliseconds(failure.toInstant().toEpochMilli()) },
+                    it.lastSuccess?.let { lastSuccess -> Instant.fromEpochMilliseconds(lastSuccess.toInstant().toEpochMilli()) },
+                    scheduledTaskMap[it.taskName]?.ident,
+                )
+            }
         }
-    }
 
     fun insertScheduledTaskHistory(
         ident: String,
         taskName: String,
     ) {
-        scheduledTaskRepository.insert(ident, taskName)
+        dataSource.transaction { tx ->
+            ScheduledTaskRepository.insert(ident, taskName, tx)
+        }
     }
 }

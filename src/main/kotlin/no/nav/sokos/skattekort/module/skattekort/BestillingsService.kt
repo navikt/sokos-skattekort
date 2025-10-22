@@ -4,7 +4,6 @@ import kotlinx.coroutines.runBlocking
 
 import com.zaxxer.hikari.HikariDataSource
 
-import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.skatteetaten.Arbeidsgiver
 import no.nav.sokos.skattekort.skatteetaten.ArbeidsgiverIdentifikator
 import no.nav.sokos.skattekort.skatteetaten.ForespoerselOmSkattekortTilArbeidsgiver
@@ -17,46 +16,44 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 // TODO: Metrikk for varsling: tid siden siste mottatte bestilling
 // TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingsService(
-    val dataSource: HikariDataSource = DatabaseConfig.dataSource,
-    val skatteetatenClient: SkatteetatenClient = SkatteetatenClient(),
+    val dataSource: HikariDataSource,
+    val skatteetatenClient: SkatteetatenClient,
 ) {
     fun opprettBestillingsbatch() {
-        val (bestillings, request) =
+        val bestillings: List<Bestilling> =
             dataSource.transaction { tx ->
-                val bestillings =
-                    BestillingRepository
-                        .getAllBestilling(tx)
-                        .filter { it.bestillingsbatchId == null }
-                        .take(500)
-                        .toList()
-                val request =
-                    SkatteetatenBestillSkattekortRequest(
-                        inntektsaar = "2025",
-                        bestillingstype = "HENT_ALLE_OPPGITTE",
-                        kontaktinformasjon =
-                            Kontaktinformasjon(
-                                epostadresse = "john.smith@example.com",
-                                mobiltelefonummer = "+4794123456",
-                            ),
-                        varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
-                        forespoerselOmSkattekortTilArbeidsgiver =
-                            ForespoerselOmSkattekortTilArbeidsgiver(
-                                arbeidsgiver =
-                                    listOf(
-                                        Arbeidsgiver(
-                                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator("312978083"),
-                                            arbeidstakeridentifikator = bestillings.map { it.fnr }.map { it.value },
-                                        ),
-                                    ),
-                            ),
-                    )
-                bestillings to request
+                BestillingRepository
+                    .getAllBestilling(tx)
+                    .filter { it.bestillingsbatchId == null }
+                    .take(500)
+                    .toList()
             }
-
         if (bestillings.isEmpty()) {
             // Ingenting å gjøre
             return
         }
+        val request =
+            SkatteetatenBestillSkattekortRequest(
+                inntektsaar = "2025",
+                bestillingstype = "HENT_ALLE_OPPGITTE",
+                kontaktinformasjon =
+                    Kontaktinformasjon(
+                        epostadresse = "john.smith@example.com",
+                        mobiltelefonummer = "+4794123456",
+                    ),
+                varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
+                forespoerselOmSkattekortTilArbeidsgiver =
+                    ForespoerselOmSkattekortTilArbeidsgiver(
+                        arbeidsgiver =
+                            listOf(
+                                Arbeidsgiver(
+                                    arbeidsgiveridentifikator = ArbeidsgiverIdentifikator("312978083"),
+                                    arbeidstakeridentifikator = bestillings.map { it.fnr }.map { it.value },
+                                ),
+                            ),
+                    ),
+            )
+
         runBlocking {
             val response = skatteetatenClient.bestillSkattekort(request)
 

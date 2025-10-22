@@ -24,6 +24,7 @@ import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
+import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -59,6 +60,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(ForespoerselListener::class)
         provide(UtsendingService::class)
         provide(BestillingsService::class)
+        provide(SkatteetatenClient::class)
     }
 
     val forespoerselListener: ForespoerselListener by dependencies

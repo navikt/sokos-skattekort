@@ -337,7 +337,7 @@ erDiagram
 erDiagram
     person ||--o{ skattekort: har
     person ||--o{ skattekort_data: har
-    skattekort ||--o{ skattekort_deler: har
+    skattekort ||--o{ forskuddstrekker: har
     skattekort ||--o{ skattekort_tilleggsopplysninger: har
     skattekort {
         smallint inntektsaar
@@ -346,8 +346,8 @@ erDiagram
         text kilde "Angir kilde for skattekortet: skatt, syntetisert, manuelt"
         timestamptz opprettet "Vår egen dato for oppretting av skattekortet"
     }
-    skattekort_deler {
-        text trekk_kode "PENSJON, PENSJON_FRA_NAV, etc. Satt av skatteetaten, angir bruksområde for skattekortdelen"
+    forskuddstrekker {
+        text trekk_kode "PENSJON, PENSJON_FRA_NAV, etc. Satt av skatteetaten, angir bruksområde for forskuddstrekken"
         text type "frikort, tabell, prosent"
         int frikort_beloep "Beløpsgrense for frikort, eller null dersom ikke frikort eller ingen grense"
         text tabell_nummer "Tabellangivelse. Tabeller oppdateres en gang pr år"

@@ -1,6 +1,10 @@
 package no.nav.sokos.skattekort.module.utsending.oppdragz
 
+import java.math.BigDecimal
 import javax.xml.datatype.DatatypeFactory
+
+import no.nav.sokos.skattekort.module.skattekort.Prosentkort
+import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 
 data class Skattekortmelding(
     val inntektsaar: Long = 0,
@@ -18,8 +22,16 @@ data class Skattekortmelding(
                 inntektsaar = sk.inntektsaar.toLong(),
                 utstedtDato = DatatypeFactory.newInstance().newXMLGregorianCalendar(sk.utstedtDato.toString()),
                 skattekortidentifikator = sk.identifikator.toLong(),
-                forskuddstrekk = sk.deler.map { Forskuddstrekk(it) },
+                forskuddstrekk =
+                    sk.deler.map {
+                        when (it) {
+                            is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(it.trekkode), BigDecimal(it.frikortBeloep))
+                            is Prosentkort -> Trekkprosent(Trekkode.fromValue(it.trekkode), it.prosentSats, it.antallMndForTrekk)
+                            is Tabellkort -> Trekktabell(Trekkode.fromValue(it.trekkode), Tabelltype.TREKKTABELL_FOR_LOENN, it.tabellNummer, it.prosentSats, it.antallMndForTrekk)
+                            else -> throw IllegalStateException("Unexpected $it")
+                        }
+                    },
             ),
-        tilleggsopplysning = sk.tilleggsopplysning.map { Tilleggsopplysning(it) },
+        tilleggsopplysning = sk.tilleggsopplysning.map { Tilleggsopplysning.fromValue(it.opplysning) },
     )
 }

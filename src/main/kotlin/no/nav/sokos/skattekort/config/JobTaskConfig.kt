@@ -19,7 +19,7 @@ import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 
 private val logger = KotlinLogging.logger { }
-private const val JOB_TASK_BESTILL_SKATTEKORT = "bestill-skattekort-job-task"
+private const val JOB_TASK_SEND_BESTILLING_BATCH = "send-bestilling"
 
 object JobTaskConfig {
     fun scheduler(dataSource: HikariDataSource = DatabaseConfig.dataSource): Scheduler =
@@ -28,10 +28,10 @@ object JobTaskConfig {
             .enableImmediateExecution()
             .registerShutdownHook()
             .startTasks(
-                recurringSomethingsomething(),
+                sendBestillingBatch(),
             ).build()
 
-    fun recurringSomethingsomething(
+    fun sendBestillingBatch(
         bestillingsService: BestillingsService =
             BestillingsService(
                 dataSource = DatabaseConfig.dataSource,
@@ -43,14 +43,14 @@ object JobTaskConfig {
         val showLogLocalTime = LocalDateTime.now()
         return Tasks
             .recurring(
-                JOB_TASK_BESTILL_SKATTEKORT,
+                JOB_TASK_SEND_BESTILLING_BATCH,
                 cron(schedulerProperties.cronExpression),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 withTracerId {
                     showLog(showLogLocalTime, instance, context)
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_BESTILL_SKATTEKORT)
+                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
                     bestillingsService.opprettBestillingsbatch()
                 }
             }

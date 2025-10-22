@@ -127,7 +127,7 @@ object PropertiesConfig {
 
     data class SchedulerProperties(
         val enabled: Boolean = getOrEmpty("SCHEDULER_ENABLED").toBoolean(),
-        val cronExpression: String = getOrEmpty("SCHEDULER_CRON_EXPRESSION"),
+        val cronExpression: String = getOrEmpty("SEND_BESTILLING_BATCHSCHEDULER_CRON_EXPRESSION"),
     )
 
     data class MaskinportenProperties(

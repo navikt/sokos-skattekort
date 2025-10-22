@@ -21,6 +21,7 @@ import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
@@ -57,6 +58,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
         provide(UtsendingService::class)
+        provide(BestillingsService::class)
     }
 
     val forespoerselListener: ForespoerselListener by dependencies

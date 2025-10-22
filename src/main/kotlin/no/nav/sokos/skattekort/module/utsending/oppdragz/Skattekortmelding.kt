@@ -23,7 +23,7 @@ data class Skattekortmelding(
                 utstedtDato = DatatypeFactory.newInstance().newXMLGregorianCalendar(sk.utstedtDato.toString()),
                 skattekortidentifikator = sk.identifikator.toLong(),
                 forskuddstrekk =
-                    sk.deler.map {
+                    sk.forskuddstrekkList.map {
                         when (it) {
                             is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(it.trekkode), BigDecimal(it.frikortBeloep))
                             is Prosentkort -> Trekkprosent(Trekkode.fromValue(it.trekkode), it.prosentSats, it.antallMndForTrekk)
@@ -32,6 +32,6 @@ data class Skattekortmelding(
                         }
                     },
             ),
-        tilleggsopplysning = sk.tilleggsopplysning.map { Tilleggsopplysning.fromValue(it.opplysning) },
+        tilleggsopplysning = sk.tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it.opplysning) },
     )
 }

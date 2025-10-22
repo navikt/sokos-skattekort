@@ -48,44 +48,54 @@ value class SkattekortId(
 )
 
 interface Forskuddstrekk {
-    val trekkode: String
+    companion object {
+        fun create(row: Row): Forskuddstrekk {
+            val type = row.string("type")
+            return when (type) {
+                "frikort" ->
+                    Frikort(
+                        trekkode = row.string("trekk_kode"),
+                        frikortBeloep = row.int("frikort_beloep"),
+                    )
+
+                "prosent" ->
+                    Prosentkort(
+                        trekkode = row.string("trekk_kode"),
+                        prosentSats = row.bigDecimal("prosentsats"),
+                        antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
+                    )
+
+                "tabell" ->
+                    Tabellkort(
+                        trekkode = row.string("trekk_kode"),
+                        tabellNummer = row.string("tabell_nummer"),
+                        prosentSats = row.bigDecimal("prosentsats"),
+                        antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
+                    )
+
+                else -> throw IllegalStateException("Ukjent type for skattekort-del med id ${row.long("id")}")
+            }
+        }
+    }
 }
 
 data class Frikort(
-    override val trekkode: String,
+    val trekkode: String,
     val frikortBeloep: Int,
-) : Forskuddstrekk {
-    constructor(row: Row) : this(
-        trekkode = row.string("trekk_kode"),
-        frikortBeloep = row.int("frikort_beloep"),
-    )
-}
+) : Forskuddstrekk
 
 data class Tabellkort(
-    override val trekkode: String,
+    val trekkode: String,
     val tabellNummer: String,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal,
-) : Forskuddstrekk {
-    constructor(row: Row) : this(
-        trekkode = row.string("trekk_kode"),
-        tabellNummer = row.string("tabell_nummer"),
-        prosentSats = row.bigDecimal("prosentsats"),
-        antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
-    )
-}
+) : Forskuddstrekk
 
 data class Prosentkort(
-    override val trekkode: String,
+    val trekkode: String,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal? = null,
-) : Forskuddstrekk {
-    constructor(row: Row) : this(
-        trekkode = row.string("trekk_kode"),
-        prosentSats = row.bigDecimal("prosentsats"),
-        antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
-    )
-}
+) : Forskuddstrekk
 
 data class Tilleggsopplysning(
     val opplysning: String,
@@ -94,11 +104,3 @@ data class Tilleggsopplysning(
         opplysning = row.string("opplysning"),
     )
 }
-
-fun mapToForskuddstrekk(row: Row): Forskuddstrekk =
-    when (row.string("type")) {
-        "frikort" -> Frikort(row)
-        "prosent" -> Prosentkort(row)
-        "tabell" -> Tabellkort(row)
-        else -> throw IllegalStateException("Ukjent type for skattekort-del med id ${row.long("id")}")
-    }

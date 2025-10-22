@@ -15,10 +15,10 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 
 private val logger = KotlinLogging.logger { }
 
-fun Route.foerespoerselApi(forespoerselService: ForespoerselService) {
-    route("api/v1") {
-        post("bestilleSkattekort") {
-            val request = call.receive<FoerespoerselRequest>()
+fun Route.skattekortApi(forespoerselService: ForespoerselService) {
+    route("api/v1/skattekort/") {
+        post("bestille") {
+            val request = call.receive<ForespoerselRequest>()
             val message = "${request.forsystem};${request.aar};${request.personIdent}"
 
             logger.info(marker = TEAM_LOGS_MARKER) { "foerespoerselApi - Mottat request: $request" }
@@ -29,7 +29,7 @@ fun Route.foerespoerselApi(forespoerselService: ForespoerselService) {
 }
 
 @Serializable
-data class FoerespoerselRequest(
+data class ForespoerselRequest(
     val personIdent: String,
     val aar: Int,
     val forsystem: String,

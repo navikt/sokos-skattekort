@@ -1,0 +1,71 @@
+openapi: 3.0.4
+info:
+  title: sokos-skattekort API
+  description: |-
+    API-tjeneste for å søke eller bestille etter skattekort
+  termsOfService: https://swagger.io/terms/
+  contact:
+    name: Team Motta og Beregne
+    email: okonomi@nav.no
+    url: https://nav-it.slack.com/archives/CKZADNFBP
+  version: 1.0.0
+servers:
+  - url: /api/v1/skattekort
+tags:
+  - name: sokos-skattekort
+    description: API for å håndtere skattekort-forespørsler
+    externalDocs:
+      description: Find out more
+      url: https://swagger.io
+paths:
+  /forespoersel:
+    post:
+      tags:
+        - skattekort
+      summary: Bestille skattekort
+      description: Bekrefte henting av skattekort
+      operationId: taImotForespoeresel
+      requestBody:
+        description: Send forespørsel om skattekort
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForespoerselRequest'
+        required: true
+      responses:
+        '201':
+          description: Opprettet forespø operation
+        '400':
+          description: Invalid input
+      security:
+        - Bearer: [ ]
+
+components:
+  schemas:
+    ForespoerselRequest:
+      type: object
+      properties:
+        personIdent:
+          type: string
+          example: "12345678901"
+        aar:
+          type: integer
+          format: int32
+          example: 2025
+        forsystem:
+          type: string
+          example: "MANUEL"
+          enum:
+            - MANUEL
+            - OS
+            - ARENA
+
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: |-
+        OBO-token (JWT via OAuth2.0).
+        Følgende format må brukes i input-feltet "Value" under: **"Bearer {token}"**.
+        Eksempel på verdi i input-felt: **Bearer eYdmifml0ejugm**
+      name: Authorization
+      in: header

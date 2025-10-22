@@ -57,6 +57,7 @@ val postgresVersion = "42.7.7"
 val vaultVersion = "1.3.10"
 val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
+val swaggerRequestValidatorVersion = "2.46.0"
 
 dependencies {
 
@@ -121,6 +122,7 @@ dependencies {
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
+    testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
 }
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5

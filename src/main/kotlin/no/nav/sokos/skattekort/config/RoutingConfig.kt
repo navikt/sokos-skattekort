@@ -7,8 +7,8 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 
 import no.nav.sokos.skattekort.api.bestillingApi
-import no.nav.sokos.skattekort.api.foerespoerselApi
 import no.nav.sokos.skattekort.api.maskinportenTokenApi
+import no.nav.sokos.skattekort.api.skattekortApi
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
@@ -26,7 +26,7 @@ fun Application.routingConfig(
             val bestillingsService: BestillingsService by dependencies
 
             maskinportenTokenApi(maskinportenTokenClient)
-            foerespoerselApi(forespoerselService)
+            skattekortApi(forespoerselService)
             bestillingApi(bestillingsService)
         }
     }

@@ -22,6 +22,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
+import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 
@@ -50,11 +51,15 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
+        provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
+            MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+        }
         provide(MaskinportenTokenClient::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
-        provide(BestillingsService::class)
         provide(ForespoerselListener::class)
+        provide(UtsendingService::class)
+        provide(BestillingsService::class)
         provide(SkatteetatenClient::class)
     }
 

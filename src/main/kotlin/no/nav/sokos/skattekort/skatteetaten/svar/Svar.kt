@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.bestilling.svar
+package no.nav.sokos.skattekort.skatteetaten.svar
 
 import kotlinx.serialization.Serializable
 

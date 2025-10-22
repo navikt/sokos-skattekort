@@ -58,7 +58,9 @@ object SkattekortRepository {
                     "skattekkortId" to id.value,
                 ),
             ),
-            extractor = { row -> mapToForskuddstrekk(row) },
+            extractor = { row ->
+                Forskuddstrekk.create(row)
+            },
         )
 
     private fun findAllTilleggsopplysningBySkattekortId(

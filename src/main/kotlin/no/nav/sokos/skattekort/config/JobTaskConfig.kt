@@ -20,18 +20,22 @@ private val logger = KotlinLogging.logger { }
 private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
 
 object JobTaskConfig {
-    fun scheduler(dataSource: HikariDataSource = DatabaseConfig.dataSource): Scheduler =
+    fun scheduler(
+        bestillingsService: BestillingsService,
+        scheduledTaskService: ScheduledTaskService,
+        dataSource: HikariDataSource,
+    ): Scheduler =
         Scheduler
             .create(dataSource)
             .enableImmediateExecution()
             .registerShutdownHook()
             .startTasks(
-                recurringSendBestillingBatchTask(),
+                recurringSendBestillingBatchTask(bestillingsService, scheduledTaskService),
             ).build()
 
     fun recurringSendBestillingBatchTask(
-        bestillingsService: BestillingsService = BestillingsService(),
-        scheduledTaskService: ScheduledTaskService = ScheduledTaskService(),
+        bestillingsService: BestillingsService,
+        scheduledTaskService: ScheduledTaskService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()

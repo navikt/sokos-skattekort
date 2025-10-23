@@ -18,7 +18,7 @@ object UtsendingRepository {
                     "abonnementId" to utsending.abonnementId.value,
                     "fnr" to utsending.fnr.value,
                     "inntektsaar" to utsending.inntektsaar,
-                    "forsystem" to utsending.forsystem.kode,
+                    "forsystem" to utsending.forsystem.value,
                 ),
             ),
         )

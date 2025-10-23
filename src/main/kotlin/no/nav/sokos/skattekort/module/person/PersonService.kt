@@ -25,17 +25,16 @@ class PersonService(
 
     fun findOrCreatePersonByFnr(
         fnr: Personidentifikator,
-        informasjon: String?,
+        informasjon: String,
+        brukerId: String? = null,
         tx: TransactionalSession,
     ): Person =
         PersonRepository.findPersonByFnr(tx, fnr)?.let { person ->
-            informasjon?.let {
-                AuditRepository.insert(tx, AuditTag.MOTTATT_FORESPOERSEL, person.id!!, informasjon)
-            }
+            AuditRepository.insert(tx, AuditTag.MOTTATT_FORESPOERSEL, person.id!!, informasjon, brukerId)
             person
         } ?: run {
             val personId =
-                PersonRepository.insert(tx, fnr, LocalDate.now(), informasjon ?: "")
+                PersonRepository.insert(tx, fnr, LocalDate.now(), informasjon, brukerId)
                     ?: run {
                         logger.error(marker = TEAM_LOGS_MARKER) { "Kan ikke opprettet person med fnr: $fnr" }
                         throw PersonException("Kan ikke opprettet person med fnr: xxxx")

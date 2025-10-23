@@ -18,6 +18,7 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
+import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private const val FORESPOERSEL_DELIMITER = ";"
@@ -27,57 +28,62 @@ class ForespoerselService(
     private val dataSource: HikariDataSource,
     private val personService: PersonService,
 ) {
-    fun taImotForespoersel(message: String) {
+    fun taImotForespoersel(
+        message: String,
+        saksbehandler: NavIdent? = null,
+    ) {
         dataSource.transaction { tx ->
-            val foerespoerselInput =
+            val forespoerselInput =
                 when {
                     message.startsWith("<") -> parseXmlMessage(message)
                     else -> parseCopybookMessage(message)
                 }
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $foerespoerselInput" }
+            logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 
-            val foerespoerselId =
+            val forespoerselId =
                 ForespoerselRepository.insert(
                     tx = tx,
-                    forsystem = foerespoerselInput.forsystem,
+                    forsystem = forespoerselInput.forsystem,
                     dataMottatt = message,
                 )
-            createBestillingAndUtsending(tx, foerespoerselId, foerespoerselInput)
+            createBestillingAndUtsending(tx, forespoerselId, forespoerselInput, saksbehandler?.ident)
         }
     }
 
     @OptIn(ExperimentalTime::class)
     private fun createBestillingAndUtsending(
         tx: TransactionalSession,
-        foerespoerselId: Long,
-        foerespoerselInput: FoerespoerselInput,
+        forespoerselId: Long,
+        forespoerselInput: ForespoerselInput,
+        brukerId: String?,
     ) {
         var bestllingCount = 0
-        foerespoerselInput.fnrList.map { fnr ->
+        forespoerselInput.fnrList.map { fnr ->
             val person =
                 personService.findOrCreatePersonByFnr(
                     tx = tx,
                     fnr = Personidentifikator(fnr),
-                    informasjon = "Mottatt forespørsel: $foerespoerselId, forsystem: ${foerespoerselInput.forsystem.name} på skattekort",
+                    informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
+                    brukerId = brukerId,
                 )
 
             val abonnementId =
                 AbonnementRepository.insert(
                     tx = tx,
-                    forespoerselId = foerespoerselId,
-                    inntektsaar = foerespoerselInput.inntektsaar,
+                    forespoerselId = forespoerselId,
+                    inntektsaar = forespoerselInput.inntektsaar,
                     personId = person.id!!.value,
                 )
 
-            SkattekortRepository.findAllByPersonId(tx, person.id, foerespoerselInput.inntektsaar).ifEmpty {
+            SkattekortRepository.findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar).ifEmpty {
                 BestillingRepository.insert(
                     tx = tx,
                     bestilling =
                         Bestilling(
                             personId = person.id,
                             fnr = Personidentifikator(fnr),
-                            inntektsaar = foerespoerselInput.inntektsaar,
+                            inntektsaar = forespoerselInput.inntektsaar,
                         ),
                 )
                 bestllingCount++
@@ -89,16 +95,16 @@ class ForespoerselService(
                     Utsending(
                         abonnementId = AbonnementId(abonnementId!!),
                         fnr = Personidentifikator(fnr),
-                        inntektsaar = foerespoerselInput.inntektsaar,
-                        forsystem = foerespoerselInput.forsystem,
+                        inntektsaar = forespoerselInput.inntektsaar,
+                        forsystem = forespoerselInput.forsystem,
                     ),
             )
         }
-        logger.info { "FoerespoerselId: $foerespoerselId med total: ${foerespoerselInput.fnrList.size} abonnement(er)/utsending(er), $bestllingCount bestilling(er)" }
+        logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er)/utsending(er), $bestllingCount bestilling(er)" }
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun parseXmlMessage(message: String): FoerespoerselInput {
+    private fun parseXmlMessage(message: String): ForespoerselInput {
         val eSkattekortBestilling = xmlMapper.readValue<ESkattekortBestilling>(message)
         val forsystem =
             when (eSkattekortBestilling.bestiller) {
@@ -106,7 +112,7 @@ class ForespoerselService(
                 Applikasjon.OS -> Forsystem.OPPDRAGSSYSTEMET
             }
 
-        return FoerespoerselInput(
+        return ForespoerselInput(
             forsystem = forsystem,
             inntektsaar = eSkattekortBestilling.inntektsaar.toInt(),
             fnrList = eSkattekortBestilling.brukere,
@@ -114,21 +120,21 @@ class ForespoerselService(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun parseCopybookMessage(message: String): FoerespoerselInput {
+    private fun parseCopybookMessage(message: String): ForespoerselInput {
         val parts = message.split(FORESPOERSEL_DELIMITER)
         require(parts.size == 3) { "Invalid message format: $message" }
         val forsystem = Forsystem.fromValue(parts[0])
         val inntektsaar = Integer.parseInt(parts[1])
         val fnrString = parts[2]
 
-        return FoerespoerselInput(
+        return ForespoerselInput(
             forsystem = forsystem,
             inntektsaar = inntektsaar,
             fnrList = listOf(fnrString),
         )
     }
 
-    private data class FoerespoerselInput(
+    private data class ForespoerselInput(
         val forsystem: Forsystem,
         val inntektsaar: Int,
         val fnrList: List<String>,

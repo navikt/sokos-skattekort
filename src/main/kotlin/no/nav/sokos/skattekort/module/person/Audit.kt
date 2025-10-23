@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 
 import kotliquery.Row
 
+const val AUDIT_SYSTEM = "system"
+
 @Serializable
 data class Audit
     @OptIn(ExperimentalTime::class)

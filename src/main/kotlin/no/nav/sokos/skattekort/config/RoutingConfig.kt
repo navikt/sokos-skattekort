@@ -6,8 +6,9 @@ import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 
-import no.nav.sokos.skattekort.api.foerespoerselApi
 import no.nav.sokos.skattekort.api.maskinportenTokenApi
+import no.nav.sokos.skattekort.api.skattekortApi
+import no.nav.sokos.skattekort.api.swaggerApi
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
@@ -17,13 +18,13 @@ fun Application.routingConfig(
 ) {
     routing {
         internalNaisRoutes(applicationState)
-        // TODO: Midlertidig kode for testing. Må ikke puttes i produksjon!
+        swaggerApi()
         authenticate(useAuthentication, AUTHENTICATION_NAME) {
             val maskinportenTokenClient: MaskinportenTokenClient by dependencies
             val forespoerselService: ForespoerselService by dependencies
 
             maskinportenTokenApi(maskinportenTokenClient)
-            foerespoerselApi(forespoerselService)
+            skattekortApi(forespoerselService)
         }
     }
 }

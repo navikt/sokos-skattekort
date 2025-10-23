@@ -114,7 +114,9 @@ Ingen
 | Arena        | Filområde | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 | OppdragZ     | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 
-TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
+Swagger
+- [Dev-fss](https://sokos-skattekort.intern.dev.nav.no/api/v1/skattekort/docs)
+- [Lokalt](http://0.0.0.0:8080/api/v1/skattekort/docs)
 
 ### Maskinporten og systembrukere
 

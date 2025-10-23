@@ -6,9 +6,9 @@ import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 
 import no.nav.sokos.skattekort.api.ForespoerselRequest
-import no.nav.sokos.skattekort.config.Validatior.isValidAar
-import no.nav.sokos.skattekort.config.Validatior.isValidForsystem
-import no.nav.sokos.skattekort.config.Validatior.isValidPersonIdent
+import no.nav.sokos.skattekort.config.Validator.isValidAar
+import no.nav.sokos.skattekort.config.Validator.isValidForsystem
+import no.nav.sokos.skattekort.config.Validator.isValidPersonIdent
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 
 fun RequestValidationConfig.requestValidationSkattekortConfig() {
@@ -22,7 +22,7 @@ fun RequestValidationConfig.requestValidationSkattekortConfig() {
     }
 }
 
-object Validatior {
+object Validator {
     fun isValidPersonIdent(personIdent: String): Boolean = Regex("^\\d{11}$").matches(personIdent)
 
     fun isValidAar(aar: Int): Boolean {

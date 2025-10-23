@@ -42,7 +42,8 @@ class PersonServiceTest :
                     personService.findOrCreatePersonByFnr(
                         fnr = Personidentifikator(fnr),
                         informasjon = "TEST",
-                        tx,
+                        brukerId = AUDIT_SYSTEM,
+                        tx = tx,
                     )
                 person shouldNotBe null
                 person.foedselsnummer.fnr.value shouldBe fnr
@@ -65,7 +66,8 @@ class PersonServiceTest :
                     personService.findOrCreatePersonByFnr(
                         fnr = Personidentifikator(fnr),
                         informasjon = "TEST",
-                        tx,
+                        brukerId = AUDIT_SYSTEM,
+                        tx = tx,
                     )
                 person shouldNotBe null
                 person.foedselsnummer.fnr.value shouldBe fnr

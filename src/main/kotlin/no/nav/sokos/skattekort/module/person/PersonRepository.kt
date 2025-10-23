@@ -94,6 +94,7 @@ object PersonRepository {
         fnr: Personidentifikator,
         gjelderFom: LocalDate,
         informasjon: String,
+        brukerId: String? = null,
     ): Long? {
         val personId =
             tx.updateAndReturnGeneratedKey(
@@ -118,7 +119,7 @@ object PersonRepository {
                     "personId" to personId,
                     "gjelderFom" to gjelderFom,
                     "fnr" to fnr.value,
-                    "brukerId" to "system",
+                    "brukerId" to (brukerId ?: AUDIT_SYSTEM),
                     "tag" to AuditTag.OPPRETTET_PERSON.name,
                     "informasjon" to informasjon,
                 ),

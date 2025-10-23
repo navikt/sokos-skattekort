@@ -20,7 +20,7 @@ object ForespoerselRepository {
                 VALUES (:forsystem, :data_mottatt)
                 """.trimIndent(),
                 mapOf(
-                    "forsystem" to forsystem.kode,
+                    "forsystem" to forsystem.value,
                     "data_mottatt" to dataMottatt,
                 ),
             ),

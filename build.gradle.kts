@@ -59,6 +59,7 @@ val vaultVersion = "1.3.10"
 val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
 val opentelemetryVersion = "2.20.1-alpha"
+val swaggerRequestValidatorVersion = "2.46.0"
 
 dependencies {
 
@@ -68,6 +69,8 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-swagger:$ktorVersion")
     implementation("io.ktor:ktor-server-di:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation("io.ktor:ktor-server-request-validation:$ktorVersion")
 
     // Ktor client
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
@@ -129,6 +132,7 @@ dependencies {
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
+    testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
 }
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5

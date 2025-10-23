@@ -11,25 +11,18 @@ import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.dependencies
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.TestApplicationBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
-import io.mockk.spyk
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
-import no.nav.sokos.skattekort.config.AUTHENTICATION_NAME
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.config.authenticate
-import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 object TestUtil {
@@ -56,22 +49,6 @@ object TestUtil {
                 thunk()
             }
         }
-
-    fun withApiTestApplication(
-        api: Route.() -> Unit,
-        useAuthentication: Boolean = false,
-        thunk: suspend ApplicationTestBuilder.() -> Unit,
-    ) = testApplication {
-        application {
-            commonConfig()
-            routing {
-                authenticate(useAuthentication, AUTHENTICATION_NAME) {
-                    api(this)
-                }
-            }
-        }
-        thunk()
-    }
 
     fun TestApplicationBuilder.configureTestEnvironment() {
         environment {
@@ -106,10 +83,12 @@ object TestUtil {
         application {
             dependencies {
                 provide { mockk<MaskinportenTokenClient>() }
-                provide { spyk<ForespoerselService>() }
                 provide<ConnectionFactory> { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                }
+                provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
                 }
             }
             module()

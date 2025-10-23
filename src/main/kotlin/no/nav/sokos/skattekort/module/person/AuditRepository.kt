@@ -9,6 +9,7 @@ object AuditRepository {
         tag: AuditTag,
         personId: PersonId,
         informasjon: String,
+        brukerId: String? = null,
     ): Long? =
         tx.updateAndReturnGeneratedKey(
             queryOf(
@@ -19,7 +20,7 @@ object AuditRepository {
                 mapOf(
                     "person_id" to personId.value,
                     "tag" to tag.name,
-                    "brukerId" to "system",
+                    "brukerId" to (brukerId ?: AUDIT_SYSTEM),
                     "informasjon" to informasjon,
                 ),
             ),

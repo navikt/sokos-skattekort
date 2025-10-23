@@ -70,7 +70,7 @@ spec:
     - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
       value: "0 * * * * *"
     - name: SCHEDULER_ENABLED
-      value: "true"
+      value: "false"
     - name: USE_AUTHENTICATION
       value: "true"
     - name: JDK_JAVA_OPTIONS

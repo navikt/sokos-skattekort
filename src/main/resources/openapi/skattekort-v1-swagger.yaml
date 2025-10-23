@@ -1,4 +1,4 @@
-openapi: 3.0.4
+openapi: 3.0.3
 info:
   title: sokos-skattekort API
   description: |-
@@ -14,11 +14,8 @@ servers:
 tags:
   - name: sokos-skattekort
     description: API for å håndtere skattekort-forespørsler
-    externalDocs:
-      description: Find out more
-      url: https://swagger.io
 paths:
-  /forespoersel:
+  /bestille:
     post:
       tags:
         - skattekort
@@ -34,9 +31,21 @@ paths:
         required: true
       responses:
         '201':
-          description: Opprettet forespø operation
+          description: Opprettet forespørsel suksess
         '400':
-          description: Invalid input
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Ingen tilgang
+        '500':
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
       security:
         - Bearer: [ ]
 
@@ -54,11 +63,36 @@ components:
           example: 2025
         forsystem:
           type: string
-          example: "MANUEL"
-          enum:
-            - MANUEL
-            - OS
-            - ARENA
+          example: "MANUELL"
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Tidspunkt feilen oppsto
+        status:
+          type: integer
+          example: 4xx
+          description: HTTP status kode
+        error:
+          type: string
+          example: Bad Request
+          description: En kort, lesbar oppsummering av problemet
+        message:
+          type: string
+          example: Det skjedde en feil
+          description: En lesbar forklaring som er spesifikk for denne forekomsten av problemet
+        path:
+          type: string
+          example: /api/v1/skattekort/bestille
+          description: Endepunktet hvor feilen oppstå
 
   securitySchemes:
     Bearer:

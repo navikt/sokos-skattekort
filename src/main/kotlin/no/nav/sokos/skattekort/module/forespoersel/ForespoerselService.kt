@@ -18,6 +18,7 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
+import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private const val FORESPOERSEL_DELIMITER = ";"
@@ -27,7 +28,10 @@ class ForespoerselService(
     private val dataSource: HikariDataSource,
     private val personService: PersonService,
 ) {
-    fun taImotForespoersel(message: String) {
+    fun taImotForespoersel(
+        message: String,
+        saksbehandler: NavIdent? = null,
+    ) {
         dataSource.transaction { tx ->
             val forespoerselInput =
                 when {
@@ -43,7 +47,7 @@ class ForespoerselService(
                     forsystem = forespoerselInput.forsystem,
                     dataMottatt = message,
                 )
-            createBestillingAndUtsending(tx, forespoerselId, forespoerselInput)
+            createBestillingAndUtsending(tx, forespoerselId, forespoerselInput, saksbehandler?.ident)
         }
     }
 
@@ -52,6 +56,7 @@ class ForespoerselService(
         tx: TransactionalSession,
         forespoerselId: Long,
         forespoerselInput: ForespoerselInput,
+        brukerId: String?,
     ) {
         var bestllingCount = 0
         forespoerselInput.fnrList.map { fnr ->
@@ -60,6 +65,7 @@ class ForespoerselService(
                     tx = tx,
                     fnr = Personidentifikator(fnr),
                     informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
+                    brukerId = brukerId,
                 )
 
             val abonnementId =

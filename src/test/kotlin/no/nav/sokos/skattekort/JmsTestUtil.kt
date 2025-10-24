@@ -22,8 +22,10 @@ object JmsTestUtil {
     }
 
     fun getMessages(queue: Queue): List<String> =
-        MQListener.jmsContext.createContext(SESSION_TRANSACTED).use { context ->
-            val consumer = context.createConsumer(queue)
+        MQListener.connectionFactory.createConnection().use { connection ->
+            connection.start()
+            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+            val consumer = session.createConsumer(queue)
             val messages = mutableListOf<String>()
             var msg: Message? = consumer.receive(100)
             while (msg != null) {
@@ -31,6 +33,7 @@ object JmsTestUtil {
                 msg = consumer.receive(100)
             }
             consumer.close()
+            session.close()
             messages
         }
 

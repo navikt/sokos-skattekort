@@ -13,11 +13,13 @@ import com.zaxxer.hikari.HikariDataSource
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
+import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 
 private val logger = KotlinLogging.logger { }
 private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
+private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
 
 object JobTaskConfig {
     fun scheduler(
@@ -42,7 +44,7 @@ object JobTaskConfig {
         return Tasks
             .recurring(
                 JOB_TASK_SEND_BESTILLING_BATCH,
-                cron(schedulerProperties.cronExpression),
+                cron(schedulerProperties.cronBestilling),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 withTracerId {
@@ -50,6 +52,27 @@ object JobTaskConfig {
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                     scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
                     bestillingsService.opprettBestillingsbatch()
+                }
+            }
+    }
+
+    fun recurringSendUtsendingTask(
+        utsendingService: UtsendingService,
+        scheduledTaskService: ScheduledTaskService,
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+    ): RecurringTask<String> {
+        val startTime = LocalDateTime.now()
+        return Tasks
+            .recurring(
+                JOB_TASK_SEND_UTSENDING_BATCH,
+                cron(schedulerProperties.cronUtsending),
+                String::class.java,
+            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
+                withTracerId {
+                    showLog(startTime, instance, context)
+                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_UTSENDING_BATCH)
+                    utsendingService.handleUtsending()
                 }
             }
     }

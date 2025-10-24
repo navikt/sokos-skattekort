@@ -7,6 +7,7 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.di.dependencies
+import io.ktor.server.plugins.di.provide
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
@@ -15,6 +16,7 @@ import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.JobTaskConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.SftpConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.httpClient
@@ -27,6 +29,7 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
+import no.nav.sokos.skattekort.sftp.SftpService
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 
 fun main() {
@@ -50,6 +53,10 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     dependencies {
         provide { httpClient }
         provide { DatabaseConfig.dataSource }
+        provide { SftpConfig() }
+        provide(SftpService::class)
+        provide(MaskinportenTokenClient::class)
+
         provide { MQConfig.connectionFactory }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
@@ -57,7 +64,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
             MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
         }
-        provide(MaskinportenTokenClient::class)
+
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
@@ -67,12 +74,15 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(ScheduledTaskService::class)
     }
 
-    val forespoerselListener: ForespoerselListener by dependencies
-    forespoerselListener.start()
-
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
+
+    val sftpService: SftpService by dependencies
+    logger.info { "SFTP connection is ok: ${sftpService.isSftpConnectionOk()}" }
+
+    val forespoerselListener: ForespoerselListener by dependencies
+    forespoerselListener.start()
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingsService: BestillingsService by dependencies

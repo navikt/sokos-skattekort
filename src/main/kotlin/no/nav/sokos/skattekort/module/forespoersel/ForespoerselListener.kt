@@ -11,8 +11,8 @@ private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
     jmsConnectionFactory: ConnectionFactory,
-    forespoerselService: ForespoerselService,
-    @Named("forespoerselQueue") forespoerselQueue: Queue,
+    private val forespoerselService: ForespoerselService,
+    @Named("forespoerselQueue") private val forespoerselQueue: Queue,
 ) {
     private val jmsContext = jmsConnectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
     private val listener = jmsContext.createConsumer(forespoerselQueue)
@@ -29,6 +29,6 @@ class ForespoerselListener(
 
     fun start() {
         jmsContext.start()
-        logger.info { "Forespoersel started, listening on $listener" }
+        logger.info { "Forespoersel started, listening on queue: ${forespoerselQueue.queueName}" }
     }
 }

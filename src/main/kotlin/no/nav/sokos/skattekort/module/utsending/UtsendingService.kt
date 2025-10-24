@@ -93,6 +93,7 @@ class UtsendingService(
                             }
                         }
                         Forsystem.ARENA -> throw NotImplementedError("Forsystem.ARENA is not implemented yet")
+                        Forsystem.MANUELL -> throw NotImplementedError("Forsystem.MANUELL is not implemented yet")
                     }
                 }
             }

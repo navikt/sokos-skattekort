@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort
 
 import jakarta.jms.JMSContext.SESSION_TRANSACTED
+import jakarta.jms.Message
 import jakarta.jms.Queue
 import jakarta.jms.Session
 
@@ -19,6 +20,19 @@ object JmsTestUtil {
             producer.send(queue, message)
         }
     }
+
+    fun getMessages(queue: Queue): List<String> =
+        MQListener.jmsContext.createContext(SESSION_TRANSACTED).use { context ->
+            val consumer = context.createConsumer(queue)
+            val messages = mutableListOf<String>()
+            var msg: Message? = consumer.receive(100)
+            while (msg != null) {
+                messages.add(msg.getBody(String::class.java))
+                msg = consumer.receive(100)
+            }
+            consumer.close()
+            messages
+        }
 
     fun assertQueueIsEmpty(queue: Queue) {
         MQListener.connectionFactory.createConnection().use { connection ->

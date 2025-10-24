@@ -40,11 +40,31 @@ object UtsendingRepository {
     fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> =
         tx.list(
             queryOf(
-                """
-                SELECT id, abonnement_id, fnr, inntektsaar, forsystem, opprettet
-                FROM utsendinger
-                """.trimIndent(),
+                """SELECT * FROM utsendinger""".trimIndent(),
             ),
             extractor = { row -> Utsending(row) },
         )
+
+    fun increaseFailCount(
+        tx: TransactionalSession,
+        maybeId: UtsendingId?,
+        failMessage: String,
+    ) {
+        maybeId?.let { id ->
+            tx.update(
+                queryOf(
+                    """
+                    UPDATE utsendinger SET
+                    fail_count = fail_count + 1,
+                    fail_message = :fail_message
+                    WHERE id = :id
+                    """.trimIndent(),
+                    mapOf(
+                        "id" to id.value,
+                        "fail_message" to failMessage,
+                    ),
+                ),
+            )
+        }
+    }
 }

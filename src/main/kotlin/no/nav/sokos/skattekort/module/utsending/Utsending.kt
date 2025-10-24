@@ -20,6 +20,8 @@ data class Utsending
         val fnr: Personidentifikator,
         val inntektsaar: Int,
         val forsystem: Forsystem,
+        val failCount: Int = 0,
+        val failMessage: String? = null,
         val opprettet: Instant = Clock.System.now(),
     ) {
         @OptIn(ExperimentalTime::class)
@@ -29,6 +31,8 @@ data class Utsending
             fnr = Personidentifikator(row.string("fnr")),
             inntektsaar = row.int("inntektsaar"),
             forsystem = Forsystem.fromValue(row.string("forsystem")),
+            failCount = row.int("fail_count"),
+            failMessage = row.stringOrNull("fail_message"),
             opprettet = row.instant("opprettet").toKotlinInstant(),
         )
     }

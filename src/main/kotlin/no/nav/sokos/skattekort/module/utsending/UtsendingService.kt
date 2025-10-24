@@ -99,6 +99,11 @@ class UtsendingService(
             }
     }
 
+    fun getAllUtsendinger(): List<Utsending> =
+        dataSource.transaction { tx ->
+            UtsendingRepository.getAllUtsendinger(tx)
+        }
+
     companion object {
         val utsendingOppdragzCounter =
             Counter

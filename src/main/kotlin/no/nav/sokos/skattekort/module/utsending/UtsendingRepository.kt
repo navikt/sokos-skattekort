@@ -27,12 +27,10 @@ object UtsendingRepository {
         tx: TransactionalSession,
         id: UtsendingId,
     ) {
-        tx.execute(
+        tx.update(
             queryOf(
-                """
-                DELETE FROM utsendinger WHERE id = :id
-                """.trimIndent(),
-                listOf("id" to id.value),
+                """DELETE FROM utsendinger WHERE id = :id""".trimIndent(),
+                mapOf("id" to id.value),
             ),
         )
     }

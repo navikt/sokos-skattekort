@@ -68,6 +68,8 @@ spec:
     - secret: sokos-skattekort-mq-credentials
 
   env:
+    - name: SKATTEETATEN_API_URL
+      value: "https://api-test.sits.no"
     - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
       value: "0 * * * * *"
     - name: SCHEDULER_ENABLED

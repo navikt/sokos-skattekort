@@ -43,7 +43,6 @@ class UtsendingService(
         var personId: PersonId? = null
         try {
             val person = PersonRepository.findPersonByFnr(tx, fnr)
-            println("Sending til oppdragz $person")
             personId = person?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
             jmsConnection = jmsConnectionFactory.createConnection()
             jmsSession = jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE)
@@ -61,6 +60,7 @@ class UtsendingService(
                     AuditRepository.insert(errorsession, AuditTag.UTSENDING_FEILET, id, "Oppdragz: Utsending feilet: $e")
                 }
             }
+            throw e
         } finally {
             jmsProducer?.close()
             jmsSession?.close()
@@ -73,7 +73,6 @@ class UtsendingService(
             dataSource.transaction { tx ->
                 UtsendingRepository.getAllUtsendinger(tx)
             }
-        println("utsendinger $utsendinger")
         utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
         utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
         utsendinger

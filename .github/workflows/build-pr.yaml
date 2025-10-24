@@ -22,5 +22,5 @@ jobs:
     name: Build & test application
     uses: navikt/mob-gha-workflows/.github/workflows/gradle-run-test.yaml@main
     with:
-      gradle-task: './gradlew clean build installDist --configuration-cache'
+      gradle-task: './gradlew clean build installDist'
 

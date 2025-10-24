@@ -47,7 +47,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
       security:
-        - Bearer: [ ]
+        - BearerAuth: [ ]
 
 components:
   schemas:
@@ -95,11 +95,10 @@ components:
           description: Endepunktet hvor feilen oppstå
 
   securitySchemes:
-    Bearer:
-      type: apiKey
-      description: |-
-        OBO-token (JWT via OAuth2.0).
-        Følgende format må brukes i input-feltet "Value" under: **"Bearer {token}"**.
-        Eksempel på verdi i input-felt: **Bearer eYdmifml0ejugm**
-      name: Authorization
-      in: header
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Paste only the raw token (no "Bearer " prefix). UI will send header:
+        Authorization: Bearer <token>

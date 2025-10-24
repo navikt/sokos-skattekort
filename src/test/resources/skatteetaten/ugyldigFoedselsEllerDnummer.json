@@ -1,0 +1,17 @@
+{
+  "status": "FORESPOERSEL_OK",
+  "arbeidsgiver": [
+    {
+      "arbeidsgiveridentifikator": {
+        "organisasjonsnummer": "312978083"
+      },
+      "arbeidstaker": [
+        {
+          "arbeidstakeridentifikator": "13468809235",
+          "resultatForSkattekort": "ugyldigFoedselsEllerDnummer",
+          "inntektsaar": "2025"
+        }
+      ]
+    }
+  ]
+}

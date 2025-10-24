@@ -88,6 +88,11 @@ object PropertiesConfig {
             systemBrukerClaim = getOrEmpty("MASKINPORTEN_SYSTEM_BRUKER_CLAIM"),
         )
 
+    fun getSkatteetatenProperties(): SkatteetatenProperties =
+        SkatteetatenProperties(
+            skatteetatenApiUrl = getOrEmpty("SKATTEETATEN_API_URL"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -138,6 +143,10 @@ object PropertiesConfig {
         val rsaKey: RSAKey?,
         val scopes: String,
         val systemBrukerClaim: String,
+    )
+
+    data class SkatteetatenProperties(
+        val skatteetatenApiUrl: String,
     )
 
     enum class Environment {

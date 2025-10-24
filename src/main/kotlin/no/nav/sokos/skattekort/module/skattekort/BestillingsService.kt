@@ -1,9 +1,13 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDate
 
 import com.zaxxer.hikari.HikariDataSource
 
+import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.skatteetaten.Arbeidsgiver
 import no.nav.sokos.skattekort.skatteetaten.ArbeidsgiverIdentifikator
 import no.nav.sokos.skattekort.skatteetaten.ForespoerselOmSkattekortTilArbeidsgiver
@@ -18,6 +22,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 class BestillingsService(
     val dataSource: HikariDataSource,
     val skatteetatenClient: SkatteetatenClient,
+    val personService: PersonService,
 ) {
     fun opprettBestillingsbatch() {
         val bestillings: List<Bestilling> =
@@ -69,6 +74,42 @@ class BestillingsService(
                     bestillings.map { it.id!!.id },
                     bestillingsbatchId,
                 )
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun hentSkattekort() {
+        val bestillingsbatch =
+            dataSource.transaction { tx ->
+                BestillingBatchRepository.getUnprocessedBatch(tx)
+            } ?: return
+        runBlocking {
+            val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
+            if (response.status == "FORESPOERSEL_OK") {
+                response.arbeidsgiver
+                    .first()
+                    .arbeidstaker
+                    .filter { it.resultatForSkattekort == "skattekortopplysningerOK" }
+                    .map { arbeidstaker ->
+                        val person =
+                            dataSource.transaction { tx ->
+                                personService.findOrCreatePersonByFnr(
+                                    tx = tx,
+                                    fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
+                                    informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: ${bestillingsbatch.id?.id}",
+                                )
+                            }
+                        Skattekort(
+                            personId = person.id!!,
+                            utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
+                            identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
+                            inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                            kilde = "SKATTEETATEN",
+                            forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
+                            tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                        )
+                    }
             }
         }
     }

@@ -40,6 +40,19 @@ object BestillingBatchRepository {
             ),
         ) ?: error("Failed to insert bestillingsbatch")
 
+    fun getUnprocessedBatch(tx: TransactionalSession): BestillingBatch? =
+        tx.single(
+            queryOf(
+                """
+                    |SELECT * 
+                    |FROM bestillingsbatcher
+                    |ORDER BY oppdatert ASC
+                    |LIMIT 1
+                """.trimMargin(),
+            ),
+            extractor = mapToBestillingBatch,
+        )
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestillingBatch: (Row) -> BestillingBatch = { row ->
         BestillingBatch(

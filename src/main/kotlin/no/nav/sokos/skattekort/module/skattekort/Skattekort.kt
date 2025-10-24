@@ -73,7 +73,33 @@ interface Forskuddstrekk {
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
 
-                else -> throw IllegalStateException("Ukjent type for skattekort-del med id ${row.long("id")}")
+                else -> error("Ukjent type for skattekort-del med id ${row.long("id")}")
+            }
+        }
+
+        fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk): Forskuddstrekk {
+            when (forskuddstrekk.trekkode) {
+                "frikort" -> return Frikort(
+                    trekkode = forskuddstrekk.trekkode,
+                    frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
+                )
+
+                "prosent" -> return Prosentkort(
+                    trekkode = forskuddstrekk.trekkode,
+                    prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
+                    antallMndForTrekk = forskuddstrekk.trekkprosent.antallMaanederForTrekk,
+                )
+
+                "tabell" -> return Tabellkort(
+                    trekkode = forskuddstrekk.trekkode,
+                    tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
+                    prosentSats = forskuddstrekk.trekktabell.prosentsats,
+                    antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
+                )
+
+                else -> {
+                    error("Ukjent type for skattekort-del med trekkode ${forskuddstrekk.trekkode}")
+                }
             }
         }
     }

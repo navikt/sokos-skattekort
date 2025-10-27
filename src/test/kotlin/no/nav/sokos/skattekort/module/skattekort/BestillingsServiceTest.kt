@@ -141,6 +141,11 @@ class BestillingsServiceTest :
                     SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025)
                 }
 
-            println("bestillingsreferanse = $bestillingsreferanse")
+            assertSoftly {
+                updatedBatches.count { it.status == "NY" } shouldBe 1
+                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                skattekort.size shouldBe 1
+                skattekort.first().identifikator shouldBe "54407"
+            }
         }
     })

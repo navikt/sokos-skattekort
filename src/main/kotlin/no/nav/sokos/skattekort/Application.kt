@@ -7,7 +7,6 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.di.dependencies
-import io.ktor.server.plugins.di.provide
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
@@ -79,7 +78,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     routingConfig(useAuthentication, applicationState)
 
     val sftpService: SftpService by dependencies
-    logger.info { "SFTP connection is ok: ${sftpService.isSftpConnectionOk()}" }
+    logger.info { "SFTP connection is ok: ${sftpService.isSftpConnectionEnable()}" }
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()

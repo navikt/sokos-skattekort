@@ -59,6 +59,28 @@ object SftpListener : TestListener {
         clearDirectory(Directories.OUTBOUND)
     }
 
+    fun clearDirectory(directory: Directories) {
+        val sftpConfig = SftpConfig(sftpProperties)
+        sftpConfig.channel { channelSftp ->
+            val files = channelSftp.ls(directory.value).filter { !it.attrs.isDir }.map { it.filename }
+            files.forEach { file ->
+                channelSftp.rm("${directory.value}/$file")
+            }
+        }
+    }
+
+    fun downloadFile(
+        fileName: String,
+        directory: Directories,
+    ): String {
+        val sftpConfig = SftpConfig(sftpProperties)
+
+        return sftpConfig.channel { channelSftp ->
+            val inputStream = channelSftp.get("${directory.value}/$fileName")
+            inputStream.bufferedReader().use { it.readText() }
+        }
+    }
+
     private fun setupSftpTestContainer(publicKey: AsymmetricKeyParameter): GenericContainer<*> {
         val publicKeyAsBytes = convertToByteArray(publicKey)
         return GenericContainer("atmoz/sftp:alpine")
@@ -102,15 +124,5 @@ object SftpListener : TestListener {
         val openSshEncodedPublicKey = OpenSSHPublicKeyUtil.encodePublicKey(publicKey)
         val base64EncodedPublicKey = Base64.getEncoder().encodeToString(openSshEncodedPublicKey)
         return "ssh-ed25519 $base64EncodedPublicKey".toByteArray(StandardCharsets.UTF_8)
-    }
-
-    fun clearDirectory(directory: Directories) {
-        val sftpConfig = SftpConfig(sftpProperties)
-        sftpConfig.channel { channelSftp ->
-            val files = channelSftp.ls(directory.value).filter { !it.attrs.isDir }.map { it.filename }
-            files.forEach { file ->
-                channelSftp.rm("${directory.value}/$file")
-            }
-        }
     }
 }

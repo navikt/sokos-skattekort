@@ -24,6 +24,7 @@ private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
 object JobTaskConfig {
     fun scheduler(
         bestillingsService: BestillingsService,
+        utsendingService: UtsendingService,
         scheduledTaskService: ScheduledTaskService,
         dataSource: HikariDataSource,
     ): Scheduler =
@@ -33,6 +34,7 @@ object JobTaskConfig {
             .registerShutdownHook()
             .startTasks(
                 recurringSendBestillingBatchTask(bestillingsService, scheduledTaskService),
+                recurringSendUtsendingTask(utsendingService, scheduledTaskService),
             ).build()
 
     fun recurringSendBestillingBatchTask(

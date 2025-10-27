@@ -72,6 +72,8 @@ spec:
       value: "https://api-test.sits.no"
     - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
       value: "0 * * * * *"
+    - name: SEND_UTSENDING_CRON_EXPRESSION
+      value: "0 * * * * *"
     - name: SCHEDULER_ENABLED
       value: "false"
     - name: USE_AUTHENTICATION

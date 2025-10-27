@@ -64,6 +64,9 @@ spec:
   webproxy: true
   vault:
     enabled: true
+  filesFrom:
+    - secret: sokos-skattekort-private-key
+      mountPath: /var/run/secrets/sokos-skattekort-private-key
   envFrom:
     - secret: sokos-skattekort-mq-credentials
     - secret: sokos-skattekort-sftp-credentials

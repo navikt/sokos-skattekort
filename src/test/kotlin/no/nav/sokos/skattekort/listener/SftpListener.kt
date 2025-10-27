@@ -12,6 +12,8 @@ import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.Ports
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.Spec
+import io.kotest.core.test.TestCase
+import io.kotest.engine.test.TestResult
 import mu.KotlinLogging
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.images.builder.Transferable
@@ -45,11 +47,16 @@ object SftpListener : TestListener {
         )
 
     override suspend fun beforeSpec(spec: Spec) {
-        sftpContainer.start()
+        if (!sftpContainer.isRunning) {
+            sftpContainer.start()
+        }
     }
 
-    override suspend fun afterSpec(spec: Spec) {
-        sftpContainer.stop()
+    override suspend fun afterEach(
+        testCase: TestCase,
+        result: TestResult,
+    ) {
+        clearDirectory(Directories.OUTBOUND)
     }
 
     private fun setupSftpTestContainer(publicKey: AsymmetricKeyParameter): GenericContainer<*> {
@@ -97,17 +104,12 @@ object SftpListener : TestListener {
         return "ssh-ed25519 $base64EncodedPublicKey".toByteArray(StandardCharsets.UTF_8)
     }
 
-    fun deleteFile(vararg fileName: String) {
-        val deleteFilename = fileName.joinToString(separator = " ")
+    fun clearDirectory(directory: Directories) {
         val sftpConfig = SftpConfig(sftpProperties)
-
-        sftpConfig.channel { connector ->
-            runCatching {
-                logger.info { "Fjerner fil: $deleteFilename" }
-                fileName.forEach { connector.rm(it) }
-            }.onFailure { exception ->
-                logger.error { "Feil i fjerning av filer $deleteFilename: ${exception.message}" }
-                throw exception
+        sftpConfig.channel { channelSftp ->
+            val files = channelSftp.ls(directory.value).filter { !it.attrs.isDir }.map { it.filename }
+            files.forEach { file ->
+                channelSftp.rm("${directory.value}/$file")
             }
         }
     }

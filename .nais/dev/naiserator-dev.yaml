@@ -65,8 +65,12 @@ spec:
   vault:
     enabled: true
     paths:
-      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp
-        mountPath: /var/run/secrets/nais.io/sftp
+      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp/serviceuser
+        mountPath: /var/run/secrets/nais.io/sftp/serviceuser
+      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp/privateKey
+        mountPath: /var/run/secrets/nais.io/sftp/privateKey
+      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp/keyPassword
+        mountPath: /var/run/secrets/nais.io/sftp/keyPassword
   envFrom:
     - secret: sokos-skattekort-mq-credentials
 

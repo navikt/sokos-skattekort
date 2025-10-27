@@ -18,6 +18,6 @@ enum class Trekkode(
     ;
 
     companion object {
-        fun fromValue(value: String): Trekkode = entries.first { it.value == value }
+        fun fromValue(value: String): Trekkode = entries.firstOrNull { it.value == value } ?: throw IllegalArgumentException("Ingen trekkode mapper til: $value")
     }
 }

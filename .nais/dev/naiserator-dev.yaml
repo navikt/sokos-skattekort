@@ -65,14 +65,10 @@ spec:
   vault:
     enabled: true
     paths:
-      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp/serviceuser
-        mountPath: /var/run/secrets/nais.io/sftp/serviceuser
-      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp/privateKey
-        mountPath: /var/run/secrets/nais.io/sftp/privateKey
-      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp/keyPassword
-        mountPath: /var/run/secrets/nais.io/sftp/keyPassword
+      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp
   envFrom:
     - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-sftp-credentials
 
   env:
     - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
@@ -87,13 +83,5 @@ spec:
       value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
     - name: APPLICATION_ENV
       value: DEV
-
-  # SFTP
-    - name: SFTP_USER
-      value: /var/run/secrets/nais.io/sftp/serviceuser
-    - name: SFTP_PRIVATE_KEY_FILE_PATH
-      value: /var/run/secrets/nais.io/sftp/privateKey
-    - name: SFTP_KEY_PASSWORD
-      value: /var/run/secrets/nais.io/sftp/keyPassword
 
 

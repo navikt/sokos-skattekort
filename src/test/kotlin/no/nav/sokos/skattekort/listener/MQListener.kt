@@ -16,8 +16,8 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
 
-const val MQ_FRA_FORSYSTEM_ALT_QUEUE = "QA.Q1_OS_ESKATT.FRA_FORSYSTEM_ALT"
-const val MQ_TIL_OPPDRAGZ_QUEUE = "QA.Q1_OS_ESKATT.FRA_OSESKATT"
+const val MQ_FRA_FORSYSTEM_ALT_QUEUE = "FRA_FORSYSTEM_ALT"
+const val MQ_TIL_OPPDRAGZ_QUEUE = "FRA_OSESKATT"
 
 object MQListener : BeforeSpecListener, AfterTestListener {
     val server: EmbeddedActiveMQ =

@@ -87,29 +87,36 @@ class BestillingsService(
         runBlocking {
             val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
             if (response.status == "FORESPOERSEL_OK") {
-                response.arbeidsgiver
-                    .first()
-                    .arbeidstaker
-                    .filter { it.resultatForSkattekort == "skattekortopplysningerOK" }
-                    .map { arbeidstaker ->
-                        val person =
-                            dataSource.transaction { tx ->
-                                personService.findOrCreatePersonByFnr(
-                                    tx = tx,
-                                    fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
-                                    informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: ${bestillingsbatch.id?.id}",
-                                )
-                            }
-                        Skattekort(
-                            personId = person.id!!,
-                            utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
-                            identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
-                            inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                            kilde = "SKATTEETATEN",
-                            forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
-                            tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
-                        )
-                    }
+                val skattekortene =
+                    response.arbeidsgiver
+                        .first()
+                        .arbeidstaker
+                        .filter { it.resultatForSkattekort == "skattekortopplysningerOK" }
+                        .map { arbeidstaker ->
+                            val person =
+                                dataSource.transaction { tx ->
+                                    personService.findOrCreatePersonByFnr(
+                                        tx = tx,
+                                        fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
+                                        informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: ${bestillingsbatch.id?.id}",
+                                    )
+                                }
+                            Skattekort(
+                                personId = person.id!!,
+                                utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
+                                identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
+                                inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                                kilde = "SKATTEETATEN",
+                                forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
+                                tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                            )
+                        }
+                dataSource.transaction { tx ->
+                    SkattekortRepository.insertBatch(tx, skattekortene)
+                }
+                dataSource.transaction { tx ->
+                    BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
+                }
             }
         }
     }

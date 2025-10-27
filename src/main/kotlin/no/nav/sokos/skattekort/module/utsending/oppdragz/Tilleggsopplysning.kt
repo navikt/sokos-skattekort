@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.module.utsending.oppdragz
 
+import mu.KotlinLogging
+
 enum class Tilleggsopplysning(
     val value: String,
 ) {
@@ -10,6 +12,8 @@ enum class Tilleggsopplysning(
     ;
 
     companion object {
+        private val logger = KotlinLogging.logger {}
+
         fun fromValue(value: String): Tilleggsopplysning {
             if (value.equals("kildeskattPaaPensjon")) {
                 return Tilleggsopplysning.KILDESKATTPENSJONIST // TODO: Sjekk med Endre at dette er faktisk det de forventer...
@@ -17,7 +21,7 @@ enum class Tilleggsopplysning(
             try {
                 return Tilleggsopplysning.entries.first { it.value == value }
             } catch (e: NoSuchElementException) {
-                println("Tilleggsopplysning feilet: $value")
+                logger.error("Ukjent tilleggsopplysning funnet: $value")
                 throw e
             }
         }

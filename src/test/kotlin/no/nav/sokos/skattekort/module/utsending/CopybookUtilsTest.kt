@@ -8,16 +8,11 @@ import no.nav.sokos.skattekort.TestData
 class CopybookUtilsTest :
     FunSpec({
         val skattekort = TestData.getSkattekortTestData()
-        val skattekortDelList = TestData.getSkatteDelListTestData()
-        val skattekortTileggsopplysningList = TestData.getSkattekortTileggsopplysningListTestData()
+
+        val skattekortTileggsopplysningList = TestData.getTilleggsopplysningListTestData()
 
         test("skattekortToArenaCopybookFormat med tabell trekk") {
-            val result =
-                CopybookUtils.skattekortToArenaCopybookFormat(
-                    skattekort,
-                    skattekortDelList,
-                    emptyList(),
-                )
+            val result = CopybookUtils.skattekortToArenaCopybookFormat(skattekort)
             result shouldBe "SO0301" +
                 "20860599016" +
                 "1 7100 35" +
@@ -31,22 +26,12 @@ class CopybookUtilsTest :
         }
 
         test("skattekortToArenaCopybookFormat med opphold tiltakssone") {
-            val result =
-                CopybookUtils.skattekortToArenaCopybookFormat(
-                    skattekort,
-                    listOf(tabellDel),
-                    listOf(oppholdTiltak),
-                )
+            val result = CopybookUtils.skattekortToArenaCopybookFormat(skattekort)
             result.substring(2, 6) shouldBe "5444"
         }
 
         test("skattekortToArenaCopybookFormat med opphold svalbard") {
-            val result =
-                CopybookUtils.skattekortToArenaCopybookFormat(
-                    skattekort,
-                    listOf(tabellDel),
-                    listOf(oppholdSvalbard),
-                )
+            val result = CopybookUtils.skattekortToArenaCopybookFormat(skattekort)
             result.substring(2, 6) shouldBe "2100"
         }
     })

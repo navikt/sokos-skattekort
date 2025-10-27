@@ -5,11 +5,14 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 
+import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.module.skattekort.Frikort
+import no.nav.sokos.skattekort.module.skattekort.Prosentkort
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
-import no.nav.sokos.skattekort.module.skattekort.SkattekortDel
-import no.nav.sokos.skattekort.module.skattekort.SkattekortType
-import no.nav.sokos.skattekort.module.skattekort.Tileggsopplysning
+import no.nav.sokos.skattekort.module.skattekort.Tabellkort
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE
+import no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning.OPPHOLD_PAA_SVALBARD
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Trekkode
 
 private const val OPPHOLD_TILTAKSSONE = "5444"
@@ -29,11 +32,11 @@ private const val MAX_LENGDE_FNR = 17
 
 object CopybookUtils {
     fun skattekortToArenaCopybookFormat(skattekort: Skattekort): String {
-        val skattekortDel = findSkattekortDel(skattekort.skattekortDelList) ?: return ""
+        val skattekortDel = findForskuddstrekk(skattekort.forskuddstrekkList) ?: return ""
 
         return StringBuilder()
             .append(formatRecordType())
-            .append(formatSkattekommune(skattekort.tileggsopplysningList))
+            .append(formatSkattekommune(skattekort.tilleggsopplysningList))
             .append(formatArbeidstakeridentifikator(skattekort))
             .append(formatForskuddsform(skattekortDel))
             .append(formatNyTrekkmnd())
@@ -48,26 +51,33 @@ object CopybookUtils {
 
     fun getFrikortBeloepCopybookFormat(
         skattekort: Skattekort,
-        skattekortDelList: List<SkattekortDel>,
+        forskuddstrekkList: List<Forskuddstrekk>,
     ): String {
-        val skattekortDel = findSkattekortDel(skattekortDelList)!!
-        val frikortBeloepLength = skattekortDel.frikortBeloep.toString().length
+        val forskuddstrekk = findForskuddstrekk(forskuddstrekkList)!!
+        val frikortBeloepLength =
+            when {
+                forskuddstrekk is Frikort -> forskuddstrekk.frikortBeloep.toString().length
+                else -> 0
+            }
         val diffLength = MAX_LENGDE_FRIKORT_BELOP - frikortBeloepLength
         val pos = MAX_LENGDE_FNR + diffLength
 
-        return "${formatArbeidstakeridentifikator(skattekort)}-${pos}s ${formatFrikortbeloep(skattekortDel)}-12s"
+        return "${formatArbeidstakeridentifikator(skattekort)}-${pos}s ${formatFrikortbeloep(forskuddstrekk)}-12s"
     }
 
-    private fun findSkattekortDel(skattekortDelList: List<SkattekortDel>): SkattekortDel? = skattekortDelList.find { skattekortDel -> Trekkode.LOENN_FRA_NAV.value == skattekortDel.trekkKode }
+    private fun findForskuddstrekk(forskuddstrekkList: List<Forskuddstrekk>): Forskuddstrekk? =
+        forskuddstrekkList.find { forskuddstrekk ->
+            Trekkode.LOENN_FRA_NAV.value == forskuddstrekk.trekkode
+        }
 
     private fun formatRecordType() = RECORD_TYPE.padEnd(2, EMPTY_SPACE)
 
-    private fun formatSkattekommune(tileggsopplysningList: List<Tileggsopplysning>): String {
+    private fun formatSkattekommune(tileggsopplysningList: List<Tilleggsopplysning>): String {
         val tilleggsopplysning =
             when {
                 tileggsopplysningList.isEmpty() -> DEFAULT_OPPHOLD_OPPLYSNING
                 OPPHOLD_I_TILTAKSSONE.value == tileggsopplysningList.first().opplysning -> OPPHOLD_TILTAKSSONE
-                OPPHOLD_PA_SVALBARD == tileggsopplysningList.first().opplysning -> OPPHOLD_PA_SVALBARD
+                OPPHOLD_PAA_SVALBARD.value == tileggsopplysningList.first().opplysning -> OPPHOLD_PA_SVALBARD
                 else -> DEFAULT_OPPHOLD_OPPLYSNING
             }
         return tilleggsopplysning.padEnd(4, EMPTY_SPACE)
@@ -75,31 +85,41 @@ object CopybookUtils {
 
     private fun formatArbeidstakeridentifikator(skattekort: Skattekort) = skattekort.identifikator.padEnd(11, EMPTY_SPACE)
 
-    private fun formatForskuddsform(skattekortDel: SkattekortDel): String {
+    private fun formatForskuddsform(forskuddstrekk: Forskuddstrekk): String {
         val sb = StringBuilder()
 
         val skatteklasse = "".padEnd(1, EMPTY_SPACE)
         val trekkTabelltype = "".padEnd(1, EMPTY_SPACE)
 
-        when (skattekortDel.skattekortType) {
-            SkattekortType.TABELL -> {
+        when (forskuddstrekk) {
+            is Tabellkort -> {
                 sb.append(TREKKTABELL.padEnd(1, EMPTY_SPACE))
                 sb.append(skatteklasse)
-                sb.append((skattekortDel.tabellNummer ?: "").padEnd(4, EMPTY_SPACE))
+                sb.append((forskuddstrekk.tabellNummer).padEnd(4, EMPTY_SPACE))
                 sb.append(trekkTabelltype)
-                sb.append((skattekortDel.prosentsats?.toInt()?.toString() ?: "").padEnd(2, EMPTY_SPACE))
+                sb.append(
+                    forskuddstrekk.prosentSats
+                        .toInt()
+                        .toString()
+                        .padEnd(2, EMPTY_SPACE),
+                )
             }
 
-            SkattekortType.PROSENT -> {
+            is Prosentkort -> {
                 sb.append(TREKKPROSENT.padEnd(1, EMPTY_SPACE))
                 sb.append(skatteklasse)
                 sb.append("".padEnd(4, EMPTY_SPACE))
                 sb.append(trekkTabelltype)
-                sb.append((skattekortDel.prosentsats?.toInt()?.toString() ?: "").padEnd(2, EMPTY_SPACE))
+                sb.append(
+                    forskuddstrekk.prosentSats
+                        .toInt()
+                        .toString()
+                        .padEnd(2, EMPTY_SPACE),
+                )
             }
 
-            SkattekortType.FRIKORT -> {
-                skattekortDel.frikortBeloep.let {
+            is Frikort -> {
+                forskuddstrekk.frikortBeloep.let {
                     sb.append(FRIKORT_MED_BELOP.padEnd(1, EMPTY_SPACE))
                 } ?: sb.append(FRIKORT_UTEN_BELOP.padEnd(1, EMPTY_SPACE))
                 sb.append(skatteklasse)
@@ -125,10 +145,10 @@ object CopybookUtils {
 
     private fun formatInntektsaar(skattekort: Skattekort) = skattekort.inntektsaar.toString()
 
-    private fun formatFrikortbeloep(skattekortDel: SkattekortDel): String {
-        if (skattekortDel.skattekortType != SkattekortType.FRIKORT) {
+    private fun formatFrikortbeloep(forskuddstrekk: Forskuddstrekk): String {
+        if (forskuddstrekk !is Frikort) {
             return "".padEnd(6, EMPTY_SPACE)
         }
-        return skattekortDel.frikortBeloep.toString().padEnd(6, EMPTY_SPACE)
+        return forskuddstrekk.frikortBeloep.toString().padEnd(6, EMPTY_SPACE)
     }
 }

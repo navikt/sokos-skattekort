@@ -1,0 +1,104 @@
+openapi: 3.0.3
+info:
+  title: sokos-skattekort API
+  description: |-
+    API-tjeneste for å søke eller bestille etter skattekort
+  termsOfService: https://swagger.io/terms/
+  contact:
+    name: Team Motta og Beregne
+    email: okonomi@nav.no
+    url: https://nav-it.slack.com/archives/CKZADNFBP
+  version: 1.0.0
+servers:
+  - url: /api/v1/skattekort
+tags:
+  - name: sokos-skattekort
+    description: API for å håndtere skattekort-forespørsler
+paths:
+  /bestille:
+    post:
+      tags:
+        - skattekort
+      summary: Bestille skattekort
+      description: Bekrefte henting av skattekort
+      operationId: taImotForespoeresel
+      requestBody:
+        description: Send forespørsel om skattekort
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForespoerselRequest'
+        required: true
+      responses:
+        '201':
+          description: Opprettet forespørsel suksess
+        '400':
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Ingen tilgang
+        '500':
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - BearerAuth: [ ]
+
+components:
+  schemas:
+    ForespoerselRequest:
+      type: object
+      properties:
+        personIdent:
+          type: string
+          example: "12345678901"
+        aar:
+          type: integer
+          format: int32
+          example: 2025
+        forsystem:
+          type: string
+          example: "MANUELL"
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Tidspunkt feilen oppsto
+        status:
+          type: integer
+          example: 4xx
+          description: HTTP status kode
+        error:
+          type: string
+          example: Bad Request
+          description: En kort, lesbar oppsummering av problemet
+        message:
+          type: string
+          example: Det skjedde en feil
+          description: En lesbar forklaring som er spesifikk for denne forekomsten av problemet
+        path:
+          type: string
+          example: /api/v1/skattekort/bestille
+          description: Endepunktet hvor feilen oppstå
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Paste only the raw token (no "Bearer " prefix). UI will send header:
+        Authorization: Bearer <token>

@@ -11,12 +11,15 @@ import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.dependencies
+import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.TestApplicationBuilder
+import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
+import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
@@ -36,6 +39,16 @@ object TestUtil {
             .parallel()
             .collect(Collectors.joining("\n"))
     }
+
+    fun withFullTestApplication(thunk: suspend ApplicationTestBuilder.() -> Unit) =
+        withMockOAuth2Server {
+            testApplication {
+                configureTestEnvironment()
+                configureTestApplication()
+                startApplication()
+                thunk()
+            }
+        }
 
     fun TestApplicationBuilder.configureTestEnvironment() {
         environment {
@@ -73,6 +86,9 @@ object TestUtil {
                 provide<ConnectionFactory> { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                }
+                provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
                 }
             }
             module()

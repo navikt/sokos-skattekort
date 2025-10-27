@@ -75,7 +75,8 @@ object PropertiesConfig {
             serviceUsername = getOrEmpty("MQ_SERVICE_USERNAME"),
             servicePassword = getOrEmpty("MQ_SERVICE_PASSWORD"),
             userAuth = true,
-            fraForSystemQueue = getOrEmpty("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+            fraForSystemQueue = get("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+            leveransekoeOppdragZSkattekort = get("MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT"),
         )
 
     fun getMaskinportenProperties(): MaskinportenProperties =
@@ -123,6 +124,13 @@ object PropertiesConfig {
         val servicePassword: String,
         val userAuth: Boolean = true,
         val fraForSystemQueue: String,
+        val leveransekoeOppdragZSkattekort: String,
+    )
+
+    data class SchedulerProperties(
+        val enabled: Boolean = getOrEmpty("SCHEDULER_ENABLED").toBoolean(),
+        val cronBestilling: String = get("SEND_BESTILLING_BATCH_CRON_EXPRESSION"),
+        val cronUtsending: String = get("SEND_UTSENDING_CRON_EXPRESSION"),
     )
 
     data class MaskinportenProperties(

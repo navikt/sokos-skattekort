@@ -108,13 +108,16 @@ Ingen
 
 ### Versjonerte grensesnitt
 
-| Funksjon     | Type      | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner          | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
-|--------------|-----------|-------------------|-------------------------------|--------------------------------------------|----------------------------------------------------------|
-| bestillinger | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
-| Arena        | Filområde | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
-| OppdragZ     | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| Funksjon                         | Type      | Navn QA                           | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner          | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
+|----------------------------------|-----------|-----------------------------------|-------------------|-------------------------------|--------------------------------------------|----------------------------------------------------------|
+| bestillinger fra arena, OppdragZ | MQ        | QA.Q1_OS_ESKATT.FRA_FORSYSTEM_ALT | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| "store bestillinger" (ved nyttår | MQ        |                                   | TBD               | #utbetaling-sokos-skattekort  | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| Arena                            | Filområde |                                   | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| Skattekort til OppdragZ          | MQ        | QA.Q1_231.OB04_FRA_OS_ESKATT      | TBD               | #utbetaling-sokos-skattekort  | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 
-TBD Hva er url til swagger i Lokal, dev og prod? Dok for grensesnitt.
+Swagger
+- [Dev-fss](https://sokos-skattekort.intern.dev.nav.no/api/v1/skattekort/docs)
+- [Lokalt](http://0.0.0.0:8080/api/v1/skattekort/docs)
 
 ### Maskinporten og systembrukere
 
@@ -337,7 +340,7 @@ erDiagram
 erDiagram
     person ||--o{ skattekort: har
     person ||--o{ skattekort_data: har
-    skattekort ||--o{ skattekort_deler: har
+    skattekort ||--o{ forskuddstrekk: har
     skattekort ||--o{ skattekort_tilleggsopplysninger: har
     skattekort {
         smallint inntektsaar
@@ -346,8 +349,8 @@ erDiagram
         text kilde "Angir kilde for skattekortet: skatt, syntetisert, manuelt"
         timestamptz opprettet "Vår egen dato for oppretting av skattekortet"
     }
-    skattekort_deler {
-        text trekk_kode "PENSJON, PENSJON_FRA_NAV, etc. Satt av skatteetaten, angir bruksområde for skattekortdelen"
+    forskuddstrekk {
+        text trekk_kode "PENSJON, PENSJON_FRA_NAV, etc. Satt av skatteetaten, angir bruksområde for forskuddstrekken"
         text type "frikort, tabell, prosent"
         int frikort_beloep "Beløpsgrense for frikort, eller null dersom ikke frikort eller ingen grense"
         text tabell_nummer "Tabellangivelse. Tabeller oppdateres en gang pr år"

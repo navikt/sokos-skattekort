@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import java.math.BigDecimal
+
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -22,18 +24,20 @@ data class Skattekort
         val inntektsaar: Int,
         val kilde: String,
         val opprettet: Instant = Clock.System.now(),
-        val skattekortDelList: List<SkattekortDel> = emptyList(),
-        val tileggsopplysningList: List<Tileggsopplysning> = emptyList(),
+        val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
+        val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
     ) {
         @OptIn(ExperimentalTime::class)
-        constructor(row: Row) : this(
-            id = row.long("id")?.let { SkattekortId(it) },
+        constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
+            id = SkattekortId(row.long("id")),
             personId = PersonId(row.long("person_id")),
             utstedtDato = row.localDate("utstedt_dato").toKotlinLocalDate(),
             identifikator = row.string("identifikator"),
             inntektsaar = row.int("inntektsaar"),
             kilde = row.string("kilde"),
             opprettet = row.instant("opprettet").toKotlinInstant(),
+            forskuddstrekkList = forskuddstrekkList,
+            tilleggsopplysningList = tilleggsopplysningList,
         )
     }
 
@@ -43,31 +47,62 @@ value class SkattekortId(
     val value: Long,
 )
 
-data class SkattekortDel(
-    val id: SkattekortDelId? = null,
-    val skattekortId: SkattekortId,
-    val trekkKode: String,
-    val skattekortType: SkattekortType,
-    val frikortBeloep: Int? = null,
-    val tabellNummer: String? = null,
-    val prosentsats: Double? = null,
-    val antallMndForTrekk: Double? = null,
-)
+interface Forskuddstrekk {
+    val trekkode: String
 
-@Serializable
-@JvmInline
-value class SkattekortDelId(
-    val value: Long,
-)
+    companion object {
+        fun create(row: Row): Forskuddstrekk {
+            val type = row.string("type")
+            return when (type) {
+                "frikort" ->
+                    Frikort(
+                        trekkode = row.string("trekk_kode"),
+                        frikortBeloep = row.int("frikort_beloep"),
+                    )
 
-data class Tileggsopplysning(
-    val id: SkattekortTileggsopplysningId? = null,
-    val skattekortId: SkattekortId,
+                "prosent" ->
+                    Prosentkort(
+                        trekkode = row.string("trekk_kode"),
+                        prosentSats = row.bigDecimal("prosentsats"),
+                        antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
+                    )
+
+                "tabell" ->
+                    Tabellkort(
+                        trekkode = row.string("trekk_kode"),
+                        tabellNummer = row.string("tabell_nummer"),
+                        prosentSats = row.bigDecimal("prosentsats"),
+                        antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
+                    )
+
+                else -> throw IllegalStateException("Ukjent type for skattekort-del med id ${row.long("id")}")
+            }
+        }
+    }
+}
+
+data class Frikort(
+    override val trekkode: String,
+    val frikortBeloep: Int,
+) : Forskuddstrekk
+
+data class Tabellkort(
+    override val trekkode: String,
+    val tabellNummer: String,
+    val prosentSats: BigDecimal,
+    val antallMndForTrekk: BigDecimal,
+) : Forskuddstrekk
+
+data class Prosentkort(
+    override val trekkode: String,
+    val prosentSats: BigDecimal,
+    val antallMndForTrekk: BigDecimal? = null,
+) : Forskuddstrekk
+
+data class Tilleggsopplysning(
     val opplysning: String,
-)
-
-@Serializable
-@JvmInline
-value class SkattekortTileggsopplysningId(
-    val value: Long,
-)
+) {
+    constructor(row: Row) : this(
+        opplysning = row.string("opplysning"),
+    )
+}

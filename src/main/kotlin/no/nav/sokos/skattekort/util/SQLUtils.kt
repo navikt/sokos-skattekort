@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.util
 
+import javax.sql.DataSource
+
 import kotlin.reflect.full.memberProperties
 
 import com.zaxxer.hikari.HikariDataSource
@@ -30,8 +32,15 @@ object SQLUtils {
         }
 
     fun <A> HikariDataSource.transaction(operation: (TransactionalSession) -> A): A =
-        using(sessionOf(this, returnGeneratedKey = true)) { tx ->
-            tx.transaction { tx ->
+        using(sessionOf(this, returnGeneratedKey = true)) { session ->
+            session.transaction { tx ->
+                operation(tx)
+            }
+        }
+
+    fun <A> DataSource.transaction(operation: (TransactionalSession) -> A): A =
+        using(sessionOf(this, returnGeneratedKey = true)) { session ->
+            session.transaction { tx ->
                 operation(tx)
             }
         }

@@ -41,6 +41,10 @@ spec:
   azure:
     application:
       enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - NAVident
   accessPolicy:
     inbound:
       rules:
@@ -64,10 +68,12 @@ spec:
     - secret: sokos-skattekort-mq-credentials
 
   env:
-    - name: SCHEDULER_CRON_EXPRESSION
-    - value: "0 15 6 * * *"
+    - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
+      value: "0 * * * * *"
+    - name: SEND_UTSENDING_CRON_EXPRESSION
+      value: "0 * * * * *"
     - name: SCHEDULER_ENABLED
-    - value: "true"
+      value: "false"
     - name: USE_AUTHENTICATION
       value: "true"
     - name: JDK_JAVA_OPTIONS

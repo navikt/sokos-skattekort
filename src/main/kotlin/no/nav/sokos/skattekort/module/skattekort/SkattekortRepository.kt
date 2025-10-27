@@ -31,12 +31,60 @@ object SkattekortRepository {
                 """
                 SELECT * FROM skattekort 
                 WHERE person_id = :personId AND inntektsaar = :inntektsaar
+                ORDER BY opprettet DESC
                 """.trimIndent(),
                 mapOf(
                     "personId" to personId.value,
                     "inntektsaar" to inntektsaar,
                 ),
             ),
-            extractor = { row -> Skattekort(row) },
+            extractor = { row ->
+                val id = SkattekortId(row.long("id"))
+                Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id), findAllTilleggsopplysningBySkattekortId(tx, id))
+            },
         )
+
+    fun findAllForskuddstrekkBySkattekortId(
+        tx: TransactionalSession,
+        id: SkattekortId,
+    ): List<Forskuddstrekk> =
+        tx.list(
+            queryOf(
+                """
+                SELECT * FROM forskuddstrekk 
+                WHERE skattekort_id = :skattekkortId
+                """.trimIndent(),
+                mapOf(
+                    "skattekkortId" to id.value,
+                ),
+            ),
+            extractor = { row ->
+                Forskuddstrekk.create(row)
+            },
+        )
+
+    private fun findAllTilleggsopplysningBySkattekortId(
+        tx: TransactionalSession,
+        id: SkattekortId,
+    ): List<Tilleggsopplysning> =
+        tx.list(
+            queryOf(
+                """
+                SELECT * FROM skattekort_tilleggsopplysning 
+                WHERE skattekort_id = :skattekkortId
+                """.trimIndent(),
+                mapOf(
+                    "skattekkortId" to id.value,
+                ),
+            ),
+            extractor = { row ->
+                Tilleggsopplysning(row)
+            },
+        )
+
+    fun findLatestByPersonId(
+        tx: TransactionalSession,
+        personId: PersonId,
+        inntektsaar: Int,
+    ): Skattekort = findAllByPersonId(tx, personId, inntektsaar).first()
 }

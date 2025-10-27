@@ -41,6 +41,7 @@ val nimbusVersion = "10.4.1"
 val logbackVersion = "1.5.18"
 val logstashVersion = "8.1"
 val micrometerVersion = "1.15.2"
+val dbSchedulerVersion = "16.2.0"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val kotestVersion = "6.0.0.M17"
@@ -57,6 +58,8 @@ val postgresVersion = "42.7.7"
 val vaultVersion = "1.3.10"
 val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
+val opentelemetryVersion = "2.20.1-alpha"
+val swaggerRequestValidatorVersion = "2.46.0"
 
 dependencies {
 
@@ -66,6 +69,8 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-swagger:$ktorVersion")
     implementation("io.ktor:ktor-server-di:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation("io.ktor:ktor-server-request-validation:$ktorVersion")
 
     // Ktor client
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
@@ -111,6 +116,12 @@ dependencies {
     // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
     implementation("org.apache.commons:commons-lang3:3.18.0")
 
+    // Scheduler
+    implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
+
+    // Opentelemetry
+    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
+
     // Test
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
@@ -121,6 +132,7 @@ dependencies {
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
+    testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
 }
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5

@@ -9,14 +9,11 @@ import no.nav.sokos.skattekort.module.person.FoedselsnummerId
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
-import no.nav.sokos.skattekort.module.skattekort.SkattekortDel
-import no.nav.sokos.skattekort.module.skattekort.SkattekortDelId
 import no.nav.sokos.skattekort.module.skattekort.SkattekortId
-import no.nav.sokos.skattekort.module.skattekort.SkattekortTileggsopplysningId
-import no.nav.sokos.skattekort.module.skattekort.SkattekortType
-import no.nav.sokos.skattekort.module.skattekort.Tileggsopplysning
-import no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning
+import no.nav.sokos.skattekort.module.skattekort.Tabellkort
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Trekkode
 
 object TestData {
@@ -30,6 +27,8 @@ object TestData {
             inntektsaar = 2025,
             kilde = "skattekortsvar",
             opprettet = Clock.System.now(),
+            forskuddstrekkList = getForskuddstrekkListTestData(),
+            tilleggsopplysningList = getTilleggsopplysningListTestData(),
         )
 
     fun getPersonTestData() =
@@ -45,32 +44,24 @@ object TestData {
                 ),
         )
 
-    fun getSkatteDelListTestData() =
+    fun getForskuddstrekkListTestData() =
         listOf(
-            SkattekortDel(
-                id = SkattekortDelId(2L),
-                skattekortId = SkattekortId(1L),
-                trekkKode = Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value,
-                skattekortType = SkattekortType.FRIKORT,
+            Frikort(
+                trekkode = Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value,
                 frikortBeloep = 0,
             ),
-            SkattekortDel(
-                id = SkattekortDelId(1L),
-                skattekortId = SkattekortId(1L),
-                trekkKode = Trekkode.LOENN_FRA_NAV.value,
-                skattekortType = SkattekortType.TABELL,
+            Tabellkort(
+                trekkode = Trekkode.LOENN_FRA_NAV.value,
                 tabellNummer = "7100",
-                prosentsats = 35.0,
-                frikortBeloep = null,
+                prosentSats = 35.0.toBigDecimal(),
+                antallMndForTrekk = 0.5.toBigDecimal(),
             ),
         )
 
-    fun getSkattekortTileggsopplysningListTestData() =
+    fun getTilleggsopplysningListTestData() =
         listOf(
-            Tileggsopplysning(
-                id = SkattekortTileggsopplysningId(1L),
-                skattekortId = SkattekortId(1L),
-                opplysning = Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE.value,
+            Tilleggsopplysning(
+                opplysning = no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE.value,
             ),
         )
 }

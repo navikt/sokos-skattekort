@@ -76,11 +76,13 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingsService: BestillingsService by dependencies
+        val utsendingService: UtsendingService by dependencies
         val scheduledTaskService: ScheduledTaskService by dependencies
         val dataSource: HikariDataSource by dependencies
         JobTaskConfig
             .scheduler(
                 bestillingsService,
+                utsendingService,
                 scheduledTaskService,
                 dataSource,
             ).start()

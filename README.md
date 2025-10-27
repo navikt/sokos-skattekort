@@ -108,11 +108,12 @@ Ingen
 
 ### Versjonerte grensesnitt
 
-| Funksjon     | Type      | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner          | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
-|--------------|-----------|-------------------|-------------------------------|--------------------------------------------|----------------------------------------------------------|
-| bestillinger | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
-| Arena        | Filområde | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
-| OppdragZ     | MQ        | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| Funksjon                         | Type      | Navn QA                           | Nåværende versjon | Kanal for funksjonelle ønsker | Kanal for varslinger om versjoner          | Kanal for drifts- eller utviklingsrelatert kommunikasjon |
+|----------------------------------|-----------|-----------------------------------|-------------------|-------------------------------|--------------------------------------------|----------------------------------------------------------|
+| bestillinger fra arena, OppdragZ | MQ        | QA.Q1_OS_ESKATT.FRA_FORSYSTEM_ALT | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| "store bestillinger" (ved nyttår | MQ        |                                   | TBD               | #utbetaling-sokos-skattekort  | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| Arena                            | Filområde |                                   | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| Skattekort til OppdragZ          | MQ        | QA.Q1_231.OB04_FRA_OS_ESKATT      | TBD               | #utbetaling-sokos-skattekort  | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 
 Swagger
 - [Dev-fss](https://sokos-skattekort.intern.dev.nav.no/api/v1/skattekort/docs)

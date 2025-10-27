@@ -85,4 +85,7 @@ spec:
     - name: APPLICATION_ENV
       value: DEV
 
+    # SFTP
+    - name: SFTP_PRIVATE_KEY
+      value: /var/run/secrets/sokos-skattekort-private-key/SFTP_PRIVATE_KEY
 

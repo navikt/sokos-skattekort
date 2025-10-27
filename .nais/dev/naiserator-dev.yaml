@@ -64,8 +64,6 @@ spec:
   webproxy: true
   vault:
     enabled: true
-    paths:
-      - kvPath: /kv/preprod/fss/sokos-skattekort/okonomi/sftp
   envFrom:
     - secret: sokos-skattekort-mq-credentials
     - secret: sokos-skattekort-sftp-credentials

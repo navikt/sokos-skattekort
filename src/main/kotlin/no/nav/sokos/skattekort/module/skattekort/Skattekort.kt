@@ -58,14 +58,14 @@ interface Forskuddstrekk {
                         frikortBeloep = row.int("frikort_beloep"),
                     )
 
-                "loennFraBiarbeidsgiver", "loennFraNAV", "ufoeretrygdFraNAV", "ufoereytelserFraAndre" ->
+                "prosentkort", "loennFraBiarbeidsgiver", "loennFraNAV", "ufoeretrygdFraNAV", "ufoereytelserFraAndre" ->
                     Prosentkort(
                         trekkode = row.string("trekk_kode"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
 
-                "loennFraHovedarbeidsgiver" ->
+                "tabellkort", "loennFraHovedarbeidsgiver" ->
                     Tabellkort(
                         trekkode = row.string("trekk_kode"),
                         tabellNummer = row.string("tabell_nummer"),

@@ -53,6 +53,25 @@ object BestillingBatchRepository {
             extractor = mapToBestillingBatch,
         )
 
+    fun markAsProcessed(
+        tx: TransactionalSession,
+        bestillingsbatchId: Long,
+    ) {
+        tx.run(
+            queryOf(
+                """
+                    |UPDATE bestillingsbatcher
+                    |SET status = :status, oppdatert = NOW()
+                    |WHERE id = :id
+                """.trimMargin(),
+                mapOf(
+                    "id" to bestillingsbatchId,
+                    "status" to "FERDIG",
+                ),
+            ).asExecute,
+        )
+    }
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestillingBatch: (Row) -> BestillingBatch = { row ->
         BestillingBatch(

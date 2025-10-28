@@ -88,6 +88,15 @@ object PropertiesConfig {
             systemBrukerClaim = getOrEmpty("MASKINPORTEN_SYSTEM_BRUKER_CLAIM"),
         )
 
+    fun getSftpProperties(): SftpProperties =
+        SftpProperties(
+            host = get("SFTP_HOST"),
+            port = get("SFTP_PORT").toInt(),
+            user = getOrEmpty("SFTP_USER"),
+            privateKey = getOrEmpty("SFTP_PRIVATE_KEY"),
+            keyPassword = getOrEmpty("SFTP_KEY_PASSWORD"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -139,6 +148,14 @@ object PropertiesConfig {
         val rsaKey: RSAKey?,
         val scopes: String,
         val systemBrukerClaim: String,
+    )
+
+    data class SftpProperties(
+        val host: String,
+        val port: Int,
+        val user: String,
+        val privateKey: String,
+        val keyPassword: String,
     )
 
     enum class Environment {

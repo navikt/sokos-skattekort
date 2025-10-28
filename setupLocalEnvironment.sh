@@ -1,6 +1,16 @@
 #!/bin/bash
 export VAULT_ADDR=https://vault.adeo.no
 
+# Extract single values from map[key:value ...]
+getFromMap() {
+  local map="$1" key="$2"
+  # Strip leading 'map[' and trailing ']'
+  local body=${map#map[}
+  body=${body%]}
+  # Turn spaces into newlines, then split on first ':'
+  echo "$body" | tr ' ' '\n' | awk -F':' -v k="$key" '$1==k {print substr($0, index($0,":")+1)}'
+}
+
 # Ensure user is authenicated, and run login if not.
 gcloud auth print-identity-token &> /dev/null
 if [ $? -gt 0 ]; then
@@ -15,20 +25,23 @@ kubectl config set-context --current --namespace=okonomi
 # Get AZURE system variables
 envValue=$(kubectl exec -it $(kubectl get pods | grep sokos-skattekort | cut -f1 -d' ') -c sokos-skattekort -- env | egrep "^AZURE|^MASKINPORTEN|^MQ_SERVICE"| sort)
 
-POSTGRES_USER=$(vault kv get -field=data postgresql/preprod-fss/creds/sokos-skattekort-user)
-POSTGRES_ADMIN=$(vault kv get -field=data postgresql/preprod-fss/creds/sokos-skattekort-admin)
+POSTGRES_USER_MAP=$(vault kv get -field=data postgresql/preprod-fss/creds/sokos-skattekort-user)
+POSTGRES_ADMIN_MAP=$(vault kv get -field=data postgresql/preprod-fss/creds/sokos-skattekort-admin)
 
 # Set AZURE as local environment variables
 rm -f defaults.properties
 echo "$envValue" > defaults.properties
 echo "AZURE stores as defaults.properties"
 
-username=$(echo "$POSTGRES_USER" | awk -F 'username:' '{print $2}' | awk '{print $1}' | sed 's/]$//')
-password=$(echo "$POSTGRES_USER" | awk -F 'password:' '{print $2}' | awk '{print $1}' | sed 's/]$//')
-echo "POSTGRES_USER_USERNAME=$username" >> defaults.properties
-echo "POSTGRES_USER_PASSWORD=$password" >> defaults.properties
+echo "POSTGRES_USER_USERNAME=$(getFromMap "$POSTGRES_USER_MAP" username)" >> defaults.properties
+echo "POSTGRES_USER_PASSWORD=$(getFromMap "$POSTGRES_USER_MAP" password)" >> defaults.properties
 
-username=$(echo "$POSTGRES_ADMIN" | awk -F 'username:' '{print $2}' | awk '{print $1}' | sed 's/]$//')
-password=$(echo "$POSTGRES_ADMIN" | awk -F 'password:' '{print $2}' | awk '{print $1}' | sed 's/]$//')
-echo "POSTGRES_ADMIN_USERNAME=$username" >> defaults.properties
-echo "POSTGRES_ADMIN_PASSWORD=$password" >> defaults.properties
+echo "POSTGRES_ADMIN_USERNAME=$(getFromMap "$POSTGRES_ADMIN_MAP" username)" >> defaults.properties
+echo "POSTGRES_ADMIN_PASSWORD=$(getFromMap "$POSTGRES_ADMIN_MAP" password)" >> defaults.properties
+
+echo "SFTP_USER=$(vault kv get -field=serviceuser kv/preprod/fss/sokos-skattekort/okonomi/sftp)" >> defaults.properties
+echo "SFTP_KEY_PASSWORD=$(vault kv get -field=keyPassword kv/preprod/fss/sokos-skattekort/okonomi/sftp)" >> defaults.properties
+echo "SFTP_PRIVATE_KEY=privateKey" >> defaults.properties
+
+rm -f privateKey
+echo "$(vault kv get -field=privateKey kv/preprod/fss/sokos-skattekort/okonomi/sftp)" > privateKey

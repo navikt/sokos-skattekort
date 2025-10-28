@@ -26,7 +26,7 @@ class SftpService(
         }
     }
 
-    fun isSftpConnectionEnable(): Boolean =
+    fun isSftpConnectionEnabled(): Boolean =
         runCatching {
             sftpConfig.channel { connector ->
                 // ChannelSftp from JSch assumed

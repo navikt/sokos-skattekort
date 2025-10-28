@@ -78,7 +78,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     routingConfig(useAuthentication, applicationState)
 
     val sftpService: SftpService by dependencies
-    logger.info { "SFTP connection is ok: ${sftpService.isSftpConnectionEnable()}" }
+    logger.info { "SFTP connection is enabled: ${sftpService.isSftpConnectionEnabled()}" }
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()

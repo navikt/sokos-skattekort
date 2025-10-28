@@ -60,6 +60,7 @@ val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
 val opentelemetryVersion = "2.20.1-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
+val jschVersion = "2.27.3"
 
 dependencies {
 
@@ -112,6 +113,9 @@ dependencies {
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")
+
+    // SFTP
+    implementation("com.github.mwiede:jsch:$jschVersion")
 
     // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
     implementation("org.apache.commons:commons-lang3:3.18.0")

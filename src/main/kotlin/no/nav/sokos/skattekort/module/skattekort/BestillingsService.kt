@@ -117,6 +117,9 @@ class BestillingsService(
                 dataSource.transaction { tx ->
                     BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
                 }
+                dataSource.transaction { tx ->
+                    BestillingRepository.deleteProcessedBestillings(tx, bestillingsbatch.id!!.id)
+                }
             }
         }
     }

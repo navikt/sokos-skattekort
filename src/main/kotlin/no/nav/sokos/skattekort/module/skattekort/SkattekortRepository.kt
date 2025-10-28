@@ -7,6 +7,9 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT
+import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT
+import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT
 
 object SkattekortRepository {
     fun insertBatch(
@@ -44,7 +47,7 @@ object SkattekortRepository {
                                 mapOf(
                                     "skattekortId" to id,
                                     "trekk_kode" to forskuddstrekk.trekkode,
-                                    "type" to "frikort",
+                                    "type" to FRIKORT.type,
                                     "frikort_beloep" to forskuddstrekk.frikortBeloep,
                                     "tabell_nummer" to null,
                                     "prosentsats" to null,
@@ -55,7 +58,7 @@ object SkattekortRepository {
                                 mapOf(
                                     "skattekortId" to id,
                                     "trekk_kode" to forskuddstrekk.trekkode,
-                                    "type" to "prosentkort",
+                                    "type" to PROSENTKORT.type,
                                     "frikort_beloep" to null,
                                     "tabell_nummer" to null,
                                     "prosentsats" to forskuddstrekk.prosentSats,
@@ -66,7 +69,7 @@ object SkattekortRepository {
                                 mapOf(
                                     "skattekortId" to id,
                                     "trekk_kode" to forskuddstrekk.trekkode,
-                                    "type" to "tabellkort",
+                                    "type" to TABELLKORT.type,
                                     "frikort_beloep" to null,
                                     "tabell_nummer" to forskuddstrekk.tabellNummer,
                                     "prosentsats" to forskuddstrekk.prosentSats,

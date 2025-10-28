@@ -40,7 +40,7 @@ class SftpServiceTest :
             exception.message shouldContain "feil"
         }
 
-        test("isSftpConnectionEnable returnere true når SFTP er oppe") {
-            sftpService.isSftpConnectionEnable() shouldBe true
+        test("isSftpConnectionEnabled returnere true når SFTP er oppe") {
+            sftpService.isSftpConnectionEnabled() shouldBe true
         }
     })

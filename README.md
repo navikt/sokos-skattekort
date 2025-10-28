@@ -116,6 +116,7 @@ Ingen
 | Skattekort til OppdragZ          | MQ        | QA.Q1_231.OB04_FRA_OS_ESKATT      | TBD               | #utbetaling-sokos-skattekort  | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 
 Swagger
+
 - [Dev-fss](https://sokos-skattekort.intern.dev.nav.no/api/v1/skattekort/docs)
 - [Lokalt](http://0.0.0.0:8080/api/v1/skattekort/docs)
 
@@ -249,7 +250,7 @@ flowchart TD
     BB[Ta tak i en passende Bestillingsbatch] --> HS(Kall HentSkattekort hos Skatteetaten for aktuell bestillingsreferanse)
     HS -->|For hver Bestilling| SK{Har vi fått skattekort?} -->|Ja| L(Lagre Skattekort i databasen) --> SLETT(Slett bestillinger som vi har fått skattekort for)
     SK -->|Nei| RESET(Slett bestillingsbatchid fra bestilling)
-    SK -->|Feil FNR| FLAGG(Flagg FNR) --> SKRIK(Rop høyt et sted så noen hører) --> SLETT2(Slett Bestillinger, Utsendinger og Abonnementer som feilet)
+    SK -->|Feil FNR| FLAGG(Flagg FNR) --> SKRIK(Rop høyt et sted så noen hører) --> SLETT2(Slett Bestillinger og Abonnementer som feilet)
 ```
 
 ## Prosess 4: Send skattekort til Forsystem

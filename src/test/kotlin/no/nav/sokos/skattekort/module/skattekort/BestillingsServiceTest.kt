@@ -103,11 +103,7 @@ class BestillingsServiceTest :
         test("henter skattekort for batch") {
             val bestillingsreferanse = "some-bestillings-ref"
 
-            val jsonPath = Paths.get("src/test/resources/skatteetaten/skattekortopplysningerOK.json")
-            val jsonString = Files.readString(jsonPath)
-            val rootObj: Root = Json.decodeFromString(Root.serializer(), jsonString)
-
-            coEvery { skatteetatenClient.hentSkattekort(bestillingsreferanse) } returns rootObj
+            coEvery { skatteetatenClient.hentSkattekort(bestillingsreferanse) } returns rootObjectFromFile("src/test/resources/skatteetaten/skattekortopplysningerOK.json")
 
             // Sett inn bestillinger uten bestillingsbatch.
             DbListener.loadDataSet("database/person/persondata.sql")
@@ -129,6 +125,11 @@ class BestillingsServiceTest :
                 )
             }
 
+            val bestillingsBefore: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
             bestillingsService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> =
@@ -141,11 +142,36 @@ class BestillingsServiceTest :
                     SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025)
                 }
 
+            val bestillingsAfter: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
             assertSoftly {
                 updatedBatches.count { it.status == "NY" } shouldBe 1
                 updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                bestillingsBefore.size shouldBe 3
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 2
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
+                bestillingsAfter.size shouldBe 1
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 0
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
                 skattekort.size shouldBe 1
                 skattekort.first().identifikator shouldBe "54407"
             }
         }
     })
+
+private fun rootObjectFromFile(jsonfile: String): Root = Json.decodeFromString(Root.serializer(), Files.readString(Paths.get(jsonfile)))

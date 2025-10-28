@@ -50,52 +50,53 @@ value class SkattekortId(
 interface Forskuddstrekk {
     companion object {
         fun create(row: Row): Forskuddstrekk {
-            val type = row.string("type")
+            val type = ForskuddstrekkType.from(row.string("type"))
             return when (type) {
-                "frikort" ->
+                ForskuddstrekkType.FRIKORT ->
                     Frikort(
                         trekkode = row.string("trekk_kode"),
                         frikortBeloep = row.int("frikort_beloep"),
                     )
 
-                "prosentkort", "loennFraBiarbeidsgiver", "loennFraNAV", "ufoeretrygdFraNAV", "ufoereytelserFraAndre" ->
+                ForskuddstrekkType.PROSENTKORT ->
                     Prosentkort(
                         trekkode = row.string("trekk_kode"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
 
-                "tabellkort", "loennFraHovedarbeidsgiver" ->
+                ForskuddstrekkType.TABELLKORT ->
                     Tabellkort(
                         trekkode = row.string("trekk_kode"),
                         tabellNummer = row.string("tabell_nummer"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
-
-                else -> error("Ukjent type for skattekort-del med id ${row.long("id")}")
             }
         }
 
         fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk): Forskuddstrekk {
             val type = klassifiserType(forskuddstrekk)
-            when (type) {
-                ForskuddstrekkType.FRIKORT -> return Frikort(
-                    trekkode = forskuddstrekk.trekkode,
-                    frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
-                )
+            return when (type) {
+                ForskuddstrekkType.FRIKORT ->
+                    Frikort(
+                        trekkode = forskuddstrekk.trekkode,
+                        frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
+                    )
 
-                ForskuddstrekkType.PROSENTKORT -> return Prosentkort(
-                    trekkode = forskuddstrekk.trekkode,
-                    prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
-                )
+                ForskuddstrekkType.PROSENTKORT ->
+                    Prosentkort(
+                        trekkode = forskuddstrekk.trekkode,
+                        prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
+                    )
 
-                ForskuddstrekkType.TABELLKORT -> return Tabellkort(
-                    trekkode = forskuddstrekk.trekkode,
-                    tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
-                    prosentSats = forskuddstrekk.trekktabell.prosentsats,
-                    antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
-                )
+                ForskuddstrekkType.TABELLKORT ->
+                    Tabellkort(
+                        trekkode = forskuddstrekk.trekkode,
+                        tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
+                        prosentSats = forskuddstrekk.trekktabell.prosentsats,
+                        antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
+                    )
             }
         }
 
@@ -107,10 +108,19 @@ interface Forskuddstrekk {
                 else -> error("Forskuddstrekk ${forskuddstrekk.trekkode} har ingen av de forventede typene")
             }
 
-        private enum class ForskuddstrekkType {
-            FRIKORT,
-            TABELLKORT,
-            PROSENTKORT,
+        enum class ForskuddstrekkType(
+            val type: String,
+        ) {
+            FRIKORT("frikort"),
+            TABELLKORT("trekktabell"),
+            PROSENTKORT("trekkprosent"),
+            ;
+
+            companion object {
+                fun from(type: String): ForskuddstrekkType =
+                    entries.find { it.type == type }
+                        ?: error("Ukjent ForskuddstrekkType: $type")
+            }
         }
     }
 }

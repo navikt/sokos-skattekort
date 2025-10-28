@@ -15,6 +15,7 @@ import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.MQListener.bestillingsQueue
+import no.nav.sokos.skattekort.listener.SftpListener
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
@@ -23,7 +24,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class MottaBestillingEndToEndTest :
     FunSpec({
-        extensions(DbListener, MQListener)
+        extensions(DbListener, MQListener, SftpListener)
 
         test("vi kan håndtere en forespørsel fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {

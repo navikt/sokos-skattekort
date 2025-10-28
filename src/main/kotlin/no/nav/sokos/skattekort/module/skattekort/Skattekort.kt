@@ -78,28 +78,39 @@ interface Forskuddstrekk {
         }
 
         fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk): Forskuddstrekk {
-            when (forskuddstrekk.trekkode) {
-                "frikort" -> return Frikort(
+            val type = klassifiserType(forskuddstrekk)
+            when (type) {
+                ForskuddstrekkType.FRIKORT -> return Frikort(
                     trekkode = forskuddstrekk.trekkode,
                     frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
                 )
 
-                "loennFraBiarbeidsgiver", "loennFraNAV", "ufoeretrygdFraNAV", "ufoereytelserFraAndre" -> return Prosentkort(
+                ForskuddstrekkType.PROSENTKORT -> return Prosentkort(
                     trekkode = forskuddstrekk.trekkode,
                     prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
                 )
 
-                "loennFraHovedarbeidsgiver" -> return Tabellkort(
+                ForskuddstrekkType.TABELLKORT -> return Tabellkort(
                     trekkode = forskuddstrekk.trekkode,
                     tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
                     prosentSats = forskuddstrekk.trekktabell.prosentsats,
                     antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
                 )
-
-                else -> {
-                    error("Ukjent type for skattekort-del med trekkode ${forskuddstrekk.trekkode}")
-                }
             }
+        }
+
+        private fun klassifiserType(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk): ForskuddstrekkType =
+            when {
+                forskuddstrekk.frikort != null -> ForskuddstrekkType.FRIKORT
+                forskuddstrekk.trekktabell != null -> ForskuddstrekkType.TABELLKORT
+                forskuddstrekk.trekkprosent != null -> ForskuddstrekkType.PROSENTKORT
+                else -> error("Forskuddstrekk ${forskuddstrekk.trekkode} har ingen av de forventede typene")
+            }
+
+        private enum class ForskuddstrekkType {
+            FRIKORT,
+            TABELLKORT,
+            PROSENTKORT,
         }
     }
 }

@@ -32,19 +32,19 @@ private const val MAX_LENGDE_FNR = 17
 
 object CopybookUtils {
     fun skattekortToArenaCopybookFormat(skattekort: Skattekort): String {
-        val skattekortDel = findForskuddstrekk(skattekort.forskuddstrekkList) ?: return ""
+        val forskuddstrekk = findForskuddstrekk(skattekort.forskuddstrekkList) ?: return ""
 
         return StringBuilder()
             .append(formatRecordType())
             .append(formatSkattekommune(skattekort.tilleggsopplysningList))
             .append(formatArbeidstakeridentifikator(skattekort))
-            .append(formatForskuddsform(skattekortDel))
+            .append(formatForskuddstrekk(forskuddstrekk))
             .append(formatNyTrekkmnd())
             .append(formatUtskriftsdato(skattekort))
             .append(formatArbeidsgivergruppe())
             .append(formatSkattemantallsgruppe())
             .append(formatInntektsaar(skattekort))
-            .append(formatFrikortbeloep(skattekortDel))
+            .append(formatFrikortbeloep(forskuddstrekk))
             .append("/n")
             .toString()
     }
@@ -85,7 +85,7 @@ object CopybookUtils {
 
     private fun formatArbeidstakeridentifikator(skattekort: Skattekort) = skattekort.identifikator.padEnd(11, EMPTY_SPACE)
 
-    private fun formatForskuddsform(forskuddstrekk: Forskuddstrekk): String {
+    private fun formatForskuddstrekk(forskuddstrekk: Forskuddstrekk): String {
         val sb = StringBuilder()
 
         val skatteklasse = "".padEnd(1, EMPTY_SPACE)

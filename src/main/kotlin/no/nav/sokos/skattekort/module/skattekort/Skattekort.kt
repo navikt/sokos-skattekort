@@ -75,7 +75,7 @@ interface Forskuddstrekk {
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
 
-                else -> throw IllegalStateException("Ukjent type for skattekort-del med id ${row.long("id")}")
+                else -> throw IllegalStateException("Ukjent type for forskuddstrekk med id ${row.long("id")}")
             }
         }
     }

@@ -14,6 +14,7 @@ import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortId
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Trekkode
 
 object TestData {
@@ -28,7 +29,7 @@ object TestData {
             kilde = "skattekortsvar",
             opprettet = Clock.System.now(),
             forskuddstrekkList = getForskuddstrekkListTestData(),
-            tilleggsopplysningList = getTilleggsopplysningListTestData(),
+            tilleggsopplysningList = emptyList(),
         )
 
     fun getPersonTestData() =
@@ -61,7 +62,7 @@ object TestData {
     fun getTilleggsopplysningListTestData() =
         listOf(
             Tilleggsopplysning(
-                opplysning = no.nav.sokos.skattekort.module.utsending.oppdragz.Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE.value,
+                opplysning = OPPHOLD_I_TILTAKSSONE.value,
             ),
         )
 }

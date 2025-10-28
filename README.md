@@ -172,7 +172,7 @@ erDiagram
 
 Designnotater:
 
-- vi kan få skattekort uten skattekort-deler. Det gjelder typisk personer som har tilleggsopplysninger.
+- vi kan få skattekort uten forskuddstrekk. Det gjelder typisk personer som har tilleggsopplysninger.
 - tanken bak skattekort-tabellen er at den er immuterbar
 
 ## Deployment

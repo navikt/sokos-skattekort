@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
@@ -153,6 +154,15 @@ class BestillingsServiceTest :
                     }.size shouldBe 1
                 skattekort.size shouldBe 1
                 skattekort.first().identifikator shouldBe "54407"
+                skattekort.first().forskuddstrekkList.size shouldBe 5
+                skattekort.first().tilleggsopplysningList.size shouldBe 4
+                skattekort.first().tilleggsopplysningList shouldContainExactlyInAnyOrder
+                    listOf(
+                        "oppholdPaaSvalbard",
+                        "kildeskattPaaPensjon",
+                        "oppholdITiltakssone",
+                        "kildeskattPaaLoenn",
+                    ).map { Tilleggsopplysning(it) }
             }
         }
     })

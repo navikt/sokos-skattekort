@@ -14,32 +14,30 @@ import kotliquery.Row
 
 import no.nav.sokos.skattekort.module.person.PersonId
 
-data class Skattekort
-    @OptIn(ExperimentalTime::class)
-    constructor(
-        val id: SkattekortId? = null,
-        val personId: PersonId,
-        val utstedtDato: LocalDate,
-        val identifikator: String,
-        val inntektsaar: Int,
-        val kilde: String,
-        val opprettet: Instant = Clock.System.now(),
-        val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
-        val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
-    ) {
-        @OptIn(ExperimentalTime::class)
-        constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
-            id = SkattekortId(row.long("id")),
-            personId = PersonId(row.long("person_id")),
-            utstedtDato = row.localDate("utstedt_dato").toKotlinLocalDate(),
-            identifikator = row.string("identifikator"),
-            inntektsaar = row.int("inntektsaar"),
-            kilde = row.string("kilde"),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
-            forskuddstrekkList = forskuddstrekkList,
-            tilleggsopplysningList = tilleggsopplysningList,
-        )
-    }
+@OptIn(ExperimentalTime::class)
+data class Skattekort(
+    val id: SkattekortId? = null,
+    val personId: PersonId,
+    val utstedtDato: LocalDate,
+    val identifikator: String,
+    val inntektsaar: Int,
+    val kilde: String,
+    val opprettet: Instant = Clock.System.now(),
+    val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
+    val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
+) {
+    constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
+        id = SkattekortId(row.long("id")),
+        personId = PersonId(row.long("person_id")),
+        utstedtDato = row.localDate("utstedt_dato").toKotlinLocalDate(),
+        identifikator = row.string("identifikator"),
+        inntektsaar = row.int("inntektsaar"),
+        kilde = row.string("kilde"),
+        opprettet = row.instant("opprettet").toKotlinInstant(),
+        forskuddstrekkList = forskuddstrekkList,
+        tilleggsopplysningList = tilleggsopplysningList,
+    )
+}
 
 @Serializable
 @JvmInline
@@ -52,30 +50,76 @@ interface Forskuddstrekk {
 
     companion object {
         fun create(row: Row): Forskuddstrekk {
-            val type = row.string("type")
+            val type = ForskuddstrekkType.from(row.string("type"))
             return when (type) {
-                "frikort" ->
+                ForskuddstrekkType.FRIKORT ->
                     Frikort(
                         trekkode = row.string("trekk_kode"),
                         frikortBeloep = row.int("frikort_beloep"),
                     )
 
-                "prosent" ->
+                ForskuddstrekkType.PROSENTKORT ->
                     Prosentkort(
                         trekkode = row.string("trekk_kode"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
 
-                "tabell" ->
+                ForskuddstrekkType.TABELLKORT ->
                     Tabellkort(
                         trekkode = row.string("trekk_kode"),
                         tabellNummer = row.string("tabell_nummer"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
+            }
+        }
 
-                else -> throw IllegalStateException("Ukjent type for forskuddstrekk med id ${row.long("id")}")
+        fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): Forskuddstrekk {
+            val type = klassifiserType(forskuddstrekk)
+            return when (type) {
+                ForskuddstrekkType.FRIKORT ->
+                    Frikort(
+                        trekkode = forskuddstrekk.trekkode,
+                        frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
+                    )
+
+                ForskuddstrekkType.PROSENTKORT ->
+                    Prosentkort(
+                        trekkode = forskuddstrekk.trekkode,
+                        prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
+                    )
+
+                ForskuddstrekkType.TABELLKORT ->
+                    Tabellkort(
+                        trekkode = forskuddstrekk.trekkode,
+                        tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
+                        prosentSats = forskuddstrekk.trekktabell.prosentsats,
+                        antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
+                    )
+            }
+        }
+
+        private fun klassifiserType(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): ForskuddstrekkType =
+            when {
+                forskuddstrekk.frikort != null -> ForskuddstrekkType.FRIKORT
+                forskuddstrekk.trekktabell != null -> ForskuddstrekkType.TABELLKORT
+                forskuddstrekk.trekkprosent != null -> ForskuddstrekkType.PROSENTKORT
+                else -> error("Forskuddstrekk ${forskuddstrekk.trekkode} har ingen av de forventede typene")
+            }
+
+        enum class ForskuddstrekkType(
+            val type: String,
+        ) {
+            FRIKORT("frikort"),
+            TABELLKORT("trekktabell"),
+            PROSENTKORT("trekkprosent"),
+            ;
+
+            companion object {
+                fun from(type: String): ForskuddstrekkType =
+                    entries.find { it.type == type }
+                        ?: error("Ukjent ForskuddstrekkType: $type")
             }
         }
     }

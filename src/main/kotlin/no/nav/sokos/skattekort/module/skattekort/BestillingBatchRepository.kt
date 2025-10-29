@@ -8,7 +8,7 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenBestillSkattekortRequest
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortRequest
 
 object BestillingBatchRepository {
     fun list(tx: TransactionalSession): List<BestillingBatch> =
@@ -25,7 +25,7 @@ object BestillingBatchRepository {
     fun insert(
         tx: TransactionalSession,
         bestillingsreferanse: String,
-        request: SkatteetatenBestillSkattekortRequest,
+        request: BestillSkattekortRequest,
     ): Long =
         tx.updateAndReturnGeneratedKey(
             queryOf(
@@ -39,6 +39,39 @@ object BestillingBatchRepository {
                 ),
             ),
         ) ?: error("Failed to insert bestillingsbatch")
+
+    fun getUnprocessedBatch(tx: TransactionalSession): BestillingBatch? =
+        tx.single(
+            queryOf(
+                """
+                    |SELECT * 
+                    |FROM bestillingsbatcher
+                    |WHERE status <> 'FERDIG'
+                    |ORDER BY oppdatert ASC
+                    |LIMIT 1
+                """.trimMargin(),
+            ),
+            extractor = mapToBestillingBatch,
+        )
+
+    fun markAsProcessed(
+        tx: TransactionalSession,
+        bestillingsbatchId: Long,
+    ) {
+        tx.run(
+            queryOf(
+                """
+                    |UPDATE bestillingsbatcher
+                    |SET status = :status, oppdatert = NOW()
+                    |WHERE id = :id
+                """.trimMargin(),
+                mapOf(
+                    "id" to bestillingsbatchId,
+                    "status" to "FERDIG",
+                ),
+            ).asExecute,
+        )
+    }
 
     @OptIn(ExperimentalTime::class)
     private val mapToBestillingBatch: (Row) -> BestillingBatch = { row ->

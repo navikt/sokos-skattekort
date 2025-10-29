@@ -8,12 +8,12 @@ import com.zaxxer.hikari.HikariDataSource
 
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.skatteetaten.Arbeidsgiver
-import no.nav.sokos.skattekort.skatteetaten.ArbeidsgiverIdentifikator
-import no.nav.sokos.skattekort.skatteetaten.ForespoerselOmSkattekortTilArbeidsgiver
-import no.nav.sokos.skattekort.skatteetaten.Kontaktinformasjon
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenBestillSkattekortRequest
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.Arbeidsgiver
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.ArbeidsgiverIdentifikator
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortRequest
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.ForespoerselOmSkattekortTilArbeidsgiver
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.Kontaktinformasjon
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 // TODO: Metrikk: bestillinger per system
@@ -38,7 +38,7 @@ class BestillingsService(
             return
         }
         val request =
-            SkatteetatenBestillSkattekortRequest(
+            BestillSkattekortRequest(
                 inntektsaar = "2025",
                 bestillingstype = "HENT_ALLE_OPPGITTE",
                 kontaktinformasjon =
@@ -113,12 +113,8 @@ class BestillingsService(
                         }
                 dataSource.transaction { tx ->
                     SkattekortRepository.insertBatch(tx, skattekortene)
-                }
-                dataSource.transaction { tx ->
                     BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
-                }
-                dataSource.transaction { tx ->
-                    BestillingRepository.deleteProcessedBestillings(tx, bestillingsbatch.id!!.id)
+                    BestillingRepository.deleteProcessedBestillings(tx, bestillingsbatch.id.id)
                 }
             }
         }

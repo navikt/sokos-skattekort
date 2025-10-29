@@ -75,7 +75,7 @@ interface Forskuddstrekk {
             }
         }
 
-        fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk): Forskuddstrekk {
+        fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): Forskuddstrekk {
             val type = klassifiserType(forskuddstrekk)
             return when (type) {
                 ForskuddstrekkType.FRIKORT ->
@@ -100,7 +100,7 @@ interface Forskuddstrekk {
             }
         }
 
-        private fun klassifiserType(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk): ForskuddstrekkType =
+        private fun klassifiserType(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): ForskuddstrekkType =
             when {
                 forskuddstrekk.frikort != null -> ForskuddstrekkType.FRIKORT
                 forskuddstrekk.trekktabell != null -> ForskuddstrekkType.TABELLKORT

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS skattekort_del
     skattekort_id        BIGINT REFERENCES skattekort (id) DEFERRABLE        NOT NULL,
 
     trekk_kode           TEXT                                                NOT NULL, -- 'PENSJON', 'PENSJON_FRA_NAV', 'LOENN_FRA_NAV', 'LOENN_FRA_BIARBEIDSGIVER', 'LOENN_FRA_HOVEDARBEIDSGIVER'
-    type                 TEXT                                                NOT NULL, -- 'frikort', 'trekktabell', 'trekkprosent'
+    type                 TEXT                                                NOT NULL, -- 'frikort', 'tabell', 'prosent'
     frikort_beloep       INT                                                 NULL,     -- null for ikke-frikort
     tabell_nummer        TEXT                                                NULL,     -- null for ikke-tabellkort
     prosentsats          DECIMAL(5, 2)                                       NULL,     -- null for frikort, satt for prosent og tabell. Kan være desimaltall for kildeskattytere. yttrykker marginalprosent for tabellkort

@@ -1,10 +1,10 @@
-package no.nav.sokos.skattekort.skatteetaten
+package no.nav.sokos.skattekort.skatteetaten.bestillskattekort
 
 import kotlinx.serialization.Serializable
 
 // Data classes
 @Serializable
-data class SkatteetatenBestillSkattekortRequest(
+data class BestillSkattekortRequest(
     val inntektsaar: String,
     val bestillingstype: String,
     val kontaktinformasjon: Kontaktinformasjon,

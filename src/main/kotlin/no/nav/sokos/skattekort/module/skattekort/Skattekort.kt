@@ -50,30 +50,76 @@ value class SkattekortId(
 interface Forskuddstrekk {
     companion object {
         fun create(row: Row): Forskuddstrekk {
-            val type = row.string("type")
+            val type = ForskuddstrekkType.from(row.string("type"))
             return when (type) {
-                "frikort" ->
+                ForskuddstrekkType.FRIKORT ->
                     Frikort(
                         trekkode = row.string("trekk_kode"),
                         frikortBeloep = row.int("frikort_beloep"),
                     )
 
-                "prosent" ->
+                ForskuddstrekkType.PROSENTKORT ->
                     Prosentkort(
                         trekkode = row.string("trekk_kode"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
 
-                "tabell" ->
+                ForskuddstrekkType.TABELLKORT ->
                     Tabellkort(
                         trekkode = row.string("trekk_kode"),
                         tabellNummer = row.string("tabell_nummer"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
+            }
+        }
 
-                else -> throw IllegalStateException("Ukjent type for skattekort-del med id ${row.long("id")}")
+        fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): Forskuddstrekk {
+            val type = klassifiserType(forskuddstrekk)
+            return when (type) {
+                ForskuddstrekkType.FRIKORT ->
+                    Frikort(
+                        trekkode = forskuddstrekk.trekkode,
+                        frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
+                    )
+
+                ForskuddstrekkType.PROSENTKORT ->
+                    Prosentkort(
+                        trekkode = forskuddstrekk.trekkode,
+                        prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
+                    )
+
+                ForskuddstrekkType.TABELLKORT ->
+                    Tabellkort(
+                        trekkode = forskuddstrekk.trekkode,
+                        tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
+                        prosentSats = forskuddstrekk.trekktabell.prosentsats,
+                        antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
+                    )
+            }
+        }
+
+        private fun klassifiserType(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): ForskuddstrekkType =
+            when {
+                forskuddstrekk.frikort != null -> ForskuddstrekkType.FRIKORT
+                forskuddstrekk.trekktabell != null -> ForskuddstrekkType.TABELLKORT
+                forskuddstrekk.trekkprosent != null -> ForskuddstrekkType.PROSENTKORT
+                else -> error("Forskuddstrekk ${forskuddstrekk.trekkode} har ingen av de forventede typene")
+            }
+
+        enum class ForskuddstrekkType(
+            val type: String,
+        ) {
+            FRIKORT("frikort"),
+            TABELLKORT("trekktabell"),
+            PROSENTKORT("trekkprosent"),
+            ;
+
+            companion object {
+                fun from(type: String): ForskuddstrekkType =
+                    entries.find { it.type == type }
+                        ?: error("Ukjent ForskuddstrekkType: $type")
             }
         }
     }

@@ -37,18 +37,18 @@ VALUES
 
 SELECT setval('skattekort_id_seq', (SELECT coalesce(max(id), 0) FROM skattekort) + 1, false);
 
--- Skattekort del (frikort, tabell, prosent)
+-- Forskuddstrekk (frikort, trekktabell, trekkprosent)
 INSERT INTO forskuddstrekk (id, skattekort_id, trekk_kode, type, frikort_beloep, tabell_nummer, prosentsats, antall_mnd_for_trekk)
 VALUES
     -- Person 1, 2025 (tabellkort)
-    (1, 1, 'loennFraHovedarbeidsgiver', 'tabell', NULL, '7100', 27.5, 12),
+    (1, 1, 'loennFraHovedarbeidsgiver', 'trekktabell', NULL, '7100', 27.5, 12),
     -- Person 1, 2024 (prosentkort)
-    (2, 2, 'loennFraHovedarbeidsgiver', 'prosent', NULL, NULL, 30.0, 12),
+    (2, 2, 'loennFraHovedarbeidsgiver', 'trekkprosent', NULL, NULL, 30.0, 12),
     -- Person 2, 2025 (frikort + biarbeidsgiver prosent)
     (3, 3, 'loennFraHovedarbeidsgiver', 'frikort', 65000, NULL, NULL, NULL),
-    (4, 3, 'loennFraBiarbeidsgiver', 'prosent', NULL, NULL, 28.0, 10.5),
+    (4, 3, 'loennFraBiarbeidsgiver', 'trekkprosent', NULL, NULL, 28.0, 10.5),
     -- Person 3, 2025 (pensjon prosent)
-    (5, 4, 'pensjonFraNAV', 'prosent', NULL, NULL, 18.5, 12);
+    (5, 4, 'pensjonFraNAV', 'trekkprosent', NULL, NULL, 18.5, 12);
 
 SELECT setval('forskuddstrekk_id_seq', (SELECT coalesce(max(id), 0) FROM forskuddstrekk) + 1, false);
 

@@ -88,6 +88,11 @@ object PropertiesConfig {
             systemBrukerClaim = getOrEmpty("MASKINPORTEN_SYSTEM_BRUKER_CLAIM"),
         )
 
+    fun getSkatteetatenProperties(): SkatteetatenProperties =
+        SkatteetatenProperties(
+            skatteetatenApiUrl = getOrEmpty("SKATTEETATEN_API_URL"),
+        )
+
     fun getSftpProperties(): SftpProperties =
         SftpProperties(
             host = get("SFTP_HOST"),
@@ -148,6 +153,10 @@ object PropertiesConfig {
         val rsaKey: RSAKey?,
         val scopes: String,
         val systemBrukerClaim: String,
+    )
+
+    data class SkatteetatenProperties(
+        val skatteetatenApiUrl: String,
     )
 
     data class SftpProperties(

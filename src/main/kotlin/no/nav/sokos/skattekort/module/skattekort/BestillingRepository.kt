@@ -55,6 +55,21 @@ object BestillingRepository {
         )
     }
 
+    fun deleteProcessedBestillings(
+        tx: TransactionalSession,
+        batch: Long,
+    ) {
+        tx.run(
+            queryOf(
+                """
+                DELETE FROM bestillinger
+                WHERE bestillingsbatch_id = :bestillingsbatchId
+                """.trimIndent(),
+                mapOf("bestillingsbatchId" to batch),
+            ).asUpdate,
+        )
+    }
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(

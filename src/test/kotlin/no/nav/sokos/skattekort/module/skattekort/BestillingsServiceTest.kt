@@ -1,5 +1,11 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import java.nio.file.Files
+import java.nio.file.Paths
+
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.json.Json
+
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -9,8 +15,15 @@ import io.mockk.mockk
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenBestillSkattekortResponse
+import no.nav.sokos.skattekort.module.person.Foedselsnummer
+import no.nav.sokos.skattekort.module.person.FoedselsnummerId
+import no.nav.sokos.skattekort.module.person.Person
+import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class BestillingsServiceTest :
@@ -18,16 +31,29 @@ class BestillingsServiceTest :
         extensions(DbListener)
 
         val skatteetatenClient = mockk<SkatteetatenClient>()
+        val personService = mockk<PersonService>()
+
+        coEvery { personService.findOrCreatePersonByFnr(any(), any(), any(), any()) } returns
+            Person(
+                id = PersonId(1),
+                false,
+                Foedselsnummer(
+                    FoedselsnummerId(1),
+                    PersonId(1),
+                    LocalDate(2000, 1, 1),
+                    Personidentifikator("12345678901"),
+                ),
+            )
 
         val bestillingsService: BestillingsService by lazy {
-            BestillingsService(DbListener.dataSource, skatteetatenClient)
+            BestillingsService(DbListener.dataSource, skatteetatenClient, personService)
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {
             val bestillingsreferanse = "some-bestillings-ref"
 
             coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
-                SkatteetatenBestillSkattekortResponse(
+                BestillSkattekortResponse(
                     dialogreferanse = "some-dialog-ref",
                     bestillingsreferanse = bestillingsreferanse,
                 )
@@ -73,4 +99,62 @@ class BestillingsServiceTest :
                 bestillings.all { it.bestillingsbatchId == batches.first().id } shouldBe true
             }
         }
+
+        test("henter skattekort for batch") {
+
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/skattekortopplysningerOK.json")
+
+            // Sett inn bestillinger uten bestillingsbatch.
+            DbListener.loadDataSet("database/person/persondata.sql")
+            DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
+
+            val bestillingsBefore: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            bestillingsService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingBatchRepository.list(session)
+                }
+
+            val skattekort: List<Skattekort> =
+                DbListener.dataSource.transaction { session ->
+                    SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025)
+                }
+
+            val bestillingsAfter: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            assertSoftly {
+                updatedBatches.count { it.status == "NY" } shouldBe 1
+                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                bestillingsBefore.size shouldBe 3
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 2
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
+                bestillingsAfter.size shouldBe 1
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 0
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
+                skattekort.size shouldBe 1
+                skattekort.first().identifikator shouldBe "54407"
+            }
+        }
     })
+
+private fun hentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get(jsonfile)))

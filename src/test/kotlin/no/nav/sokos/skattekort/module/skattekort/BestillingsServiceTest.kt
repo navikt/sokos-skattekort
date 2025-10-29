@@ -21,9 +21,9 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenBestillSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
-import no.nav.sokos.skattekort.skatteetaten.svar.Root
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class BestillingsServiceTest :
@@ -53,7 +53,7 @@ class BestillingsServiceTest :
             val bestillingsreferanse = "some-bestillings-ref"
 
             coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
-                SkatteetatenBestillSkattekortResponse(
+                BestillSkattekortResponse(
                     dialogreferanse = "some-dialog-ref",
                     bestillingsreferanse = bestillingsreferanse,
                 )
@@ -101,29 +101,12 @@ class BestillingsServiceTest :
         }
 
         test("henter skattekort for batch") {
-            val bestillingsreferanse = "some-bestillings-ref"
 
-            coEvery { skatteetatenClient.hentSkattekort(bestillingsreferanse) } returns rootObjectFromFile("src/test/resources/skatteetaten/skattekortopplysningerOK.json")
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/skattekortopplysningerOK.json")
 
             // Sett inn bestillinger uten bestillingsbatch.
             DbListener.loadDataSet("database/person/persondata.sql")
-            val fnr1 = "12345678901"
-            val fnr2 = "12345678902"
-            val fnr3 = "12345678903"
-            DbListener.dataSource.transaction { session ->
-                session.run(
-                    queryOf(
-                        """
-                        INSERT INTO bestillingsbatcher(id, bestillingsreferanse, data_sendt)
-                        VALUES (1, '$bestillingsreferanse', '{}'), (2, 'other-ref', '{}');
-                        INSERT INTO bestillinger(person_id, fnr, inntektsaar, bestillingsbatch_id)
-                        VALUES (1, '$fnr1', 2025, 1),
-                               (2, '$fnr2', 2025, 1),
-                               (3, '$fnr3', 2025, 2);
-                        """.trimIndent(),
-                    ).asExecute,
-                )
-            }
+            DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
 
             val bestillingsBefore: List<Bestilling> =
                 DbListener.dataSource.transaction { session ->
@@ -174,4 +157,4 @@ class BestillingsServiceTest :
         }
     })
 
-private fun rootObjectFromFile(jsonfile: String): Root = Json.decodeFromString(Root.serializer(), Files.readString(Paths.get(jsonfile)))
+private fun hentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get(jsonfile)))

@@ -8,7 +8,7 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenBestillSkattekortRequest
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortRequest
 
 object BestillingBatchRepository {
     fun list(tx: TransactionalSession): List<BestillingBatch> =
@@ -25,7 +25,7 @@ object BestillingBatchRepository {
     fun insert(
         tx: TransactionalSession,
         bestillingsreferanse: String,
-        request: SkatteetatenBestillSkattekortRequest,
+        request: BestillSkattekortRequest,
     ): Long =
         tx.updateAndReturnGeneratedKey(
             queryOf(
@@ -46,6 +46,7 @@ object BestillingBatchRepository {
                 """
                     |SELECT * 
                     |FROM bestillingsbatcher
+                    |WHERE status <> 'FERDIG'
                     |ORDER BY oppdatert ASC
                     |LIMIT 1
                 """.trimMargin(),

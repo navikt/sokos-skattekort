@@ -16,7 +16,9 @@ import io.ktor.http.isSuccess
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
-import no.nav.sokos.skattekort.skatteetaten.svar.Root
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortRequest
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 
 class SkatteetatenClient(
     private val maskinportenTokenClient: MaskinportenTokenClient,
@@ -24,7 +26,7 @@ class SkatteetatenClient(
 ) {
     private val skatteetatenUrl = PropertiesConfig.getSkatteetatenProperties().skatteetatenApiUrl
 
-    suspend fun bestillSkattekort(request: SkatteetatenBestillSkattekortRequest): SkatteetatenBestillSkattekortResponse {
+    suspend fun bestillSkattekort(request: BestillSkattekortRequest): BestillSkattekortResponse {
         val url = "$skatteetatenUrl/api/forskudd/bestillSkattekort/"
 
         val response: HttpResponse =
@@ -38,10 +40,10 @@ class SkatteetatenClient(
             throw RuntimeException("Feil ved bestilling av skattekort: ${response.status.value} - ${response.bodyAsText()}")
         }
 
-        return response.body<SkatteetatenBestillSkattekortResponse>()
+        return response.body<BestillSkattekortResponse>()
     }
 
-    suspend fun hentSkattekort(bestillingsreferanse: String): Root {
+    suspend fun hentSkattekort(bestillingsreferanse: String): HentSkattekortResponse {
         val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/"
 
         val response =
@@ -55,6 +57,6 @@ class SkatteetatenClient(
             throw RuntimeException("Feil ved henting av skattekort: ${response.status.value} - ${response.bodyAsText()}")
         }
 
-        return response.body<Root>()
+        return response.body<HentSkattekortResponse>()
     }
 }

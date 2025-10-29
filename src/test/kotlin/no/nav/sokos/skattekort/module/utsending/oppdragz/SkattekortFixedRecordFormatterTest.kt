@@ -8,10 +8,10 @@ import kotlinx.serialization.json.Json
 import io.kotest.core.spec.style.FunSpec
 
 import no.nav.sokos.skattekort.TestUtil.readFile
-import no.nav.sokos.skattekort.skatteetaten.svar.Arbeidstaker
-import no.nav.sokos.skattekort.skatteetaten.svar.Forskuddstrekk
-import no.nav.sokos.skattekort.skatteetaten.svar.Root
-import no.nav.sokos.skattekort.skatteetaten.svar.Skattekort
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
 
 fun arbeidstakerConverter(a: Arbeidstaker): Skattekortmelding =
     Skattekortmelding(
@@ -69,7 +69,7 @@ class SkattekortFixedRecordFormatterDuplicatorTest :
         test("gå gjennom alle skattekort og sjekk at vi får et stabilt svar") {
             val arbeidstakere: List<Arbeidstaker> =
                 Json
-                    .decodeFromString<Root>(readFile("/oppdragz/skattekortsvar.json"))
+                    .decodeFromString<HentSkattekortResponse>(readFile("/oppdragz/skattekortsvar.json"))
                     .arbeidsgiver
                     .flatMap { it.arbeidstaker }
             val referanseverdier: Map<String, String> = Json.decodeFromString(readFile("/oppdragz/skattekortreferanser.json"))

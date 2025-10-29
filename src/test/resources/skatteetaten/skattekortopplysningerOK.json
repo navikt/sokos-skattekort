@@ -47,6 +47,12 @@
               }
             ]
           },
+          "tilleggsopplysning": [
+            "oppholdPaaSvalbard",
+            "kildeskattPaaPensjon",
+            "oppholdITiltakssone",
+            "kildeskattPaaLoenn"
+          ],
           "inntektsaar": "2025"
         }
       ]

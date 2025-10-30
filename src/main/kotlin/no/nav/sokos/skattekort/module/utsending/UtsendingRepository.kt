@@ -38,7 +38,7 @@ object UtsendingRepository {
     fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> =
         tx.list(
             queryOf(
-                """SELECT * FROM utsendinger""".trimIndent(),
+                """SELECT * FROM utsendinger FOR UPDATE""".trimIndent(),
             ),
             extractor = { row -> Utsending(row) },
         )

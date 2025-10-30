@@ -43,4 +43,4 @@ out/
 defaults.properties
 privateKey
 .kotlin
-mqjms.0.log
+mqjms.log.0

@@ -59,7 +59,7 @@ class ForespoerselService(
         brukerId: String?,
     ) {
         var bestllingCount = 0
-        forespoerselInput.fnrList.map { fnr ->
+        forespoerselInput.fnrList.forEach { fnr ->
             val person =
                 personService.findOrCreatePersonByFnr(
                     tx = tx,
@@ -67,6 +67,13 @@ class ForespoerselService(
                     informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
                     brukerId = brukerId,
                 )
+
+            UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)?.let {
+                logger.info {
+                    "Utsending allerede eksisterer for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av abonnement og utsending"
+                }
+                return@forEach
+            }
 
             val abonnementId =
                 AbonnementRepository.insert(
@@ -77,16 +84,18 @@ class ForespoerselService(
                 )
 
             SkattekortRepository.findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar).ifEmpty {
-                BestillingRepository.insert(
-                    tx = tx,
-                    bestilling =
-                        Bestilling(
-                            personId = person.id,
-                            fnr = Personidentifikator(fnr),
-                            inntektsaar = forespoerselInput.inntektsaar,
-                        ),
-                )
-                bestllingCount++
+                if (BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {
+                    BestillingRepository.insert(
+                        tx = tx,
+                        bestilling =
+                            Bestilling(
+                                personId = person.id,
+                                fnr = Personidentifikator(fnr),
+                                inntektsaar = forespoerselInput.inntektsaar,
+                            ),
+                    )
+                    bestllingCount++
+                }
             }
 
             UtsendingRepository.insert(

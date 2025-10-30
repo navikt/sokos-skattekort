@@ -80,6 +80,18 @@ object SkattekortRepository {
                         }
                     },
                 )
+                tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+                    """
+                    INSERT INTO skattekort_tilleggsopplysning (skattekort_id, opplysning)
+                    VALUES (:skattekortId, :opplysning)
+                    """.trimIndent(),
+                    skattekort.tilleggsopplysningList.map { tilleggsopplysning ->
+                        mapOf(
+                            "skattekortId" to id,
+                            "opplysning" to tilleggsopplysning.opplysning,
+                        )
+                    },
+                )
             }
             id ?: error("Failed to insert skattekort record")
         }

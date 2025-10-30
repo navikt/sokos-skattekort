@@ -15,16 +15,16 @@ import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
 
 fun arbeidstakerConverter(a: Arbeidstaker): Skattekortmelding =
     Skattekortmelding(
-        a.inntektsaar.toLong(),
+        a.inntektsaar,
         a.arbeidstakeridentifikator,
         Resultatstatus.fromValue(a.resultatForSkattekort),
-        skattekortConverter(a.skattekort, a.inntektsaar.toLong()),
+        skattekortConverter(a.skattekort, a.inntektsaar),
         a.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
     )
 
 fun skattekortConverter(
     s: Skattekort?,
-    inntektsaar: Long,
+    inntektsaar: Int,
 ): no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekort? =
     if (s != null) {
         Skattekort(

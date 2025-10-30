@@ -3,6 +3,8 @@ package no.nav.sokos.skattekort.module.utsending
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+
 object UtsendingRepository {
     fun insert(
         tx: TransactionalSession,
@@ -32,6 +34,36 @@ object UtsendingRepository {
                 """DELETE FROM utsendinger WHERE id = :id""".trimIndent(),
                 mapOf("id" to id.value),
             ),
+        )
+    }
+
+    fun deletBatch(
+        tx: TransactionalSession,
+        idList: List<UtsendingId>,
+    ) {
+        tx.batchPreparedNamedStatement(
+            """DELETE FROM utsendinger WHERE id = :id""".trimIndent(),
+            idList.map { mapOf("id" to it.value) },
+        )
+    }
+
+    fun getAllUtsendingHasSkattkortByForsystem(
+        tx: TransactionalSession,
+        vararg forsystem: Forsystem = emptyArray(),
+    ): List<Utsending> {
+        val whereClause = forsystem.takeIf { it.isNotEmpty() }?.joinToString(prefix = "WHERE u.forsystem IN ('", separator = "','", postfix = "')") { it.value } ?: ""
+
+        return tx.list(
+            queryOf(
+                """
+                SELECT u.*
+                FROM utsendinger u
+                         INNER JOIN foedselsnumre f ON u.fnr = f.fnr
+                         INNER JOIN skattekort s ON s.person_id = f.person_id and u.inntektsaar = s.inntektsaar
+                $whereClause
+                """.trimIndent(),
+            ),
+            extractor = { row -> Utsending(row) },
         )
     }
 

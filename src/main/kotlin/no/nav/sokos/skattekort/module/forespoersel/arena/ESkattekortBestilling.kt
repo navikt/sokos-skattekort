@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 data class ESkattekortBestilling(
     val bestiller: Applikasjon,
-    val inntektsaar: String,
+    val inntektsaar: Int,
     val bestillingId: Int? = null,
     val kvittering: Receipt? = null,
     val datoSendt: LocalDateTime? = null,

@@ -27,7 +27,7 @@ data class Arbeidstaker(
     val resultatForSkattekort: String,
     val skattekort: Skattekort? = null,
     val tilleggsopplysning: List<String>? = null,
-    val inntektsaar: String,
+    val inntektsaar: Int,
 )
 
 @Serializable

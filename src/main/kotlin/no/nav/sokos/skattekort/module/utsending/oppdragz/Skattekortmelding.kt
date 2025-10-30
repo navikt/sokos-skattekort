@@ -7,19 +7,19 @@ import no.nav.sokos.skattekort.module.skattekort.Prosentkort
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 
 data class Skattekortmelding(
-    val inntektsaar: Long,
+    val inntektsaar: Int,
     val arbeidstakeridentifikator: String? = null,
     val resultatPaaForespoersel: Resultatstatus,
     val skattekort: Skattekort? = null,
     val tilleggsopplysning: List<Tilleggsopplysning> = listOf<Tilleggsopplysning>(),
 ) {
     constructor(sk: no.nav.sokos.skattekort.module.skattekort.Skattekort, forespurtFnr: String) : this(
-        inntektsaar = sk.inntektsaar.toLong(),
+        inntektsaar = sk.inntektsaar,
         arbeidstakeridentifikator = forespurtFnr,
         resultatPaaForespoersel = Resultatstatus.SKATTEKORTOPPLYSNINGER_OK,
         skattekort =
             Skattekort(
-                inntektsaar = sk.inntektsaar.toLong(),
+                inntektsaar = sk.inntektsaar,
                 utstedtDato = DatatypeFactory.newInstance().newXMLGregorianCalendar(sk.utstedtDato.toString()),
                 skattekortidentifikator = sk.identifikator.toLong(),
                 forskuddstrekk =

@@ -7,23 +7,29 @@ import io.kotest.extensions.testcontainers.toDataSource
 import junit.framework.TestCase.assertEquals
 
 import no.nav.sokos.skattekort.JmsTestUtil
+import no.nav.sokos.skattekort.config.SftpConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.SftpListener
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditService
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
+import no.nav.sokos.skattekort.sftp.SftpService
 
 class UtsendingCronJobTest :
     FunSpec(
         {
-            extensions(listOf(MQListener, DbListener))
+            extensions(listOf(MQListener, DbListener, SftpListener))
+            val sftpService: SftpService by lazy { SftpService(SftpConfig(SftpListener.sftpProperties)) }
+
             val uut =
                 UtsendingService(
-                    DbListener.dataSource,
-                    MQListener.connectionFactory,
-                    MQListener.utsendingsQueue,
+                    dataSource = DbListener.dataSource,
+                    sftpService = sftpService,
+                    jmsConnectionFactory = MQListener.connectionFactory,
+                    leveransekoeOppdragZSkattekort = MQListener.utsendingsQueue,
                 )
             val auditService = AuditService(DbListener.dataSource)
 

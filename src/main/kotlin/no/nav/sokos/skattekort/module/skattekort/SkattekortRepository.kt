@@ -7,6 +7,7 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT
@@ -150,4 +151,30 @@ object SkattekortRepository {
         personId: PersonId,
         inntektsaar: Int,
     ): Skattekort = findAllByPersonId(tx, personId, inntektsaar).first()
+
+    fun findLatestByPersonIdentifikator(
+        tx: TransactionalSession,
+        fnr: Personidentifikator,
+        inntektsaar: Int,
+    ): Skattekort? =
+        tx.single(
+            queryOf(
+                """
+                SELECT s.* 
+                FROM skattekort s
+                         INNER JOIN foedselsnumre f ON s.person_id = f.person_id
+                WHERE f.fnr = :fnr AND s.inntektsaar = :inntektsaar
+                ORDER BY s.opprettet DESC
+                LIMIT 1
+                """.trimIndent(),
+                mapOf(
+                    "fnr" to fnr.value,
+                    "inntektsaar" to inntektsaar,
+                ),
+            ),
+            extractor = { row ->
+                val id = SkattekortId(row.long("id"))
+                Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id), findAllTilleggsopplysningBySkattekortId(tx, id))
+            },
+        )
 }

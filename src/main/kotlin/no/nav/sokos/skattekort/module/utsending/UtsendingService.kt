@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.module.utsending
 
-import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
+
 import io.ktor.server.plugins.di.annotations.Named
 import io.prometheus.metrics.core.metrics.Counter
 import io.prometheus.metrics.core.metrics.Gauge
@@ -20,17 +21,59 @@ import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.module.utsending.oppdragz.SkattekortFixedRecordFormatter
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekortmelding
+import no.nav.sokos.skattekort.sftp.SftpService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
+private const val START_RECORD_PREFIX = "HD"
+private const val UTT_RECORD_PREFIX = "TR"
+
+private val logger = KotlinLogging.logger {}
+
 class UtsendingService(
-    val dataSource: HikariDataSource,
-    val jmsConnectionFactory: ConnectionFactory,
-    @Named("leveransekoeOppdragZSkattekort") val leveransekoeOppdragZSkattekort: Queue,
+    private val dataSource: DataSource,
+    private val sftpService: SftpService,
+    private val jmsConnectionFactory: ConnectionFactory,
+    @Named("leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
 ) {
-    private val logger = KotlinLogging.logger {}
+    fun handleArenaUtsending() {
+        runCatching {
+            dataSource.transaction { tx ->
+                val utsendingList = UtsendingRepository.getAllUtsendingHasSkattkortByForsystem(tx, Forsystem.ARENA)
+                if (utsendingList.isEmpty()) {
+                    logger.info { "Ingen utsending for Arena" }
+                    return@transaction
+                }
+
+                val utsendingWithSkattekortList =
+                    utsendingList.map { utsending ->
+                        utsending.id!! to SkattekortRepository.findLatestByPersonIdentifikator(tx, utsending.fnr, utsending.inntektsaar)
+                    }
+
+                val arenaFileName = sftpService.createArenaFilename(aarligBestilling = false)
+                val areanaUtsendingContent = buildArenaUtsendingFil(utsendingWithSkattekortList)
+                UtsendingRepository.deletBatch(tx, utsendingWithSkattekortList.map { it.first })
+                sftpService.uploadFile(fileName = arenaFileName, content = areanaUtsendingContent)
+            }
+        }.onFailure { execption ->
+            logger.error(execption) { "Feil under håndtering av Arena utsending" }
+        }
+    }
+
+    private fun buildArenaUtsendingFil(utsendingWithSkattekortList: List<Pair<UtsendingId, Skattekort?>>): String {
+        val arenaFilBuilder = StringBuilder()
+        arenaFilBuilder.append(START_RECORD_PREFIX).append('\n')
+
+        utsendingWithSkattekortList.forEach { (id, skattekort) ->
+            skattekort?.let {
+                arenaFilBuilder.append(CopybookUtils.skattekortToArenaCopybookFormat(skattekort))
+            } ?: logger.error { "Mangler skattekort til utsending: $id" }
+        }
+        return arenaFilBuilder.toString()
+    }
 
     private fun sendTilOppdragz(
         tx: TransactionalSession,
@@ -92,6 +135,7 @@ class UtsendingService(
                                 }
                             }
                         }
+
                         Forsystem.ARENA -> throw NotImplementedError("Forsystem.ARENA is not implemented yet")
                         Forsystem.MANUELL -> throw NotImplementedError("Forsystem.MANUELL is not implemented yet")
                     }

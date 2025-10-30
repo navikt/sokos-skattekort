@@ -105,7 +105,7 @@ class BestillingsService(
                                 personId = person.id!!,
                                 utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
                                 identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
-                                inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                                inntektsaar = arbeidstaker.inntektsaar,
                                 kilde = "SKATTEETATEN",
                                 forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
                                 tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),

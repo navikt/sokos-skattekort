@@ -3,6 +3,9 @@ package no.nav.sokos.skattekort.module.utsending
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+import no.nav.sokos.skattekort.module.person.Personidentifikator
+
 object UtsendingRepository {
     fun insert(
         tx: TransactionalSession,
@@ -65,4 +68,25 @@ object UtsendingRepository {
             )
         }
     }
+
+    fun findByPersonIdAndInntektsaar(
+        tx: TransactionalSession,
+        fnr: Personidentifikator,
+        inntektsaar: Int,
+        forsystem: Forsystem,
+    ): Utsending? =
+        tx.single(
+            queryOf(
+                """
+                SELECT id, abonnement_id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
+                WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
+                """.trimIndent(),
+                mapOf(
+                    "fnr" to fnr.value,
+                    "inntektsaar" to inntektsaar,
+                    "forsystem" to forsystem.value,
+                ),
+            ),
+            extractor = { row -> Utsending(row) },
+        )
 }

@@ -10,6 +10,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -163,6 +164,119 @@ class BestillingsServiceTest :
                         "oppholdITiltakssone",
                         "kildeskattPaaLoenn",
                     ).map { Tilleggsopplysning(it) }
+            }
+        }
+
+        test("ugyldigFoedselsEllerDnummer") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ugyldigFoedselsEllerDnummer.json")
+            DbListener.loadDataSet("database/person/persondata.sql")
+            DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
+
+            val bestillingsBefore: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            bestillingsService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingBatchRepository.list(session)
+                }
+
+            val skattekort: List<Skattekort> =
+                DbListener.dataSource.transaction { session ->
+                    SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025)
+                }
+
+            val bestillingsAfter: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            assertSoftly {
+                updatedBatches.count { it.status == "NY" } shouldBe 1
+                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                bestillingsBefore.size shouldBe 3
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 2
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
+
+                bestillingsAfter.size shouldBe 1
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 0
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
+                skattekort.size shouldBe 1
+                skattekort.first().identifikator shouldBe beBlank()
+                skattekort.first().forskuddstrekkList shouldBe emptyList()
+                skattekort.first().tilleggsopplysningList shouldBe emptyList()
+                skattekort.first().resultatForSkattekort shouldBe ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+            }
+        }
+        test("ikkeSkattekort") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ikkeSkattekort.json")
+            DbListener.loadDataSet("database/person/persondata.sql")
+            DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
+
+            val bestillingsBefore: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            bestillingsService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingBatchRepository.list(session)
+                }
+
+            val skattekort: List<Skattekort> =
+                DbListener.dataSource.transaction { session ->
+                    SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025)
+                }
+
+            val bestillingsAfter: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            assertSoftly {
+                updatedBatches.count { it.status == "NY" } shouldBe 1
+                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                bestillingsBefore.size shouldBe 3
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 2
+                bestillingsBefore
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
+
+                bestillingsAfter.size shouldBe 1
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(1L)
+                    }.size shouldBe 0
+                bestillingsAfter
+                    .filter {
+                        it.bestillingsbatchId == BestillingsbatchId(2L)
+                    }.size shouldBe 1
+                skattekort.size shouldBe 1
+                skattekort.first().identifikator shouldBe beBlank()
+                skattekort.first().forskuddstrekkList shouldBe emptyList()
+                skattekort.first().tilleggsopplysningList shouldBe emptyList()
+                skattekort.first().resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort
             }
         }
     })

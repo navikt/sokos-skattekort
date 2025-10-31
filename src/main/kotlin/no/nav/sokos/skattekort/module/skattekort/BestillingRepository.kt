@@ -70,6 +70,25 @@ object BestillingRepository {
         )
     }
 
+    fun findByPersonIdAndInntektsaar(
+        tx: TransactionalSession,
+        personId: PersonId,
+        inntektsaar: Int,
+    ): Bestilling? =
+        tx.single(
+            queryOf(
+                """
+                SELECT * FROM bestillinger
+                WHERE person_id = :personId AND inntektsaar = :inntektsaar
+                """.trimIndent(),
+                mapOf(
+                    "personId" to personId.value,
+                    "inntektsaar" to inntektsaar,
+                ),
+            ),
+            extractor = mapToBestilling,
+        )
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(

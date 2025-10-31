@@ -11,6 +11,7 @@ import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.serialization.Serializable
 
 import kotliquery.Row
+import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.module.person.PersonId
 
@@ -22,6 +23,7 @@ data class Skattekort(
     val identifikator: String,
     val inntektsaar: Int,
     val kilde: String,
+    val resultatForSkattekort: ResultatForSkattekort,
     val opprettet: Instant = Clock.System.now(),
     val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
     val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
@@ -33,6 +35,7 @@ data class Skattekort(
         identifikator = row.string("identifikator"),
         inntektsaar = row.int("inntektsaar"),
         kilde = row.string("kilde"),
+        resultatForSkattekort = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort")),
         opprettet = row.instant("opprettet").toKotlinInstant(),
         forskuddstrekkList = forskuddstrekkList,
         tilleggsopplysningList = tilleggsopplysningList,
@@ -149,4 +152,29 @@ data class Tilleggsopplysning(
     constructor(row: Row) : this(
         opplysning = row.string("opplysning"),
     )
+}
+
+enum class ResultatForSkattekort(
+    val value: String,
+) {
+    IkkeSkattekort(value = "ikkeSkattekort"),
+    IkkeTrekkplikt(value = "ikkeTrekkplikt"),
+    SkattekortopplysningerOK(value = "skattekortopplysningerOK"),
+    UgyldigOrganisasjonsnummer(value = "ugyldigOrganisasjonsnummer"),
+    UgyldigFoedselsEllerDnummer(value = "ugyldigFoedselsEllerDnummer"),
+    UtgaattDnummerSkattekortForFoedselsnummerErLevert(value = "utgaattDnummerSkattekortForFoedselsnummerErLevert"),
+    ;
+
+    companion object {
+        private val logger = KotlinLogging.logger {}
+
+        fun fromValue(value: String): ResultatForSkattekort {
+            try {
+                return ResultatForSkattekort.entries.first { it.value == value }
+            } catch (e: NoSuchElementException) {
+                logger.error("Ukjent ResultatForSkattekort-verdi funnet: $value")
+                throw e
+            }
+        }
+    }
 }

@@ -107,6 +107,7 @@ class BestillingsService(
                                 identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
                                 inntektsaar = arbeidstaker.inntektsaar,
                                 kilde = "SKATTEETATEN",
+                                resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
                                 forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
                                 tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                             )

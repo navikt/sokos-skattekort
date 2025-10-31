@@ -10,6 +10,7 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Frikort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortId
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
@@ -27,6 +28,7 @@ object TestData {
             identifikator = "20860599016",
             inntektsaar = 2025,
             kilde = "skattekortsvar",
+            resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
             opprettet = Clock.System.now(),
             forskuddstrekkList = getForskuddstrekkListTestData(),
             tilleggsopplysningList = emptyList(),

@@ -22,8 +22,8 @@ object SkattekortRepository {
                     Query(
                         statement =
                             """
-                            INSERT INTO skattekort (person_id, utstedt_dato, identifikator, inntektsaar, kilde) 
-                            VALUES (:personId, :utstedtDato, :identifikator, :inntektsaar, :kilde)
+                            INSERT INTO skattekort (person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
+                            VALUES (:personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
                             """.trimIndent(),
                         paramMap =
                             mapOf(
@@ -32,6 +32,7 @@ object SkattekortRepository {
                                 "identifikator" to skattekort.identifikator,
                                 "inntektsaar" to skattekort.inntektsaar,
                                 "kilde" to skattekort.kilde,
+                                "resultatForSkattekort" to skattekort.resultatForSkattekort.value,
                             ),
                     ),
                 )

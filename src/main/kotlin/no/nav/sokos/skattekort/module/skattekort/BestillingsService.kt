@@ -87,7 +87,6 @@ class BestillingsService(
             BestillingBatchRepository.getUnprocessedBatch(tx)?.let { bestillingsbatch ->
                 runBlocking {
                     val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
-                    println("Here")
                     if (response.status == "FORESPOERSEL_OK") {
                         response.arbeidsgiver
                             .first()
@@ -116,9 +115,7 @@ class BestillingsService(
                                         ),
                                     ),
                                 )
-                                println("Person ${person.id} skid ${arbeidstaker.skattekort.skattekortidentifikator}")
                                 AbonnementRepository.finnAktiveAbonnement(tx, person.id).forEach { (aboid, system) ->
-                                    println("Abonnement: $aboid, system: $system")
                                     UtsendingRepository.insert(
                                         tx,
                                         Utsending(

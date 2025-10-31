@@ -22,6 +22,8 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.utsending.Utsending
+import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
@@ -108,6 +110,7 @@ class BestillingsServiceTest :
             // Sett inn bestillinger uten bestillingsbatch.
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
+            DbListener.loadDataSet("database/bestillinger/abonnementer.sql")
 
             val bestillingsBefore: List<Bestilling> =
                 DbListener.dataSource.transaction { session ->
@@ -129,6 +132,10 @@ class BestillingsServiceTest :
             val bestillingsAfter: List<Bestilling> =
                 DbListener.dataSource.transaction { session ->
                     BestillingRepository.getAllBestilling(session)
+                }
+            val utsendingerAfter: List<Utsending> =
+                DbListener.dataSource.transaction { tx ->
+                    UtsendingRepository.getAllUtsendinger(tx)
                 }
 
             assertSoftly {
@@ -163,6 +170,7 @@ class BestillingsServiceTest :
                         "oppholdITiltakssone",
                         "kildeskattPaaLoenn",
                     ).map { Tilleggsopplysning(it) }
+                utsendingerAfter.size shouldBe 1
             }
         }
     })

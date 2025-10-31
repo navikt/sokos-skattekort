@@ -6,8 +6,11 @@ import kotlinx.datetime.LocalDate
 
 import com.zaxxer.hikari.HikariDataSource
 
+import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.utsending.Utsending
+import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.Arbeidsgiver
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.ArbeidsgiverIdentifikator
@@ -80,42 +83,56 @@ class BestillingsService(
 
     @OptIn(ExperimentalTime::class)
     fun hentSkattekort() {
-        val bestillingsbatch =
-            dataSource.transaction { tx ->
-                BestillingBatchRepository.getUnprocessedBatch(tx)
-            } ?: return
-        runBlocking {
-            val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
-            if (response.status == "FORESPOERSEL_OK") {
-                val skattekortene =
-                    response.arbeidsgiver
-                        .first()
-                        .arbeidstaker
-                        .filter { it.resultatForSkattekort == "skattekortopplysningerOK" }
-                        .map { arbeidstaker ->
-                            val person =
-                                dataSource.transaction { tx ->
+        dataSource.transaction { tx ->
+            BestillingBatchRepository.getUnprocessedBatch(tx)?.let { bestillingsbatch ->
+                runBlocking {
+                    val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
+                    println("Here")
+                    if (response.status == "FORESPOERSEL_OK") {
+                        response.arbeidsgiver
+                            .first()
+                            .arbeidstaker
+                            .filter { it.resultatForSkattekort == "skattekortopplysningerOK" }
+                            .map { arbeidstaker ->
+                                val person =
                                     personService.findOrCreatePersonByFnr(
                                         tx = tx,
                                         fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
                                         informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: ${bestillingsbatch.id?.id}",
                                     )
+                                val inntektsaar = arbeidstaker.inntektsaar.toInt()
+                                SkattekortRepository.insertBatch(
+                                    tx,
+                                    listOf(
+                                        Skattekort(
+                                            personId = person.id!!,
+                                            utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
+                                            identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
+                                            inntektsaar = inntektsaar,
+                                            kilde = "SKATTEETATEN",
+                                            resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
+                                            forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
+                                            tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                                        ),
+                                    ),
+                                )
+                                println("Person ${person.id} skid ${arbeidstaker.skattekort.skattekortidentifikator}")
+                                AbonnementRepository.finnAktiveAbonnement(tx, person.id).forEach { (aboid, system) ->
+                                    println("Abonnement: $aboid, system: $system")
+                                    UtsendingRepository.insert(
+                                        tx,
+                                        Utsending(
+                                            abonnementId = aboid,
+                                            inntektsaar = inntektsaar,
+                                            fnr = person.foedselsnummer.fnr,
+                                            forsystem = system,
+                                        ),
+                                    )
                                 }
-                            Skattekort(
-                                personId = person.id!!,
-                                utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
-                                identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
-                                inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                                kilde = "SKATTEETATEN",
-                                resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
-                                forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
-                                tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
-                            )
-                        }
-                dataSource.transaction { tx ->
-                    SkattekortRepository.insertBatch(tx, skattekortene)
-                    BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
-                    BestillingRepository.deleteProcessedBestillings(tx, bestillingsbatch.id.id)
+                            }
+                        BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
+                        BestillingRepository.deleteProcessedBestillings(tx, bestillingsbatch.id.id)
+                    }
                 }
             }
         }

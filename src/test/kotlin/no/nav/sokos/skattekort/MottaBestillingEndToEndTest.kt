@@ -8,7 +8,6 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 
 import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
 import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
@@ -59,14 +58,8 @@ class MottaBestillingEndToEndTest :
 
                             val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
 
-                            assertSoftly("Det skal ha blitt opprettet en utsending") {
-                                utsendingList shouldHaveSize 1
-                                val utsending = utsendingList.first()
-                                utsending.id shouldNotBe null
-                                utsending.abonnementId shouldBe abonnementList.first().id
-                                utsending.fnr.value shouldBe fnr
-                                utsending.inntektsaar shouldBe 1994
-                                utsending.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                            assertSoftly("Det skal ikke ha blitt opprettet en utsending") {
+                                utsendingList shouldHaveSize 0
                             }
                         }
                     }

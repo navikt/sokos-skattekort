@@ -8,9 +8,12 @@ import kotlinx.datetime.toLocalDateTime
 
 import com.zaxxer.hikari.HikariDataSource
 
+import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.utsending.Utsending
+import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.Arbeidsgiver
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.ArbeidsgiverIdentifikator
@@ -18,7 +21,6 @@ import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortR
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.ForespoerselOmSkattekortTilArbeidsgiver
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.Kontaktinformasjon
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 // TODO: Metrikk: bestillinger per system
@@ -85,39 +87,39 @@ class BestillingsService(
 
     @OptIn(ExperimentalTime::class)
     fun hentSkattekort() {
-        val bestillingsbatch =
-            dataSource.transaction { tx ->
-                BestillingBatchRepository.getUnprocessedBatch(tx)
-            } ?: return
-        runBlocking {
-            val response: HentSkattekortResponse = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
-            when (ResponseStatus.valueOf(response.status)) {
-                ResponseStatus.FORESPOERSEL_OK -> {
-                    val skattekortene =
+        dataSource.transaction { tx ->
+            BestillingBatchRepository.getUnprocessedBatch(tx)?.let { bestillingsbatch ->
+                runBlocking {
+                    val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
+                    if (response.status == "FORESPOERSEL_OK") {
                         response.arbeidsgiver
                             .first()
                             .arbeidstaker
                             .map { arbeidstaker ->
                                 val person = getPerson(arbeidstaker, bestillingsbatch)
-                                toSkattekort(arbeidstaker, person, bestillingsbatch)
+                                val inntektsaar = arbeidstaker.inntektsaar.toInt()
+                                SkattekortRepository.insertBatch(
+                                    tx,
+                                    listOf(
+                                        toSkattekort(arbeidstaker, person, bestillingsbatch),
+                                    ),
+                                )
+                                AbonnementRepository.finnAktiveAbonnement(tx, person.id!!).forEach { (aboid, system) ->
+                                    UtsendingRepository.insert(
+                                        tx,
+                                        Utsending(
+                                            abonnementId = aboid,
+                                            inntektsaar = inntektsaar,
+                                            fnr = person.foedselsnummer.fnr,
+                                            forsystem = system,
+                                        ),
+                                    )
+                                }
                             }
-                    dataSource.transaction { tx ->
-                        SkattekortRepository.insertBatch(tx, skattekortene)
                         BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
                         BestillingRepository.deleteProcessedBestillings(tx, bestillingsbatch.id.id)
                     }
                 }
-
-                ResponseStatus.UGYLDIG_FORESPOERSEL -> {
-                    // Må bestille på nytt, men ikke med akkurat de samme fødselsnumrene
-                    // Det er ikke noe vits å be Skatteetaten om svar på denne bestillingsreferansen igjen
-                    dataSource.transaction { tx ->
-                        BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
-                    }
-                    throw NotImplementedError()
-                }
-
-                else -> throw NotImplementedError("Må håndtere ${response.status}")
             }
         }
     }

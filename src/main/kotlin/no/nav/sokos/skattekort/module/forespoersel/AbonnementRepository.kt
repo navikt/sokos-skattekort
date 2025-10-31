@@ -55,6 +55,25 @@ object AbonnementRepository {
             mapToAbonnement,
         )
 
+    fun finnAktiveAbonnement(
+        tx: TransactionalSession,
+        personId: PersonId,
+    ): List<Pair<AbonnementId, Forsystem>> =
+        tx.list(
+            queryOf(
+                """SELECT a.id as aboid, f.forsystem as forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id WHERE a.person_id = :personId""",
+                mapOf(
+                    "personId" to personId.value,
+                ),
+            ),
+            { row ->
+                Pair(
+                    AbonnementId(row.long("aboid")),
+                    Forsystem.fromValue(row.string("forsystem")),
+                )
+            },
+        )
+
     @OptIn(ExperimentalTime::class)
     private val mapToAbonnement: (Row) -> Abonnement = { row ->
         Abonnement(

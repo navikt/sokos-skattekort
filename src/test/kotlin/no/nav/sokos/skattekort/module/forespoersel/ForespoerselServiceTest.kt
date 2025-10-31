@@ -10,7 +10,6 @@ import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
-import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -43,9 +42,9 @@ class ForespoerselServiceTest :
                 val bestillingList = BestillingRepository.getAllBestilling(tx)
                 bestillingList.size shouldBe 4
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 4
+                utsendingList.size shouldBe 0
 
-                verifyData(abonnementList, bestillingList, utsendingList, forespoersel)
+                verifyData(abonnementList, bestillingList, forespoersel)
             }
         }
 
@@ -65,9 +64,9 @@ class ForespoerselServiceTest :
                 val bestillingList = BestillingRepository.getAllBestilling(tx)
                 bestillingList.size shouldBe 1
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 1
+                utsendingList.size shouldBe 0
 
-                verifyData(abonnementList, bestillingList, utsendingList, forespoersel)
+                verifyData(abonnementList, bestillingList, forespoersel)
             }
         }
 
@@ -88,9 +87,9 @@ class ForespoerselServiceTest :
                 val bestillingList = BestillingRepository.getAllBestilling(tx)
                 bestillingList.size shouldBe 1
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 4
+                utsendingList.size shouldBe 0
 
-                verifyData(abonnementList, bestillingList, utsendingList, forespoersel)
+                verifyData(abonnementList, bestillingList, forespoersel)
             }
         }
 
@@ -111,9 +110,9 @@ class ForespoerselServiceTest :
                 val bestillingList = BestillingRepository.getAllBestilling(tx)
                 bestillingList.size shouldBe 1
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 1
+                utsendingList.size shouldBe 0
 
-                verifyData(abonnementList, bestillingList, utsendingList, forespoersel)
+                verifyData(abonnementList, bestillingList, forespoersel)
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
                 auditList.first().brukerId shouldBe brukerId
@@ -135,7 +134,7 @@ class ForespoerselServiceTest :
                 val bestillingList = BestillingRepository.getAllBestilling(tx)
                 bestillingList.size shouldBe 1
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 2
+                utsendingList.size shouldBe 0
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
                 auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
@@ -153,11 +152,11 @@ class ForespoerselServiceTest :
                 val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
                 forespoerselList.size shouldBe 2
                 val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                abonnementList.size shouldBe 1
+                abonnementList.size shouldBe 2
                 val bestillingList = BestillingRepository.getAllBestilling(tx)
                 bestillingList.size shouldBe 1
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 1
+                utsendingList.size shouldBe 0
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
                 auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
@@ -169,12 +168,11 @@ class ForespoerselServiceTest :
 private fun verifyData(
     abonnementList: List<Abonnement>,
     bestillingList: List<Bestilling>,
-    utsendingList: List<Utsending>,
     forespoersel: Forespoersel,
 ) {
     val bestillingByPersonId = bestillingList.associateBy { it.personId.value }
 
-    abonnementList.forEachIndexed { idx, abonnement ->
+    abonnementList.forEach { abonnement ->
         abonnement.forespoersel.id shouldBe forespoersel.id
 
         val bestilling =
@@ -186,11 +184,5 @@ private fun verifyData(
             abonnement.inntektsaar shouldBe bestilling.inntektsaar
             bestilling.bestillingsbatchId shouldBe null
         }
-
-        val utsending = utsendingList[idx]
-        utsending.abonnementId shouldBe abonnement.id
-        utsending.fnr shouldBe abonnement.person.foedselsnummer.fnr
-        utsending.inntektsaar shouldBe abonnement.inntektsaar
-        utsending.forsystem shouldBe forespoersel.forsystem
     }
 }

@@ -13,6 +13,7 @@ import jakarta.jms.Session
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.metrics.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.metrics.Metrics.prometheusMeterRegistry
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.AuditRepository
@@ -92,6 +93,7 @@ class UtsendingService(
                                 }
                             }
                         }
+
                         Forsystem.ARENA -> throw NotImplementedError("Forsystem.ARENA is not implemented yet")
                         Forsystem.MANUELL -> throw NotImplementedError("Forsystem.MANUELL is not implemented yet")
                     }
@@ -108,21 +110,21 @@ class UtsendingService(
         val utsendingOppdragzCounter =
             Counter
                 .builder()
-                .name("utsendinger_oppdragz_total")
+                .name("${METRICS_NAMESPACE}_utsendinger_oppdragz_total")
                 .help("Utsendinger til oppdrag z")
                 .withoutExemplars()
                 .register(prometheusMeterRegistry.prometheusRegistry)
         val feiledeUtsendingerOppdragzCounter =
             Counter
                 .builder()
-                .name("utsendinger_oppdragz_feil_total")
+                .name("${METRICS_NAMESPACE}_utsendinger_oppdragz_feil_total")
                 .help("Feilede forsøk på utsendinger til oppdrag z")
                 .withoutExemplars()
                 .register(prometheusMeterRegistry.prometheusRegistry)
         val utsendingerIKoe =
             Gauge
                 .builder()
-                .name("utsendinger_i_koe")
+                .name("${METRICS_NAMESPACE}_utsendinger_i_koe")
                 .help("Utsendinger i koe, enda ikke håndtert")
                 .labelNames("status")
                 .withoutExemplars()

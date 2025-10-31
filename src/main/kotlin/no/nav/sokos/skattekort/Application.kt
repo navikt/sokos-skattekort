@@ -44,7 +44,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     PropertiesConfig.initEnvConfig(applicationConfig)
     val applicationProperties = PropertiesConfig.getApplicationProperties()
     val useAuthentication = applicationProperties.useAuthentication
-
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 
     DatabaseConfig.migrate()

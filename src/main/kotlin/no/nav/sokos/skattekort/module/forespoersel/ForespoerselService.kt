@@ -94,7 +94,7 @@ class ForespoerselService(
                                 inntektsaar = forespoerselInput.inntektsaar,
                             ),
                     )
-                    bestillingCount++
+                    bestllingCount++
                 }
             }
 

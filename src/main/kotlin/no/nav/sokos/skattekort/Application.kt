@@ -25,6 +25,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
+import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
@@ -70,6 +71,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(BestillingsService::class)
         provide(SkatteetatenClient::class)
         provide(ScheduledTaskService::class)
+        provide(SkattekortPersonService::class)
     }
 
     commonConfig()

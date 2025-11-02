@@ -3,34 +3,58 @@ package no.nav.sokos.skattekort.module.skattekortpersonapi.v1
 import java.math.BigDecimal
 
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
+import no.nav.sokos.skattekort.BigDecimalJson
+import no.nav.sokos.skattekort.module.skattekort.Prosentkort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.Tabellkort
+
+@Serializable
 data class SkattekortTilArbeidsgiver(
     var navn: String? = null,
     val arbeidsgiver: List<Arbeidsgiver>,
 )
 
+@Serializable
 data class Arbeidsgiver(
     val arbeidstaker: List<Arbeidstaker>,
     val arbeidsgiveridentifikator: IdentifikatorForEnhetEllerPerson,
 )
 
+@Serializable
 data class Arbeidstaker(
     val inntektsaar: Long,
     val arbeidstakeridentifikator: String,
     val resultatPaaForespoersel: Resultatstatus,
     val skattekort: Skattekort? = null,
     val tilleggsopplysning: List<Tilleggsopplysning>? = null,
-)
+) {
+    constructor(inntektsaar: Long, fnr: String, sk: no.nav.sokos.skattekort.module.skattekort.Skattekort) : this(
+        inntektsaar = inntektsaar,
+        arbeidstakeridentifikator = fnr,
+        resultatPaaForespoersel = Resultatstatus.fromDomainModel(sk.resultatForSkattekort),
+        skattekort =
+            Skattekort(
+                utstedtDato = sk.utstedtDato,
+                skattekortidentifikator = sk.identifikator.toLong(), // TODO: Should be refactored to match types.
+                forskuddstrekk = sk.forskuddstrekkList.map { Forskuddstrekk.fromDomainModel(it) },
+            ),
+        tilleggsopplysning = sk.tilleggsopplysningList.map { Tilleggsopplysning.fromDomainModel(it) },
+    )
+}
 
+@Serializable
 data class IdentifikatorForEnhetEllerPerson(
     val organisasjonsnummer: String? = null,
     val personidentifikator: String? = null,
 )
 
+@Serializable
 enum class Resultatstatus(
     val value: String,
 ) {
@@ -54,8 +78,14 @@ enum class Resultatstatus(
 
     @JsonProperty("utgaattDnummerSkattekortForFoedselsnummerErLevert")
     UTGAATT_DNUMMER_SKATTEKORT_FOR_FOEDSELSNUMMER_ER_LEVERT("utgaattDnummerSkattekortForFoedselsnummerErLevert"),
+    ;
+
+    companion object {
+        fun fromDomainModel(resultat: ResultatForSkattekort) = entries.find { it.value == resultat.value } ?: throw IllegalArgumentException("Ukjent skattekort-status ${resultat.value}")
+    }
 }
 
+@Serializable
 enum class Tilleggsopplysning(
     val value: String,
 ) {
@@ -70,8 +100,15 @@ enum class Tilleggsopplysning(
 
     @JsonProperty("kildeskattPaaLoenn")
     KILDESKATT_PAA_LOENN("kildeskattPaaLoenn"),
+    ;
+
+    companion object {
+        fun fromDomainModel(tilleggsopplysning: no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning): Tilleggsopplysning =
+            entries.find { it.value == tilleggsopplysning.opplysning } ?: throw IllegalArgumentException("Ukjent tilleggsopplysning ${tilleggsopplysning.opplysning}")
+    }
 }
 
+@Serializable
 data class Skattekort(
     val utstedtDato: LocalDate,
     val skattekortidentifikator: Long,
@@ -89,39 +126,58 @@ data class Skattekort(
     JsonSubTypes.Type(value = Trekktabell::class, name = "Trekktabell"),
     JsonSubTypes.Type(value = Trekkprosent::class, name = "Trekkprosent"),
 )
-interface Forskuddstrekk {
+@Serializable
+sealed interface Forskuddstrekk {
     val trekkode: Trekkode
+
+    companion object {
+        fun fromDomainModel(forskuddstrekk: no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk): Forskuddstrekk =
+            when (forskuddstrekk) {
+                is no.nav.sokos.skattekort.module.skattekort.Frikort ->
+                    Frikort(
+                        Trekkode.fromValue(forskuddstrekk.trekkode),
+                        BigDecimal(forskuddstrekk.frikortBeloep),
+                    )
+                is Tabellkort ->
+                    Trekktabell(
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
+                        tabellnummer = forskuddstrekk.tabellNummer,
+                        prosentsats = forskuddstrekk.prosentSats,
+                        antallMaanederForTrekk = forskuddstrekk.antallMndForTrekk,
+                    )
+                is Prosentkort ->
+                    Trekkprosent(
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
+                        prosentsats = forskuddstrekk.prosentSats,
+                        antallMaanederForTrekk = forskuddstrekk.antallMndForTrekk,
+                    )
+            }
+    }
 }
 
+@Serializable
 data class Frikort(
     override val trekkode: Trekkode,
-    val frikortbeloep: BigDecimal? = null,
+    val frikortbeloep: BigDecimalJson? = null,
 ) : Forskuddstrekk
 
-enum class Tabelltype(
-    val value: String,
-) {
-    @JsonProperty("trekktabellForPensjon")
-    TREKKTABELL_FOR_PENSJON("trekktabellForPensjon"),
-
-    @JsonProperty("trekktabellForLoenn")
-    TREKKTABELL_FOR_LOENN("trekktabellForLoenn"),
-}
-
+@Serializable
 data class Trekktabell(
     override val trekkode: Trekkode,
-    val tabelltype: Tabelltype? = null,
+    // val tabelltype: Tabelltype? = null, Returneres ikke lenger av skatt
     val tabellnummer: String? = null,
-    val prosentsats: BigDecimal? = null,
-    val antallMaanederForTrekk: BigDecimal? = null,
+    val prosentsats: BigDecimalJson? = null,
+    val antallMaanederForTrekk: BigDecimalJson? = null,
 ) : Forskuddstrekk
 
+@Serializable
 data class Trekkprosent(
     override val trekkode: Trekkode,
-    val prosentsats: BigDecimal? = null,
-    var antallMaanederForTrekk: BigDecimal? = null,
+    val prosentsats: BigDecimalJson? = null,
+    var antallMaanederForTrekk: BigDecimalJson? = null,
 ) : Forskuddstrekk
 
+@Serializable
 enum class Trekkode(
     val value: String,
 ) {
@@ -157,4 +213,9 @@ enum class Trekkode(
 
     @JsonProperty("introduksjonsstoenad")
     INTRODUKSJONSSTOENAD("introduksjonsstoenad"),
+    ;
+
+    companion object {
+        fun fromValue(value: String): Trekkode = entries.find { it.value == value } ?: throw IllegalArgumentException("Ukjent trekkode $value")
+    }
 }

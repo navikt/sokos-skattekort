@@ -168,7 +168,7 @@ class BestillingsService(
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = "SKATTEETATEN",
+                    kilde = "NAV",
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
                     forskuddstrekkList = forskuddstrekkWhenIkkeSkattekort,
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),

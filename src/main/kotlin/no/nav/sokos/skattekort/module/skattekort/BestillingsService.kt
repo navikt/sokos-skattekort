@@ -3,10 +3,9 @@ package no.nav.sokos.skattekort.module.skattekort
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 import com.zaxxer.hikari.HikariDataSource
+import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.Person
@@ -89,6 +88,7 @@ class BestillingsService(
     fun hentSkattekort() {
         dataSource.transaction { tx ->
             BestillingBatchRepository.getUnprocessedBatch(tx)?.let { bestillingsbatch ->
+                val batchId = bestillingsbatch.id!!.id
                 runBlocking {
                     val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
                     if (response.status == "FORESPOERSEL_OK") {
@@ -96,31 +96,48 @@ class BestillingsService(
                             .first()
                             .arbeidstaker
                             .map { arbeidstaker ->
-                                val person = getPerson(arbeidstaker, bestillingsbatch)
-                                val inntektsaar = arbeidstaker.inntektsaar.toInt()
-                                SkattekortRepository.insertBatch(
-                                    tx,
-                                    listOf(
-                                        toSkattekort(arbeidstaker, person, bestillingsbatch),
-                                    ),
-                                )
-                                AbonnementRepository.finnAktiveAbonnement(tx, person.id!!).forEach { (aboid, system) ->
-                                    UtsendingRepository.insert(
-                                        tx,
-                                        Utsending(
-                                            abonnementId = aboid,
-                                            inntektsaar = inntektsaar,
-                                            fnr = person.foedselsnummer.fnr,
-                                            forsystem = system,
-                                        ),
-                                    )
-                                }
+                                handleNyttSkattekort(tx, arbeidstaker, batchId)
                             }
-                        BestillingBatchRepository.markAsProcessed(tx, bestillingsbatch.id!!.id)
-                        BestillingRepository.deleteProcessedBestillings(tx, bestillingsbatch.id.id)
+                        BestillingBatchRepository.markAsProcessed(tx, batchId)
+                        BestillingRepository.deleteProcessedBestillings(tx, batchId)
                     }
                 }
             }
+        }
+    }
+
+    private fun handleNyttSkattekort(
+        tx: TransactionalSession,
+        arbeidstaker: Arbeidstaker,
+        batchId: Long,
+    ) {
+        val person = getPerson(arbeidstaker, batchId)
+        val inntektsaar = arbeidstaker.inntektsaar.toInt()
+        SkattekortRepository.insertBatch(
+            tx,
+            listOf(
+                toSkattekort(arbeidstaker, person),
+            ),
+        )
+        opprettUtsendingerForAbonnementer(tx, person, inntektsaar)
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun opprettUtsendingerForAbonnementer(
+        tx: TransactionalSession,
+        person: Person,
+        inntektsaar: Int,
+    ) {
+        AbonnementRepository.finnAktiveAbonnement(tx, person.id!!).forEach { (aboid, system) ->
+            UtsendingRepository.insert(
+                tx,
+                Utsending(
+                    abonnementId = aboid,
+                    inntektsaar = inntektsaar,
+                    fnr = person.foedselsnummer.fnr,
+                    forsystem = system,
+                ),
+            )
         }
     }
 
@@ -128,7 +145,6 @@ class BestillingsService(
     private fun toSkattekort(
         arbeidstaker: Arbeidstaker,
         person: Person,
-        bestillingsbatch: BestillingBatch,
     ): Skattekort =
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
             ResultatForSkattekort.SkattekortopplysningerOK ->
@@ -146,8 +162,8 @@ class BestillingsService(
             else ->
                 Skattekort(
                     personId = person.id!!,
-                    utstedtDato = bestillingsbatch.oppdatert.toLocalDateTime(TimeZone.currentSystemDefault()).date,
-                    identifikator = "",
+                    utstedtDato = null,
+                    identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = "SKATTEETATEN",
                     resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
@@ -156,13 +172,13 @@ class BestillingsService(
 
     private fun getPerson(
         arbeidstaker: Arbeidstaker,
-        bestillingsbatch: BestillingBatch,
+        batchId: Long,
     ): Person =
         dataSource.transaction { tx ->
             personService.findOrCreatePersonByFnr(
                 tx = tx,
                 fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
-                informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: ${bestillingsbatch.id?.id}",
+                informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: $batchId",
             )
         }
 }

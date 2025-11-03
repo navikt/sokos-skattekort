@@ -45,8 +45,8 @@ data class Skattekort
     constructor(
         val id: SkattekortId? = null,
         val personId: PersonId,
-        val utstedtDato: LocalDate,
-        val identifikator: String,
+        val utstedtDato: LocalDate?,
+        val identifikator: String?,
         val inntektsaar: Int,
         val kilde: String,
         val resultatForSkattekort: ResultatForSkattekort,
@@ -58,8 +58,8 @@ data class Skattekort
         constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
             id = SkattekortId(row.long("id")),
             personId = PersonId(row.long("person_id")),
-            utstedtDato = row.localDate("utstedt_dato").toKotlinLocalDate(),
-            identifikator = row.string("identifikator"),
+            utstedtDato = row.localDateOrNull("utstedt_dato")?.toKotlinLocalDate(),
+            identifikator = row.stringOrNull("identifikator"),
             inntektsaar = row.int("inntektsaar"),
             kilde = row.string("kilde"),
             resultatForSkattekort = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort")),

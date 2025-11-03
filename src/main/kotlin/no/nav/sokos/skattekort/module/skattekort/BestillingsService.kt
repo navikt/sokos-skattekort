@@ -170,12 +170,7 @@ class BestillingsService(
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = "SKATTEETATEN",
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
-                    forskuddstrekkList =
-                        if (svalbardSkatt(arbeidstaker.tilleggsopplysning)) {
-                            svalbardTrekk
-                        } else {
-                            forskuddstrekkWhenIkkeSkattekort
-                        },
+                    forskuddstrekkList = forskuddstrekkWhenIkkeSkattekort,
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
 
@@ -190,8 +185,6 @@ class BestillingsService(
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
         }
-
-    private fun svalbardSkatt(tilleggsopplysninger: List<String>?): Boolean = tilleggsopplysninger?.any { it === "oppholdPaaSvalbard" } ?: false
 
     private fun getPerson(
         arbeidstaker: Arbeidstaker,
@@ -214,17 +207,6 @@ class BestillingsService(
             Prosentkort(
                 trekkode = Trekkode.PENSJON_FRA_NAV.value,
                 prosentSats = BigDecimal.valueOf(30.00),
-            ),
-        )
-    private val svalbardTrekk =
-        listOf<Forskuddstrekk>(
-            Prosentkort(
-                trekkode = Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value,
-                prosentSats = BigDecimal.valueOf(15.70),
-            ),
-            Prosentkort(
-                trekkode = Trekkode.PENSJON_FRA_NAV.value,
-                prosentSats = BigDecimal.valueOf(15.70),
             ),
         )
 }

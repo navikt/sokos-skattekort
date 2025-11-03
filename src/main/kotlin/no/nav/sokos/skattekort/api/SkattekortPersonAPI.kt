@@ -10,8 +10,8 @@ import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonReq
 import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
 
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
-    route("/api/hent-skattekort") {
-        post("1") {
+    route("/api/v1") {
+        post("hent-skattekort") {
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             call.respond(
                 skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest),

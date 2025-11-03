@@ -138,10 +138,10 @@ object SkattekortRepository {
             queryOf(
                 """
                 SELECT * FROM forskuddstrekk 
-                WHERE skattekort_id = :skattekkortId
+                WHERE skattekort_id = :skattekortId
                 """.trimIndent(),
                 mapOf(
-                    "skattekkortId" to id.value,
+                    "skattekortId" to id.value,
                 ),
             ),
             extractor = { row ->

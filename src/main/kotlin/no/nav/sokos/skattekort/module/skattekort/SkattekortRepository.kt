@@ -28,7 +28,7 @@ object SkattekortRepository {
                         paramMap =
                             mapOf(
                                 "personId" to skattekort.personId.value,
-                                "utstedtDato" to skattekort.utstedtDato.toJavaLocalDate(),
+                                "utstedtDato" to skattekort.utstedtDato?.toJavaLocalDate(),
                                 "identifikator" to skattekort.identifikator,
                                 "inntektsaar" to skattekort.inntektsaar,
                                 "kilde" to skattekort.kilde,

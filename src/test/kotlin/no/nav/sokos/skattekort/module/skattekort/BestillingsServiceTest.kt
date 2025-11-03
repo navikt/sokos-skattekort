@@ -10,7 +10,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.beBlank
 import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -225,12 +224,13 @@ class BestillingsServiceTest :
                         it.bestillingsbatchId == BestillingsbatchId(2L)
                     }.size shouldBe 1
                 skattekort.size shouldBe 1
-                skattekort.first().identifikator shouldBe beBlank()
+                skattekort.first().identifikator shouldBe null
                 skattekort.first().forskuddstrekkList shouldBe emptyList()
                 skattekort.first().tilleggsopplysningList shouldBe emptyList()
                 skattekort.first().resultatForSkattekort shouldBe ResultatForSkattekort.UgyldigFoedselsEllerDnummer
             }
         }
+
         test("ikkeSkattekort") {
             coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ikkeSkattekort.json")
             DbListener.loadDataSet("database/person/persondata.sql")
@@ -281,8 +281,9 @@ class BestillingsServiceTest :
                         it.bestillingsbatchId == BestillingsbatchId(2L)
                     }.size shouldBe 1
                 skattekort.size shouldBe 1
-                skattekort.first().identifikator shouldBe beBlank()
-                skattekort.first().forskuddstrekkList shouldBe emptyList()
+                skattekort.first().identifikator shouldBe null
+                skattekort.first().forskuddstrekkList.size shouldBe 2
+
                 skattekort.first().tilleggsopplysningList shouldBe emptyList()
                 skattekort.first().resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort
             }

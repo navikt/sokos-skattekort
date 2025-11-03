@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import java.math.BigDecimal
+
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
@@ -11,6 +13,7 @@ import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.Trekkode
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
@@ -159,16 +162,36 @@ class BestillingsService(
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
 
-            else ->
+            ResultatForSkattekort.IkkeSkattekort ->
                 Skattekort(
                     personId = person.id!!,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = "SKATTEETATEN",
+                    resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
+                    forskuddstrekkList =
+                        if (svalbardSkatt(arbeidstaker.tilleggsopplysning)) {
+                            svalbardTrekk
+                        } else {
+                            forskuddstrekkWhenIkkeSkattekort
+                        },
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                )
+
+            else ->
+                Skattekort(
+                    personId = person.id!!,
+                    utstedtDato = null,
+                    identifikator = null,
+                    inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                    kilde = "NAV",
                     resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
         }
+
+    private fun svalbardSkatt(tilleggsopplysninger: List<String>?): Boolean = tilleggsopplysninger?.any { it === "oppholdPaaSvalbard" } ?: false
 
     private fun getPerson(
         arbeidstaker: Arbeidstaker,
@@ -181,4 +204,27 @@ class BestillingsService(
                 informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: $batchId",
             )
         }
+
+    val forskuddstrekkWhenIkkeSkattekort =
+        listOf<Forskuddstrekk>(
+            Prosentkort(
+                trekkode = Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value,
+                prosentSats = BigDecimal.valueOf(50.00),
+            ),
+            Prosentkort(
+                trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                prosentSats = BigDecimal.valueOf(30.00),
+            ),
+        )
+    private val svalbardTrekk =
+        listOf<Forskuddstrekk>(
+            Prosentkort(
+                trekkode = Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value,
+                prosentSats = BigDecimal.valueOf(15.70),
+            ),
+            Prosentkort(
+                trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                prosentSats = BigDecimal.valueOf(15.70),
+            ),
+        )
 }

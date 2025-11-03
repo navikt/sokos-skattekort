@@ -27,7 +27,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SkattekortPersonRequest'
+              $ref: '#/components/schemas/Arbeidstaker'
         required: true
 
       responses:
@@ -38,7 +38,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SkattekortTilArbeidsgiver'
+                  $ref: '#/components/schemas/Arbeidstaker'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -60,41 +60,6 @@ paths:
 components:
   schemas:
 
-    SkattekortPersonRequest:
-      type: object
-      required:
-        - fnr
-        - inntektsaar
-      properties:
-        fnr:
-          type: string
-          example: "fødelsnummer"
-          description: Fødelsnummer 11 siffer
-        inntektsaar:
-          type: string
-          example: "2023"
-          description: Skattekort for gjeldende år +/- 1 år
-
-    SkattekortTilArbeidsgiver:
-      type: object
-      properties:
-        navn:
-          type: string
-        arbeidsgiver:
-          type: array
-          items:
-            $ref: '#/components/schemas/Arbeidsgiver'
-
-    Arbeidsgiver:
-      type: object
-      properties:
-        arbeidstaker:
-          type: array
-          items:
-            $ref: "#/components/schemas/Arbeidstaker"
-        arbeidsgiveridentifikator:
-          $ref: '#/components/schemas/IdentifikatorForEnhetEllerPerson'
-
     Arbeidstaker:
       type: object
       properties:
@@ -110,19 +75,10 @@ components:
         tilleggsopplysning:
           $ref: '#/components/schemas/Tilleggsopplysning'
 
-    IdentifikatorForEnhetEllerPerson:
-      type: object
-      properties:
-        organisasjonsnummer:
-          type: string
-        personidentifikator:
-          type: string
-
     Resultatstatus:
       type: string
       enum:
         - ikkeSkattekort
-        - vurderArbeidstillatelse
         - ikkeTrekkplikt
         - skattekortopplysningerOK
         - ugyldigOrganisasjonsnummer
@@ -136,9 +92,11 @@ components:
         utstedtDato:
           type: string
           format: date
+          nullable: true
         skattekortidentifikator:
           type: integer
           format: int64
+          nullable: true
         forskuddstrekk:
           type: array
           items:
@@ -176,6 +134,7 @@ components:
         frikortbeloep:
           type: number
           format: double
+          nullable: true
         type:
           type: string
 
@@ -186,8 +145,6 @@ components:
       properties:
         trekkode:
           type: string
-        tabelltype:
-          $ref: '#/components/schemas/Tabelltype'
         tabellnummer:
           type: string
         prosentsats:
@@ -212,14 +169,9 @@ components:
         antallMaanederForTrekk:
           type: number
           format: double
+          nullable: true
         type:
           type: string
-
-    Tabelltype:
-      type: string
-      enum:
-        - trekktabellForPensjon
-        - trekktabellForLoenn
 
     ApiError:
       type: object

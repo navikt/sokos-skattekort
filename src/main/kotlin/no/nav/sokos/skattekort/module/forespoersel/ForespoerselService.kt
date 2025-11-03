@@ -16,7 +16,6 @@ import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
-import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -47,18 +46,18 @@ class ForespoerselService(
                     forsystem = forespoerselInput.forsystem,
                     dataMottatt = message,
                 )
-            createBestillingAndUtsending(tx, forespoerselId, forespoerselInput, saksbehandler?.ident)
+            createBestilling(tx, forespoerselId, forespoerselInput, saksbehandler?.ident)
         }
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun createBestillingAndUtsending(
+    private fun createBestilling(
         tx: TransactionalSession,
         forespoerselId: Long,
         forespoerselInput: ForespoerselInput,
         brukerId: String?,
     ) {
-        var bestllingCount = 0
+        var bestillingCount = 0
         forespoerselInput.fnrList.forEach { fnr ->
             val person =
                 personService.findOrCreatePersonByFnr(
@@ -94,22 +93,11 @@ class ForespoerselService(
                                 inntektsaar = forespoerselInput.inntektsaar,
                             ),
                     )
-                    bestllingCount++
+                    bestillingCount++
                 }
             }
-
-            UtsendingRepository.insert(
-                tx = tx,
-                utsending =
-                    Utsending(
-                        abonnementId = AbonnementId(abonnementId!!),
-                        fnr = Personidentifikator(fnr),
-                        inntektsaar = forespoerselInput.inntektsaar,
-                        forsystem = forespoerselInput.forsystem,
-                    ),
-            )
         }
-        logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er)/utsending(er), $bestllingCount bestilling(er)" }
+        logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }
     }
 
     @OptIn(ExperimentalTime::class)

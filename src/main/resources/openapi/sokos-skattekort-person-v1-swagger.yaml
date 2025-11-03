@@ -1,0 +1,262 @@
+openapi: '3.0.3'
+
+info:
+  version: 1.0.0
+  title: sokos-skattekort-person API
+  description: API-tjeneste for å hente ut skattekort på person for gjeldende år +/- 1 år som får ytelser i NAV
+  contact:
+    name: PO Utbetaling
+    email: okonomi@nav.no
+    url: https://nav-it.slack.com/archives/CKZADNFBP
+
+tags:
+  - name: skattekort
+    description: Skattekort informasjon
+
+paths:
+  /api/v1/hent-skattekort:
+    post:
+      tags:
+        - skattekort
+      summary: Hente skattekort for person
+      description: Returnerer skattekort for person
+      operationId: hentSkattekortPerson
+
+      requestBody:
+        description: fnr og inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkattekortPersonRequest'
+        required: true
+
+      responses:
+        200:
+          description: OK - Hvis skattekort ikke finnes, returneres tom liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkattekortTilArbeidsgiver'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
+components:
+  schemas:
+
+    SkattekortPersonRequest:
+      type: object
+      required:
+        - fnr
+        - inntektsaar
+      properties:
+        fnr:
+          type: string
+          example: "fødelsnummer"
+          description: Fødelsnummer 11 siffer
+        inntektsaar:
+          type: string
+          example: "2023"
+          description: Skattekort for gjeldende år +/- 1 år
+
+    SkattekortTilArbeidsgiver:
+      type: object
+      properties:
+        navn:
+          type: string
+        arbeidsgiver:
+          type: array
+          items:
+            $ref: '#/components/schemas/Arbeidsgiver'
+
+    Arbeidsgiver:
+      type: object
+      properties:
+        arbeidstaker:
+          type: array
+          items:
+            $ref: "#/components/schemas/Arbeidstaker"
+        arbeidsgiveridentifikator:
+          $ref: '#/components/schemas/IdentifikatorForEnhetEllerPerson'
+
+    Arbeidstaker:
+      type: object
+      properties:
+        inntektsaar:
+          type: integer
+          format: int64
+        arbeidstakeridentifikator:
+          type: string
+        resultatPaaForespoersel:
+          $ref: '#/components/schemas/Resultatstatus'
+        skattekort:
+          $ref: '#/components/schemas/Skattekort'
+        tilleggsopplysning:
+          $ref: '#/components/schemas/Tilleggsopplysning'
+
+    IdentifikatorForEnhetEllerPerson:
+      type: object
+      properties:
+        organisasjonsnummer:
+          type: string
+        personidentifikator:
+          type: string
+
+    Resultatstatus:
+      type: string
+      enum:
+        - ikkeSkattekort
+        - vurderArbeidstillatelse
+        - ikkeTrekkplikt
+        - skattekortopplysningerOK
+        - ugyldigOrganisasjonsnummer
+        - ugyldigFoedselsEllerDnummer
+        - utgaattDnummerSkattekortForFoedselsnummerErLevert
+
+    Skattekort:
+      type: object
+      nullable: true
+      properties:
+        utstedtDato:
+          type: string
+          format: date
+        skattekortidentifikator:
+          type: integer
+          format: int64
+        forskuddstrekk:
+          type: array
+          items:
+            $ref: '#/components/schemas/Forskuddstrekk'
+
+    Tilleggsopplysning:
+      type: string
+      items:
+        enum:
+          - oppholdPaaSvalbard
+          - kildeskattpensjonist
+          - oppholdITiltakssone
+          - kildeskattPaaLoenn
+
+    Forskuddstrekk:
+      type: object
+      anyOf:
+        - $ref: '#/components/schemas/Frikort'
+        - $ref: '#/components/schemas/Trekktabell'
+        - $ref: '#/components/schemas/Trekkprosent'
+      discriminator:
+        propertyName: type
+        mapping:
+          Frikort: '#/components/schemas/Frikort'
+          Trekktabell: '#/components/schemas/Trekktabell'
+          Trekkprosent: '#/components/schemas/Trekkprosent'
+
+    Frikort:
+      type: object
+      required:
+        - type
+      properties:
+        trekkode:
+          type: string
+        frikortbeloep:
+          type: number
+          format: double
+        type:
+          type: string
+
+    Trekktabell:
+      type: object
+      required:
+        - type
+      properties:
+        trekkode:
+          type: string
+        tabelltype:
+          $ref: '#/components/schemas/Tabelltype'
+        tabellnummer:
+          type: string
+        prosentsats:
+          type: number
+          format: double
+        antallMaanederForTrekk:
+          type: number
+          format: double
+        type:
+          type: string
+
+    Trekkprosent:
+      type: object
+      required:
+        - type
+      properties:
+        trekkode:
+          type: string
+        prosentsats:
+          type: number
+          format: double
+        antallMaanederForTrekk:
+          type: number
+          format: double
+        type:
+          type: string
+
+    Tabelltype:
+      type: string
+      enum:
+        - trekktabellForPensjon
+        - trekktabellForLoenn
+
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Tidspunkt feilen oppsto
+        status:
+          type: integer
+          example: 4xx
+          description: HTTP status kode
+        error:
+          type: string
+          example: Error type
+          description: En kort, lesbar oppsummering av problemet
+        message:
+          type: string
+          example: Error message, invalid value
+          description: En lesbar forklaring som er spesifikk for denne forekomsten av problemet
+        path:
+          type: string
+          example: /api/v1/skattekort
+          description: Endepunktet hvor feilen oppstå
+
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: |-
+        OIDC-token (JWT via OAuth2.0).<br> 
+          Følgende format må brukes i input-feltet "Value" under: <strong>\"Bearer {token}\"</strong>.<br> 
+          Eksempel på verdi i input-felt: <strong>Bearer eYdmifml0ejugm</strong>
+      name: Authorization
+      in: header

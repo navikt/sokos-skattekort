@@ -12,6 +12,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.mockk.mockk
+import net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
@@ -34,7 +35,7 @@ class SkattekortpersonApiE2ETest :
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
                     val response: HttpResponse =
-                        client.post("/api/hent-skattekort/1") {
+                        client.post("/api/v1/hent-skattekort") {
                             contentType(ContentType.Application.Json)
                             setBody(
                                 """{
@@ -55,7 +56,7 @@ class SkattekortpersonApiE2ETest :
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
                     val response: HttpResponse =
-                        client.post("/api/hent-skattekort/1") {
+                        client.post("/api/v1/hent-skattekort") {
                             contentType(ContentType.Application.Json)
                             setBody(
                                 """{
@@ -76,7 +77,7 @@ class SkattekortpersonApiE2ETest :
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
                     val response: HttpResponse =
-                        client.post("/api/hent-skattekort/1") {
+                        client.post("/api/v1/hent-skattekort") {
                             contentType(ContentType.Application.Json)
                             setBody(
                                 """{
@@ -97,7 +98,7 @@ class SkattekortpersonApiE2ETest :
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
                     val response: HttpResponse =
-                        client.post("/api/hent-skattekort/1") {
+                        client.post("/api/v1/hent-skattekort") {
                             contentType(ContentType.Application.Json)
                             setBody(
                                 """{
@@ -118,7 +119,7 @@ class SkattekortpersonApiE2ETest :
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
                     val response: HttpResponse =
-                        client.post("/api/hent-skattekort/1") {
+                        client.post("/api/v1/hent-skattekort") {
                             contentType(ContentType.Application.Json)
                             setBody(
                                 """{
@@ -129,34 +130,30 @@ class SkattekortpersonApiE2ETest :
                             )
                         }
                     assertThat("Post returnerer ok", response.status, equalTo(HttpStatusCode.OK))
-                    assertThat(
-                        "Vi får et skattekort",
-                        response.body(),
-                        equalTo(
-                            """[
-    {
-        "inntektsaar": 2025,
-        "arbeidstakeridentifikator": "12345678901",
-        "resultatPaaForespoersel": "SKATTEKORTOPPLYSNINGER_OK",
-        "skattekort": {
-            "utstedtDato": "2025-11-02",
-            "skattekortidentifikator": 17,
-            "forskuddstrekk": [
-                {
-                    "type": "no.nav.sokos.skattekort.module.skattekortpersonapi.v1.Trekktabell",
-                    "trekkode": "LOENN_FRA_HOVEDARBEIDSGIVER",
-                    "tabellnummer": "7100",
-                    "prosentsats": 27.50,
-                    "antallMaanederForTrekk": 12.0
-                }
-            ]
-        },
-        "tilleggsopplysning": [
-            "KILDESKATT_PAA_LOENN"
-        ]
-    }
-]""",
-                        ),
+                    assertThatJson(response.body<String>()).isEqualTo(
+                        """[
+                                {
+                                    "inntektsaar": 2025,
+                                    "arbeidstakeridentifikator": "12345678901",
+                                    "resultatPaaForespoersel": "SKATTEKORTOPPLYSNINGER_OK",
+                                    "skattekort": {
+                                    "utstedtDato": "2025-01-06",
+                                    "skattekortidentifikator": 17,
+                                    "forskuddstrekk": [
+                                    {
+                                        "type": "no.nav.sokos.skattekort.module.skattekortpersonapi.v1.Trekktabell",
+                                        "trekkode": "LOENN_FRA_HOVEDARBEIDSGIVER",
+                                        "tabellnummer": "7100",
+                                        "prosentsats": 27.50,
+                                        "antallMaanederForTrekk": 12.0
+                                    }
+                                    ]
+                                },
+                                    "tilleggsopplysning": [
+                                    "KILDESKATT_PAA_LOENN"
+                                    ]
+                                }
+                            ]""",
                     )
                 }
             }

@@ -286,6 +286,7 @@ class BestillingsServiceTest :
 
                 skattekort.first().tilleggsopplysningList shouldBe emptyList()
                 skattekort.first().resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort
+                skattekort.first().kilde shouldBe "NAV"
             }
         }
     })

@@ -114,6 +114,7 @@ Ingen
 | "store bestillinger" (ved nyttår | MQ        |                                   | TBD               | #utbetaling-sokos-skattekort  | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 | Arena                            | Filområde |                                   | TBD               | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 | Skattekort til OppdragZ          | MQ        | QA.Q1_231.OB04_FRA_OS_ESKATT      | TBD               | #utbetaling-sokos-skattekort  | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
+| Hent skattekort (salesforce)     | Rest      |                                   | V1                | #utbetaling                   | #utbetaling-sokos-skattekort-announcements | #utbetaling-sokos-skattekort                             |
 
 Swagger
 

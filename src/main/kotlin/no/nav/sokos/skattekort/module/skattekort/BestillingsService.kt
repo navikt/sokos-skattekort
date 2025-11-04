@@ -96,7 +96,7 @@ class BestillingsService(
                     val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
                     if (response.status == ResponseStatus.FORESPOERSEL_OK.name) {
                         response.arbeidsgiver.first().arbeidstaker.map { arbeidstaker ->
-                            handleNyttSkattekort(tx, arbeidstaker, batchId)
+                            handleNyttSkattekort(tx, arbeidstaker)
                         }
                         BestillingBatchRepository.markAsProcessed(tx, batchId)
                         BestillingRepository.deleteProcessedBestillings(tx, batchId)
@@ -109,9 +109,14 @@ class BestillingsService(
     private fun handleNyttSkattekort(
         tx: TransactionalSession,
         arbeidstaker: Arbeidstaker,
-        batchId: Long,
     ) {
-        val person = getPerson(arbeidstaker, batchId)
+        val person =
+            dataSource.transaction { tx ->
+                personService.findPersonByFnr(
+                    tx = tx,
+                    fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
+                ) ?: error("Person med fnr ${arbeidstaker.arbeidstakeridentifikator} ikke funnet ved behandling av skattekortbestilling")
+            }
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
         SkattekortRepository.insertBatch(
             tx,
@@ -185,18 +190,6 @@ class BestillingsService(
                     resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
-        }
-
-    private fun getPerson(
-        arbeidstaker: Arbeidstaker,
-        batchId: Long,
-    ): Person =
-        dataSource.transaction { tx ->
-            personService.findOrCreatePersonByFnr(
-                tx = tx,
-                fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
-                informasjon = "Mottatt skattekort fra Skatteetaten for bestillingsbatch: $batchId",
-            )
         }
 
     fun genererForskuddstrekk(tilleggsopplysning: List<String>?): List<Forskuddstrekk> {

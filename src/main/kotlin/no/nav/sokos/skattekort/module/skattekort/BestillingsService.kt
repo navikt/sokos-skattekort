@@ -170,7 +170,7 @@ class BestillingsService(
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = "NAV",
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
-                    forskuddstrekkList = forskuddstrekkWhenIkkeSkattekort,
+                    forskuddstrekkList = genererForskuddstrekk(arbeidstaker.tilleggsopplysning),
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
 
@@ -198,15 +198,37 @@ class BestillingsService(
             )
         }
 
-    val forskuddstrekkWhenIkkeSkattekort =
-        listOf<Forskuddstrekk>(
-            Prosentkort(
-                trekkode = Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value,
-                prosentSats = BigDecimal.valueOf(50.00),
-            ),
-            Prosentkort(
-                trekkode = Trekkode.PENSJON_FRA_NAV.value,
-                prosentSats = BigDecimal.valueOf(30.00),
-            ),
-        )
+    fun genererForskuddstrekk(tilleggsopplysning: List<String>?): List<Forskuddstrekk> {
+        if (tilleggsopplysning == null || tilleggsopplysning.isEmpty()) {
+            return emptyList()
+        }
+
+        return when {
+            tilleggsopplysning.contains("kildeskattpensjonist") ->
+                listOf<Forskuddstrekk>(
+                    Prosentkort(
+                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                        prosentSats = BigDecimal.valueOf(15.00),
+                    ),
+                )
+
+            tilleggsopplysning.contains("oppholdPaaSvalbard") ->
+                listOf<Forskuddstrekk>(
+                    Prosentkort(
+                        trekkode = Trekkode.LOENN_FRA_NAV.value,
+                        prosentSats = BigDecimal.valueOf(15.70),
+                    ),
+                    Prosentkort(
+                        trekkode = Trekkode.UFOERETRYGD_FRA_NAV.value,
+                        prosentSats = BigDecimal.valueOf(15.70),
+                    ),
+                    Prosentkort(
+                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                        prosentSats = BigDecimal.valueOf(13.00),
+                    ),
+                )
+
+            else -> emptyList()
+        }
+    }
 }

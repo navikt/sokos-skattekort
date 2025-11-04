@@ -282,7 +282,7 @@ class BestillingsServiceTest :
                     }.size shouldBe 1
                 skattekort.size shouldBe 1
                 skattekort.first().identifikator shouldBe null
-                skattekort.first().forskuddstrekkList.size shouldBe 2
+                skattekort.first().forskuddstrekkList.size shouldBe 0
 
                 skattekort.first().tilleggsopplysningList shouldBe emptyList()
                 skattekort.first().resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort

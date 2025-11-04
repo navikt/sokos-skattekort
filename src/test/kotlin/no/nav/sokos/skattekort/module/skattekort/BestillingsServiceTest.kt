@@ -39,7 +39,7 @@ class BestillingsServiceTest :
         val skatteetatenClient = mockk<SkatteetatenClient>()
         val personService = mockk<PersonService>()
 
-        coEvery { personService.findOrCreatePersonByFnr(any(), any(), any(), any()) } returns
+        coEvery { personService.findPersonByFnr(any(), any()) } returns
             Person(
                 id = PersonId(1),
                 false,

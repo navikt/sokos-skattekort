@@ -7,7 +7,7 @@
       },
       "arbeidstaker": [
         {
-          "arbeidstakeridentifikator": "11859699644",
+          "arbeidstakeridentifikator": "02020200002",
           "resultatForSkattekort": "skattekortopplysningerOK",
           "skattekort": {
             "utstedtDato": "2025-10-20",
@@ -56,7 +56,7 @@
           "inntektsaar": "2025"
         },
         {
-          "arbeidstakeridentifikator": "12345678901",
+          "arbeidstakeridentifikator": "03030300003",
           "resultatForSkattekort": "skattekortopplysningerOK",
           "skattekort": {
             "utstedtDato": "2025-10-20",

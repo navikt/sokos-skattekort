@@ -178,3 +178,27 @@ data class Tilleggsopplysning(
         opplysning = row.string("opplysning"),
     )
 }
+
+enum class SkattekortKilde(
+    val value: String,
+) {
+    SKATTEETATEN(value = "skatteetaten"),
+    SYNTETISERT(value = "syntetisert"),
+    MANGLER(value = "mangler"),
+}
+
+enum class Trekkode(
+    val value: String,
+) {
+    LOENN_FRA_HOVEDARBEIDSGIVER("loennFraHovedarbeidsgiver"),
+    LOENN_FRA_BIARBEIDSGIVER("loennFraBiarbeidsgiver"),
+    LOENN_FRA_NAV("loennFraNAV"),
+    PENSJON("pensjon"),
+    PENSJON_FRA_NAV("pensjonFraNAV"),
+    LOENN_TIL_UTENRIKSTJENESTEMANN("loennTilUtenrikstjenestemann"),
+    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER("loennKunTrygdeavgiftTilUtenlandskBorger"),
+    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER_SOM_GRENSEGJENGER("loennKunTrygdeavgiftTilUtenlandskBorgerSomGrensegjenger"),
+    UFOERETRYGD_FRA_NAV("ufoeretrygdFraNAV"),
+    UFOEREYTELSER_FRA_ANDRE("ufoereytelserFraAndre"),
+    INTRODUKSJONSSTOENAD("introduksjonsstoenad"),
+}

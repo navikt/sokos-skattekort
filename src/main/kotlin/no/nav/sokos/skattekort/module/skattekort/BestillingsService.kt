@@ -94,13 +94,10 @@ class BestillingsService(
                 val batchId = bestillingsbatch.id!!.id
                 runBlocking {
                     val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
-                    if (response.status == "FORESPOERSEL_OK") {
-                        response.arbeidsgiver
-                            .first()
-                            .arbeidstaker
-                            .map { arbeidstaker ->
-                                handleNyttSkattekort(tx, arbeidstaker, batchId)
-                            }
+                    if (response.status == ResponseStatus.FORESPOERSEL_OK.name) {
+                        response.arbeidsgiver.first().arbeidstaker.map { arbeidstaker ->
+                            handleNyttSkattekort(tx, arbeidstaker, batchId)
+                        }
                         BestillingBatchRepository.markAsProcessed(tx, batchId)
                         BestillingRepository.deleteProcessedBestillings(tx, batchId)
                     }
@@ -156,23 +153,27 @@ class BestillingsService(
                     utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
                     identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = "SKATTEETATEN",
+                    kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
                     forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
 
-            ResultatForSkattekort.IkkeSkattekort ->
+            ResultatForSkattekort.IkkeSkattekort -> {
+                val forskuddstrekkList = genererForskuddstrekk(arbeidstaker.tilleggsopplysning)
+                val kilde = if (forskuddstrekkList.isEmpty()) SkattekortKilde.MANGLER else SkattekortKilde.SYNTETISERT
+
                 Skattekort(
                     personId = person.id!!,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = "NAV",
+                    kilde = kilde.value,
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
-                    forskuddstrekkList = genererForskuddstrekk(arbeidstaker.tilleggsopplysning),
+                    forskuddstrekkList = forskuddstrekkList,
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
+            }
 
             else ->
                 Skattekort(
@@ -180,7 +181,7 @@ class BestillingsService(
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = "NAV",
+                    kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
                 )
@@ -199,19 +200,11 @@ class BestillingsService(
         }
 
     fun genererForskuddstrekk(tilleggsopplysning: List<String>?): List<Forskuddstrekk> {
-        if (tilleggsopplysning == null || tilleggsopplysning.isEmpty()) {
+        if (tilleggsopplysning.isNullOrEmpty()) {
             return emptyList()
         }
 
         return when {
-            tilleggsopplysning.contains("kildeskattpensjonist") ->
-                listOf<Forskuddstrekk>(
-                    Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
-                        prosentSats = BigDecimal.valueOf(15.00),
-                    ),
-                )
-
             tilleggsopplysning.contains("oppholdPaaSvalbard") ->
                 listOf<Forskuddstrekk>(
                     Prosentkort(
@@ -225,6 +218,14 @@ class BestillingsService(
                     Prosentkort(
                         trekkode = Trekkode.PENSJON_FRA_NAV.value,
                         prosentSats = BigDecimal.valueOf(13.00),
+                    ),
+                )
+
+            tilleggsopplysning.contains("kildeskattpensjonist") ->
+                listOf<Forskuddstrekk>(
+                    Prosentkort(
+                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                        prosentSats = BigDecimal.valueOf(15.00),
                     ),
                 )
 

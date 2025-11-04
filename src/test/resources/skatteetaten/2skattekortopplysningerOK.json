@@ -1,0 +1,104 @@
+{
+  "status": "FORESPOERSEL_OK",
+  "arbeidsgiver": [
+    {
+      "arbeidsgiveridentifikator": {
+        "organisasjonsnummer": "312978083"
+      },
+      "arbeidstaker": [
+        {
+          "arbeidstakeridentifikator": "11859699644",
+          "resultatForSkattekort": "skattekortopplysningerOK",
+          "skattekort": {
+            "utstedtDato": "2025-10-20",
+            "skattekortidentifikator": 54408,
+            "forskuddstrekk": [
+              {
+                "trekkode": "loennFraHovedarbeidsgiver",
+                "trekktabell": {
+                  "tabellnummer": "8140",
+                  "prosentsats": 43,
+                  "antallMaanederForTrekk": 10.5
+                }
+              },
+              {
+                "trekkode": "loennFraBiarbeidsgiver",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              },
+              {
+                "trekkode": "loennFraNAV",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              },
+              {
+                "trekkode": "ufoeretrygdFraNAV",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              },
+              {
+                "trekkode": "ufoereytelserFraAndre",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              }
+            ]
+          },
+          "tilleggsopplysning": [
+            "oppholdPaaSvalbard",
+            "kildeskattPaaPensjon",
+            "oppholdITiltakssone",
+            "kildeskattPaaLoenn"
+          ],
+          "inntektsaar": "2025"
+        },
+        {
+          "arbeidstakeridentifikator": "12345678901",
+          "resultatForSkattekort": "skattekortopplysningerOK",
+          "skattekort": {
+            "utstedtDato": "2025-10-20",
+            "skattekortidentifikator": 54409,
+            "forskuddstrekk": [
+              {
+                "trekkode": "loennFraHovedarbeidsgiver",
+                "trekktabell": {
+                  "tabellnummer": "8140",
+                  "prosentsats": 43,
+                  "antallMaanederForTrekk": 10.5
+                }
+              },
+              {
+                "trekkode": "loennFraBiarbeidsgiver",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              },
+              {
+                "trekkode": "loennFraNAV",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              },
+              {
+                "trekkode": "ufoeretrygdFraNAV",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              },
+              {
+                "trekkode": "ufoereytelserFraAndre",
+                "trekkprosent": {
+                  "prosentsats": 43
+                }
+              }
+            ]
+          },
+          "inntektsaar": "2025"
+        }
+      ]
+    }
+  ]
+}

@@ -102,6 +102,21 @@ object PropertiesConfig {
             keyPassword = getOrEmpty("SFTP_KEY_PASSWORD"),
         )
 
+    fun getKafkaProperties(): KafkaProperties =
+        KafkaProperties(
+            topic = getOrEmpty("KAFKA_CONSUMER_TOPIC"),
+            consumerGroupId = getOrEmpty("KAFKA_CONSUMER_GROUP_ID"),
+            offsetReset = getOrEmpty("KAFKA_CONSUMER_OFFSET_RESET"),
+            brokers = getOrEmpty("KAFKA_BROKERS"),
+            schemaRegistry = getOrEmpty("KAFKA_SCHEMA_REGISTRY_URL"),
+            schemaRegistryUser = getOrEmpty("KAFKA_SCHEMA_REGISTRY_USER"),
+            schemaRegistryPassword = getOrEmpty("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
+            useSSLSecurity = getOrEmpty("KAFKA_USE_SSL_SECURITY").toBoolean(),
+            truststorePath = getOrEmpty("KAFKA_TRUSTSTORE_PATH"),
+            credstorePassword = getOrEmpty("KAFKA_CREDSTORE_PASSWORD"),
+            keystorePath = getOrEmpty("KAFKA_KEYSTORE_PATH"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -165,6 +180,20 @@ object PropertiesConfig {
         val user: String,
         val privateKey: String,
         val keyPassword: String,
+    )
+
+    data class KafkaProperties(
+        val topic: String,
+        val consumerGroupId: String,
+        val offsetReset: String,
+        val brokers: String,
+        val schemaRegistry: String,
+        val schemaRegistryUser: String,
+        val schemaRegistryPassword: String,
+        val useSSLSecurity: Boolean,
+        val truststorePath: String,
+        val credstorePassword: String,
+        val keystorePath: String,
     )
 
     enum class Environment {

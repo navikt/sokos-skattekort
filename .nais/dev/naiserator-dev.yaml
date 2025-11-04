@@ -61,6 +61,8 @@ spec:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
         - name: "altinn:authentication/systemregister.write"
+  kafka:
+    pool: nav-dev
   webproxy: true
   vault:
     enabled: true

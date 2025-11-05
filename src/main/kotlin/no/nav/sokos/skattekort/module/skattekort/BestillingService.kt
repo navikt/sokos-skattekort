@@ -124,10 +124,14 @@ class BestillingService(
                 ) ?: error("Person med fnr ${arbeidstaker.arbeidstakeridentifikator} ikke funnet ved behandling av skattekortbestilling")
             }
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
+        val skattekort = toSkattekort(arbeidstaker, person)
+        if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
+            personService.flaggPerson(tx, person.id!!)
+        }
         SkattekortRepository.insertBatch(
             tx,
             listOf(
-                toSkattekort(arbeidstaker, person),
+                skattekort,
             ),
         )
         opprettUtsendingerForAbonnementer(tx, person, inntektsaar)

@@ -12,7 +12,7 @@ import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
 import com.zaxxer.hikari.HikariDataSource
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.module.skattekort.BestillingsService
+import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
@@ -23,7 +23,7 @@ private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
 
 object JobTaskConfig {
     fun scheduler(
-        bestillingsService: BestillingsService,
+        bestillingService: BestillingService,
         utsendingService: UtsendingService,
         scheduledTaskService: ScheduledTaskService,
         dataSource: HikariDataSource,
@@ -33,12 +33,12 @@ object JobTaskConfig {
             .enableImmediateExecution()
             .registerShutdownHook()
             .startTasks(
-                recurringSendBestillingBatchTask(bestillingsService, scheduledTaskService),
+                recurringSendBestillingBatchTask(bestillingService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
             ).build()
 
     fun recurringSendBestillingBatchTask(
-        bestillingsService: BestillingsService,
+        bestillingService: BestillingService,
         scheduledTaskService: ScheduledTaskService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
@@ -53,7 +53,7 @@ object JobTaskConfig {
                     showLog(showLogLocalTime, instance, context)
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                     scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
-                    bestillingsService.opprettBestillingsbatch()
+                    bestillingService.opprettBestillingsbatch()
                 }
             }
     }

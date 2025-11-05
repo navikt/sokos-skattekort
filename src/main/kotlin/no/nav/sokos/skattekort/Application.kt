@@ -109,6 +109,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val kafkaProperties = PropertiesConfig.getKafkaProperties()
     if (kafkaProperties.enabled) {
         monitor.subscribe(ApplicationStarted) {
+            applicationState.ready = true
             val kafkaConsumerService: KafkaConsumerService by dependencies
             launchBackgroundTask(applicationState) {
                 kafkaConsumerService.start(applicationState)

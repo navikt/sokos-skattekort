@@ -36,9 +36,10 @@ class BestillingService(
     fun opprettBestillingsbatch() {
         val bestillings: List<Bestilling> =
             dataSource.transaction { tx ->
-                BestillingRepository
-                    .getAllBestilling(tx)
+                val allBestilling = BestillingRepository.getAllBestilling(tx)
+                allBestilling
                     .filter { it.bestillingsbatchId == null }
+                    .filter { it.inntektsaar == allBestilling.firstOrNull()?.inntektsaar }
                     .take(500)
                     .toList()
             }
@@ -48,7 +49,7 @@ class BestillingService(
         }
         val request =
             BestillSkattekortRequest(
-                inntektsaar = "2025",
+                inntektsaar = bestillings.firstOrNull()?.inntektsaar.toString(),
                 bestillingstype = "HENT_ALLE_OPPGITTE",
                 kontaktinformasjon =
                     Kontaktinformasjon(

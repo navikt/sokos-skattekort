@@ -77,7 +77,7 @@ spec:
     - name: SEND_UTSENDING_CRON_EXPRESSION
       value: "0 * * * * *"
     - name: SCHEDULER_ENABLED
-      value: "false"
+      value: "true"
     - name: USE_AUTHENTICATION
       value: "true"
     - name: JDK_JAVA_OPTIONS

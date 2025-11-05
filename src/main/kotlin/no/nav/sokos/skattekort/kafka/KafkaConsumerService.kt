@@ -20,6 +20,7 @@ import no.nav.sokos.skattekort.module.person.AktorService
 
 private val logger = KotlinLogging.logger {}
 private const val DELAY_ON_ERROR_SECONDS = 60L
+private const val DELAY_KAFKA_START = 500L
 private const val POLL_DURATION_SECONDS = 10L
 
 class KafkaConsumerService(

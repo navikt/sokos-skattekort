@@ -11,19 +11,16 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.security.auth.SecurityProtocol
 
-object KafkaConfig {
-    val kafkaConsumerConfig: KafkaConsumerConfig by lazy {
-        val kafkaProperties = PropertiesConfig.getKafkaProperties()
-        KafkaConsumerConfig(
-            topic = kafkaProperties.topic,
-            properties = initProperties(kafkaProperties),
-        )
+class KafkaConfig(
+    private val kafkaProperties: PropertiesConfig.KafkaProperties = PropertiesConfig.getKafkaProperties(),
+) {
+    val topic: String by lazy {
+        kafkaProperties.topic
     }
 
-    data class KafkaConsumerConfig(
-        val topic: String,
-        val properties: Properties = Properties(),
-    )
+    val properties: Properties by lazy {
+        initProperties(kafkaProperties)
+    }
 
     private fun initProperties(kafkaProperties: PropertiesConfig.KafkaProperties): Properties =
         Properties().apply {
@@ -36,7 +33,14 @@ object KafkaConfig {
             put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaProperties.offsetReset)
             put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed")
             put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true)
+            put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.brokers)
 
+            // Schema Registry
+            put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaProperties.schemaRegistry)
+            put(SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
+            put(SchemaRegistryClientConfig.USER_INFO_CONFIG, "${kafkaProperties.schemaRegistryUser}:${kafkaProperties.schemaRegistryPassword}")
+
+            // SSL Configuration
             if (kafkaProperties.useSSLSecurity) {
                 put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.SSL.name)
                 put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "")
@@ -47,9 +51,5 @@ object KafkaConfig {
                 put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, kafkaProperties.keystorePath)
                 put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, kafkaProperties.credstorePassword)
             }
-            put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.brokers)
-            put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaProperties.schemaRegistry)
-            put(SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
-            put(SchemaRegistryClientConfig.USER_INFO_CONFIG, "${kafkaProperties.schemaRegistryUser}:${kafkaProperties.schemaRegistryPassword}")
         }
 }

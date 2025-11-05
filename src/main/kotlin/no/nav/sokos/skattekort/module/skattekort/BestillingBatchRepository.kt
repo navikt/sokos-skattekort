@@ -54,9 +54,10 @@ object BestillingBatchRepository {
             extractor = mapToBestillingBatch,
         )
 
-    fun markAsProcessed(
+    fun markAs(
         tx: TransactionalSession,
         bestillingsbatchId: Long,
+        status: BestillingBatchStatus,
     ) {
         tx.run(
             queryOf(
@@ -67,7 +68,7 @@ object BestillingBatchRepository {
                 """.trimMargin(),
                 mapOf(
                     "id" to bestillingsbatchId,
-                    "status" to "FERDIG",
+                    "status" to status.value,
                 ),
             ).asExecute,
         )

@@ -9,6 +9,9 @@
         {
           "arbeidstakeridentifikator": "19906396974",
           "resultatForSkattekort": "ikkeSkattekort",
+          "tilleggsopplysning": [
+            "oppholdPaaSvalbard"
+          ],
           "inntektsaar": "2025"
         }
       ]

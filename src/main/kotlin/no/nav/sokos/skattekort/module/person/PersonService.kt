@@ -42,4 +42,9 @@ class PersonService(
             logger.info(marker = TEAM_LOGS_MARKER) { "Opprett person fnr: $fnr" }
             PersonRepository.findPersonById(tx, PersonId(personId))
         }
+
+    fun findPersonByFnr(
+        tx: TransactionalSession,
+        fnr: Personidentifikator,
+    ): Person? = PersonRepository.findPersonByFnr(tx, fnr)
 }

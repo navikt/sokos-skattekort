@@ -8,6 +8,9 @@ import kotlinx.serialization.json.Json
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.inspectors.forExactly
+import io.kotest.inspectors.forOne
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -36,7 +39,7 @@ class BestillingsServiceTest :
         val skatteetatenClient = mockk<SkatteetatenClient>()
         val personService = mockk<PersonService>()
 
-        coEvery { personService.findOrCreatePersonByFnr(any(), any(), any(), any()) } returns
+        coEvery { personService.findPersonByFnr(any(), any()) } returns
             Person(
                 id = PersonId(1),
                 false,
@@ -48,8 +51,8 @@ class BestillingsServiceTest :
                 ),
             )
 
-        val bestillingsService: BestillingsService by lazy {
-            BestillingsService(DbListener.dataSource, skatteetatenClient, personService)
+        val bestillingService: BestillingService by lazy {
+            BestillingService(DbListener.dataSource, skatteetatenClient, personService)
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {
@@ -79,7 +82,7 @@ class BestillingsServiceTest :
                 )
             }
 
-            bestillingsService.opprettBestillingsbatch()
+            bestillingService.opprettBestillingsbatch()
 
             val bestillings: List<Bestilling> =
                 DbListener.dataSource.transaction { session ->
@@ -105,7 +108,9 @@ class BestillingsServiceTest :
 
         test("henter skattekort for batch") {
 
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/skattekortopplysningerOK.json")
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                hentSkattekortResponseFromFile("src/test/resources/skatteetaten/skattekortopplysningerOK.json") andThen
+                hentSkattekortResponseFromFile("src/test/resources/skatteetaten/2skattekortopplysningerOK.json")
 
             // Sett inn bestillinger uten bestillingsbatch.
             DbListener.loadDataSet("database/person/persondata.sql")
@@ -117,7 +122,7 @@ class BestillingsServiceTest :
                     BestillingRepository.getAllBestilling(session)
                 }
 
-            bestillingsService.hentSkattekort()
+            bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> =
                 DbListener.dataSource.transaction { session ->
@@ -139,38 +144,171 @@ class BestillingsServiceTest :
                 }
 
             assertSoftly {
-                updatedBatches.count { it.status == "NY" } shouldBe 1
-                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+
                 bestillingsBefore.size shouldBe 3
-                bestillingsBefore
-                    .filter {
-                        it.bestillingsbatchId == BestillingsbatchId(1L)
-                    }.size shouldBe 2
-                bestillingsBefore
-                    .filter {
-                        it.bestillingsbatchId == BestillingsbatchId(2L)
-                    }.size shouldBe 1
-                bestillingsAfter.size shouldBe 1
-                bestillingsAfter
-                    .filter {
-                        it.bestillingsbatchId == BestillingsbatchId(1L)
-                    }.size shouldBe 0
-                bestillingsAfter
-                    .filter {
-                        it.bestillingsbatchId == BestillingsbatchId(2L)
-                    }.size shouldBe 1
+                bestillingsBefore.forExactly(1) { it.bestillingsbatchId!!.id shouldBe 1L }
+                bestillingsBefore.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
+
+                updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+
+                bestillingsAfter.size shouldBe 2
+                bestillingsAfter.forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
+                bestillingsAfter.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
+
                 skattekort.size shouldBe 1
-                skattekort.first().identifikator shouldBe "54407"
-                skattekort.first().forskuddstrekkList.size shouldBe 5
-                skattekort.first().tilleggsopplysningList.size shouldBe 4
-                skattekort.first().tilleggsopplysningList shouldContainExactlyInAnyOrder
+                val skattekortet = skattekort.first()
+                skattekortet.identifikator shouldBe "54407"
+                skattekortet.forskuddstrekkList shouldContainExactlyInAnyOrder
+                    listOf(
+                        aForskuddstrekk(Tabellkort::class.simpleName!!, Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, 43.00, 10.5, "8140"),
+                        aForskuddstrekk(Prosentkort::class.simpleName!!, Trekkode.LOENN_FRA_BIARBEIDSGIVER, 43.00),
+                        aForskuddstrekk(Prosentkort::class.simpleName!!, Trekkode.LOENN_FRA_NAV, 43.00),
+                        aForskuddstrekk(Prosentkort::class.simpleName!!, Trekkode.UFOERETRYGD_FRA_NAV, 43.00),
+                        aForskuddstrekk(Prosentkort::class.simpleName!!, Trekkode.UFOEREYTELSER_FRA_ANDRE, 43.00),
+                    )
+                skattekortet.tilleggsopplysningList.size shouldBe 4
+                skattekortet.tilleggsopplysningList shouldContainExactlyInAnyOrder
                     listOf(
                         "oppholdPaaSvalbard",
                         "kildeskattPaaPensjon",
                         "oppholdITiltakssone",
                         "kildeskattPaaLoenn",
                     ).map { Tilleggsopplysning(it) }
+                skattekortet.resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK
                 utsendingerAfter.size shouldBe 1
+            }
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatchesSecondRun: List<BestillingBatch> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingBatchRepository.list(session)
+                }
+            val bestillingsAfterSecondRun: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            val skattekortAfterSecondRun: List<Skattekort> =
+                DbListener.dataSource.transaction { session ->
+                    listOf(
+                        SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025),
+                        SkattekortRepository.findAllByPersonId(session, PersonId(2), 2025),
+                        SkattekortRepository.findAllByPersonId(session, PersonId(3), 2025),
+                    ).flatMap { it }
+                }
+
+            val utsendingerAfterSecondRun: List<Utsending> =
+                DbListener.dataSource.transaction { tx ->
+                    UtsendingRepository.getAllUtsendinger(tx)
+                }
+
+            assertSoftly {
+                updatedBatchesSecondRun.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 2
+                bestillingsAfterSecondRun.size shouldBe 0
+                skattekortAfterSecondRun.size shouldBe 3
+                utsendingerAfterSecondRun.size shouldBe 3
+            }
+        }
+
+        test("ugyldigFoedselsEllerDnummer") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ugyldigFoedselsEllerDnummer.json")
+            DbListener.loadDataSet("database/person/persondata.sql")
+            DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
+
+            val bestillingsBefore: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingBatchRepository.list(session)
+                }
+
+            val skattekort: List<Skattekort> =
+                DbListener.dataSource.transaction { session ->
+                    SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025)
+                }
+
+            val bestillingsAfter: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            assertSoftly {
+                bestillingsBefore.size shouldBe 3
+                bestillingsBefore.forExactly(1) { it.bestillingsbatchId!!.id shouldBe 1L }
+                bestillingsBefore.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
+
+                updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+                bestillingsAfter.size shouldBe 2
+                bestillingsAfter.forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
+                bestillingsAfter.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
+
+                val skattekortet = skattekort.first()
+                skattekortet.identifikator shouldBe null
+                skattekortet.forskuddstrekkList shouldBe emptyList()
+                skattekortet.tilleggsopplysningList shouldBe emptyList()
+                skattekortet.resultatForSkattekort shouldBe ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+            }
+        }
+
+        test("ikkeSkattekort med oppholdPaaSvalbard") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ikkeSkattekort.json")
+            DbListener.loadDataSet("database/person/persondata.sql")
+            DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
+
+            val bestillingsBefore: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingBatchRepository.list(session)
+                }
+
+            val skattekort: List<Skattekort> =
+                DbListener.dataSource.transaction { session ->
+                    SkattekortRepository.findAllByPersonId(session, PersonId(1), 2025)
+                }
+
+            val bestillingsAfter: List<Bestilling> =
+                DbListener.dataSource.transaction { session ->
+                    BestillingRepository.getAllBestilling(session)
+                }
+
+            assertSoftly {
+                bestillingsBefore.size shouldBe 3
+                bestillingsBefore.forExactly(1) { it.bestillingsbatchId!!.id shouldBe 1L }
+                bestillingsBefore.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
+
+                updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+                bestillingsAfter.size shouldBe 2
+                bestillingsAfter.forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
+                bestillingsAfter.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
+
+                skattekort.size shouldBe 1
+                val skattekortet = skattekort.first()
+                skattekortet.identifikator shouldBe null
+                skattekortet.forskuddstrekkList shouldContainExactly
+                    listOf(
+                        aForskuddstrekk("Prosentkort", Trekkode.LOENN_FRA_NAV, 15.70, null),
+                        aForskuddstrekk("Prosentkort", Trekkode.UFOERETRYGD_FRA_NAV, 15.70, null),
+                        aForskuddstrekk("Prosentkort", Trekkode.PENSJON_FRA_NAV, 13.00, null),
+                    )
+                skattekortet.tilleggsopplysningList.size shouldBe 1
+                skattekortet.tilleggsopplysningList.forOne { it.opplysning shouldBe "oppholdPaaSvalbard" }
+                skattekortet.resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort
+                skattekortet.kilde shouldBe SkattekortKilde.SYNTETISERT.value
             }
         }
     })

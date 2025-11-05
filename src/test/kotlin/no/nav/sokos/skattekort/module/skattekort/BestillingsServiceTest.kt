@@ -51,8 +51,8 @@ class BestillingsServiceTest :
                 ),
             )
 
-        val bestillingsService: BestillingsService by lazy {
-            BestillingsService(DbListener.dataSource, skatteetatenClient, personService)
+        val bestillingService: BestillingService by lazy {
+            BestillingService(DbListener.dataSource, skatteetatenClient, personService)
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {
@@ -82,7 +82,7 @@ class BestillingsServiceTest :
                 )
             }
 
-            bestillingsService.opprettBestillingsbatch()
+            bestillingService.opprettBestillingsbatch()
 
             val bestillings: List<Bestilling> =
                 DbListener.dataSource.transaction { session ->
@@ -122,7 +122,7 @@ class BestillingsServiceTest :
                     BestillingRepository.getAllBestilling(session)
                 }
 
-            bestillingsService.hentSkattekort()
+            bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> =
                 DbListener.dataSource.transaction { session ->
@@ -179,7 +179,7 @@ class BestillingsServiceTest :
                 utsendingerAfter.size shouldBe 1
             }
 
-            bestillingsService.hentSkattekort()
+            bestillingService.hentSkattekort()
 
             val updatedBatchesSecondRun: List<BestillingBatch> =
                 DbListener.dataSource.transaction { session ->
@@ -222,7 +222,7 @@ class BestillingsServiceTest :
                     BestillingRepository.getAllBestilling(session)
                 }
 
-            bestillingsService.hentSkattekort()
+            bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> =
                 DbListener.dataSource.transaction { session ->
@@ -268,7 +268,7 @@ class BestillingsServiceTest :
                     BestillingRepository.getAllBestilling(session)
                 }
 
-            bestillingsService.hentSkattekort()
+            bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> =
                 DbListener.dataSource.transaction { session ->

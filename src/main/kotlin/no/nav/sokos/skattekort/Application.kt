@@ -24,7 +24,7 @@ import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.module.skattekort.BestillingsService
+import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
@@ -68,7 +68,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
         provide(UtsendingService::class)
-        provide(BestillingsService::class)
+        provide(BestillingService::class)
         provide(SkatteetatenClient::class)
         provide(ScheduledTaskService::class)
         provide(SkattekortPersonService::class)
@@ -85,13 +85,13 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     forespoerselListener.start()
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
-        val bestillingsService: BestillingsService by dependencies
+        val bestillingService: BestillingService by dependencies
         val utsendingService: UtsendingService by dependencies
         val scheduledTaskService: ScheduledTaskService by dependencies
         val dataSource: HikariDataSource by dependencies
         JobTaskConfig
             .scheduler(
-                bestillingsService,
+                bestillingService,
                 utsendingService,
                 scheduledTaskService,
                 dataSource,

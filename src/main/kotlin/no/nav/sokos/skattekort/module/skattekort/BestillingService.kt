@@ -28,7 +28,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 // TODO: Metrikk: bestillinger per system
 // TODO: Metrikk for varsling: tid siden siste mottatte bestilling
 // TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
-class BestillingsService(
+class BestillingService(
     val dataSource: HikariDataSource,
     val skatteetatenClient: SkatteetatenClient,
     val personService: PersonService,
@@ -94,12 +94,18 @@ class BestillingsService(
                 val batchId = bestillingsbatch.id!!.id
                 runBlocking {
                     val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
-                    if (response.status == ResponseStatus.FORESPOERSEL_OK.name) {
-                        response.arbeidsgiver.first().arbeidstaker.map { arbeidstaker ->
-                            handleNyttSkattekort(tx, arbeidstaker)
+                    when (response.status) {
+                        ResponseStatus.FORESPOERSEL_OK.name -> {
+                            response.arbeidsgiver.first().arbeidstaker.map { arbeidstaker ->
+                                handleNyttSkattekort(tx, arbeidstaker)
+                            }
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            BestillingRepository.deleteProcessedBestillings(tx, batchId)
                         }
-                        BestillingBatchRepository.markAsProcessed(tx, batchId)
-                        BestillingRepository.deleteProcessedBestillings(tx, batchId)
+
+                        else -> {
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                        }
                     }
                 }
             }

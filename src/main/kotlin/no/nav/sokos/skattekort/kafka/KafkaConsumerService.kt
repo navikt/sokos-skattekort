@@ -37,6 +37,7 @@ class KafkaConsumerService(
         kafkaConsumer.use { consumer ->
             consumer.subscribe(listOf(kafkaConfig.topic))
 
+            logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
             while (applicationState.ready) {
                 if (kafkaConsumer.subscription().isEmpty()) {
                     kafkaConsumer.subscribe(listOf(kafkaConfig.topic))

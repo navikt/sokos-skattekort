@@ -312,6 +312,15 @@ class BestillingsServiceTest :
                 skattekortet.kilde shouldBe SkattekortKilde.SYNTETISERT.value
             }
         }
+        test("ugyldig inntektsår") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ikkeSkattekort.json")
+            DbListener.loadDataSet("database/person/persondata.sql")
+            DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
+
+            bestillingService.hentSkattekort()
+
+            println("skatteetatenClient = $skatteetatenClient")
+        }
     })
 
 private fun hentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get(jsonfile)))

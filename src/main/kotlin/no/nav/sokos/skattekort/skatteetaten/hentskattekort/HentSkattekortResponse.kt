@@ -7,7 +7,7 @@ import no.nav.sokos.skattekort.BigDecimalJson
 @Serializable
 data class HentSkattekortResponse(
     val status: String,
-    val arbeidsgiver: List<Arbeidsgiver>,
+    val arbeidsgiver: List<Arbeidsgiver>? = emptyList(),
 )
 
 @Serializable

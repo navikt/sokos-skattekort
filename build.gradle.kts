@@ -137,6 +137,7 @@ dependencies {
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
     testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
 }
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5

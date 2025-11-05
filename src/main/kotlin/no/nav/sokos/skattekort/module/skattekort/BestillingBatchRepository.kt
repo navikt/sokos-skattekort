@@ -68,7 +68,7 @@ object BestillingBatchRepository {
                 """.trimMargin(),
                 mapOf(
                     "id" to bestillingsbatchId,
-                    "status" to status.name,
+                    "status" to status.value,
                 ),
             ).asExecute,
         )

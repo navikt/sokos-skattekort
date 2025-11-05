@@ -149,8 +149,8 @@ class BestillingsServiceTest :
                 bestillingsBefore.forExactly(1) { it.bestillingsbatchId!!.id shouldBe 1L }
                 bestillingsBefore.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
 
-                updatedBatches.count { it.status == "NY" } shouldBe 1
-                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
 
                 bestillingsAfter.size shouldBe 2
                 bestillingsAfter.forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
@@ -205,7 +205,7 @@ class BestillingsServiceTest :
                 }
 
             assertSoftly {
-                updatedBatchesSecondRun.count { it.status == "FERDIG" } shouldBe 2
+                updatedBatchesSecondRun.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 2
                 bestillingsAfterSecondRun.size shouldBe 0
                 skattekortAfterSecondRun.size shouldBe 3
                 utsendingerAfterSecondRun.size shouldBe 3
@@ -244,8 +244,8 @@ class BestillingsServiceTest :
                 bestillingsBefore.forExactly(1) { it.bestillingsbatchId!!.id shouldBe 1L }
                 bestillingsBefore.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
 
-                updatedBatches.count { it.status == "NY" } shouldBe 1
-                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
                 bestillingsAfter.size shouldBe 2
                 bestillingsAfter.forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
                 bestillingsAfter.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
@@ -290,8 +290,8 @@ class BestillingsServiceTest :
                 bestillingsBefore.forExactly(1) { it.bestillingsbatchId!!.id shouldBe 1L }
                 bestillingsBefore.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
 
-                updatedBatches.count { it.status == "NY" } shouldBe 1
-                updatedBatches.count { it.status == "FERDIG" } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
                 bestillingsAfter.size shouldBe 2
                 bestillingsAfter.forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
                 bestillingsAfter.forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }

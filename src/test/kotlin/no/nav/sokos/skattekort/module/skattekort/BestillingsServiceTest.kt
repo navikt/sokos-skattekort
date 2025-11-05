@@ -214,6 +214,7 @@ class BestillingsServiceTest :
 
         test("ugyldigFoedselsEllerDnummer") {
             coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ugyldigFoedselsEllerDnummer.json")
+            coEvery { personService.flaggPerson(any(), any()) } returns true
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
 

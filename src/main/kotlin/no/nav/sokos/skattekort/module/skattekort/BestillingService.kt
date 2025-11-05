@@ -97,7 +97,7 @@ class BestillingService(
                     val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
                     when (response.status) {
                         ResponseStatus.FORESPOERSEL_OK.name -> {
-                            response.arbeidsgiver.first().arbeidstaker.map { arbeidstaker ->
+                            response.arbeidsgiver!!.first().arbeidstaker.map { arbeidstaker ->
                                 handleNyttSkattekort(tx, arbeidstaker)
                             }
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)

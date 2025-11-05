@@ -45,8 +45,8 @@ data class Skattekort
     constructor(
         val id: SkattekortId? = null,
         val personId: PersonId,
-        val utstedtDato: LocalDate,
-        val identifikator: String,
+        val utstedtDato: LocalDate?,
+        val identifikator: String?,
         val inntektsaar: Int,
         val kilde: String,
         val resultatForSkattekort: ResultatForSkattekort,
@@ -58,8 +58,8 @@ data class Skattekort
         constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
             id = SkattekortId(row.long("id")),
             personId = PersonId(row.long("person_id")),
-            utstedtDato = row.localDate("utstedt_dato").toKotlinLocalDate(),
-            identifikator = row.string("identifikator"),
+            utstedtDato = row.localDateOrNull("utstedt_dato")?.toKotlinLocalDate(),
+            identifikator = row.stringOrNull("identifikator"),
             inntektsaar = row.int("inntektsaar"),
             kilde = row.string("kilde"),
             resultatForSkattekort = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort")),
@@ -177,4 +177,28 @@ data class Tilleggsopplysning(
     constructor(row: Row) : this(
         opplysning = row.string("opplysning"),
     )
+}
+
+enum class SkattekortKilde(
+    val value: String,
+) {
+    SKATTEETATEN(value = "skatteetaten"),
+    SYNTETISERT(value = "syntetisert"),
+    MANGLER(value = "mangler"),
+}
+
+enum class Trekkode(
+    val value: String,
+) {
+    LOENN_FRA_HOVEDARBEIDSGIVER("loennFraHovedarbeidsgiver"),
+    LOENN_FRA_BIARBEIDSGIVER("loennFraBiarbeidsgiver"),
+    LOENN_FRA_NAV("loennFraNAV"),
+    PENSJON("pensjon"),
+    PENSJON_FRA_NAV("pensjonFraNAV"),
+    LOENN_TIL_UTENRIKSTJENESTEMANN("loennTilUtenrikstjenestemann"),
+    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER("loennKunTrygdeavgiftTilUtenlandskBorger"),
+    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER_SOM_GRENSEGJENGER("loennKunTrygdeavgiftTilUtenlandskBorgerSomGrensegjenger"),
+    UFOERETRYGD_FRA_NAV("ufoeretrygdFraNAV"),
+    UFOEREYTELSER_FRA_ANDRE("ufoereytelserFraAndre"),
+    INTRODUKSJONSSTOENAD("introduksjonsstoenad"),
 }

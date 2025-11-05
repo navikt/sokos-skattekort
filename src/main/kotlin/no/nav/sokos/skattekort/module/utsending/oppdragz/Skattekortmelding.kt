@@ -20,15 +20,15 @@ data class Skattekortmelding(
         skattekort =
             Skattekort(
                 inntektsaar = sk.inntektsaar.toLong(),
-                utstedtDato = DatatypeFactory.newInstance().newXMLGregorianCalendar(sk.utstedtDato.toString()),
-                skattekortidentifikator = sk.identifikator.toLong(),
+                utstedtDato = sk.utstedtDato?.toString().let { DatatypeFactory.newInstance().newXMLGregorianCalendar(it) },
+                skattekortidentifikator = sk.identifikator?.toLong(),
                 forskuddstrekk =
                     sk.forskuddstrekkList.map {
                         when (it) {
                             is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(it.trekkode), BigDecimal(it.frikortBeloep))
                             is Prosentkort -> Trekkprosent(Trekkode.fromValue(it.trekkode), it.prosentSats, it.antallMndForTrekk)
                             is Tabellkort -> Trekktabell(Trekkode.fromValue(it.trekkode), Tabelltype.TREKKTABELL_FOR_LOENN, it.tabellNummer, it.prosentSats, it.antallMndForTrekk)
-                            else -> throw IllegalStateException("Unexpected $it")
+                            else -> error("Unexpected $it")
                         }
                     },
             ),

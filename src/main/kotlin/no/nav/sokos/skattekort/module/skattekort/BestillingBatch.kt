@@ -19,3 +19,11 @@ data class BestillingBatch
 value class BestillingsbatchId(
     val id: Long,
 )
+
+enum class BestillingBatchStatus(
+    val value: String,
+) {
+    Ny(value = "NY"),
+    Ferdig(value = "FERDIG"),
+    Feilet(value = "FEILET"),
+}

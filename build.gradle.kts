@@ -107,7 +107,7 @@ repositories {
         implementation("com.github.mwiede:jsch:$jschVersion")
 
         // Kafka
-        implementation("org.apache.kafka:kafka-streams:$kafkaClientsVersion")
+        implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
         implementation("org.apache.avro:avro:$avroVersion")
         implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
 
@@ -151,7 +151,7 @@ repositories {
     }
 
     generateAvro {
-        schemas.from(layout.projectDirectory.dir("src/main/avro"))
+        schemas.from(layout.projectDirectory.dir("src/main/avro/aktor"))
     }
 
     kotlin {

@@ -13,6 +13,7 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.JobTaskConfig
+import no.nav.sokos.skattekort.config.KafkaConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.SftpConfig
@@ -21,8 +22,10 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.httpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.person.AktorService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingsService
 import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
@@ -31,6 +34,7 @@ import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.sftp.SftpService
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.util.launchBackgroundTask
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -53,6 +57,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { httpClient }
         provide { DatabaseConfig.dataSource }
         provide { SftpConfig() }
+        provide { KafkaConfig() }
         provide(SftpService::class)
         provide(MaskinportenTokenClient::class)
 
@@ -72,6 +77,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(SkatteetatenClient::class)
         provide(ScheduledTaskService::class)
         provide(SkattekortPersonService::class)
+        provide(AktorService::class)
+        provide(KafkaConsumerService::class)
     }
 
     commonConfig()
@@ -97,4 +104,13 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 dataSource,
             ).start()
     }
+
+    val kafkaProperties = PropertiesConfig.getKafkaProperties()
+    if (kafkaProperties.enabled) {
+        val kafkaConsumerService: KafkaConsumerService by dependencies
+        launchBackgroundTask(applicationState) {
+            kafkaConsumerService.start(applicationState)
+        }
+    }
+    logger.info { "Kafka consumer is enabled: ${kafkaProperties.enabled}" }
 }

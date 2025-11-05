@@ -104,11 +104,12 @@ object PropertiesConfig {
 
     fun getKafkaProperties(): KafkaProperties =
         KafkaProperties(
+            enabled = getOrEmpty("KAFKA_CONSUMER_ENABLED").toBoolean(),
             topic = getOrEmpty("KAFKA_CONSUMER_TOPIC"),
             consumerGroupId = getOrEmpty("KAFKA_CONSUMER_GROUP_ID"),
             offsetReset = getOrEmpty("KAFKA_CONSUMER_OFFSET_RESET"),
             brokers = getOrEmpty("KAFKA_BROKERS"),
-            schemaRegistry = getOrEmpty("KAFKA_SCHEMA_REGISTRY_URL"),
+            schemaRegistry = getOrEmpty("KAFKA_SCHEMA_REGISTRY"),
             schemaRegistryUser = getOrEmpty("KAFKA_SCHEMA_REGISTRY_USER"),
             schemaRegistryPassword = getOrEmpty("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
             useSSLSecurity = getOrEmpty("KAFKA_USE_SSL_SECURITY").toBoolean(),
@@ -183,6 +184,7 @@ object PropertiesConfig {
     )
 
     data class KafkaProperties(
+        val enabled: Boolean,
         val topic: String,
         val consumerGroupId: String,
         val offsetReset: String,

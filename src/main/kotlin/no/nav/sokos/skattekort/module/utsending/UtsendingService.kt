@@ -95,13 +95,7 @@ class UtsendingService(
                         }
 
                         Forsystem.ARENA -> {
-                            dataSource.transaction { errorsession ->
-                                UtsendingRepository.increaseFailCount(errorsession, utsending.id, "Arena ikke implementert")
-                                feiledeUtsendingerOppdragzCounter.inc()
-                                if (utsending.failCount > 1000) { // TODO: Slett før produksjonssetting!
-                                    UtsendingRepository.delete(tx, utsending.id!!)
-                                }
-                            }
+                            // NOP
                         }
                         Forsystem.MANUELL -> {
                             UtsendingRepository.delete(tx, utsending.id!!)

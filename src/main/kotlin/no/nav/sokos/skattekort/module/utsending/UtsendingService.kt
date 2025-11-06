@@ -71,8 +71,13 @@ class UtsendingService(
 
     fun handleUtsending() {
         val utsendinger: List<Utsending> =
-            dataSource.transaction { tx ->
-                UtsendingRepository.getAllUtsendinger(tx)
+            try {
+                dataSource.transaction { tx ->
+                    UtsendingRepository.getAllUtsendinger(tx)
+                }
+            } catch (e: Exception) {
+                logger.error("Feil under henting av utsendinger", e)
+                throw e
             }
         utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
         utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
@@ -87,6 +92,7 @@ class UtsendingService(
                                 utsendingOppdragzCounter.inc()
                             } catch (e: Exception) {
                                 // TODO: logg feil
+                                logger.error("Feil under sending til oppdragz", e)
                                 dataSource.transaction { errorsession ->
                                     UtsendingRepository.increaseFailCount(errorsession, utsending.id, e.message ?: "Ukjent feil")
                                     feiledeUtsendingerOppdragzCounter.inc()

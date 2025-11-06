@@ -36,9 +36,10 @@ class BestillingService(
     fun opprettBestillingsbatch() {
         val bestillings: List<Bestilling> =
             dataSource.transaction { tx ->
-                BestillingRepository
-                    .getAllBestilling(tx)
+                val allBestilling = BestillingRepository.getAllBestilling(tx)
+                allBestilling
                     .filter { it.bestillingsbatchId == null }
+                    .filter { it.inntektsaar == allBestilling.firstOrNull()?.inntektsaar }
                     .take(500)
                     .toList()
             }
@@ -48,7 +49,7 @@ class BestillingService(
         }
         val request =
             BestillSkattekortRequest(
-                inntektsaar = "2025",
+                inntektsaar = bestillings.firstOrNull()?.inntektsaar.toString(),
                 bestillingstype = "HENT_ALLE_OPPGITTE",
                 kontaktinformasjon =
                     Kontaktinformasjon(
@@ -96,7 +97,7 @@ class BestillingService(
                     val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
                     when (response.status) {
                         ResponseStatus.FORESPOERSEL_OK.name -> {
-                            response.arbeidsgiver.first().arbeidstaker.map { arbeidstaker ->
+                            response.arbeidsgiver!!.first().arbeidstaker.map { arbeidstaker ->
                                 handleNyttSkattekort(tx, arbeidstaker)
                             }
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
@@ -124,10 +125,14 @@ class BestillingService(
                 ) ?: error("Person med fnr ${arbeidstaker.arbeidstakeridentifikator} ikke funnet ved behandling av skattekortbestilling")
             }
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
+        val skattekort = toSkattekort(arbeidstaker, person)
+        if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
+            personService.flaggPerson(tx, person.id!!)
+        }
         SkattekortRepository.insertBatch(
             tx,
             listOf(
-                toSkattekort(arbeidstaker, person),
+                skattekort,
             ),
         )
         opprettUtsendingerForAbonnementer(tx, person, inntektsaar)

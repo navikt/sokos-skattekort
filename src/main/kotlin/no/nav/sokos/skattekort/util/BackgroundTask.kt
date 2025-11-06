@@ -5,6 +5,7 @@ import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -17,6 +18,7 @@ import no.nav.sokos.skattekort.config.ApplicationState
 
 private val logger = KotlinLogging.logger {}
 
+@OptIn(DelicateCoroutinesApi::class)
 fun launchBackgroundTask(
     applicationState: ApplicationState,
     action: suspend CoroutineScope.() -> Unit,

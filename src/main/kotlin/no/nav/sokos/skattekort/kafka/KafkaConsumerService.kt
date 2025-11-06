@@ -52,7 +52,7 @@ class KafkaConsumerService(
                         logger.info("Mottatt ${consumerRecords.count()} meldinger fra PDL")
                         consumerRecords.forEach { record ->
                             logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
-                            val identifikatorList = getIdentifikatorList(record)
+                            val identifikatorList = mapToIdentifikatorList(record)
                             aktorService.processIdentChanging(identifikatorList)
                         }
                         kafkaConsumer.commitSync()
@@ -66,7 +66,7 @@ class KafkaConsumerService(
         }
     }
 
-    private fun getIdentifikatorList(record: ConsumerRecord<String, Aktor>): List<IdentifikatorDTO> =
+    private fun mapToIdentifikatorList(record: ConsumerRecord<String, Aktor>): List<IdentifikatorDTO> =
         record.value()?.let { aktor ->
             aktor.identifikatorer
                 .map { identifikator ->

@@ -70,7 +70,7 @@ class SkattekortFixedRecordFormatterDuplicatorTest :
             val arbeidstakere: List<Arbeidstaker> =
                 Json
                     .decodeFromString<HentSkattekortResponse>(readFile("/oppdragz/skattekortsvar.json"))
-                    .arbeidsgiver
+                    .arbeidsgiver!!
                     .flatMap { it.arbeidstaker }
             val referanseverdier: Map<String, String> = Json.decodeFromString(readFile("/oppdragz/skattekortreferanser.json"))
             val nyeReferanseVerdier: Map<String, String> =

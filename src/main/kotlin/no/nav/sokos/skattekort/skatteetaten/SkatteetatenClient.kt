@@ -5,7 +5,6 @@ import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -44,13 +43,12 @@ class SkatteetatenClient(
     }
 
     suspend fun hentSkattekort(bestillingsreferanse: String): HentSkattekortResponse {
-        val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/"
+        val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
 
         val response =
             client.get(url) {
                 bearerAuth(maskinportenTokenClient.getAccessToken())
                 accept(ContentType.Application.Json)
-                parameter("bestillingsreferanse", bestillingsreferanse)
             }
 
         if (!response.status.isSuccess()) {

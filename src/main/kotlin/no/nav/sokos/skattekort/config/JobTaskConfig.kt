@@ -20,6 +20,7 @@ import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 private val logger = KotlinLogging.logger { }
 private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
 private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
+private const val JOB_TASK_HENT_SKATTEKORT_BATCH = "hentSkattekort"
 
 object JobTaskConfig {
     fun scheduler(
@@ -35,6 +36,7 @@ object JobTaskConfig {
             .startTasks(
                 recurringSendBestillingBatchTask(bestillingService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
+                recurringHentSkattekortBatchTask(bestillingService, scheduledTaskService),
             ).build()
 
     fun recurringSendBestillingBatchTask(
@@ -75,6 +77,27 @@ object JobTaskConfig {
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                     scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_UTSENDING_BATCH)
                     utsendingService.handleUtsending()
+                }
+            }
+    }
+
+    fun recurringHentSkattekortBatchTask(
+        bestillingService: BestillingService,
+        scheduledTaskService: ScheduledTaskService,
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+    ): RecurringTask<String> {
+        val showLogLocalTime = LocalDateTime.now()
+        return Tasks
+            .recurring(
+                JOB_TASK_HENT_SKATTEKORT_BATCH,
+                cron(schedulerProperties.cronHenting),
+                String::class.java,
+            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
+                withTracerId {
+                    showLog(showLogLocalTime, instance, context)
+                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_SKATTEKORT_BATCH)
+                    bestillingService.hentSkattekort()
                 }
             }
     }

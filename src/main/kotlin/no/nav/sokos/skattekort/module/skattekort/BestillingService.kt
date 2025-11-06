@@ -71,6 +71,9 @@ class BestillingService(
                     )
                 }
             } catch (ex: Exception) {
+                dataSource.transaction { tx ->
+                    AuditRepository.insertBatch(tx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Bestilling feilet")
+                }
                 logger.error(ex) { "Bestillingsbatch feilet: ${ex.message}" }
             }
         }

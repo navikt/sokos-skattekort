@@ -94,8 +94,12 @@ class UtsendingService(
                             }
                         }
 
-                        Forsystem.ARENA -> throw NotImplementedError("Forsystem.ARENA is not implemented yet")
-                        Forsystem.MANUELL -> throw NotImplementedError("Forsystem.MANUELL is not implemented yet")
+                        Forsystem.ARENA -> {
+                            // NOP
+                        }
+                        Forsystem.MANUELL -> {
+                            UtsendingRepository.delete(tx, utsending.id!!)
+                        }
                     }
                 }
             }

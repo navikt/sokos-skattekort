@@ -1,8 +1,11 @@
 package no.nav.sokos.skattekort.module.person
 
 import java.time.LocalDate
+import javax.sql.DataSource
 
-import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
@@ -12,7 +15,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.withTx
 private val logger = KotlinLogging.logger { }
 
 class PersonService(
-    private val dataSource: HikariDataSource,
+    private val dataSource: DataSource,
 ) {
     fun getPersonList(
         count: Int = 30,
@@ -52,4 +55,13 @@ class PersonService(
         tx: TransactionalSession,
         personId: PersonId,
     ) = PersonRepository.flaggPerson(tx, personId)
+
+    suspend fun isPersonExists(
+        tx: TransactionalSession,
+        foedselsnummerList: List<String>,
+    ): Boolean =
+        withContext(Dispatchers.IO) {
+            if (foedselsnummerList.isEmpty()) return@withContext false
+            tx.transaction { FoedselsnummerRepository.findAllPersonIdByfoedselsnummer(tx, foedselsnummerList) }
+        }
 }

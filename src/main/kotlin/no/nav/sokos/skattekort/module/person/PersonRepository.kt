@@ -128,6 +128,20 @@ object PersonRepository {
         return personId
     }
 
+    fun flaggPerson(
+        tx: TransactionalSession,
+        personId: PersonId,
+    ) = tx.execute(
+        queryOf(
+            """
+                    |UPDATE personer 
+                    |SET flagget = true
+                    |WHERE id = :personId
+            """.trimMargin(),
+            mapOf("personId" to personId.value),
+        ),
+    )
+
     private val mapToPerson: (Row) -> Person = { row ->
         Person(
             id = PersonId(row.long("person_id").toLong()),

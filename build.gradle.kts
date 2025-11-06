@@ -20,191 +20,192 @@ repositories {
     maven { url = uri("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
     maven { url = uri("https://packages.confluent.io/maven/") }
+}
 
-    val ktorVersion = "3.3.1"
-    val nimbusVersion = "10.4.1"
-    val logbackVersion = "1.5.18"
-    val logstashVersion = "8.1"
-    val micrometerVersion = "1.15.2"
-    val dbSchedulerVersion = "16.2.0"
-    val kotlinLoggingVersion = "3.0.5"
-    val janionVersion = "3.1.12"
-    val kotestVersion = "6.0.0.M17"
-    val kotlinxSerializationVersion = "1.9.0"
-    val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
-    val jacksonVersion = "3.0.0"
-    val mockOAuth2ServerVersion = "2.2.1"
-    val mockkVersion = "1.14.5"
-    val hikariVersion = "6.3.1"
-    val kotliqueryVersion = "1.9.1"
-    val testcontainersVersion = "1.21.3"
-    val flywayVersion = "11.10.3"
-    val postgresVersion = "42.7.7"
-    val vaultVersion = "1.3.10"
-    val activemqVersion = "2.41.0"
-    val ibmmqVersion = "9.4.3.0"
-    val opentelemetryVersion = "2.20.1-alpha"
-    val swaggerRequestValidatorVersion = "2.46.0"
-    val jschVersion = "2.27.3"
-    val kafkaClientsVersion = "4.1.0"
-    val avroVersion = "1.12.1"
-    val kafkaAvroSerializerVersion = "8.1.0"
-    val avro4kVersion = "2.6.0"
+val ktorVersion = "3.3.1"
+val nimbusVersion = "10.4.1"
+val logbackVersion = "1.5.18"
+val logstashVersion = "8.1"
+val micrometerVersion = "1.15.2"
+val dbSchedulerVersion = "16.2.0"
+val kotlinLoggingVersion = "3.0.5"
+val janionVersion = "3.1.12"
+val kotestVersion = "6.0.0.M17"
+val kotlinxSerializationVersion = "1.9.0"
+val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
+val jacksonVersion = "3.0.0"
+val mockOAuth2ServerVersion = "2.2.1"
+val mockkVersion = "1.14.5"
+val hikariVersion = "6.3.1"
+val kotliqueryVersion = "1.9.1"
+val testcontainersVersion = "1.21.3"
+val flywayVersion = "11.10.3"
+val postgresVersion = "42.7.7"
+val vaultVersion = "1.3.10"
+val activemqVersion = "2.41.0"
+val ibmmqVersion = "9.4.3.0"
+val opentelemetryVersion = "2.20.1-alpha"
+val swaggerRequestValidatorVersion = "2.46.0"
+val jschVersion = "2.27.3"
+val kafkaClientsVersion = "4.1.0"
+val avroVersion = "1.12.1"
+val kafkaAvroSerializerVersion = "8.1.0"
+val avro4kVersion = "2.6.0"
 
-    dependencies {
+dependencies {
 
-        // Ktor server
-        implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")
-        implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
-        implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
-        implementation("io.ktor:ktor-server-swagger:$ktorVersion")
-        implementation("io.ktor:ktor-server-di:$ktorVersion")
-        implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
-        implementation("io.ktor:ktor-server-request-validation:$ktorVersion")
+    // Ktor server
+    implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-swagger:$ktorVersion")
+    implementation("io.ktor:ktor-server-di:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation("io.ktor:ktor-server-request-validation:$ktorVersion")
 
-        // Ktor client
-        implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-        implementation("io.ktor:ktor-client-apache-jvm:$ktorVersion")
+    // Ktor client
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-client-apache-jvm:$ktorVersion")
 
-        // Security
-        implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktorVersion")
-        implementation("com.nimbusds:nimbus-jose-jwt:$nimbusVersion")
+    // Security
+    implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktorVersion")
+    implementation("com.nimbusds:nimbus-jose-jwt:$nimbusVersion")
 
-        // Database
-        implementation("com.zaxxer:HikariCP:$hikariVersion")
-        implementation("org.postgresql:postgresql:$postgresVersion")
-        implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    // Database
+    implementation("com.zaxxer:HikariCP:$hikariVersion")
+    implementation("org.postgresql:postgresql:$postgresVersion")
+    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
 
-        implementation("org.flywaydb:flyway-core:$flywayVersion")
-        runtimeOnly("org.flywaydb:flyway-database-postgresql:$flywayVersion")
+    implementation("org.flywaydb:flyway-core:$flywayVersion")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:$flywayVersion")
 
-        // Serialization
-        implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
-        implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
+    // Serialization
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
-        implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-        implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
-        implementation("tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
+    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
+    implementation("tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
 
-        // Monitorering
-        implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
-        implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
+    // Monitorering
+    implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
 
-        // Logging
-        implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
-        runtimeOnly("org.codehaus.janino:janino:$janionVersion")
-        runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
-        runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
+    // Logging
+    implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
+    runtimeOnly("org.codehaus.janino:janino:$janionVersion")
+    runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
 
-        // Config
-        implementation("no.nav:vault-jdbc:$vaultVersion")
+    // Config
+    implementation("no.nav:vault-jdbc:$vaultVersion")
 
-        implementation("jakarta.jms:jakarta.jms-api:3.1.0")
-        implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")
+    implementation("jakarta.jms:jakarta.jms-api:3.1.0")
+    implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")
 
-        // SFTP
-        implementation("com.github.mwiede:jsch:$jschVersion")
+    // SFTP
+    implementation("com.github.mwiede:jsch:$jschVersion")
 
-        // Kafka
-        implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
-        implementation("org.apache.avro:avro:$avroVersion")
-        implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
+    // Kafka
+    implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
+    implementation("org.apache.avro:avro:$avroVersion")
+    implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
 
-        // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
-        implementation("org.apache.commons:commons-lang3:3.18.0")
+    // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
+    implementation("org.apache.commons:commons-lang3:3.18.0")
 
-        // Scheduler
-        implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
+    // Scheduler
+    implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
 
-        // Opentelemetry
-        implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
+    // Opentelemetry
+    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
 
-        // Test
-        testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
-        testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
-        testImplementation("io.kotest:kotest-extensions-now:$kotestVersion")
-        testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
-        testImplementation("io.mockk:mockk:$mockkVersion")
-        testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
-        testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
-        testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
-        testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
-        testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
-    }
+    // Test
+    testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
+    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
+    testImplementation("io.kotest:kotest-extensions-now:$kotestVersion")
+    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
+    testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
+    testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
+    testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
+    testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
+}
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5
-    configurations.ktlint {
-        resolutionStrategy.force("ch.qos.logback:logback-classic:$logbackVersion")
-    }
+configurations.ktlint {
+    resolutionStrategy.force("ch.qos.logback:logback-classic:$logbackVersion")
+}
 
-    application {
-        mainClass.set("no.nav.sokos.skattekort.ApplicationKt")
-    }
+application {
+    mainClass.set("no.nav.sokos.skattekort.ApplicationKt")
+}
 
-    sourceSets {
-        main {
-            java {
-                srcDirs("${layout.buildDirectory.get()}/generated/src/main/kotlin")
-            }
+sourceSets {
+    main {
+        java {
+            srcDirs("${layout.buildDirectory.get()}/generated/src/main/kotlin")
         }
     }
+}
 
-    generateAvro {
-        schemas.from(layout.projectDirectory.dir("src/main/avro/aktor"))
+generateAvro {
+    schemas.from(layout.projectDirectory.dir("src/main/avro/aktor"))
+}
+
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+tasks {
+    withType<KotlinCompile>().configureEach {
+        dependsOn("ktlintFormat")
     }
 
-    kotlin {
-        jvmToolchain {
-            languageVersion.set(JavaLanguageVersion.of(21))
+    withType<Test>().configureEach {
+        useJUnitPlatform()
+
+        testLogging {
+            showExceptions = true
+            showStackTraces = true
+            exceptionFormat = FULL
+            events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
         }
+
+        reports.forEach { report -> report.required.value(false) }
+
+        finalizedBy(koverHtmlReport)
     }
 
-    tasks {
-        withType<KotlinCompile>().configureEach {
-            dependsOn("ktlintFormat")
-        }
+    withType<Wrapper> {
+        gradleVersion = "9.1.0"
+    }
 
-        withType<Test>().configureEach {
-            useJUnitPlatform()
+    ("build") {
+        dependsOn("copyPreCommitHook")
+    }
 
-            testLogging {
-                showExceptions = true
-                showStackTraces = true
-                exceptionFormat = FULL
-                events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+    register<Copy>("copyPreCommitHook") {
+        from(".scripts/pre-commit")
+        into(".git/hooks")
+        filePermissions {
+            user {
+                execute = true
             }
-
-            reports.forEach { report -> report.required.value(false) }
-
-            finalizedBy(koverHtmlReport)
         }
-
-        withType<Wrapper> {
-            gradleVersion = "9.1.0"
+        doFirst {
+            println("Installing git hooks...")
         }
-
-        ("build") {
-            dependsOn("copyPreCommitHook")
+        doLast {
+            println("Git hooks installed successfully.")
         }
-
-        register<Copy>("copyPreCommitHook") {
-            from(".scripts/pre-commit")
-            into(".git/hooks")
-            filePermissions {
-                user {
-                    execute = true
-                }
-            }
-            doFirst {
-                println("Installing git hooks...")
-            }
-            doLast {
-                println("Git hooks installed successfully.")
-            }
-            description = "Copy pre-commit hook to .git/hooks"
-            group = "git hooks"
-            outputs.upToDateWhen { false }
-        }
+        description = "Copy pre-commit hook to .git/hooks"
+        group = "git hooks"
+        outputs.upToDateWhen { false }
     }
 }

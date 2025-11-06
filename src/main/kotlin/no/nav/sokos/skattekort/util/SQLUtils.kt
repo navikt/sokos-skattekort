@@ -8,7 +8,6 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.sessionOf
 import kotliquery.using
-import org.postgresql.util.PSQLException
 
 object SQLUtils {
     inline fun <reified T : Any> Row.optionalOrNull(columnLabel: String): T? =
@@ -31,28 +30,10 @@ object SQLUtils {
             this.transaction { action(it) }
         }
 
-    fun <A> DataSource.transaction(
-        maxRetries: Int = 3,
-        initialDelayMs: Long = 100L,
-        operation: (TransactionalSession) -> A,
-    ): A {
-        var delay = initialDelayMs
-        repeat(maxRetries) { attempt ->
-            try {
-                return using(sessionOf(this, returnGeneratedKey = true)) { session ->
-                    session.transaction { tx ->
-                        operation(tx)
-                    }
-                }
-            } catch (e: PSQLException) {
-                if (e.sqlState == "40001" && attempt < maxRetries - 1) {
-                    Thread.sleep(delay)
-                    delay *= 2
-                } else {
-                    throw e
-                }
+    fun <A> DataSource.transaction(operation: (TransactionalSession) -> A): A =
+        using(sessionOf(this, returnGeneratedKey = true)) { session ->
+            session.transaction { tx ->
+                operation(tx)
             }
         }
-        error("Unreachable code")
-    }
 }

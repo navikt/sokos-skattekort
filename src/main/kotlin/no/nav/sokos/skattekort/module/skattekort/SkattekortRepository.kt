@@ -6,6 +6,8 @@ import kotliquery.Query
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.module.person.AuditRepository
+import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT
@@ -17,6 +19,12 @@ object SkattekortRepository {
         skattekortList: List<Skattekort>,
     ): List<Long> =
         skattekortList.map { skattekort ->
+            AuditRepository.insert(
+                tx,
+                AuditTag.SKATTEKORTINFORMASJON_MOTTATT,
+                skattekort.personId,
+                "Lagret skattekortresultat ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar}",
+            )
             val id =
                 tx.updateAndReturnGeneratedKey(
                     Query(
@@ -36,7 +44,7 @@ object SkattekortRepository {
                             ),
                     ),
                 )
-            skattekortList.forEach { skattekort ->
+            if (skattekort.forskuddstrekkList.isNotEmpty()) {
                 tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
                     """
                     INSERT INTO forskuddstrekk (skattekort_id, trekk_kode, type, frikort_beloep, tabell_nummer, prosentsats, antall_mnd_for_trekk)
@@ -81,6 +89,8 @@ object SkattekortRepository {
                         }
                     },
                 )
+            }
+            if (skattekort.tilleggsopplysningList.isNotEmpty()) {
                 tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
                     """
                     INSERT INTO skattekort_tilleggsopplysning (skattekort_id, opplysning)

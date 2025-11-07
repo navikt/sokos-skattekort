@@ -1,12 +1,12 @@
 package no.nav.sokos.skattekort.module.skattekort
 
 import java.math.BigDecimal
+import javax.sql.DataSource
 
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 
-import com.zaxxer.hikari.HikariDataSource
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
@@ -28,7 +28,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 // TODO: Metrikk for varsling: tid siden siste mottatte bestilling
 // TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingService(
-    val dataSource: HikariDataSource,
+    val dataSource: DataSource,
     val skatteetatenClient: SkatteetatenClient,
     val personService: PersonService,
 ) {

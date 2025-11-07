@@ -1,8 +1,9 @@
 package no.nav.sokos.skattekort.module.forespoersel
 
+import javax.sql.DataSource
+
 import kotlin.time.ExperimentalTime
 
-import com.zaxxer.hikari.HikariDataSource
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 import tools.jackson.module.kotlin.readValue
@@ -24,7 +25,7 @@ private const val FORESPOERSEL_DELIMITER = ";"
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselService(
-    private val dataSource: HikariDataSource,
+    private val dataSource: DataSource,
     private val personService: PersonService,
 ) {
     fun taImotForespoersel(

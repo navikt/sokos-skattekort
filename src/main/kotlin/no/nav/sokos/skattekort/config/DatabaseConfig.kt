@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.config
 
 import java.time.Duration
+import javax.sql.DataSource
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -15,14 +16,14 @@ import no.nav.vault.jdbc.hikaricp.HikariCPVaultUtil
 private val logger = KotlinLogging.logger {}
 
 object DatabaseConfig {
-    val dataSource: HikariDataSource by lazy {
+    val dataSource: DataSource by lazy {
         initDataSource()
     }
 
     init {
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                dataSource.close()
+                (dataSource as HikariDataSource).close()
             },
         )
     }

@@ -1,8 +1,8 @@
 package no.nav.sokos.skattekort.module.person
 
 import java.time.LocalDate
+import javax.sql.DataSource
 
-import com.zaxxer.hikari.HikariDataSource
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.withTx
 private val logger = KotlinLogging.logger { }
 
 class PersonService(
-    private val dataSource: HikariDataSource,
+    private val dataSource: DataSource,
 ) {
     fun getPersonList(
         count: Int = 30,

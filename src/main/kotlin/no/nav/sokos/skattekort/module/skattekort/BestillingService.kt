@@ -102,11 +102,23 @@ class BestillingService(
                             else -> {
                                 logger.error { "Bestillingsbatch feilet: ${response.status}" }
                                 BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                                AuditRepository.insertBatch(
+                                    tx,
+                                    AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                    BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                    "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
+                                )
                             }
                         }
                     } catch (ex: Exception) {
                         logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
                         BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                        AuditRepository.insertBatch(
+                            tx,
+                            AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                            BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                            "Batchhenting av skattekort feilet",
+                        )
                     }
                 }
             }

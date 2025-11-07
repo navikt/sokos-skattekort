@@ -89,6 +89,22 @@ object BestillingRepository {
             extractor = mapToBestilling,
         )
 
+    fun getAllBestillingsInBatch(
+        tx: TransactionalSession,
+        batchId: Long,
+    ) = tx.list(
+        queryOf(
+            """
+            SELECT * FROM bestillinger
+            WHERE bestillingsbatch_id = :bestillingsbatchId
+            """.trimIndent(),
+            mapOf(
+                "bestillingsbatchId" to batchId,
+            ),
+        ),
+        extractor = mapToBestilling,
+    )
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(

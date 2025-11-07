@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.module.utsending
 
-import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
+
 import io.ktor.server.plugins.di.annotations.Named
 import io.prometheus.metrics.core.metrics.Counter
 import io.prometheus.metrics.core.metrics.Gauge
@@ -27,7 +28,7 @@ import no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekortmelding
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class UtsendingService(
-    val dataSource: HikariDataSource,
+    val dataSource: DataSource,
     val jmsConnectionFactory: ConnectionFactory,
     @Named("leveransekoeOppdragZSkattekort") val leveransekoeOppdragZSkattekort: Queue,
 ) {

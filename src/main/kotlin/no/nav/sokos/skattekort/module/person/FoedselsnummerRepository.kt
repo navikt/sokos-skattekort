@@ -44,7 +44,7 @@ object FoedselsnummerRepository {
             },
         )
 
-    fun findAllPersonIdByfoedselsnummer(
+    fun findAllPersonIdByPersonidentifikator(
         tx: TransactionalSession,
         personidentifikatorList: List<String>,
     ): List<PersonId> =

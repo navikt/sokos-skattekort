@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -108,8 +107,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     val kafkaProperties = PropertiesConfig.getKafkaProperties()
     if (kafkaProperties.enabled) {
-        monitor.subscribe(ApplicationStarted) {
-            applicationState.ready = true
+        applicationState.onReady = {
             val kafkaConsumerService: KafkaConsumerService by dependencies
             launchBackgroundTask(applicationState) {
                 kafkaConsumerService.start(applicationState)

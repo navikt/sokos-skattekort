@@ -56,12 +56,12 @@ class PersonService(
         personId: PersonId,
     ) = PersonRepository.flaggPerson(tx, personId)
 
-    suspend fun isPersonExists(
+    suspend fun findAllPersonIdByPersonidentifikator(
         tx: TransactionalSession,
-        foedselsnummerList: List<String>,
-    ): Boolean =
+        personidentifikatorList: List<String>,
+    ): List<PersonId> =
         withContext(Dispatchers.IO) {
-            if (foedselsnummerList.isEmpty()) return@withContext false
-            tx.transaction { FoedselsnummerRepository.findAllPersonIdByfoedselsnummer(tx, foedselsnummerList) }
+            if (personidentifikatorList.isEmpty()) return@withContext emptyList()
+            tx.transaction { FoedselsnummerRepository.findAllPersonIdByPersonidentifikator(tx, personidentifikatorList) }
         }
 }

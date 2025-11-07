@@ -16,17 +16,17 @@ class AktorService(
     private val personService: PersonService,
 ) {
     suspend fun processIdentChanging(identifikatorList: List<IdentifikatorDTO>) {
+        logger.info(marker = TEAM_LOGS_MARKER) { "Processing Aktor with identifikatorList: $identifikatorList" }
         dataSource.suspendTransaction { tx ->
-            val foedselsnummerList =
+            val personidentifikatorList =
                 identifikatorList
                     .filter { it.type != IdentType.AKTORID }
                     .map { it.idnummer }
-            if (personService.isPersonExists(tx, foedselsnummerList)) {
-            }
+            val personIdList = personService.findAllPersonIdByPersonidentifikator(tx, personidentifikatorList)
         }
 
-        identifikatorList.forEach { identifikator ->
-            logger.info(marker = TEAM_LOGS_MARKER) { "Processing Aktor with identifikator: $identifikator" }
-        }
+//        identifikatorList.forEach { identifikator ->
+//
+//        }
     }
 }

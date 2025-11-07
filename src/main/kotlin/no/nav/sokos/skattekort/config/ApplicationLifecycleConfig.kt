@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.config
 
+import kotlin.properties.Delegates
+
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopped
@@ -25,6 +27,13 @@ fun Application.applicationLifecycleConfig(applicationState: ApplicationState) {
 }
 
 class ApplicationState(
-    var ready: Boolean = false,
+    readyInit: Boolean = false,
     var alive: Boolean = false,
-)
+    var onReady: (() -> Unit)? = null,
+) {
+    var ready: Boolean by Delegates.observable(readyInit) { _, oldValue, newValue ->
+        if (!oldValue && newValue) {
+            onReady?.invoke()
+        }
+    }
+}

@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.listener
 
-import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
+
 import io.kotest.core.listeners.AfterEachListener
 import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.test.TestCase
@@ -29,7 +30,7 @@ object DbListener : BeforeSpecListener, AfterEachListener {
             start()
         }
 
-    val dataSource: HikariDataSource by lazy {
+    val dataSource: DataSource by lazy {
         container.toDataSource()
     }.apply {
         DatabaseConfig.migrate(container.toDataSource(), "test-admin")

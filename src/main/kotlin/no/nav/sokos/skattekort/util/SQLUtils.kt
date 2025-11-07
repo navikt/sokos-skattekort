@@ -4,7 +4,6 @@ import javax.sql.DataSource
 
 import kotlin.reflect.full.memberProperties
 
-import com.zaxxer.hikari.HikariDataSource
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.sessionOf
@@ -21,7 +20,7 @@ object SQLUtils {
         return props.keys.associateWith { props[it]?.get(this) }
     }
 
-    inline fun <reified T : Any> HikariDataSource.withTx(
+    inline fun <reified T : Any> DataSource.withTx(
         existing: TransactionalSession?,
         crossinline action: (TransactionalSession) -> T,
     ): T =
@@ -29,13 +28,6 @@ object SQLUtils {
             action(existing)
         } else {
             this.transaction { action(it) }
-        }
-
-    fun <A> HikariDataSource.transaction(operation: (TransactionalSession) -> A): A =
-        using(sessionOf(this, returnGeneratedKey = true)) { session ->
-            session.transaction { tx ->
-                operation(tx)
-            }
         }
 
     fun <A> DataSource.transaction(operation: (TransactionalSession) -> A): A =

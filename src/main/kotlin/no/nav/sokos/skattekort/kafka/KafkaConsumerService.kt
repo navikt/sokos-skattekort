@@ -11,8 +11,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
-import no.nav.person.pdl.aktor.v2.Aktor
-import no.nav.person.pdl.aktor.v2.Type
+import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.KafkaConfig
 import no.nav.sokos.skattekort.metrics.Metrics
@@ -27,7 +26,7 @@ class KafkaConsumerService(
     private val kafkaConfig: KafkaConfig,
     private val aktorService: AktorService,
 ) {
-    private val kafkaConsumer: KafkaConsumer<String, Aktor> = KafkaConsumer(kafkaConfig.properties)
+    private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(kafkaConfig.properties)
     private val kafkaClientMetrics: KafkaClientMetrics = KafkaClientMetrics(kafkaConsumer)
 
     init {
@@ -47,13 +46,13 @@ class KafkaConsumerService(
 
                 runCatching {
                     logger.info { "Polling kafka for topic=${kafkaConfig.topic}" }
-                    val consumerRecords: ConsumerRecords<String, Aktor> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+                    val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
                     if (!consumerRecords.isEmpty) {
                         logger.info("Mottatt ${consumerRecords.count()} meldinger fra PDL")
                         consumerRecords.forEach { record ->
                             logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
-                            val identifikatorList = mapToIdentifikatorList(record)
-                            aktorService.processIdentChanging(identifikatorList)
+                            val personHendelseDTO = mapToPersonHendelseDTO(record)
+                            aktorService.processIdentChanging(personHendelseDTO)
                         }
                         kafkaConsumer.commitSync()
                     }
@@ -66,20 +65,19 @@ class KafkaConsumerService(
         }
     }
 
-    private fun mapToIdentifikatorList(record: ConsumerRecord<String, Aktor>): List<IdentifikatorDTO> =
-        record.value()?.let { aktor ->
-            aktor.identifikatorer
-                .map { identifikator ->
-                    IdentifikatorDTO(
-                        idnummer = identifikator.idnummer,
-                        gjeldende = identifikator.gjeldende,
-                        type =
-                            when (identifikator.type) {
-                                Type.FOLKEREGISTERIDENT -> IdentType.FOLKEREGISTERIDENT
-                                Type.NPID -> IdentType.NPID
-                                Type.AKTORID -> IdentType.AKTORID
-                            },
-                    )
-                }
-        } ?: emptyList()
+    private fun mapToPersonHendelseDTO(record: ConsumerRecord<String, Personhendelse>): PersonHendelseDTO =
+        record.value().let { hendelse ->
+            PersonHendelseDTO(
+                hendelseId = hendelse.hendelseId,
+                personidenter = hendelse.personidenter.toList(),
+                opplysningstype = hendelse.opplysningstype,
+                endringstype = EndringstypeDTO.valueOf(hendelse.endringstype.name),
+                folkeregisteridentifikator =
+                    FolkeregisteridentifikatorDTO(
+                        identifikasjonsnummer = hendelse.folkeregisteridentifikator.identifikasjonsnummer,
+                        type = hendelse.folkeregisteridentifikator.type,
+                        status = hendelse.folkeregisteridentifikator.status,
+                    ),
+            )
+        }
 }

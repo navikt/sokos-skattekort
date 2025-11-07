@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort
 
 import com.ibm.mq.jakarta.jms.MQQueue
+import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfig
@@ -61,7 +62,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
         provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
-            MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+            val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+            queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
+            queue
         }
 
         provide(PersonService::class)

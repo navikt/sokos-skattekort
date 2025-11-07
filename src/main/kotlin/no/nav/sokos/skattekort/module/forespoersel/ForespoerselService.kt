@@ -59,6 +59,12 @@ class ForespoerselService(
         brukerId: String?,
     ) {
         var bestillingCount = 0
+        if (forespoerselInput.inntektsaar < 2025) {
+            logger.warn {
+                "ForespoerselId: $forespoerselId har inntektsår ${forespoerselInput.inntektsaar} og ignoreres "
+            }
+            return
+        }
         forespoerselInput.fnrList.forEach { fnr ->
             val person =
                 personService.findOrCreatePersonByFnr(

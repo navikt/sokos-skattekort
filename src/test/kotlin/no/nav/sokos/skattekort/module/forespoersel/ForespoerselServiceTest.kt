@@ -49,7 +49,7 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val osMessage = "OS;2005;12345678901"
+            val osMessage = "OS;2025;12345678901"
 
             forespoerselService.taImotForespoersel(osMessage)
 
@@ -94,7 +94,7 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val message = "MANUELL;2005;12345678901"
+            val message = "MANUELL;2026;12345678901"
             val brukerId = "Z123456"
 
             forespoerselService.taImotForespoersel(message, NavIdent(brukerId))

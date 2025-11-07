@@ -153,7 +153,7 @@ sourceSets {
 }
 
 generateAvro {
-    schemas.from(layout.projectDirectory.dir("src/main/avro/aktor"))
+    schemas.from(layout.projectDirectory.dir("src/main/avro/"))
 }
 
 kotlin {

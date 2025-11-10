@@ -32,7 +32,7 @@ class MottaBestillingEndToEndTest :
                     DbListener.loadDataSet("basicendtoendtest/basicdata.sql")
 
                     val fnr = "15467834260"
-                    JmsTestUtil.sendMessage("OS;1994;$fnr")
+                    JmsTestUtil.sendMessage("OS;2027;$fnr")
 
                     eventually(eventuallyConfiguration) {
                         DbListener.dataSource.transaction { tx ->
@@ -41,7 +41,7 @@ class MottaBestillingEndToEndTest :
                             forespoerselList shouldHaveSize 1
                             assertSoftly {
                                 forespoerselList.first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                                forespoerselList.first().dataMottatt shouldBe "OS;1994;$fnr"
+                                forespoerselList.first().dataMottatt shouldBe "OS;2027;$fnr"
                             }
 
                             val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
@@ -51,9 +51,9 @@ class MottaBestillingEndToEndTest :
                                 abonnementList
                                     .first()
                                     .person.foedselsnummer.fnr.value shouldBe fnr
-                                abonnementList.first().inntektsaar shouldBe 1994
+                                abonnementList.first().inntektsaar shouldBe 2027
                                 abonnementList.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                                abonnementList.first().inntektsaar shouldBe 1994
+                                abonnementList.first().inntektsaar shouldBe 2027
                             }
 
                             val utsendingList = UtsendingRepository.getAllUtsendinger(tx)

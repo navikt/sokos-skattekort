@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.module.utsending
 
-import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
+
 import io.ktor.server.plugins.di.annotations.Named
 import io.prometheus.metrics.core.metrics.Counter
 import io.prometheus.metrics.core.metrics.Gauge
@@ -27,7 +28,7 @@ import no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekortmelding
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class UtsendingService(
-    val dataSource: HikariDataSource,
+    val dataSource: DataSource,
     val jmsConnectionFactory: ConnectionFactory,
     @Named("leveransekoeOppdragZSkattekort") val leveransekoeOppdragZSkattekort: Queue,
 ) {
@@ -49,7 +50,7 @@ class UtsendingService(
             jmsSession = jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE)
             jmsProducer = jmsSession.createProducer(leveransekoeOppdragZSkattekort)
             val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar)
-            val skattekortmelding = Skattekortmelding(skattekort, fnr.toString())
+            val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
             val message = jmsSession.createTextMessage(copybook)
             jmsProducer.send(message)
@@ -71,8 +72,13 @@ class UtsendingService(
 
     fun handleUtsending() {
         val utsendinger: List<Utsending> =
-            dataSource.transaction { tx ->
-                UtsendingRepository.getAllUtsendinger(tx)
+            try {
+                dataSource.transaction { tx ->
+                    UtsendingRepository.getAllUtsendinger(tx)
+                }
+            } catch (e: Exception) {
+                logger.error("Feil under henting av utsendinger", e)
+                throw e
             }
         utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
         utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
@@ -87,6 +93,7 @@ class UtsendingService(
                                 utsendingOppdragzCounter.inc()
                             } catch (e: Exception) {
                                 // TODO: logg feil
+                                logger.error("Feil under sending til oppdragz", e)
                                 dataSource.transaction { errorsession ->
                                     UtsendingRepository.increaseFailCount(errorsession, utsending.id, e.message ?: "Ukjent feil")
                                     feiledeUtsendingerOppdragzCounter.inc()

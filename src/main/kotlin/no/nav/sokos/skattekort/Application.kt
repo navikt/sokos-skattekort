@@ -1,7 +1,9 @@
 package no.nav.sokos.skattekort
 
+import javax.sql.DataSource
+
 import com.ibm.mq.jakarta.jms.MQQueue
-import com.zaxxer.hikari.HikariDataSource
+import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
@@ -66,7 +68,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
         provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
-            MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+            val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+            queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
+            queue
         }
 
         provide(PersonService::class)
@@ -95,7 +99,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val bestillingService: BestillingService by dependencies
         val utsendingService: UtsendingService by dependencies
         val scheduledTaskService: ScheduledTaskService by dependencies
-        val dataSource: HikariDataSource by dependencies
+        val dataSource: DataSource by dependencies
         JobTaskConfig
             .scheduler(
                 bestillingService,

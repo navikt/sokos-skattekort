@@ -30,13 +30,13 @@ class DbOgMqTest :
 
         test("Tester både kø og database") {
             forespoerselListener.start()
-            JmsTestUtil.sendMessage("OS;1994;11111111111")
+            JmsTestUtil.sendMessage("OS;2025;11111111111")
 
             eventually(eventuallyConfiguration) {
                 DbListener.dataSource.transaction { session ->
                     val result = BestillingRepository.getAllBestilling(session)
                     result.size shouldBe 1
-                    result.first().inntektsaar shouldBe 1994
+                    result.first().inntektsaar shouldBe 2025
                 }
             }
         }

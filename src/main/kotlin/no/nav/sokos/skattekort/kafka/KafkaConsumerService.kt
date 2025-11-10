@@ -10,6 +10,7 @@ import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.TopicPartition
 
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -37,16 +38,19 @@ class KafkaConsumerService(
         kafkaConsumer.use { consumer ->
             consumer.subscribe(listOf(kafkaConfig.topic))
 
+            val partition = TopicPartition(kafkaConfig.topic, 0)
+            consumer.assign(listOf(partition))
+            consumer.seek(partition, 1652146L)
+
             logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
             while (applicationState.ready) {
-                logger.info { "running kafka consumer for topic=${kafkaConfig.topic}" }
                 if (kafkaConsumer.subscription().isEmpty()) {
                     kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
                 }
 
                 runCatching {
-                    logger.info { "Polling kafka for topic=${kafkaConfig.topic}" }
                     val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+                    logger.info { "Polling kafka for topic=${kafkaConfig.topic} + consumerRecords=${consumerRecords.count()}" }
                     if (!consumerRecords.isEmpty) {
                         logger.info("Mottatt ${consumerRecords.count()} meldinger fra PDL")
                         consumerRecords.forEach { record ->

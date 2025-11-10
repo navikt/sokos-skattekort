@@ -73,7 +73,7 @@ class KafkaConsumerService(
                 endringstype = EndringstypeDTO.valueOf(hendelse.endringstype.name),
                 folkeregisteridentifikator =
                     FolkeregisteridentifikatorDTO(
-                        identifikasjonsnummer = hendelse.folkeregisteridentifikator.identifikasjonsnummer,
+                        identifikasjonsnummer = hendelse.folkeregisteridentifikator?.identifikasjonsnummer,
                         type = hendelse.folkeregisteridentifikator.type,
                         status = hendelse.folkeregisteridentifikator.status,
                     ),

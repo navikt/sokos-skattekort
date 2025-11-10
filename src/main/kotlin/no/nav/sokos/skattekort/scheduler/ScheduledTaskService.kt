@@ -1,15 +1,15 @@
 package no.nav.sokos.skattekort.scheduler
 
+import javax.sql.DataSource
+
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-
-import com.zaxxer.hikari.HikariDataSource
 
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 @OptIn(ExperimentalTime::class)
 class ScheduledTaskService(
-    private val dataSource: HikariDataSource,
+    private val dataSource: DataSource,
 ) {
     fun getScheduledTaskInformation(): List<JobTaskInfo> =
         dataSource.transaction { tx ->

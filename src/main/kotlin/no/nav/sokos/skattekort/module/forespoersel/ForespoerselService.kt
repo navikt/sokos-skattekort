@@ -6,12 +6,8 @@ import kotlin.time.ExperimentalTime
 
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
-import tools.jackson.module.kotlin.readValue
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.config.xmlMapper
-import no.nav.sokos.skattekort.module.forespoersel.arena.Applikasjon
-import no.nav.sokos.skattekort.module.forespoersel.arena.ESkattekortBestilling
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
@@ -35,7 +31,7 @@ class ForespoerselService(
         dataSource.transaction { tx ->
             val forespoerselInput =
                 when {
-                    message.startsWith("<") -> parseXmlMessage(message)
+                    message.startsWith("<") -> return@transaction // drop Arena meldinger
                     else -> parseCopybookMessage(message)
                 }
 
@@ -105,22 +101,6 @@ class ForespoerselService(
             }
         }
         logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private fun parseXmlMessage(message: String): ForespoerselInput {
-        val eSkattekortBestilling = xmlMapper.readValue<ESkattekortBestilling>(message)
-        val forsystem =
-            when (eSkattekortBestilling.bestiller) {
-                Applikasjon.ARENA -> Forsystem.ARENA
-                Applikasjon.OS -> Forsystem.OPPDRAGSSYSTEMET
-            }
-
-        return ForespoerselInput(
-            forsystem = forsystem,
-            inntektsaar = eSkattekortBestilling.inntektsaar.toInt(),
-            fnrList = eSkattekortBestilling.brukere,
-        )
     }
 
     @OptIn(ExperimentalTime::class)

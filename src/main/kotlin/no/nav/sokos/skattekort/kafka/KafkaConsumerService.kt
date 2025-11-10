@@ -10,7 +10,6 @@ import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.common.TopicPartition
 
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -37,10 +36,6 @@ class KafkaConsumerService(
     suspend fun start(applicationState: ApplicationState) {
         kafkaConsumer.use { consumer ->
             consumer.subscribe(listOf(kafkaConfig.topic))
-
-            val partition = TopicPartition(kafkaConfig.topic, 0)
-            consumer.assign(listOf(partition))
-            consumer.seek(partition, 1652146L)
 
             logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
             while (applicationState.ready) {

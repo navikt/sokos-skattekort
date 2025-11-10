@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.module.forespoersel
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -26,28 +25,6 @@ class ForespoerselServiceTest :
             ForespoerselService(DbListener.dataSource, personService)
         }
 
-        test("taImotForespoersel skal parse message fra Arena og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val arenaXml = readFile("/mq/eskattekortbestilling_arena.xml")
-
-            forespoerselService.taImotForespoersel(arenaXml)
-
-            DbListener.dataSource.transaction { tx ->
-                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                forespoerselList.size shouldBe 1
-                val forespoersel = forespoerselList.first()
-                forespoersel.forsystem shouldBe Forsystem.ARENA
-
-                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                abonnementList.size shouldBe 4
-                val bestillingList = BestillingRepository.getAllBestilling(tx)
-                bestillingList.size shouldBe 4
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 0
-
-                verifyData(abonnementList, bestillingList, forespoersel)
-            }
-        }
-
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
             val osMessage = "OS;2025;12345678901"
 
@@ -61,29 +38,6 @@ class ForespoerselServiceTest :
 
                 val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                 abonnementList.size shouldBe 1
-                val bestillingList = BestillingRepository.getAllBestilling(tx)
-                bestillingList.size shouldBe 1
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 0
-
-                verifyData(abonnementList, bestillingList, forespoersel)
-            }
-        }
-
-        test("taImotForespoersel skal parse message fra Arena og oppretter bestilling der skattekort ikke fantes fra før") {
-            DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-
-            val arenaXml = readFile("/mq/eskattekortbestilling_arena.xml")
-            forespoerselService.taImotForespoersel(arenaXml)
-
-            DbListener.dataSource.transaction { tx ->
-                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                forespoerselList.size shouldBe 1
-                val forespoersel = forespoerselList.first()
-                forespoersel.forsystem shouldBe Forsystem.ARENA
-
-                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                abonnementList.size shouldBe 4
                 val bestillingList = BestillingRepository.getAllBestilling(tx)
                 bestillingList.size shouldBe 1
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)

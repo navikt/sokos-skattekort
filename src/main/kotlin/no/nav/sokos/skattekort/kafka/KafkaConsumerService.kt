@@ -45,13 +45,15 @@ class KafkaConsumerService(
 
                 runCatching {
                     val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-                    logger.info { "Polling kafka for topic=${kafkaConfig.topic} + consumerRecords=${consumerRecords.count()}" }
+                    logger.info { "Polling kafka for topic=${kafkaConfig.topic}, consumerRecords=${consumerRecords.count()}" }
                     if (!consumerRecords.isEmpty) {
                         logger.info("Mottatt ${consumerRecords.count()} meldinger fra PDL")
                         consumerRecords.forEach { record ->
                             logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
-                            val personHendelseDTO = mapToPersonHendelseDTO(record)
-                            aktorService.processIdentChanging(personHendelseDTO)
+                            if (record.value()?.folkeregisteridentifikator != null) {
+                                val personHendelseDTO = mapToPersonHendelseDTO(record)
+                                aktorService.processIdentChanging(personHendelseDTO)
+                            }
                         }
                         kafkaConsumer.commitSync()
                     }
@@ -73,7 +75,7 @@ class KafkaConsumerService(
                 endringstype = EndringstypeDTO.valueOf(hendelse.endringstype.name),
                 folkeregisteridentifikator =
                     FolkeregisteridentifikatorDTO(
-                        identifikasjonsnummer = hendelse.folkeregisteridentifikator?.identifikasjonsnummer,
+                        identifikasjonsnummer = hendelse.folkeregisteridentifikator.identifikasjonsnummer,
                         type = hendelse.folkeregisteridentifikator.type,
                         status = hendelse.folkeregisteridentifikator.status,
                     ),

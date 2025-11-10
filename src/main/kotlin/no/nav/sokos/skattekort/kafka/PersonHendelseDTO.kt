@@ -9,7 +9,7 @@ data class PersonHendelseDTO(
 )
 
 data class FolkeregisteridentifikatorDTO(
-    val identifikasjonsnummer: String?,
+    val identifikasjonsnummer: String,
     val type: String,
     val status: String,
 )

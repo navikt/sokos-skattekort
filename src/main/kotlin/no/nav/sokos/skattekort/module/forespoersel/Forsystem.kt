@@ -4,7 +4,6 @@ enum class Forsystem(
     val value: String,
 ) {
     OPPDRAGSSYSTEMET("OS"),
-    ARENA("ARENA"),
     MANUELL("MANUELL"),
     ;
 

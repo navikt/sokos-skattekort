@@ -74,14 +74,7 @@ object PersonRepository {
             queryOf(
                 """
                     |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
-                    |FROM personer p 
-                    |LEFT JOIN LATERAL (
-                    |   SELECT id, gjelder_fom, fnr
-                    |   FROM foedselsnumre
-                    |   WHERE person_id = p.id
-                    |   ORDER BY gjelder_fom DESC, id DESC
-                    |   LIMIT 1
-                    |) pf ON TRUE 
+                    |FROM personer p JOIN foedselsnumre pf ON p.id = pf.person_id 
                     |WHERE pf.fnr = :fnr
                 """.trimMargin(),
                 mapOf("fnr" to fnr.value),

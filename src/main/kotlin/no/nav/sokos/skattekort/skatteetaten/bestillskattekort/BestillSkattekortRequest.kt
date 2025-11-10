@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort.skatteetaten.bestillskattekort
 
 import kotlinx.serialization.Serializable
 
+import no.nav.sokos.skattekort.module.person.Personidentifikator
+
 // Data classes
 @Serializable
 data class BestillSkattekortRequest(
@@ -33,3 +35,28 @@ data class Arbeidsgiver(
 data class ArbeidsgiverIdentifikator(
     val organisasjonsnummer: String,
 )
+
+fun bestillSkattekortRequest(
+    inntektsaar: Int,
+    fnr: List<Personidentifikator>,
+): BestillSkattekortRequest =
+    BestillSkattekortRequest(
+        inntektsaar = inntektsaar.toString(),
+        bestillingstype = "HENT_ALLE_OPPGITTE",
+        kontaktinformasjon =
+            Kontaktinformasjon(
+                epostadresse = "john.smith@example.com",
+                mobiltelefonummer = "+4794123456",
+            ),
+        varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
+        forespoerselOmSkattekortTilArbeidsgiver =
+            ForespoerselOmSkattekortTilArbeidsgiver(
+                arbeidsgiver =
+                    listOf(
+                        Arbeidsgiver(
+                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator("312978083"),
+                            arbeidstakeridentifikator = fnr.map { it.value },
+                        ),
+                    ),
+            ),
+    )

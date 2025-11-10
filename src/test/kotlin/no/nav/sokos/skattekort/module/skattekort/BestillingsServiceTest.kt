@@ -109,8 +109,8 @@ class BestillingsServiceTest :
         test("henter skattekort for batch") {
 
             coEvery { skatteetatenClient.hentSkattekort(any()) } returns
-                hentSkattekortResponseFromFile("src/test/resources/skatteetaten/skattekortopplysningerOK.json") andThen
-                hentSkattekortResponseFromFile("src/test/resources/skatteetaten/2skattekortopplysningerOK.json")
+                hentSkattekortResponseFromFile("skattekortopplysningerOK.json") andThen
+                hentSkattekortResponseFromFile("2skattekortopplysningerOK.json")
 
             // Sett inn bestillinger uten bestillingsbatch.
             DbListener.loadDataSet("database/person/persondata.sql")
@@ -213,7 +213,7 @@ class BestillingsServiceTest :
         }
 
         test("ugyldigFoedselsEllerDnummer") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ugyldigFoedselsEllerDnummer.json")
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("ugyldigFoedselsEllerDnummer.json")
             coEvery { personService.flaggPerson(any(), any()) } returns true
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
@@ -260,7 +260,7 @@ class BestillingsServiceTest :
         }
 
         test("ikkeSkattekort med oppholdPaaSvalbard") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("src/test/resources/skatteetaten/ikkeSkattekort.json")
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns hentSkattekortResponseFromFile("ikkeSkattekort.json")
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.loadDataSet("database/bestillinger/bestillinger.sql")
 
@@ -314,4 +314,5 @@ class BestillingsServiceTest :
         }
     })
 
-private fun hentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get(jsonfile)))
+private fun hentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse =
+    Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get("src/test/resources/skatteetaten/hentSkattekort/$jsonfile")))

@@ -20,7 +20,7 @@ data class Skattekortmelding(
         skattekort =
             Skattekort(
                 inntektsaar = sk.inntektsaar.toLong(),
-                utstedtDato = sk.utstedtDato?.toString().let { DatatypeFactory.newInstance().newXMLGregorianCalendar(it) },
+                utstedtDato = sk.utstedtDato?.toString()?.let { DatatypeFactory.newInstance().newXMLGregorianCalendar(it) },
                 skattekortidentifikator = sk.identifikator?.toLong(),
                 forskuddstrekk =
                     sk.forskuddstrekkList.map {

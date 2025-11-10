@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.config
 
 import java.time.Duration
 import java.time.LocalDateTime
+import javax.sql.DataSource
 
 import com.github.kagkarlsson.scheduler.Scheduler
 import com.github.kagkarlsson.scheduler.task.ExecutionContext
@@ -9,7 +10,6 @@ import com.github.kagkarlsson.scheduler.task.TaskInstance
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask
 import com.github.kagkarlsson.scheduler.task.helper.Tasks
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
-import com.zaxxer.hikari.HikariDataSource
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
@@ -27,12 +27,13 @@ object JobTaskConfig {
         bestillingService: BestillingService,
         utsendingService: UtsendingService,
         scheduledTaskService: ScheduledTaskService,
-        dataSource: HikariDataSource,
+        dataSource: DataSource,
     ): Scheduler =
         Scheduler
             .create(dataSource)
             .enableImmediateExecution()
             .registerShutdownHook()
+            .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
                 recurringSendBestillingBatchTask(bestillingService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),

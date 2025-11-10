@@ -101,9 +101,6 @@ class UtsendingService(
                             }
                         }
 
-                        Forsystem.ARENA -> {
-                            // NOP
-                        }
                         Forsystem.MANUELL -> {
                             UtsendingRepository.delete(tx, utsending.id!!)
                         }

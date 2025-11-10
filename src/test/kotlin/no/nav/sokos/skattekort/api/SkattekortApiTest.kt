@@ -158,7 +158,7 @@ class SkattekortApiTest :
                 ApiError(
                     error = HttpStatusCode.BadRequest.description,
                     status = HttpStatusCode.BadRequest.value,
-                    message = "forsystem er ugyldig. Gyldige verdier er: OPPDRAGSSYSTEMET, ARENA, MANUELL",
+                    message = "forsystem er ugyldig. Gyldige verdier er: OPPDRAGSSYSTEMET, MANUELL",
                     path = "$BASE_PATH/bestille",
                     timestamp = Instant.parse(response.body.jsonPath().getString("timestamp")),
                 )

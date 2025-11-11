@@ -5,7 +5,7 @@ data class PersonHendelseDTO(
     val personidenter: List<String>,
     val opplysningstype: String,
     val endringstype: EndringstypeDTO,
-    val folkeregisteridentifikator: FolkeregisteridentifikatorDTO,
+    val folkeregisteridentifikator: FolkeregisteridentifikatorDTO?,
 )
 
 data class FolkeregisteridentifikatorDTO(

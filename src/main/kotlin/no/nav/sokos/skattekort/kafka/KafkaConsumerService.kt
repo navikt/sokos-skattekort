@@ -14,6 +14,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.KafkaConfig
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.metrics.Metrics
 import no.nav.sokos.skattekort.module.person.AktorService
 
@@ -50,10 +51,9 @@ class KafkaConsumerService(
                         logger.info("Mottatt ${consumerRecords.count()} meldinger fra PDL")
                         consumerRecords.forEach { record ->
                             logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
-                            if (record.value()?.folkeregisteridentifikator != null) {
-                                val personHendelseDTO = mapToPersonHendelseDTO(record)
-                                aktorService.processIdentChanging(personHendelseDTO)
-                            }
+                            logger.info(marker = TEAM_LOGS_MARKER) { "Record: ${record.value()}" }
+                            val personHendelseDTO = mapToPersonHendelseDTO(record)
+                            aktorService.processIdentChanging(personHendelseDTO)
                         }
                         kafkaConsumer.commitSync()
                     }
@@ -74,11 +74,13 @@ class KafkaConsumerService(
                 opplysningstype = hendelse.opplysningstype,
                 endringstype = EndringstypeDTO.valueOf(hendelse.endringstype.name),
                 folkeregisteridentifikator =
-                    FolkeregisteridentifikatorDTO(
-                        identifikasjonsnummer = hendelse.folkeregisteridentifikator.identifikasjonsnummer,
-                        type = hendelse.folkeregisteridentifikator.type,
-                        status = hendelse.folkeregisteridentifikator.status,
-                    ),
+                    hendelse.folkeregisteridentifikator?.let { identifikator ->
+                        FolkeregisteridentifikatorDTO(
+                            identifikasjonsnummer = identifikator.identifikasjonsnummer,
+                            type = identifikator.type,
+                            status = identifikator.status,
+                        )
+                    },
             )
         }
 }

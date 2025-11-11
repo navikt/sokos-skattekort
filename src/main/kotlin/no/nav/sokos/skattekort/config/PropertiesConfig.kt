@@ -118,6 +118,12 @@ object PropertiesConfig {
             keystorePath = getOrEmpty("KAFKA_KEYSTORE_PATH"),
         )
 
+    fun getPdlProperties(): PdlProperties =
+        PdlProperties(
+            pdlUrl = getOrEmpty("PDL_URL"),
+            pdlScope = getOrEmpty("PDL_SCOPE"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -197,6 +203,11 @@ object PropertiesConfig {
         val truststorePath: String,
         val credstorePassword: String,
         val keystorePath: String,
+    )
+
+    data class PdlProperties(
+        val pdlUrl: String,
+        val pdlScope: String,
     )
 
     enum class Environment {

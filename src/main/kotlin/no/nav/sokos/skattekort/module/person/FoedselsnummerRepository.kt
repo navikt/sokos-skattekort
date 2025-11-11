@@ -44,11 +44,11 @@ object FoedselsnummerRepository {
             },
         )
 
-    fun findAllPersonIdByPersonidentifikator(
+    fun findPersonIdByPersonidentifikator(
         tx: TransactionalSession,
         personidentifikatorList: List<String>,
-    ): List<PersonId> =
-        tx.list(
+    ): PersonId? =
+        tx.single(
             queryOf(
                 """
                 SELECT person_id FROM foedselsnumre

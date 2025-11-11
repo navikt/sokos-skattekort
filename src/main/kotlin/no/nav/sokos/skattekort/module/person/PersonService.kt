@@ -3,9 +3,6 @@ package no.nav.sokos.skattekort.module.person
 import java.time.LocalDate
 import javax.sql.DataSource
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
@@ -56,12 +53,16 @@ class PersonService(
         personId: PersonId,
     ) = PersonRepository.flaggPerson(tx, personId)
 
-    suspend fun findAllPersonIdByPersonidentifikator(
+    fun findPersonIdByPersonidentifikator(
         tx: TransactionalSession,
         personidentifikatorList: List<String>,
-    ): List<PersonId> =
-        withContext(Dispatchers.IO) {
-            if (personidentifikatorList.isEmpty()) return@withContext emptyList()
-            tx.transaction { FoedselsnummerRepository.findAllPersonIdByPersonidentifikator(tx, personidentifikatorList) }
-        }
+    ): PersonId? = FoedselsnummerRepository.findPersonIdByPersonidentifikator(tx, personidentifikatorList)
+
+    fun updateFoedselsnummer(
+        tx: TransactionalSession,
+        newFoedselsnummer: Foedselsnummer,
+    ) {
+        FoedselsnummerRepository.insert(tx, newFoedselsnummer)
+        AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, newFoedselsnummer.personId!!, "Oppdatert foedselsnummer: ${newFoedselsnummer.fnr.value}")
+    }
 }

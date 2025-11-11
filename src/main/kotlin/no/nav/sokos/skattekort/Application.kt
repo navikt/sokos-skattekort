@@ -24,15 +24,17 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.httpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.person.AktorService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
+import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
+import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.sftp.SftpService
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
@@ -72,6 +74,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
+        provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
+            AzuredTokenClient(httpClient, PropertiesConfig.getPdlProperties().pdlScope)
+        }
 
         provide(PersonService::class)
         provide(ForespoerselService::class)
@@ -81,8 +86,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(SkatteetatenClient::class)
         provide(ScheduledTaskService::class)
         provide(SkattekortPersonService::class)
-        provide(AktorService::class)
         provide(KafkaConsumerService::class)
+        provide(PdlClientService::class)
+        provide(IdentifikatorEndringService::class)
     }
 
     commonConfig()

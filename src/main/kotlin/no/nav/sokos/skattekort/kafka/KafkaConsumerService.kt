@@ -14,9 +14,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.KafkaConfig
-import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.metrics.Metrics
-import no.nav.sokos.skattekort.module.person.AktorService
 
 private val logger = KotlinLogging.logger {}
 private const val DELAY_ON_ERROR_SECONDS = 60L
@@ -25,7 +23,7 @@ private const val POLL_DURATION_SECONDS = 10L
 
 class KafkaConsumerService(
     private val kafkaConfig: KafkaConfig,
-    private val aktorService: AktorService,
+    private val identifikatorEndringService: IdentifikatorEndringService,
 ) {
     private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(kafkaConfig.properties)
     private val kafkaClientMetrics: KafkaClientMetrics = KafkaClientMetrics(kafkaConsumer)
@@ -46,14 +44,11 @@ class KafkaConsumerService(
 
                 runCatching {
                     val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-                    logger.info { "Polling kafka for topic=${kafkaConfig.topic}, consumerRecords=${consumerRecords.count()}" }
                     if (!consumerRecords.isEmpty) {
-                        logger.info("Mottatt ${consumerRecords.count()} meldinger fra PDL")
                         consumerRecords.forEach { record ->
                             logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
-                            logger.info(marker = TEAM_LOGS_MARKER) { "Record: ${record.value()}" }
                             val personHendelseDTO = mapToPersonHendelseDTO(record)
-                            aktorService.processIdentChanging(personHendelseDTO)
+                            identifikatorEndringService.processIdentifikatorEndring(personHendelseDTO)
                         }
                         kafkaConsumer.commitSync()
                     }

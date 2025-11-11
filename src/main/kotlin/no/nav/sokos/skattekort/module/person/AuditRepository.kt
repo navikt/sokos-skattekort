@@ -29,7 +29,7 @@ object AuditRepository {
     fun insertBatch(
         tx: TransactionalSession,
         tag: AuditTag,
-        personIds: List<PersonId>,
+        personIds: List<PersonId> = emptyList(),
         informasjon: String,
         brukerId: String? = null,
     ) = tx.batchPreparedNamedStatementAndReturnGeneratedKeys(

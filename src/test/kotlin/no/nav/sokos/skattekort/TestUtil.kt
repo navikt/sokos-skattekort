@@ -17,6 +17,7 @@ import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
+import kotliquery.queryOf
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.security.mock.oauth2.withMockOAuth2Server
@@ -26,6 +27,7 @@ import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.SftpListener
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
+import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 object TestUtil {
     val eventuallyConfiguration =
@@ -95,6 +97,22 @@ object TestUtil {
                 }
             }
             module()
+        }
+    }
+
+    fun runThisSql(query: String) {
+        DbListener.dataSource.transaction { session ->
+            session.run(
+                queryOf(
+                    query,
+                ).asExecute,
+            )
+        }
+    }
+
+    fun inATransaction(thunk: (tx: kotliquery.TransactionalSession) -> Unit) {
+        DbListener.dataSource.transaction { tx ->
+            thunk(tx)
         }
     }
 }

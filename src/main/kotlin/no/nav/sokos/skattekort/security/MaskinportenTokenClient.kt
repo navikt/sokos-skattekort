@@ -111,34 +111,34 @@ class MaskinportenTokenClient(
                     ),
                 ),
         )
+
+    private data class AccessToken(
+        val token: String,
+        val expiresAt: Instant,
+    ) {
+        constructor(tokenResponse: TokenResponse) :
+            this(tokenResponse.accessToken, Instant.now().plusSeconds(tokenResponse.expiresIn))
+    }
+
+    @Serializable
+    private data class TokenResponse(
+        @SerialName("access_token") val accessToken: String,
+        @SerialName("token_type") val tokenType: String,
+        @SerialName("expires_in") val expiresIn: Long,
+        val scope: String,
+    )
+
+    @Serializable
+    private data class TokenError(
+        @SerialName("error") val error: String,
+        @SerialName("error_description") val errorDescription: String,
+        @SerialName("error_uri") val errorUri: String? = null,
+    )
+
+    @Serializable
+    private data class OpenIdConfiguration(
+        @SerialName("jwks_uri") val jwksUri: String,
+        @SerialName("issuer") val issuer: String,
+        @SerialName("token_endpoint") val tokenEndpoint: String,
+    )
 }
-
-private data class AccessToken(
-    val token: String,
-    val expiresAt: Instant,
-) {
-    constructor(tokenResponse: TokenResponse) :
-        this(tokenResponse.accessToken, Instant.now().plusSeconds(tokenResponse.expiresIn))
-}
-
-@Serializable
-private data class TokenResponse(
-    @SerialName("access_token") val accessToken: String,
-    @SerialName("token_type") val tokenType: String,
-    @SerialName("expires_in") val expiresIn: Long,
-    val scope: String,
-)
-
-@Serializable
-private data class TokenError(
-    @SerialName("error") val error: String,
-    @SerialName("error_description") val errorDescription: String,
-    @SerialName("error_uri") val errorUri: String? = null,
-)
-
-@Serializable
-private data class OpenIdConfiguration(
-    @SerialName("jwks_uri") val jwksUri: String,
-    @SerialName("issuer") val issuer: String,
-    @SerialName("token_endpoint") val tokenEndpoint: String,
-)

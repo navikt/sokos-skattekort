@@ -20,6 +20,6 @@ protocol PersonhendelseProto {
     Endringstype endringstype;
     union { null, string } tidligereHendelseId = null; // Peker til tidligere hendelse ved korrigering og annullering.
 
-    union { null, no.nav.person.pdl.leesah.folkeregisteridentifikator.Folkeregisteridentifikator } folkeregisteridentifikator = null;
+    union { null, no.nav.person.pdl.leesah.folkeregisteridentifikator.Folkeregisteridentifikator } Folkeregisteridentifikator = null;
   }
 }

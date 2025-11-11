@@ -5,10 +5,6 @@ import java.math.BigDecimal
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-
 import no.nav.sokos.skattekort.BigDecimalJson
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
@@ -58,30 +54,19 @@ data class IdentifikatorForEnhetEllerPerson(
 enum class Resultatstatus(
     val value: String,
 ) {
-    @JsonProperty("ikkeSkattekort")
     IKKE_SKATTEKORT("ikkeSkattekort"),
-
-    @JsonProperty("vurderArbeidstillatelse")
     VURDER_ARBEIDSTILLATELSE("vurderArbeidstillatelse"),
-
-    @JsonProperty("ikkeTrekkplikt")
     IKKE_TREKKPLIKT("ikkeTrekkplikt"),
-
-    @JsonProperty("skattekortopplysningerOK")
     SKATTEKORTOPPLYSNINGER_OK("skattekortopplysningerOK"),
-
-    @JsonProperty("ugyldigOrganisasjonsnummer")
     UGYLDIG_ORGANISASJONSNUMMER("ugyldigOrganisasjonsnummer"),
-
-    @JsonProperty("ugyldigFoedselsEllerDnummer")
     UGYLDIG_FOEDSELS_ELLER_DNUMMER("ugyldigFoedselsEllerDnummer"),
-
-    @JsonProperty("utgaattDnummerSkattekortForFoedselsnummerErLevert")
     UTGAATT_DNUMMER_SKATTEKORT_FOR_FOEDSELSNUMMER_ER_LEVERT("utgaattDnummerSkattekortForFoedselsnummerErLevert"),
     ;
 
     companion object {
-        fun fromDomainModel(resultat: ResultatForSkattekort) = entries.find { it.value == resultat.value } ?: throw IllegalArgumentException("Ukjent skattekort-status ${resultat.value}")
+        fun fromDomainModel(resultat: ResultatForSkattekort) =
+            entries.find { it.value == resultat.value }
+                ?: throw IllegalArgumentException("Ukjent skattekort-status ${resultat.value}")
     }
 }
 
@@ -89,16 +74,9 @@ enum class Resultatstatus(
 enum class Tilleggsopplysning(
     val value: String,
 ) {
-    @JsonProperty("oppholdPaaSvalbard")
     OPPHOLD_PAA_SVALBARD("oppholdPaaSvalbard"),
-
-    @JsonProperty("kildeskattpensjonist")
     KILDESKATTPENSJONIST("kildeskattpensjonist"),
-
-    @JsonProperty("oppholdITiltakssone")
     OPPHOLD_I_TILTAKSSONE("oppholdITiltakssone"),
-
-    @JsonProperty("kildeskattPaaLoenn")
     KILDESKATT_PAA_LOENN("kildeskattPaaLoenn"),
     ;
 
@@ -115,17 +93,6 @@ data class Skattekort(
     val forskuddstrekk: List<Forskuddstrekk>? = null,
 )
 
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    // Type blir med i JSON responsen som forteller hvilken type Forskuddstrekk dette er
-    property = "type",
-)
-@JsonSubTypes(
-    JsonSubTypes.Type(value = Frikort::class, name = "Frikort"),
-    JsonSubTypes.Type(value = Trekktabell::class, name = "Trekktabell"),
-    JsonSubTypes.Type(value = Trekkprosent::class, name = "Trekkprosent"),
-)
 @Serializable
 sealed interface Forskuddstrekk {
     val trekkode: Trekkode
@@ -181,37 +148,16 @@ data class Trekkprosent(
 enum class Trekkode(
     val value: String,
 ) {
-    @JsonProperty("loennFraHovedarbeidsgiver")
     LOENN_FRA_HOVEDARBEIDSGIVER("loennFraHovedarbeidsgiver"),
-
-    @JsonProperty("loennFraBiarbeidsgiver")
     LOENN_FRA_BIARBEIDSGIVER("loennFraBiarbeidsgiver"),
-
-    @JsonProperty("loennFraNAV")
     LOENN_FRA_NAV("loennFraNAV"),
-
-    @JsonProperty("pensjon")
     PENSJON("pensjon"),
-
-    @JsonProperty("pensjonFraNAV")
     PENSJON_FRA_NAV("pensjonFraNAV"),
-
-    @JsonProperty("loennTilUtenrikstjenestemann")
     LOENN_TIL_UTENRIKSTJENESTEMANN("loennTilUtenrikstjenestemann"),
-
-    @JsonProperty("loennKunTrygdeavgiftTilUtenlandskBorger")
     LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER("loennKunTrygdeavgiftTilUtenlandskBorger"),
-
-    @JsonProperty("loennKunTrygdeavgiftTilUtenlandskBorgerSomGrensegjenger")
     LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER_SOM_GRENSEGJENGER("loennKunTrygdeavgiftTilUtenlandskBorgerSomGrensegjenger"),
-
-    @JsonProperty("ufoeretrygdFraNAV")
     UFOERETRYGD_FRA_NAV("ufoeretrygdFraNAV"),
-
-    @JsonProperty("ufoereytelserFraAndre")
     UFOEREYTELSER_FRA_ANDRE("ufoereytelserFraAndre"),
-
-    @JsonProperty("introduksjonsstoenad")
     INTRODUKSJONSSTOENAD("introduksjonsstoenad"),
     ;
 

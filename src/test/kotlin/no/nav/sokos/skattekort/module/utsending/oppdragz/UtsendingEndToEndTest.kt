@@ -1,0 +1,41 @@
+package no.nav.sokos.skattekort.module.utsending.oppdragz
+
+import java.time.LocalDateTime
+
+import io.kotest.assertions.nondeterministic.eventually
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.extensions.time.withConstantNow
+import io.kotest.matchers.shouldBe
+import io.ktor.server.plugins.di.dependencies
+
+import no.nav.sokos.skattekort.JmsTestUtil
+import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
+import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.SftpListener
+import no.nav.sokos.skattekort.module.utsending.UtsendingService
+
+class UtsendingEndToEndTest :
+    FunSpec({
+        extensions(DbListener, MQListener, SftpListener)
+
+        test("vi kan plukke opp en utsending fra databasen og sende en JMS-melding med riktig format") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                withFullTestApplication {
+                    DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                    DbListener.loadDataSet("database/utsending/skattekort_oppdragz.sql")
+
+                    val uut: UtsendingService by application.dependencies
+
+                    uut.handleUtsending()
+                    eventually(eventuallyConfiguration) {
+                        val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
+                        messages.size shouldBe 1
+                        messages[0] shouldBe
+                            "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
+                    }
+                }
+            }
+        }
+    })

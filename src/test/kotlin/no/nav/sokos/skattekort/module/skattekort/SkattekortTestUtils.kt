@@ -12,7 +12,9 @@ import kotliquery.TransactionalSession
 import no.nav.sokos.skattekort.TestUtil.runThisSql
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 fun aForskuddstrekk(
@@ -41,94 +43,48 @@ fun aForskuddstrekk(
         else -> error("Ukjent forskuddstrekk-type: $type")
     }
 
-fun aTabellkort(
-    trekkode: Trekkode,
-    tabellNummer: String,
-    prosentSats: Int,
-    antMndForTrekk: Double? = null,
-): String =
-    """ 
-    {
-        "trekkode": "${trekkode.value}",
-        "trekktabell": {
-            "tabellnummer": "$tabellNummer",
-            "prosentsats": $prosentSats,
-            "antallMaanederForTrekk": $antMndForTrekk
-        }
-    }
-    """.trimIndent()
-
-fun aProsentkort(
-    trekkode: Trekkode,
-    prosentSats: Int,
-) = """
-    {
-      "trekkode": "${trekkode.value}",
-      "trekkprosent": {
-        "prosentsats": "$prosentSats"
-      }
-    }
-    """.trimIndent()
-
 fun aSkattekort(
     utstedtDato: String,
     identifikator: Long,
-    forskuddstrekk: List<String>,
-) = """
-    "skattekort": {
-      "utstedtDato": "$utstedtDato",
-      "skattekortidentifikator": $identifikator,
-      "forskuddstrekk": [
-        ${forskuddstrekk.joinToString(",")}
-      ]
-    },
-    """.trimIndent()
+    forskuddstrekk: List<no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk>,
+): Skattekort =
+    Skattekort(
+        utstedtDato = utstedtDato,
+        skattekortidentifikator = identifikator,
+        forskuddstrekk = forskuddstrekk,
+    )
 
 fun anArbeidstaker(
     resultat: ResultatForSkattekort,
     fnr: String,
     inntektsaar: String,
     tilleggsopplysninger: List<Tilleggsopplysning>? = null,
-    skattekort: String? = "",
-): String {
-    val tilleggsopplysningerString =
-        if (tilleggsopplysninger.isNullOrEmpty()) {
-            "null"
-        } else {
-            "[${tilleggsopplysninger.joinToString(transform = { "\"${it.opplysning}\"" })}],"
-        }
-    return """
-            {
-            "arbeidstakeridentifikator": "$fnr",
-            "resultatForSkattekort": "${resultat.value}",
-            $skattekort
-            "tilleggsopplysning": $tilleggsopplysningerString
-            "inntektsaar": "$inntektsaar"
-        }
-        """.trimIndent()
-}
-
-fun aHentSkattekortResponse(vararg arbeidstakere: String): HentSkattekortResponse =
-    Json.decodeFromString(
-        HentSkattekortResponse.serializer(),
-        """
-        {
-          "status": "FORESPOERSEL_OK",
-          "arbeidsgiver": [
-            {
-              "arbeidsgiveridentifikator": {
-                "organisasjonsnummer": "312978083"
-              },
-              "arbeidstaker": [
-                ${arbeidstakere.joinToString(",")}
-              ]
-            }
-          ]
-        }
-        """.trimIndent(),
+    skattekort: Skattekort? = null,
+): Arbeidstaker =
+    Arbeidstaker(
+        arbeidstakeridentifikator = fnr,
+        resultatForSkattekort = resultat.value,
+        skattekort = skattekort,
+        tilleggsopplysning = tilleggsopplysninger?.map { it.opplysning },
+        inntektsaar = inntektsaar,
     )
 
-fun aHentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get("src/test/resources/$jsonfile")))
+fun aHentSkattekortResponse(vararg arbeidstakere: Arbeidstaker): HentSkattekortResponse =
+    HentSkattekortResponse(
+        status = "FORESPOERSEL_OK",
+        arbeidsgiver =
+            listOf(
+                no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiver(
+                    arbeidsgiveridentifikator =
+                        no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiveridentifikator(
+                            organisasjonsnummer = "312978083",
+                        ),
+                    arbeidstaker = arbeidstakere.toList(),
+                ),
+            ),
+    )
+
+fun aHentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get(jsonfile)))
 
 fun databaseHas(vararg strings: String) {
     runThisSql(strings.joinToString("\n"))

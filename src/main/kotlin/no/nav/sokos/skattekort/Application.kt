@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort
 
 import javax.sql.DataSource
 
+import kotlinx.coroutines.runBlocking
+
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -124,5 +126,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             }
         }
     }
+
+    val pdlClientService: PdlClientService by dependencies
+    val response = runBlocking { pdlClientService.getIdenterBolk(listOf("11497140244")) }
+
     logger.info { "Kafka consumer is enabled: ${kafkaProperties.enabled}" }
 }

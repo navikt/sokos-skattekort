@@ -46,7 +46,7 @@ object BestillingBatchRepository {
                 """
                     |SELECT * 
                     |FROM bestillingsbatcher
-                    |WHERE status <> 'FERDIG'
+                    |WHERE status = 'NY'
                     |ORDER BY oppdatert ASC
                     |LIMIT 1
                 """.trimMargin(),

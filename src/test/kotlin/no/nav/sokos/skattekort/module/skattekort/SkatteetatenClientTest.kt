@@ -68,7 +68,7 @@ class SkatteetatenClientTest :
                     arbeidsgiveridentifikator.organisasjonsnummer shouldBe "312978083"
                     arbeidstaker.size shouldBe 1
                     arbeidstaker[0] shouldNotBeNull {
-                        arbeidstakeridentifikator shouldBe "01010100001"
+                        arbeidstakeridentifikator shouldBe "12345678901"
                         resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
                         skattekort.shouldNotBeNull {
                             skattekortidentifikator shouldBe 54407
@@ -103,7 +103,7 @@ class SkatteetatenClientTest :
 fun setupClient(jsonFile: String): SkatteetatenClient {
     val jsonResponse = Files.readString(Paths.get("src/test/resources/skatteetaten/$jsonFile"))
     val mockEngine =
-        MockEngine { request ->
+        MockEngine { _ ->
             respond(
                 content = jsonResponse,
                 status = HttpStatusCode.OK,

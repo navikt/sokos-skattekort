@@ -17,6 +17,7 @@ import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
+import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
@@ -110,9 +111,5 @@ object TestUtil {
         }
     }
 
-    fun inATransaction(thunk: (tx: kotliquery.TransactionalSession) -> Unit) {
-        DbListener.dataSource.transaction { tx ->
-            thunk(tx)
-        }
-    }
+    fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
 }

@@ -17,6 +17,7 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
+import no.nav.sokos.skattekort.TestUtil.tx
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository

@@ -41,47 +41,92 @@ fun aForskuddstrekk(
         else -> error("Ukjent forskuddstrekk-type: $type")
     }
 
-fun aHentSkattekortResponse(
+fun aTabellkort(
+    trekkode: Trekkode,
+    tabellNummer: String,
+    prosentSats: Int,
+    antMndForTrekk: Double? = null,
+): String =
+    """ 
+    {
+        "trekkode": "${trekkode.value}",
+        "trekktabell": {
+            "tabellnummer": "$tabellNummer",
+            "prosentsats": $prosentSats,
+            "antallMaanederForTrekk": $antMndForTrekk
+        }
+    }
+    """.trimIndent()
+
+fun aProsentkort(
+    trekkode: Trekkode,
+    prosentSats: Int,
+) = """
+    {
+      "trekkode": "${trekkode.value}",
+      "trekkprosent": {
+        "prosentsats": "$prosentSats"
+      }
+    }
+    """.trimIndent()
+
+fun aSkattekort(
+    utstedtDato: String,
+    identifikator: Long,
+    forskuddstrekk: List<String>,
+) = """
+    "skattekort": {
+      "utstedtDato": "$utstedtDato",
+      "skattekortidentifikator": $identifikator,
+      "forskuddstrekk": [
+        ${forskuddstrekk.joinToString(",")}
+      ]
+    },
+    """.trimIndent()
+
+fun anArbeidstaker(
     resultat: ResultatForSkattekort,
     fnr: String,
     inntektsaar: String,
     tilleggsopplysninger: List<Tilleggsopplysning>? = null,
-): HentSkattekortResponse {
+    skattekort: String? = "",
+): String {
     val tilleggsopplysningerString =
         if (tilleggsopplysninger.isNullOrEmpty()) {
             "null"
         } else {
-            "[${tilleggsopplysninger.joinToString(prefix = "\"", postfix = "\"", transform = { it.opplysning })}],"
+            "[${tilleggsopplysninger.joinToString(transform = { "\"${it.opplysning}\"" })}],"
         }
-    return when (resultat) {
-        ResultatForSkattekort.IkkeSkattekort, ResultatForSkattekort.UgyldigFoedselsEllerDnummer ->
-            Json.decodeFromString(
-                HentSkattekortResponse.serializer(),
-                """
-                {
-                  "status": "FORESPOERSEL_OK",
-                  "arbeidsgiver": [
-                    {
-                      "arbeidsgiveridentifikator": {
-                        "organisasjonsnummer": "312978083"
-                      },
-                      "arbeidstaker": [
-                        {
-                          "arbeidstakeridentifikator": "$fnr",
-                          "resultatForSkattekort": "${resultat.value}",
-                          "tilleggsopplysning": $tilleggsopplysningerString
-                          "inntektsaar": "$inntektsaar"
-                        }
-                      ]
-                    }
-                  ]
-                }
-                """.trimIndent(),
-            )
-
-        else -> error("Et fiktivt skattekort med resultatForSkattekort $resultat er ikke implementert i testutil")
-    }
+    return """
+            {
+            "arbeidstakeridentifikator": "$fnr",
+            "resultatForSkattekort": "${resultat.value}",
+            $skattekort
+            "tilleggsopplysning": $tilleggsopplysningerString
+            "inntektsaar": "$inntektsaar"
+        }
+        """.trimIndent()
 }
+
+fun aHentSkattekortResponse(vararg arbeidstakere: String): HentSkattekortResponse =
+    Json.decodeFromString(
+        HentSkattekortResponse.serializer(),
+        """
+        {
+          "status": "FORESPOERSEL_OK",
+          "arbeidsgiver": [
+            {
+              "arbeidsgiveridentifikator": {
+                "organisasjonsnummer": "312978083"
+              },
+              "arbeidstaker": [
+                ${arbeidstakere.joinToString(",")}
+              ]
+            }
+          ]
+        }
+        """.trimIndent(),
+    )
 
 fun aHentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get("src/test/resources/$jsonfile")))
 
@@ -112,7 +157,7 @@ fun aBestilling(
     personId: Long,
     fnr: String,
     inntektsaar: Int,
-    batchId: Long,
+    batchId: Long?,
 ) = """
     INSERT INTO bestillinger(person_id, fnr, inntektsaar, bestillingsbatch_id)
                     VALUES ($personId, '$fnr', $inntektsaar, $batchId);
@@ -132,3 +177,10 @@ fun anAbonnement(
     """.trimIndent()
 
 fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
+
+fun toBestillSkattekortResponse(json: String) =
+    Json.decodeFromString(
+        no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
+            .serializer(),
+        json,
+    )

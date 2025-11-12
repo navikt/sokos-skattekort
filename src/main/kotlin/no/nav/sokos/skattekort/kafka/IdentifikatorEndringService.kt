@@ -24,10 +24,10 @@ class IdentifikatorEndringService(
     private val personService: PersonService,
 ) {
     fun processIdentifikatorEndring(personHendelse: PersonHendelseDTO) {
-        logger.info(marker = TEAM_LOGS_MARKER) { "Processing personHendelse: $personHendelse" }
-
         if (personHendelse.opplysningstype == FOLKEREGISTERIDENTIFIKATOR) {
+            logger.info(marker = TEAM_LOGS_MARKER) { "Processing personHendelse: $personHendelse" }
             logger.info { "Behandle hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}" }
+
             runCatching {
                 when (personHendelse.endringstype) {
                     EndringstypeDTO.OPPRETTET, EndringstypeDTO.KORRIGERT -> {
@@ -42,7 +42,7 @@ class IdentifikatorEndringService(
 
                     else ->
                         logger.info {
-                            "Avbryter prosessering av hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}"
+                            "Ingen prosessering av hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}"
                         }
                 }
             }.onFailure { exception ->
@@ -64,7 +64,7 @@ class IdentifikatorEndringService(
                 if (identList.isNotEmpty()) {
                     val personId = personService.findPersonIdByPersonidentifikator(tx, identList)
                     personId?.let { id ->
-                        logger.info { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
+                        logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
                         personService.updateFoedselsnummer(
                             tx,
                             Foedselsnummer(
@@ -73,7 +73,7 @@ class IdentifikatorEndringService(
                                 fnr = Personidentifikator(identifikasjonsnummer),
                             ),
                         )
-                    }
+                    } ?: logger.info(marker = TEAM_LOGS_MARKER) { "Ingen ident endringer med folkeregisteridentifikator=$identifikasjonsnummer" }
                 }
             }
         }

@@ -37,7 +37,7 @@ class SkatteetatenClientTest :
                         Personidentifikator("01010100001"),
                     ),
                 )
-            val skatteetatenClient = setupClient("bestillSkattekort/bestillSkattekortResponse.json")
+            val skatteetatenClient = setupClient("src/test/resources/skatteetaten/bestillSkattekort/bestillSkattekortResponse.json")
 
             val response = skatteetatenClient.bestillSkattekort(bestillSkattekortRequest)
 
@@ -48,7 +48,7 @@ class SkatteetatenClientTest :
         }
 
         test("should handle ugyldig inntektsaar") {
-            val skatteetatenClient = setupClient("hentSkattekort/ugyldig_inntektsaar.json")
+            val skatteetatenClient = setupClient("src/test/resources/skatteetaten/hentSkattekort/ugyldig_inntektsaar.json")
 
             val response = skatteetatenClient.hentSkattekort("BR1234")
 
@@ -57,7 +57,7 @@ class SkatteetatenClientTest :
         }
 
         test("should handle skattekortopplysningerOK") {
-            val skatteetatenClient = setupClient("hentSkattekort/skattekortopplysningerOK.json")
+            val skatteetatenClient = setupClient("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
 
             val response = skatteetatenClient.hentSkattekort("BR1234")
 
@@ -101,7 +101,7 @@ class SkatteetatenClientTest :
     })
 
 fun setupClient(jsonFile: String): SkatteetatenClient {
-    val jsonResponse = Files.readString(Paths.get("src/test/resources/skatteetaten/$jsonFile"))
+    val jsonResponse = Files.readString(Paths.get(jsonFile))
     val mockEngine =
         MockEngine { _ ->
             respond(

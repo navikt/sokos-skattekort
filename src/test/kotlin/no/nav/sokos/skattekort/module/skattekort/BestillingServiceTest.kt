@@ -27,56 +27,13 @@ import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_BIARBEIDSGIVER
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekktabell
-
-val aListOfSkatteetatenForskuddstrekk: List<Forskuddstrekk> =
-    listOf(
-        Forskuddstrekk(
-            trekkode = LOENN_FRA_HOVEDARBEIDSGIVER.value,
-            trekktabell = Trekktabell("8140", valueOf(43), valueOf(10.5)),
-        ),
-        Forskuddstrekk(
-            trekkode = LOENN_FRA_BIARBEIDSGIVER.value,
-            trekkprosent = Trekkprosent(valueOf(43)),
-        ),
-        Forskuddstrekk(
-            trekkode = LOENN_FRA_NAV.value,
-            trekkprosent = Trekkprosent(valueOf(43)),
-        ),
-        Forskuddstrekk(
-            trekkode = UFOERETRYGD_FRA_NAV.value,
-            trekkprosent = Trekkprosent(valueOf(43)),
-        ),
-        Forskuddstrekk(
-            trekkode = UFOEREYTELSER_FRA_ANDRE.value,
-            trekkprosent = Trekkprosent(valueOf(43)),
-        ),
-    )
-
-fun aSkattekortFor(
-    fnr: String,
-    id: Long,
-) = anArbeidstaker(
-    resultat = SkattekortopplysningerOK,
-    fnr = fnr,
-    inntektsaar = "2025",
-    skattekort =
-        no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort(
-            utstedtDato = "2025-11-01",
-            skattekortidentifikator = id,
-            forskuddstrekk = aListOfSkatteetatenForskuddstrekk,
-        ),
-)
 
 class BestillingServiceTest :
     FunSpec({
@@ -169,7 +126,7 @@ class BestillingServiceTest :
                         identifikator shouldBe "10001"
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 5
+                            size shouldBe 2
                         }
                     }
                 }
@@ -361,7 +318,7 @@ class BestillingServiceTest :
                             it.identifikator shouldBe "10001"
                             it.resultatForSkattekort shouldBe SkattekortopplysningerOK
                             it.forskuddstrekkList shouldNotBeNull {
-                                size shouldBe 5
+                                size shouldBe 2
                             }
                         }
                     }
@@ -537,23 +494,44 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any()) } throws RuntimeException("Feil ved henting av skattekort: 404")
             databaseHas(
                 aPerson(fnr = "01010100001", personId = 1L),
+                aPerson(fnr = "02020200002", personId = 2L),
+                aPerson(fnr = "03030300003", personId = 3L),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 1L),
+                aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 1L),
             )
 
             bestillingService.hentSkattekort()
 
             val updatedBatches = tx(BestillingBatchRepository::list)
-            val auditAfter: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(1L)) }
+            val auditPerson1: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(1L)) }
+            val auditPerson2: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(2L)) }
+            val auditPerson3: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(3L)) }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
 
             assertSoftly {
-                updatedBatches shouldNotBeNull {
-                    first().status shouldBe BestillingBatchStatus.Feilet.value
+                withClue("Should mark batch as FEILET") {
+                    updatedBatches shouldNotBeNull {
+                        first().status shouldBe BestillingBatchStatus.Feilet.value
+                    }
                 }
 
-                auditAfter shouldNotBeNull {
-                    size shouldBe 1
-                    first().tag shouldBe AuditTag.HENTING_AV_SKATTEKORT_FEILET
+                withClue("Should not delete bestilling or remove batch association") {
+                    bestillingsAfter shouldNotBeNull {
+                        size shouldBe 3
+                        forAll {
+                            it.bestillingsbatchId!!.id shouldBe 1L
+                        }
+                    }
+                }
+
+                withClue("Should create auditlog for all persons in batch") {
+                    auditPerson1 + auditPerson2 + auditPerson3 shouldNotBeNull {
+                        forAll {
+                            it.tag shouldBe AuditTag.HENTING_AV_SKATTEKORT_FEILET
+                        }
+                    }
                 }
             }
         }
@@ -593,3 +571,28 @@ class BestillingServiceTest :
             }
         }
     })
+
+fun aSkattekortFor(
+    fnr: String,
+    id: Long,
+) = anArbeidstaker(
+    resultat = SkattekortopplysningerOK,
+    fnr = fnr,
+    inntektsaar = "2025",
+    skattekort =
+        no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort(
+            utstedtDato = "2025-11-01",
+            skattekortidentifikator = id,
+            forskuddstrekk =
+                listOf(
+                    Forskuddstrekk(
+                        trekkode = LOENN_FRA_NAV.value,
+                        trekkprosent = Trekkprosent(valueOf(25)),
+                    ),
+                    Forskuddstrekk(
+                        trekkode = UFOERETRYGD_FRA_NAV.value,
+                        trekkprosent = Trekkprosent(valueOf(28)),
+                    ),
+                ),
+        ),
+)

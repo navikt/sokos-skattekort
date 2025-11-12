@@ -25,6 +25,7 @@ import no.nav.sokos.skattekort.config.SftpConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.SftpListener
+import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 object TestUtil {
@@ -86,6 +87,7 @@ object TestUtil {
             dependencies {
                 provide { SftpConfig(SftpListener.sftpProperties) }
                 provide { mockk<MaskinportenTokenClient>() }
+                provide { mockk<AzuredTokenClient>() }
                 provide<ConnectionFactory> { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)

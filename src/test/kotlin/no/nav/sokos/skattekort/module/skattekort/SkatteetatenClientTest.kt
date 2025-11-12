@@ -1,8 +1,5 @@
 package no.nav.sokos.skattekort.module.skattekort
 
-import java.nio.file.Files
-import java.nio.file.Paths
-
 import kotlinx.serialization.json.Json
 
 import io.kotest.core.spec.style.FunSpec
@@ -21,6 +18,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.mockk
 
+import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
@@ -37,7 +35,7 @@ class SkatteetatenClientTest :
                         Personidentifikator("01010100001"),
                     ),
                 )
-            val skatteetatenClient = setupClient("bestillSkattekort/bestillSkattekortResponse.json")
+            val skatteetatenClient = setupClient(readFile("/skatteetaten/bestillSkattekort/bestillSkattekortResponse.json"))
 
             val response = skatteetatenClient.bestillSkattekort(bestillSkattekortRequest)
 
@@ -48,7 +46,7 @@ class SkatteetatenClientTest :
         }
 
         test("should handle ugyldig inntektsaar") {
-            val skatteetatenClient = setupClient("hentSkattekort/ugyldig_inntektsaar.json")
+            val skatteetatenClient = setupClient(readFile("/skatteetaten/hentSkattekort/ugyldig_inntektsaar.json"))
 
             val response = skatteetatenClient.hentSkattekort("BR1234")
 
@@ -57,7 +55,7 @@ class SkatteetatenClientTest :
         }
 
         test("should handle skattekortopplysningerOK") {
-            val skatteetatenClient = setupClient("hentSkattekort/skattekortopplysningerOK.json")
+            val skatteetatenClient = setupClient(readFile("/skatteetaten/hentSkattekort/skattekortopplysningerOK.json"))
 
             val response = skatteetatenClient.hentSkattekort("BR1234")
 
@@ -68,7 +66,7 @@ class SkatteetatenClientTest :
                     arbeidsgiveridentifikator.organisasjonsnummer shouldBe "312978083"
                     arbeidstaker.size shouldBe 1
                     arbeidstaker[0] shouldNotBeNull {
-                        arbeidstakeridentifikator shouldBe "01010100001"
+                        arbeidstakeridentifikator shouldBe "12345678901"
                         resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
                         skattekort.shouldNotBeNull {
                             skattekortidentifikator shouldBe 54407
@@ -101,11 +99,10 @@ class SkatteetatenClientTest :
     })
 
 fun setupClient(jsonFile: String): SkatteetatenClient {
-    val jsonResponse = Files.readString(Paths.get("src/test/resources/skatteetaten/$jsonFile"))
     val mockEngine =
-        MockEngine { request ->
+        MockEngine { _ ->
             respond(
-                content = jsonResponse,
+                content = jsonFile,
                 status = HttpStatusCode.OK,
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )

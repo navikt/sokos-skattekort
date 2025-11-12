@@ -28,12 +28,12 @@ SELECT setval('person_audit_id_seq', (SELECT coalesce(max(id), 0) FROM person_au
 INSERT INTO skattekort (id, person_id, utstedt_dato, identifikator, inntektsaar, kilde, opprettet)
 VALUES
     -- Person 1: two years (current and previous) to test selection of latest per inntektsår
-    (1, 1, CURRENT_DATE, '17', 2025, 'skatt', now() - interval '2 days'),
-    (2, 1, CURRENT_DATE - interval '370 days', '21', 2024, 'skatt', now() - interval '370 days'),
+    (1, 1, '2025-11-11'::date, '17', 2025, 'skatt', now() - interval '2 days'),
+    (2, 1, '2025-11-11'::date - interval '370 days', '21', 2024, 'skatt', now() - interval '370 days'),
     -- Person 2: single synthetic card
-    (3, 2, CURRENT_DATE, '18', 2025, 'syntetisert', now() - interval '1 day'),
+    (3, 2, '2025-11-11'::date, '18', 2025, 'syntetisert', now() - interval '1 day'),
     -- Person 3: manually adjusted card
-    (4, 3, CURRENT_DATE, '19', 2025, 'manuelt', now() - interval '1 hour');
+    (4, 3, '2025-11-11'::date, '19', 2025, 'manuelt', now() - interval '1 hour');
 
 SELECT setval('skattekort_id_seq', (SELECT coalesce(max(id), 0) FROM skattekort) + 1, false);
 

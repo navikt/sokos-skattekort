@@ -7,15 +7,11 @@ import java.nio.file.Paths
 
 import kotlinx.serialization.json.Json
 
-import kotliquery.TransactionalSession
-
 import no.nav.sokos.skattekort.TestUtil.runThisSql
-import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
-import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 fun aForskuddstrekk(
     type: String,
@@ -131,8 +127,6 @@ fun anAbonnement(
     INSERT INTO abonnementer(forespoersel_id, person_id, inntektsaar)
                     VALUES ($forespoerselId, $personId, $inntektsaar);
     """.trimIndent()
-
-fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
 
 fun toBestillSkattekortResponse(json: String) =
     Json.decodeFromString(

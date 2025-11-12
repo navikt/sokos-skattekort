@@ -28,47 +28,52 @@ class IdentifikatorEndringService(
 
         if (personHendelse.opplysningstype == FOLKEREGISTERIDENTIFIKATOR) {
             logger.info { "Behandle hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}" }
-            when (personHendelse.endringstype) {
-                EndringstypeDTO.OPPRETTET, EndringstypeDTO.KORRIGERT -> {
-                    if (personHendelse.folkeregisteridentifikator != null) {
-                        behandleIdentifikator(personHendelse.folkeregisteridentifikator)
-                    } else {
-                        logger.error {
-                            "Folkeregisteridentifikator er null for hendelseId=${personHendelse.hendelseId}. Kan ikke prosessere opprettet/korrigert hendelse uten folkeregisteridentifikator."
+            runCatching {
+                when (personHendelse.endringstype) {
+                    EndringstypeDTO.OPPRETTET, EndringstypeDTO.KORRIGERT -> {
+                        if (personHendelse.folkeregisteridentifikator != null) {
+                            behandleIdentifikator(personHendelse.folkeregisteridentifikator)
+                        } else {
+                            logger.error {
+                                "Folkeregisteridentifikator er null for hendelseId=${personHendelse.hendelseId}. Kan ikke prosessere opprettet/korrigert hendelse uten folkeregisteridentifikator."
+                            }
                         }
                     }
-                }
 
-                else ->
-                    logger.info {
-                        "Avbryter prosessering av hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}"
-                    }
+                    else ->
+                        logger.info {
+                            "Avbryter prosessering av hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}"
+                        }
+                }
+            }.onFailure { exception ->
+                logger.error(exception) {
+                    "Feil ved prosessering av hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}"
+                }
             }
         }
     }
 
     private fun behandleIdentifikator(folkeregisteridentifikator: FolkeregisteridentifikatorDTO) {
         val identifikasjonsnummer = folkeregisteridentifikator.identifikasjonsnummer
-        val pdlResponse =
-            runBlocking {
-                pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer))
-            }
 
-        val identList = pdlResponse[identifikasjonsnummer]!!.filter { it.historisk }.map { it.ident }
+        dataSource.transaction { tx ->
+            if (personService.findPersonByFnr(tx, Personidentifikator(identifikasjonsnummer)) == null) {
+                val pdlResponse = runBlocking { pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer)) }
+                val identList = pdlResponse[identifikasjonsnummer]!!.filter { it.historisk }.map { it.ident }
 
-        if (identList.isNotEmpty()) {
-            dataSource.transaction { tx ->
-                val personId = personService.findPersonIdByPersonidentifikator(tx, identList)
-                personId?.let { id ->
-                    logger.info { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
-                    personService.updateFoedselsnummer(
-                        tx,
-                        Foedselsnummer(
-                            personId = id,
-                            gjelderFom = LocalDate.now().toKotlinLocalDate(),
-                            fnr = Personidentifikator(identifikasjonsnummer),
-                        ),
-                    )
+                if (identList.isNotEmpty()) {
+                    val personId = personService.findPersonIdByPersonidentifikator(tx, identList)
+                    personId?.let { id ->
+                        logger.info { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
+                        personService.updateFoedselsnummer(
+                            tx,
+                            Foedselsnummer(
+                                personId = id,
+                                gjelderFom = LocalDate.now().toKotlinLocalDate(),
+                                fnr = Personidentifikator(identifikasjonsnummer),
+                            ),
+                        )
+                    }
                 }
             }
         }

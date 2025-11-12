@@ -53,7 +53,7 @@ class KafkaConsumerService(
                         kafkaConsumer.commitSync()
                     }
                 }.onFailure { exception ->
-                    logger.error(exception) { "Error running kafka consumer for pdl-aktor, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
+                    logger.error(exception) { "Error running kafka consumer for ${kafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
                     kafkaConsumer.unsubscribe()
                     delay(DELAY_ON_ERROR_SECONDS.seconds)
                 }

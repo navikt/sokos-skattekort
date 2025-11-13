@@ -47,6 +47,7 @@ object PropertiesConfig {
     fun getApplicationProperties(): ApplicationProperties =
         ApplicationProperties(
             naisAppName = getOrEmpty("NAIS_APP_NAME"),
+            gyldigeFnr = getOrEmpty("GYLDIGE_FNR"),
             environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
             useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
             mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
@@ -136,6 +137,7 @@ object PropertiesConfig {
         val environment: Environment,
         val useAuthentication: Boolean,
         val mqListenerEnabled: Boolean,
+        val gyldigeFnr: String,
     )
 
     data class PostgresProperties(

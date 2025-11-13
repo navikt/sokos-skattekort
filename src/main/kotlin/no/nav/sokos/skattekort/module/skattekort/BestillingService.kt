@@ -10,13 +10,13 @@ import kotlinx.datetime.LocalDate
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.Trekkode
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient

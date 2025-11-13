@@ -30,7 +30,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
-import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
+import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService

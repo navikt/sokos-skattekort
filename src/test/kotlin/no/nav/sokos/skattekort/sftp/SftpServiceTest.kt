@@ -8,7 +8,7 @@ import io.mockk.mockk
 import org.junit.jupiter.api.assertThrows
 
 import no.nav.sokos.skattekort.config.SftpConfig
-import no.nav.sokos.skattekort.listener.SftpListener
+import no.nav.sokos.skattekort.infrastructure.SftpListener
 
 class SftpServiceTest :
     FunSpec({

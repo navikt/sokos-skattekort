@@ -7,8 +7,8 @@ import io.kotest.extensions.testcontainers.toDataSource
 import junit.framework.TestCase.assertEquals
 
 import no.nav.sokos.skattekort.JmsTestUtil
-import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditService
 import no.nav.sokos.skattekort.module.person.AuditTag

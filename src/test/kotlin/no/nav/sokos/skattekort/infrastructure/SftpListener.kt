@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.listener
+package no.nav.sokos.skattekort.infrastructure
 
 import java.io.ByteArrayOutputStream
 import java.io.File

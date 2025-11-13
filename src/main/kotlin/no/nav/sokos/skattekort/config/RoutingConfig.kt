@@ -11,7 +11,7 @@ import no.nav.sokos.skattekort.api.skattekortApi
 import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
+import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 fun Application.routingConfig(

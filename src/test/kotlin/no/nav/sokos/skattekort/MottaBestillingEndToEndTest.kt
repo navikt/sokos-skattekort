@@ -11,10 +11,10 @@ import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
 import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
-import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.listener.MQListener.bestillingsQueue
-import no.nav.sokos.skattekort.listener.SftpListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.infrastructure.MQListener.bestillingsQueue
+import no.nav.sokos.skattekort.infrastructure.SftpListener
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem

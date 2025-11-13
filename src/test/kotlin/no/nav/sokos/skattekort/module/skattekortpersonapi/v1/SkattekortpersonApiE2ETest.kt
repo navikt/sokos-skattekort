@@ -2,52 +2,67 @@ package no.nav.sokos.skattekort.module.skattekortpersonapi.v1
 
 import java.time.LocalDateTime
 
+import com.atlassian.oai.validator.restassured.OpenApiValidationFilter
+import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
-import io.ktor.client.call.body
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
 import io.mockk.mockk
-import net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson
+import io.netty.handler.codec.http.HttpHeaderValues.APPLICATION_JSON
+import io.restassured.RestAssured
+import io.restassured.response.Response
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
-import org.hamcrest.Matchers.equalTo
 
+import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
-import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.listener.SftpListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.FullNettyApplication
+import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.infrastructure.SftpListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 
-private const val PORT = 9090
 private val forespoerselService = mockk<ForespoerselService>()
 
 class SkattekortpersonApiE2ETest :
     FunSpec({
+        beforeTest {
+            FullNettyApplication.start()
+        }
+
         extensions(DbListener, MQListener, SftpListener)
+
+        val tokenWithNavIdent = readFile("/tokenWithNavIdent.txt")
+        val openApiValidationFilter = OpenApiValidationFilter("openapi/sokos-skattekort-person-v1-swagger.yaml")
+        val client =
+            RestAssured
+                .given()
+                .filter(openApiValidationFilter)
+                .header(HttpHeaders.ContentType, APPLICATION_JSON.toString())
+                .header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                .port(FullNettyApplication.PORT)
+
         test("for kort fnr dør på seg") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                withFullTestApplication {
-                    DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                    val response: HttpResponse =
-                        client.post("/api/v1/hent-skattekort") {
-                            contentType(ContentType.Application.Json)
-                            setBody(
-                                """{
-                            | "fnr": "1",
-                            | "inntektsaar": "2025"
-                            | }
-                                """.trimMargin(),
-                            )
-                        }
-                    assertThat("Post returnerer ok", response.status, equalTo(HttpStatusCode.BadRequest))
-                    assertThat("Vi får en sane feilmelding", response.body(), containsString("fnr må ha lengde 11, var 1"))
-                }
+                val response: Response =
+                    client
+                        .body(
+                            """{
+                        | "fnr": "1",
+                        | "inntektsaar": 2025
+                        | }
+                            """.trimMargin(),
+                        ).post("/api/v1/hent-skattekort")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatusCode.BadRequest.value)
+                        .extract()
+                        .response()!!
+
+                assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr må ha lengde 11, var 1"))
             }
         }
         test("fnr med bokstaver dør på seg") {
@@ -55,40 +70,22 @@ class SkattekortpersonApiE2ETest :
                 withFullTestApplication {
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                    val response: HttpResponse =
-                        client.post("/api/v1/hent-skattekort") {
-                            contentType(ContentType.Application.Json)
-                            setBody(
+                    val response: Response =
+                        client
+                            .body(
                                 """{
                             | "fnr": "a2345678901",
-                            | "inntektsaar": "2025"
+                            | "inntektsaar": 2025
                             | }
                                 """.trimMargin(),
-                            )
-                        }
-                    assertThat("Post returnerer ok", response.status, equalTo(HttpStatusCode.BadRequest))
-                    assertThat("Vi får en sane feilmelding", response.body(), containsString("fnr kan bare inneholde siffer, var a2345678901"))
-                }
-            }
-        }
-        test("inntektsaar med bokstaver dør på seg") {
-            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                withFullTestApplication {
-                    DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                            ).post("/api/v1/hent-skattekort")
+                            .then()
+                            .assertThat()
+                            .statusCode(HttpStatusCode.BadRequest.value)
+                            .extract()
+                            .response()!!
 
-                    val response: HttpResponse =
-                        client.post("/api/v1/hent-skattekort") {
-                            contentType(ContentType.Application.Json)
-                            setBody(
-                                """{
-                            | "fnr": "12345678901",
-                            | "inntektsaar": "a025"
-                            | }
-                                """.trimMargin(),
-                            )
-                        }
-                    assertThat("Post returnerer ok", response.status, equalTo(HttpStatusCode.BadRequest))
-                    assertThat("Vi får en sane feilmelding", response.body(), containsString("inntektsaar kan bare inneholde siffer, var a025"))
+                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr kan bare inneholde siffer, var a2345678901"))
                 }
             }
         }
@@ -97,19 +94,21 @@ class SkattekortpersonApiE2ETest :
                 withFullTestApplication {
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                    val response: HttpResponse =
-                        client.post("/api/v1/hent-skattekort") {
-                            contentType(ContentType.Application.Json)
-                            setBody(
+                    val response: Response =
+                        client
+                            .body(
                                 """{
                             | "fnr": "12345678901",
-                            | "inntektsaar": "20252"
+                            | "inntektsaar": 20252
                             | }
                                 """.trimMargin(),
-                            )
-                        }
-                    assertThat("Post returnerer ok", response.status, equalTo(HttpStatusCode.BadRequest))
-                    assertThat("Vi får en sane feilmelding", response.body(), containsString("inntektsaar ser ikke ut som et årstall, var 20252"))
+                            ).post("/api/v1/hent-skattekort")
+                            .then()
+                            .assertThat()
+                            .statusCode(HttpStatusCode.BadRequest.value)
+                            .extract()
+                            .response()!!
+                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("inntektsaar ser ikke ut som et gyldig årstall, var 20252"))
                 }
             }
         }
@@ -118,42 +117,44 @@ class SkattekortpersonApiE2ETest :
                 withFullTestApplication {
                     DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                    val response: HttpResponse =
-                        client.post("/api/v1/hent-skattekort") {
-                            contentType(ContentType.Application.Json)
-                            setBody(
+                    val response: Response =
+                        client
+                            .body(
                                 """{
                             | "fnr": "12345678901",
-                            | "inntektsaar": "2025"
+                            | "inntektsaar": 2025
                             | }
                                 """.trimMargin(),
-                            )
-                        }
-                    assertThat("Post returnerer ok", response.status, equalTo(HttpStatusCode.OK))
-                    assertThatJson(response.body<String>()).isEqualTo(
+                            ).post("/api/v1/hent-skattekort")
+                            .then()
+                            .assertThat()
+                            .statusCode(HttpStatusCode.OK.value)
+                            .extract()
+                            .response()!!
+                    response.body().prettyPrint().shouldEqualJson(
                         """[
-                                {
-                                    "inntektsaar": 2025,
-                                    "arbeidstakeridentifikator": "12345678901",
-                                    "resultatPaaForespoersel": "SKATTEKORTOPPLYSNINGER_OK",
-                                    "skattekort": {
-                                    "utstedtDato": "2025-01-06",
-                                    "skattekortidentifikator": 17,
-                                    "forskuddstrekk": [
-                                    {
-                                        "type": "no.nav.sokos.skattekort.module.skattekortpersonapi.v1.Trekktabell",
-                                        "trekkode": "LOENN_FRA_HOVEDARBEIDSGIVER",
-                                        "tabellnummer": "7100",
-                                        "prosentsats": 27.50,
-                                        "antallMaanederForTrekk": 12.0
-                                    }
-                                    ]
-                                },
-                                    "tilleggsopplysning": [
-                                    "KILDESKATT_PAA_LOENN"
-                                    ]
-                                }
-                            ]""",
+  {
+    "inntektsaar": 2025,
+    "arbeidstakeridentifikator": "12345678901",
+    "resultatPaaForespoersel": "skattekortopplysningerOK",
+    "skattekort": {
+      "utstedtDato": "2025-01-06",
+      "skattekortidentifikator": 17,
+      "forskuddstrekk": [
+        {
+          "type": "Trekktabell",
+          "trekkode": "LOENN_FRA_HOVEDARBEIDSGIVER",
+          "tabellnummer": "7100",
+          "prosentsats": 27.50,
+          "antallMaanederForTrekk": 12.0
+        }
+      ]
+    },
+    "tilleggsopplysning": [
+      "kildeskattPaaLoenn"
+    ]
+  }
+]""",
                     )
                 }
             }

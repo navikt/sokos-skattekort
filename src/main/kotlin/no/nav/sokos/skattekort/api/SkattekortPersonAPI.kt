@@ -6,8 +6,8 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
-import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonRequest
-import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
+import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
+import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1") {

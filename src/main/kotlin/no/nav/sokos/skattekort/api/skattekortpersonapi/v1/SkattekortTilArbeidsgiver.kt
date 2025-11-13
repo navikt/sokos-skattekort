@@ -1,8 +1,9 @@
-package no.nav.sokos.skattekort.module.skattekortpersonapi.v1
+package no.nav.sokos.skattekort.api.skattekortpersonapi.v1
 
 import java.math.BigDecimal
 
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.BigDecimalJson
@@ -54,12 +55,25 @@ data class IdentifikatorForEnhetEllerPerson(
 enum class Resultatstatus(
     val value: String,
 ) {
+    @SerialName("ikkeSkattekort")
     IKKE_SKATTEKORT("ikkeSkattekort"),
+
+    @SerialName("vurderArbeidstillatelse")
     VURDER_ARBEIDSTILLATELSE("vurderArbeidstillatelse"),
+
+    @SerialName("ikkeTrekkplikt")
     IKKE_TREKKPLIKT("ikkeTrekkplikt"),
+
+    @SerialName("skattekortopplysningerOK")
     SKATTEKORTOPPLYSNINGER_OK("skattekortopplysningerOK"),
+
+    @SerialName("ugyldigOrganisasjonsnummer")
     UGYLDIG_ORGANISASJONSNUMMER("ugyldigOrganisasjonsnummer"),
+
+    @SerialName("ugyldigFoedselsEllerDnummer")
     UGYLDIG_FOEDSELS_ELLER_DNUMMER("ugyldigFoedselsEllerDnummer"),
+
+    @SerialName("utgaattDnummerSkattekortForFoedselsnummerErLevert")
     UTGAATT_DNUMMER_SKATTEKORT_FOR_FOEDSELSNUMMER_ER_LEVERT("utgaattDnummerSkattekortForFoedselsnummerErLevert"),
     ;
 
@@ -74,9 +88,16 @@ enum class Resultatstatus(
 enum class Tilleggsopplysning(
     val value: String,
 ) {
+    @SerialName("oppholdPaaSvalbard")
     OPPHOLD_PAA_SVALBARD("oppholdPaaSvalbard"),
+
+    @SerialName("kildeskattpensjonist")
     KILDESKATTPENSJONIST("kildeskattpensjonist"),
+
+    @SerialName("oppholdITiltakssone")
     OPPHOLD_I_TILTAKSSONE("oppholdITiltakssone"),
+
+    @SerialName("kildeskattPaaLoenn")
     KILDESKATT_PAA_LOENN("kildeskattPaaLoenn"),
     ;
 
@@ -94,6 +115,7 @@ data class Skattekort(
 )
 
 @Serializable
+@SerialName("forskuddstrekk")
 sealed interface Forskuddstrekk {
     val trekkode: Trekkode
 
@@ -123,12 +145,14 @@ sealed interface Forskuddstrekk {
 }
 
 @Serializable
+@SerialName("Frikort")
 data class Frikort(
     override val trekkode: Trekkode,
     val frikortbeloep: BigDecimalJson? = null,
 ) : Forskuddstrekk
 
 @Serializable
+@SerialName("Trekktabell")
 data class Trekktabell(
     override val trekkode: Trekkode,
     // val tabelltype: Tabelltype? = null, Returneres ikke lenger av skatt
@@ -138,6 +162,7 @@ data class Trekktabell(
 ) : Forskuddstrekk
 
 @Serializable
+@SerialName("Trekkprosent")
 data class Trekkprosent(
     override val trekkode: Trekkode,
     val prosentsats: BigDecimalJson? = null,

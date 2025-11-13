@@ -11,7 +11,8 @@ object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
 
     fun initEnvConfig(applicationConfig: ApplicationConfig? = null) {
-        val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV")
+        println("Environment is ${applicationConfig?.toMap()}")
+        val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV") ?: applicationConfig?.propertyOrNull("APPLICATION_ENV")?.getString()
         val fileConfig =
             when {
                 environment == null || environment.lowercase() == "local" -> {

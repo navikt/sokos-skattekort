@@ -138,7 +138,7 @@ class SkattekortpersonApiE2ETest :
     "arbeidstakeridentifikator": "12345678901",
     "resultatPaaForespoersel": "skattekortopplysningerOK",
     "skattekort": {
-      "utstedtDato": "2025-01-06",
+      "utstedtDato": "2025-11-11",
       "skattekortidentifikator": 17,
       "forskuddstrekk": [
         {

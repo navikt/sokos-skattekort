@@ -28,10 +28,10 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.SftpConfig
-import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.infrastructure.SftpListener
+import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 

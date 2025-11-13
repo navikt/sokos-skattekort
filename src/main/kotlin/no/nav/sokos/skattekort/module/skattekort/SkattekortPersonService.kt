@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
-import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
+
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Arbeidstaker
@@ -12,7 +13,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 private val logger = KotlinLogging.logger {}
 
 class SkattekortPersonService(
-    val dataSource: HikariDataSource,
+    val dataSource: DataSource,
 ) {
     fun hentSkattekortPerson(skattekortPersonRequest: SkattekortPersonRequest): List<Arbeidstaker> =
         dataSource.transaction { tx ->

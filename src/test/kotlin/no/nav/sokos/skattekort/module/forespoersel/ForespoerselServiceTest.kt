@@ -3,7 +3,7 @@ package no.nav.sokos.skattekort.module.forespoersel
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonService

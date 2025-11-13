@@ -6,7 +6,7 @@ import jakarta.jms.JMSContext
 import jakarta.jms.Message
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.infrastructure.MQListener
 
 class MqTest :
     FunSpec({

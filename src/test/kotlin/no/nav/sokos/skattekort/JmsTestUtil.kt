@@ -5,10 +5,10 @@ import jakarta.jms.Message
 import jakarta.jms.Queue
 import jakarta.jms.Session
 
-import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.listener.MQListener.allQueues
-import no.nav.sokos.skattekort.listener.MQListener.bestillingsQueue
-import no.nav.sokos.skattekort.listener.MQListener.producer
+import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.infrastructure.MQListener.allQueues
+import no.nav.sokos.skattekort.infrastructure.MQListener.bestillingsQueue
+import no.nav.sokos.skattekort.infrastructure.MQListener.producer
 
 object JmsTestUtil {
     fun sendMessage(

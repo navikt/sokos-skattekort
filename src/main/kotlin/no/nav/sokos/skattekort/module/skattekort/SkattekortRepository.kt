@@ -84,8 +84,6 @@ object SkattekortRepository {
                                     "prosentsats" to forskuddstrekk.prosentSats,
                                     "antall_mnd_for_trekk" to forskuddstrekk.antallMndForTrekk,
                                 )
-
-                            else -> mapOf()
                         }
                     },
                 )

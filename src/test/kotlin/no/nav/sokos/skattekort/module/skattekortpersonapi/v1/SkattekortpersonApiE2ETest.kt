@@ -62,7 +62,7 @@ class SkattekortpersonApiE2ETest :
                         .extract()
                         .response()!!
 
-                assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr må ha lengde 11, var 1"))
+                assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr er ugyldig. Tillatt format er 11 siffer, var 1"))
             }
         }
         test("fnr med bokstaver dør på seg") {
@@ -85,7 +85,7 @@ class SkattekortpersonApiE2ETest :
                             .extract()
                             .response()!!
 
-                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr kan bare inneholde siffer, var a2345678901"))
+                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr er ugyldig. Tillatt format er 11 siffer, var a2345678901"))
                 }
             }
         }
@@ -108,7 +108,7 @@ class SkattekortpersonApiE2ETest :
                             .statusCode(HttpStatusCode.BadRequest.value)
                             .extract()
                             .response()!!
-                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("inntektsaar ser ikke ut som et gyldig årstall, var 20252"))
+                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("Gyldig årstall er mellom 2024 og inneværende år, var 20252"))
                 }
             }
         }

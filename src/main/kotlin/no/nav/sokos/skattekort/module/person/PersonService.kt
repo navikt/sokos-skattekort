@@ -52,4 +52,17 @@ class PersonService(
         tx: TransactionalSession,
         personId: PersonId,
     ) = PersonRepository.flaggPerson(tx, personId)
+
+    fun findPersonIdByPersonidentifikator(
+        tx: TransactionalSession,
+        personidentifikatorList: List<String>,
+    ): PersonId? = FoedselsnummerRepository.findPersonIdByPersonidentifikator(tx, personidentifikatorList)
+
+    fun updateFoedselsnummer(
+        tx: TransactionalSession,
+        newFoedselsnummer: Foedselsnummer,
+    ) {
+        FoedselsnummerRepository.insert(tx, newFoedselsnummer)
+        AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, newFoedselsnummer.personId!!, "Oppdatert foedselsnummer: ${newFoedselsnummer.fnr.value}")
+    }
 }

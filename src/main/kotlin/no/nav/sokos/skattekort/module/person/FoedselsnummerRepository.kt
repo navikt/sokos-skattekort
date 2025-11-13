@@ -43,4 +43,18 @@ object FoedselsnummerRepository {
                 )
             },
         )
+
+    fun findPersonIdByPersonidentifikator(
+        tx: TransactionalSession,
+        personidentifikatorList: List<String>,
+    ): PersonId? =
+        tx.single(
+            queryOf(
+                """
+                SELECT person_id FROM foedselsnumre
+                WHERE fnr = ANY(ARRAY[${personidentifikatorList.joinToString(separator = "','", prefix = "'", postfix = "'")}]))
+                """.trimIndent(),
+            ),
+            extractor = { row -> PersonId(row.long("person_id")) },
+        )
 }

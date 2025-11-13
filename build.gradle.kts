@@ -1,5 +1,10 @@
+import kotlinx.kover.gradle.plugin.dsl.tasks.KoverReport
+
+import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
+import com.expediagroup.graphql.plugin.gradle.tasks.GraphQLGenerateClientTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -7,6 +12,8 @@ plugins {
     kotlin("plugin.serialization") version "2.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
+    id("io.github.androa.gradle.plugin.avro") version "0.0.12"
+    id("com.expediagroup.graphql") version "8.8.1"
 
     application
 }
@@ -16,24 +23,9 @@ group = "no.nav.sokos"
 repositories {
     mavenCentral()
 
-    val githubToken = System.getenv("GITHUB_TOKEN")
-    if (githubToken.isNullOrEmpty()) {
-        maven {
-            name = "external-mirror-github-navikt"
-            url = uri("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
-        }
-    } else {
-        maven {
-            name = "github-package-registry-navikt"
-            url = uri("https://maven.pkg.github.com/navikt/maven-release")
-            credentials {
-                username = "token"
-                password = githubToken
-            }
-        }
-    }
-
+    maven { url = uri("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
+    maven { url = uri("https://packages.confluent.io/maven/") }
 }
 
 val ktorVersion = "3.3.1"
@@ -61,6 +53,11 @@ val ibmmqVersion = "9.4.3.0"
 val opentelemetryVersion = "2.20.1-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
 val jschVersion = "2.27.3"
+val kafkaClientsVersion = "4.1.0"
+val avroVersion = "1.12.1"
+val kafkaAvroSerializerVersion = "8.1.0"
+val avro4kVersion = "2.6.0"
+val graphqlClientVersion = "8.8.1"
 
 dependencies {
 
@@ -117,11 +114,21 @@ dependencies {
     // SFTP
     implementation("com.github.mwiede:jsch:$jschVersion")
 
+    // Kafka
+    implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
+    implementation("org.apache.avro:avro:$avroVersion")
+    implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
+
     // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
     implementation("org.apache.commons:commons-lang3:3.18.0")
 
     // Scheduler
     implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
+
+    // GraphQL
+    implementation("com.expediagroup:graphql-kotlin-ktor-client:$graphqlClientVersion") {
+        exclude("com.expediagroup:graphql-kotlin-client-jackson")
+    }
 
     // Opentelemetry
     implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
@@ -157,6 +164,10 @@ sourceSets {
     }
 }
 
+generateAvro {
+    schemas.from(layout.projectDirectory.dir("src/main/avro/"))
+}
+
 kotlin {
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
@@ -164,8 +175,38 @@ kotlin {
 }
 
 tasks {
+    named("runKtlintCheckOverMainSourceSet").configure {
+        dependsOn("graphqlGenerateClient")
+    }
+
+    named("runKtlintFormatOverMainSourceSet").configure {
+        dependsOn("graphqlGenerateClient")
+    }
+
     withType<KotlinCompile>().configureEach {
         dependsOn("ktlintFormat")
+        dependsOn("graphqlGenerateClient")
+    }
+
+    withType<KoverReport>().configureEach {
+        kover {
+            reports {
+                filters {
+                    excludes {
+                        // exclusion rules - classes to exclude from report
+                        classes("no.nav.pdl.*")
+                    }
+                }
+            }
+        }
+    }
+
+    withType<GraphQLGenerateClientTask>().configureEach {
+        packageName.set("no.nav.pdl")
+        schemaFile.set(file("$projectDir/src/main/resources/graphql/schema.graphql"))
+        queryFileDirectory.set(file("$projectDir/src/main/resources/graphql"))
+        outputDirectory.set(file("$projectDir/build/generated/sources/graphql/main"))
+        serializer = GraphQLSerializer.KOTLINX
     }
 
     withType<Test>().configureEach {

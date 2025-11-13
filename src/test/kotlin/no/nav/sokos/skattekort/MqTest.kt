@@ -5,7 +5,6 @@ import io.kotest.matchers.shouldBe
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.MQListener
 
 class MqTest :
@@ -13,7 +12,6 @@ class MqTest :
         extensions(listOf(MQListener))
 
         test("MQ Test") {
-            println("Waiting for message...${PropertiesConfig.getMQProperties().fraForSystemQueue}")
 
             JmsTestUtil.sendMessage("Test message")
 

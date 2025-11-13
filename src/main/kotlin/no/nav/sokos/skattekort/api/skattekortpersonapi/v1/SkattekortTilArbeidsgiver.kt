@@ -38,7 +38,7 @@ data class Arbeidstaker(
         skattekort =
             Skattekort(
                 utstedtDato = sk.utstedtDato,
-                skattekortidentifikator = sk.identifikator.toLong(), // TODO: Should be refactored to match types.
+                skattekortidentifikator = sk.identifikator?.toLong(), // TODO: Should be refactored to match types.
                 forskuddstrekk = sk.forskuddstrekkList.map { Forskuddstrekk.fromDomainModel(it) },
             ),
         tilleggsopplysning = sk.tilleggsopplysningList.map { Tilleggsopplysning.fromDomainModel(it) },
@@ -109,8 +109,8 @@ enum class Tilleggsopplysning(
 
 @Serializable
 data class Skattekort(
-    val utstedtDato: LocalDate,
-    val skattekortidentifikator: Long,
+    val utstedtDato: LocalDate? = null,
+    val skattekortidentifikator: Long? = null,
     val forskuddstrekk: List<Forskuddstrekk>? = null,
 )
 

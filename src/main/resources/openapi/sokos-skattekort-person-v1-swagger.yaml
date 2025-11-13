@@ -27,7 +27,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Arbeidstaker'
+              $ref: '#/components/schemas/SkattekortPersonRequest'
         required: true
 
       responses:
@@ -59,6 +59,17 @@ paths:
 
 components:
   schemas:
+
+    SkattekortPersonRequest:
+      type: object
+      properties:
+        fnr:
+          type: string
+          nullable: false
+        inntektsaar:
+          type: integer
+          format: int16
+          nullable: false
 
     Arbeidstaker:
       type: object

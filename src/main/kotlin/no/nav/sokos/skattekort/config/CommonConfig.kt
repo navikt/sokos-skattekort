@@ -61,6 +61,7 @@ fun Application.commonConfig() {
     }
     install(RequestValidation) {
         requestValidationSkattekortConfig()
+        requestValidationSkattekortRequest()
     }
     install(MicrometerMetrics) {
         registry = Metrics.prometheusMeterRegistry

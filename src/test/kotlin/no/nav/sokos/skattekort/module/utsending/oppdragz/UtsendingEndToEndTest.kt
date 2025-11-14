@@ -11,9 +11,9 @@ import io.ktor.server.plugins.di.dependencies
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
 import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
-import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.listener.SftpListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.infrastructure.SftpListener
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 
 class UtsendingEndToEndTest :

@@ -18,7 +18,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.TestUtil.tx
-import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag

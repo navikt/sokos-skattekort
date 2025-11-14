@@ -9,8 +9,10 @@ data class BestillingBatch
     constructor(
         val id: BestillingsbatchId? = null,
         val status: String,
+        val type: String, // "BESTILLING", "OPPDATERING"
         val bestillingsreferanse: String,
         val oppdatert: Instant,
+        val opprettet: Instant,
         val dataSendt: String,
     )
 

@@ -10,6 +10,10 @@ import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortRequest
 
+private const val OPPDATERING = "OPPDATERING"
+
+private const val BESTILLING = "BESTILLING"
+
 object BestillingBatchRepository {
     fun list(tx: TransactionalSession): List<BestillingBatch> =
         tx.list(
@@ -22,7 +26,7 @@ object BestillingBatchRepository {
             extractor = mapToBestillingBatch,
         )
 
-    fun insert(
+    fun insertBestillingsBatch(
         tx: TransactionalSession,
         bestillingsreferanse: String,
         request: BestillSkattekortRequest,
@@ -40,13 +44,46 @@ object BestillingBatchRepository {
             ),
         ) ?: error("Failed to insert bestillingsbatch")
 
-    fun getUnprocessedBatch(tx: TransactionalSession): BestillingBatch? =
+    fun insertOppdateringsBatch(
+        tx: TransactionalSession,
+        bestillingsreferanse: String,
+        request: BestillSkattekortRequest,
+    ): Long =
+        tx.updateAndReturnGeneratedKey(
+            queryOf(
+                """
+                    |INSERT INTO bestillingsbatcher (bestillingsreferanse, data_sendt, type) 
+                    |VALUES (:bestillingsreferanse, (CAST (:dataSendt AS JSON)), :type)
+                """.trimMargin(),
+                mapOf(
+                    "bestillingsreferanse" to bestillingsreferanse,
+                    "dataSendt" to Json.encodeToString(request),
+                    "type" to OPPDATERING,
+                ),
+            ),
+        ) ?: error("Failed to insert bestillingsbatch")
+
+    fun getUnprocessedBestillingsBatch(tx: TransactionalSession): BestillingBatch? =
         tx.single(
             queryOf(
                 """
                     |SELECT * 
                     |FROM bestillingsbatcher
-                    |WHERE status = 'NY'
+                    |WHERE status = 'NY' AND type = '$BESTILLING'
+                    |ORDER BY oppdatert ASC
+                    |LIMIT 1
+                """.trimMargin(),
+            ),
+            extractor = mapToBestillingBatch,
+        )
+
+    fun getUnprocessedOppdateringsBatch(tx: TransactionalSession): BestillingBatch? =
+        tx.single(
+            queryOf(
+                """
+                    |SELECT * 
+                    |FROM bestillingsbatcher
+                    |WHERE status = 'NY' AND type = '$OPPDATERING'
                     |ORDER BY oppdatert ASC
                     |LIMIT 1
                 """.trimMargin(),
@@ -79,9 +116,11 @@ object BestillingBatchRepository {
         BestillingBatch(
             id = BestillingsbatchId(row.long("id")),
             status = row.string("status"),
+            type = row.string("type"),
             bestillingsreferanse = row.string("bestillingsreferanse"),
             dataSendt = row.string("data_sendt"),
             oppdatert = row.instant("oppdatert").toKotlinInstant(),
+            opprettet = row.instant("opprettet").toKotlinInstant(),
         )
     }
 }

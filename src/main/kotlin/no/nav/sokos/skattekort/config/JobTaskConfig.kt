@@ -39,6 +39,7 @@ object JobTaskConfig {
                 recurringSendBestillingBatchTask(bestillingService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
                 recurringHentSkattekortBatchTask(bestillingService, scheduledTaskService),
+                recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
             ).build()
 
     fun recurringSendBestillingBatchTask(

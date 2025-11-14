@@ -81,7 +81,7 @@ spec:
     - name: HENT_SKATTEKORT_BATCH_CRON_EXPRESSION
       value: "0 * * * * *"
     - name: HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION
-      value: "0 */15 * * * *"
+      value: "0 0/4 * * * *"
     - name: SCHEDULER_ENABLED
       value: "true"
     - name: USE_AUTHENTICATION

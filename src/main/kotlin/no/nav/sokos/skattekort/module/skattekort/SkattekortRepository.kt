@@ -84,8 +84,6 @@ object SkattekortRepository {
                                     "prosentsats" to forskuddstrekk.prosentSats,
                                     "antall_mnd_for_trekk" to forskuddstrekk.antallMndForTrekk,
                                 )
-
-                            else -> mapOf()
                         }
                     },
                 )
@@ -138,10 +136,10 @@ object SkattekortRepository {
             queryOf(
                 """
                 SELECT * FROM forskuddstrekk 
-                WHERE skattekort_id = :skattekkortId
+                WHERE skattekort_id = :skattekortId
                 """.trimIndent(),
                 mapOf(
-                    "skattekkortId" to id.value,
+                    "skattekortId" to id.value,
                 ),
             ),
             extractor = { row ->

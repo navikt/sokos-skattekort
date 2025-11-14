@@ -171,6 +171,7 @@ object PropertiesConfig {
         val cronBestilling: String = get("SEND_BESTILLING_BATCH_CRON_EXPRESSION"),
         val cronUtsending: String = get("SEND_UTSENDING_CRON_EXPRESSION"),
         val cronHenting: String = get("HENT_SKATTEKORT_BATCH_CRON_EXPRESSION"),
+        val cronHentOppdaterte: String = get("HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION"),
     )
 
     data class MaskinportenProperties(

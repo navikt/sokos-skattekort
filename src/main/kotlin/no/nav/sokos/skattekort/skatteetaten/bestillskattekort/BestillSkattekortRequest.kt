@@ -10,8 +10,8 @@ data class BestillSkattekortRequest(
     val inntektsaar: String,
     val bestillingstype: String,
     val kontaktinformasjon: Kontaktinformasjon,
-    val varslingstype: String,
-    val forespoerselOmSkattekortTilArbeidsgiver: ForespoerselOmSkattekortTilArbeidsgiver,
+    val varslingstype: String? = null,
+    val forespoerselOmSkattekortTilArbeidsgiver: ForespoerselOmSkattekortTilArbeidsgiver? = null,
 )
 
 @Serializable
@@ -58,5 +58,16 @@ fun bestillSkattekortRequest(
                             arbeidstakeridentifikator = fnr.map { it.value },
                         ),
                     ),
+            ),
+    )
+
+fun bestillOppdateringRequest(inntektsaar: Int): BestillSkattekortRequest =
+    BestillSkattekortRequest(
+        inntektsaar = inntektsaar.toString(),
+        bestillingstype = "HENT_KUN_ENDRING",
+        kontaktinformasjon =
+            Kontaktinformasjon(
+                epostadresse = "john.smith@example.com",
+                mobiltelefonummer = "+4794123456",
             ),
     )

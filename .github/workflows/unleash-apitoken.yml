@@ -8,12 +8,14 @@ on:
       - '.github/workflows/unleash-apitoken.yaml'
       - '.nais/dev/unleash-apitoken-tss.yaml'
   workflow_dispatch:
-  pull_request: 
+  pull_request:
 
 jobs:
   apply-apitoken-unleash:
     name: Apply ApiToken for Unleash to cluster
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v5

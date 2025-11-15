@@ -17,13 +17,14 @@ open class UnleashIntegration(
 
     fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", true)
 
+    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled", true)
+
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||
             appProperties.environment == PropertiesConfig.Environment.LOCAL
         ) {
             unleashClient = FakeUnleash()
         } else {
-            logger.info { "Unleash config $unleashProps" }
             val config =
                 UnleashConfig
                     .builder()

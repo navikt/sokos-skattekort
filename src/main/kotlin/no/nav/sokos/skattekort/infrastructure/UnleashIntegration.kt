@@ -15,9 +15,9 @@ open class UnleashIntegration(
     private lateinit var unleashClient: Unleash
     private val logger = KotlinLogging.logger {}
 
-    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", false)
+    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", true)
 
-    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled", false)
+    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled", true)
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||

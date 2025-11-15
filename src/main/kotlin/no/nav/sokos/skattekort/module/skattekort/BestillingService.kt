@@ -95,27 +95,34 @@ class BestillingService(
                 runBlocking {
                     try {
                         val response = skatteetatenClient.hentSkattekort(bestillingsbatch.bestillingsreferanse)
-                        logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
-                        when (response.status) {
-                            ResponseStatus.FORESPOERSEL_OK.name -> {
-                                response.arbeidsgiver!!.first().arbeidstaker.map { arbeidstaker ->
-                                    handleNyttSkattekort(tx, arbeidstaker)
+                        if (response != null) {
+                            logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
+                            when (response.status) {
+                                ResponseStatus.FORESPOERSEL_OK.name -> {
+                                    response.arbeidsgiver!!.first().arbeidstaker.map { arbeidstaker ->
+                                        handleNyttSkattekort(tx, arbeidstaker)
+                                    }
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                                    BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
                                 }
-                                BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                                BestillingRepository.deleteProcessedBestillings(tx, batchId)
-                                logger.info("Bestillingsbatch $batchId ferdig behandlet")
-                            }
 
-                            else -> {
-                                logger.error { "Bestillingsbatch feilet: ${response.status}" }
-                                BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
-                                AuditRepository.insertBatch(
-                                    tx,
-                                    AuditTag.HENTING_AV_SKATTEKORT_FEILET,
-                                    BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                                    "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
-                                )
+                                else -> {
+                                    logger.error { "Bestillingsbatch feilet: ${response.status}" }
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                                    AuditRepository.insertBatch(
+                                        tx,
+                                        AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                        BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                        "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
+                                    )
+                                }
                             }
+                        } else {
+                            // Ingen skattekort returnert
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                            logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
                     } catch (ex: Exception) {
                         logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
@@ -265,29 +272,34 @@ class BestillingService(
                 runBlocking {
                     try {
                         val response = skatteetatenClient.hentSkattekort(oppdateringsbatch.bestillingsreferanse)
-                        logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
-                        when (response.status) {
-                            ResponseStatus.FORESPOERSEL_OK.name -> {
-                                val arbeidstakere = response.arbeidsgiver!!.first().arbeidstaker
-                                oppdateringerMottattCounter.inc(arbeidstakere.size.toLong())
-                                arbeidstakere.map { arbeidstaker ->
-                                    handleNyttSkattekort(tx, arbeidstaker)
+                        if (response != null) {
+                            logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
+                            when (response.status) {
+                                ResponseStatus.FORESPOERSEL_OK.name -> {
+                                    val arbeidstakere = response.arbeidsgiver!!.first().arbeidstaker
+                                    oppdateringerMottattCounter.inc(arbeidstakere.size.toLong())
+                                    arbeidstakere.map { arbeidstaker ->
+                                        handleNyttSkattekort(tx, arbeidstaker)
+                                    }
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
                                 }
-                                BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                                BestillingRepository.deleteProcessedBestillings(tx, batchId)
-                                logger.info("Bestillingsbatch $batchId ferdig behandlet")
-                            }
 
-                            else -> {
-                                logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
-                                BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
-                                AuditRepository.insertBatch(
-                                    tx,
-                                    AuditTag.HENTING_AV_SKATTEKORT_FEILET,
-                                    BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                                    "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
-                                )
+                                else -> {
+                                    logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                                    AuditRepository.insertBatch(
+                                        tx,
+                                        AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                        BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                        "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
+                                    )
+                                }
                             }
+                        } else {
+                            // Ingen oppdateringer
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
                     } catch (ex: Exception) {
                         logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }

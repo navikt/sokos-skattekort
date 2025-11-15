@@ -50,8 +50,10 @@ class SkatteetatenClientTest :
 
             val response = skatteetatenClient.hentSkattekort("BR1234")
 
-            response.status shouldBe ResponseStatus.UGYLDIG_INNTEKTSAAR.name
-            response.arbeidsgiver shouldBe emptyList()
+            response shouldNotBeNull {
+                status shouldBe ResponseStatus.UGYLDIG_INNTEKTSAAR.name
+                arbeidsgiver shouldBe emptyList()
+            }
         }
 
         test("should handle skattekortopplysningerOK") {
@@ -59,38 +61,40 @@ class SkatteetatenClientTest :
 
             val response = skatteetatenClient.hentSkattekort("BR1234")
 
-            response.status shouldBe ResponseStatus.FORESPOERSEL_OK.name
-            response.arbeidsgiver shouldNotBeNull {
-                size shouldBe 1
-                this[0] shouldNotBeNull {
-                    arbeidsgiveridentifikator.organisasjonsnummer shouldBe "312978083"
-                    arbeidstaker.size shouldBe 1
-                    arbeidstaker[0] shouldNotBeNull {
-                        arbeidstakeridentifikator shouldBe "12345678901"
-                        resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
-                        skattekort.shouldNotBeNull {
-                            skattekortidentifikator shouldBe 54407
-                            forskuddstrekk.size shouldBe 5
-                            forskuddstrekk[0] shouldNotBeNull {
-                                trekkode shouldBe Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value
-                                trekktabell.shouldNotBeNull {
-                                    tabellnummer shouldBe "8140"
+            response shouldNotBeNull {
+                status shouldBe ResponseStatus.FORESPOERSEL_OK.name
+                arbeidsgiver shouldNotBeNull {
+                    size shouldBe 1
+                    this[0] shouldNotBeNull {
+                        arbeidsgiveridentifikator.organisasjonsnummer shouldBe "312978083"
+                        arbeidstaker.size shouldBe 1
+                        arbeidstaker[0] shouldNotBeNull {
+                            arbeidstakeridentifikator shouldBe "12345678901"
+                            resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
+                            skattekort.shouldNotBeNull {
+                                skattekortidentifikator shouldBe 54407
+                                forskuddstrekk.size shouldBe 5
+                                forskuddstrekk[0] shouldNotBeNull {
+                                    trekkode shouldBe Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER.value
+                                    trekktabell.shouldNotBeNull {
+                                        tabellnummer shouldBe "8140"
+                                    }
                                 }
-                            }
-                            forskuddstrekk[1] shouldNotBeNull {
-                                trekkode shouldBe Trekkode.LOENN_FRA_BIARBEIDSGIVER.value
-                                trekkprosent.shouldNotBeNull {
-                                    prosentsats.toDouble() shouldBe 43.0
+                                forskuddstrekk[1] shouldNotBeNull {
+                                    trekkode shouldBe Trekkode.LOENN_FRA_BIARBEIDSGIVER.value
+                                    trekkprosent.shouldNotBeNull {
+                                        prosentsats.toDouble() shouldBe 43.0
+                                    }
                                 }
+                                tilleggsopplysning!!.size shouldBe 4
+                                tilleggsopplysning shouldContainExactly
+                                    listOf(
+                                        "oppholdPaaSvalbard",
+                                        "kildeskattPaaPensjon",
+                                        "oppholdITiltakssone",
+                                        "kildeskattPaaLoenn",
+                                    )
                             }
-                            tilleggsopplysning!!.size shouldBe 4
-                            tilleggsopplysning shouldContainExactly
-                                listOf(
-                                    "oppholdPaaSvalbard",
-                                    "kildeskattPaaPensjon",
-                                    "oppholdITiltakssone",
-                                    "kildeskattPaaLoenn",
-                                )
                         }
                     }
                 }

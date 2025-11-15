@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - feature/TOB-5509-feature-switcher
     paths:
       - '.github/workflows/unleash-apitoken.yaml'
       - '.nais/dev/unleash-apitoken-tss.yaml'
   workflow_dispatch:
+  pull_request: 
 
 jobs:
   apply-apitoken-unleash:

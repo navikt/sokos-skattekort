@@ -7,7 +7,7 @@ import io.getunleash.util.UnleashConfig
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 
-class UnleashIntegration(
+open class UnleashIntegration(
     private val unleashProps: PropertiesConfig.UnleashProperties,
     private val appProperties: PropertiesConfig.ApplicationProperties,
 ) {

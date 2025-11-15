@@ -19,6 +19,7 @@ import io.mockk.mockk
 
 import no.nav.sokos.skattekort.TestUtil.tx
 import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -43,7 +44,7 @@ class BestillingServiceTest :
         val skatteetatenClient = mockk<SkatteetatenClient>()
 
         val bestillingService: BestillingService by lazy {
-            BestillingService(DbListener.dataSource, skatteetatenClient, PersonService(DbListener.dataSource))
+            BestillingService(DbListener.dataSource, skatteetatenClient, PersonService(DbListener.dataSource), FakeUnleashIntegration())
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {

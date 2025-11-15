@@ -14,8 +14,8 @@ import jakarta.jms.Session
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.metrics.METRICS_NAMESPACE
-import no.nav.sokos.skattekort.metrics.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
+import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag

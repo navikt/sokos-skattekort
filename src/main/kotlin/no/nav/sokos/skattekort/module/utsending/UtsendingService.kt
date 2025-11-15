@@ -16,6 +16,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -28,9 +29,10 @@ import no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekortmelding
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class UtsendingService(
-    val dataSource: DataSource,
-    val jmsConnectionFactory: ConnectionFactory,
-    @Named("leveransekoeOppdragZSkattekort") val leveransekoeOppdragZSkattekort: Queue,
+    private val dataSource: DataSource,
+    private val jmsConnectionFactory: ConnectionFactory,
+    @Named("leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
+    private val featureToggles: UnleashIntegration,
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -71,42 +73,46 @@ class UtsendingService(
     }
 
     fun handleUtsending() {
-        val utsendinger: List<Utsending> =
-            try {
-                dataSource.transaction { tx ->
-                    UtsendingRepository.getAllUtsendinger(tx)
+        if (featureToggles.isUtsendingEnabled()) {
+            val utsendinger: List<Utsending> =
+                try {
+                    dataSource.transaction { tx ->
+                        UtsendingRepository.getAllUtsendinger(tx)
+                    }
+                } catch (e: Exception) {
+                    logger.error("Feil under henting av utsendinger", e)
+                    throw e
                 }
-            } catch (e: Exception) {
-                logger.error("Feil under henting av utsendinger", e)
-                throw e
-            }
-        utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
-        utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
-        utsendinger
-            .forEach { utsending ->
-                dataSource.transaction { tx ->
-                    when (utsending.forsystem) {
-                        Forsystem.OPPDRAGSSYSTEMET -> {
-                            try {
-                                sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar)
-                                UtsendingRepository.delete(tx, utsending.id!!)
-                                utsendingOppdragzCounter.inc()
-                            } catch (e: Exception) {
-                                // TODO: logg feil
-                                logger.error("Feil under sending til oppdragz", e)
-                                dataSource.transaction { errorsession ->
-                                    UtsendingRepository.increaseFailCount(errorsession, utsending.id, e.message ?: "Ukjent feil")
-                                    feiledeUtsendingerOppdragzCounter.inc()
+            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
+            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
+            utsendinger
+                .forEach { utsending ->
+                    dataSource.transaction { tx ->
+                        when (utsending.forsystem) {
+                            Forsystem.OPPDRAGSSYSTEMET -> {
+                                try {
+                                    sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar)
+                                    UtsendingRepository.delete(tx, utsending.id!!)
+                                    utsendingOppdragzCounter.inc()
+                                } catch (e: Exception) {
+                                    // TODO: logg feil
+                                    logger.error("Feil under sending til oppdragz", e)
+                                    dataSource.transaction { errorsession ->
+                                        UtsendingRepository.increaseFailCount(errorsession, utsending.id, e.message ?: "Ukjent feil")
+                                        feiledeUtsendingerOppdragzCounter.inc()
+                                    }
                                 }
                             }
-                        }
 
-                        Forsystem.MANUELL -> {
-                            UtsendingRepository.delete(tx, utsending.id!!)
+                            Forsystem.MANUELL -> {
+                                UtsendingRepository.delete(tx, utsending.id!!)
+                            }
                         }
                     }
                 }
-            }
+        } else {
+            logger.debug("Utsending er disablet")
+        }
     }
 
     fun getAllUtsendinger(): List<Utsending> =

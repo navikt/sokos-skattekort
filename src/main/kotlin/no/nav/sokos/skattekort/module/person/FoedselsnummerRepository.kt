@@ -52,8 +52,9 @@ object FoedselsnummerRepository {
             queryOf(
                 """
                 SELECT person_id FROM foedselsnumre
-                WHERE fnr = ANY(ARRAY[${personidentifikatorList.joinToString(separator = "','", prefix = "'", postfix = "'")}]))
+                WHERE fnr = ANY(?)
                 """.trimIndent(),
+                personidentifikatorList.toTypedArray(),
             ),
             extractor = { row -> PersonId(row.long("person_id")) },
         )

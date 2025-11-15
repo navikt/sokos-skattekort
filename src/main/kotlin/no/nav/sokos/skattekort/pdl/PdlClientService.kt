@@ -30,7 +30,6 @@ class PdlClientService(
     suspend fun getIdenterBolk(identer: List<String>): Map<String, List<IdentInformasjon>> {
         val request = HentIdenterBolk(HentIdenterBolk.Variables(identer))
 
-        logger.info { "Henter accesstoken for oppslag mot PDL" }
         val accessToken = azuredTokenClient.getSystemToken()
 
         logger.info { "Henter identer fra PDL" }

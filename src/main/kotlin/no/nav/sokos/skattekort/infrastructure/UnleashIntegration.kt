@@ -13,6 +13,8 @@ class UnleashIntegration(
 ) {
     private lateinit var unleashClient: Unleash
 
+    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("utsending.enabled", true)
+
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||
             appProperties.environment == PropertiesConfig.Environment.LOCAL

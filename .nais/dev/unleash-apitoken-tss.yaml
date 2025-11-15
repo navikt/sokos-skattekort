@@ -3,6 +3,7 @@ kind: ApiToken
 metadata:
   name: sokos-skattekort
   namespace: okonomi
+  cluster: dev-fss
   labels:
     team: okonomi
 spec:

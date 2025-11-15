@@ -194,6 +194,8 @@ Applikasjonen driftes av utviklerteamet under en devops-modell.
 
 Applikasjonen kjører onprem.
 
+Applikasjonen bruker feature toggles. API for å sette og inspisere disse ligger på https://okonomi-unleash-web.iap.nav.cloud.nais.io/projects
+
 ### Logging
 
 https://logs.adeo.no.

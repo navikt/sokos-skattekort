@@ -15,8 +15,8 @@ import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
-import no.nav.sokos.skattekort.metrics.METRICS_NAMESPACE
-import no.nav.sokos.skattekort.metrics.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
+import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag

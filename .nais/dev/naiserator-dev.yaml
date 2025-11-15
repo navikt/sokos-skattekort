@@ -55,6 +55,8 @@ spec:
       rules:
         - application: logging
           namespace: nais-system
+      external:
+        - host: okonomi-unleash-api.nav.cloud.nais.io
   maskinporten:
     enabled: true
     scopes:
@@ -72,6 +74,7 @@ spec:
   envFrom:
     - secret: sokos-skattekort-mq-credentials
     - secret: sokos-skattekort-sftp-credentials
+    - secret: sokos-skattekort-unleash-api-token
 
   env:
     - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION

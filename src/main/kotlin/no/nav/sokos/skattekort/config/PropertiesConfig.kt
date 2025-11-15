@@ -52,6 +52,7 @@ object PropertiesConfig {
             environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
             useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
             mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
+            podName = getOrEmpty("NAIS_POD_NAME"),
         )
 
     fun getPostgresProperties(): PostgresProperties =
@@ -126,6 +127,13 @@ object PropertiesConfig {
             pdlScope = getOrEmpty("PDL_SCOPE"),
         )
 
+    fun getUnleashProperties(): UnleashProperties =
+        UnleashProperties(
+            unleashAPI = getOrEmpty("UNLEASH_SERVER_API_URL"),
+            apiKey = getOrEmpty("UNLEASH_SERVER_API_TOKEN"),
+            environment = getOrEmpty("UNLEASH_SERVER_API_ENV"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -139,6 +147,7 @@ object PropertiesConfig {
         val useAuthentication: Boolean,
         val mqListenerEnabled: Boolean,
         val gyldigeFnr: String,
+        val podName: String,
     )
 
     data class PostgresProperties(
@@ -212,6 +221,12 @@ object PropertiesConfig {
     data class PdlProperties(
         val pdlUrl: String,
         val pdlScope: String,
+    )
+
+    data class UnleashProperties(
+        val unleashAPI: String,
+        val apiKey: String,
+        val environment: String,
     )
 
     enum class Environment {

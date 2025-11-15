@@ -10,7 +10,7 @@ import mu.KotlinLogging
 import org.flywaydb.core.Flyway
 import org.postgresql.ds.PGSimpleDataSource
 
-import no.nav.sokos.skattekort.metrics.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
 import no.nav.vault.jdbc.hikaricp.HikariCPVaultUtil
 
 private val logger = KotlinLogging.logger {}

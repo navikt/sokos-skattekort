@@ -23,6 +23,7 @@ open class UnleashIntegration(
         ) {
             unleashClient = FakeUnleash()
         } else {
+            logger.info { "Unleash config $unleashProps" }
             val config =
                 UnleashConfig
                     .builder()

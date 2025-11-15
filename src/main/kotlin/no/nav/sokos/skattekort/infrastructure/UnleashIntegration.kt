@@ -4,6 +4,7 @@ import io.getunleash.DefaultUnleash
 import io.getunleash.FakeUnleash
 import io.getunleash.Unleash
 import io.getunleash.util.UnleashConfig
+import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 
@@ -12,8 +13,9 @@ open class UnleashIntegration(
     private val appProperties: PropertiesConfig.ApplicationProperties,
 ) {
     private lateinit var unleashClient: Unleash
+    private val logger = KotlinLogging.logger {}
 
-    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("utsending.enabled", true)
+    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", true)
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||
@@ -26,7 +28,7 @@ open class UnleashIntegration(
                     .builder()
                     .appName(appProperties.naisAppName)
                     .instanceId(appProperties.podName)
-                    .unleashAPI(unleashProps.unleashAPI)
+                    .unleashAPI(unleashProps.unleashAPI + "/api/")
                     .apiKey(unleashProps.apiKey)
                     .environment(unleashProps.environment)
                     .synchronousFetchOnInitialisation(true)

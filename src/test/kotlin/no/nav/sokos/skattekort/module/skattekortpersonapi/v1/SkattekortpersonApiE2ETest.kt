@@ -20,7 +20,6 @@ import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.FullNettyApplication
 import no.nav.sokos.skattekort.infrastructure.MQListener
-import no.nav.sokos.skattekort.infrastructure.SftpListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 
 private val forespoerselService = mockk<ForespoerselService>()
@@ -31,7 +30,7 @@ class SkattekortpersonApiE2ETest :
             FullNettyApplication.start()
         }
 
-        extensions(DbListener, MQListener, SftpListener)
+        extensions(DbListener, MQListener)
 
         val tokenWithNavIdent = readFile("/tokenWithNavIdent.txt")
         val openApiValidationFilter = OpenApiValidationFilter("openapi/sokos-skattekort-person-v1-swagger.yaml")

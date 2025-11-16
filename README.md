@@ -27,7 +27,6 @@ flowchart TD
     KortDb -- ok skattekort --> Sender
     Sender --> SKDb[(SkatteKortDb)]
     person -- systeminteresse --> Sender
-    Sender -- hvis arena - interesse, SFTP --> Arena
     Sender -- alltid, JMS --> OppdragZ
     Sender -- hvis poc - interesse, JMS? Rest? --> POC
     SkatteKortDb --> AdminGui
@@ -84,9 +83,7 @@ Vi må teste oppgradering av dette/disse biblitekene manuelt.
 block-beta
     columns 7
     space space hent("hent-skattekort") space space space space
-    Arena_inn("Arena") space space space space space space
     space space bestilling space space space space
-    OS_inn("OppdragZ") space space space space space Arena("Arena (SFTP)")
     space space space space applikasjon space space
     space space space space space space OS("OppdragZ")
     space space space space db[("Database")] space space

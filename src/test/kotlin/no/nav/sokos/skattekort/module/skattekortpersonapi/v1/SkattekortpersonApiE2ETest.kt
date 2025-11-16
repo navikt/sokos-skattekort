@@ -16,7 +16,6 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 
 import no.nav.sokos.skattekort.TestUtil.readFile
-import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.FullNettyApplication
 import no.nav.sokos.skattekort.infrastructure.MQListener
@@ -67,72 +66,67 @@ class SkattekortpersonApiE2ETest :
         }
         test("fnr med bokstaver dør på seg") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                withFullTestApplication {
-                    DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                    val response: Response =
-                        client
-                            .body(
-                                """{
+                val response: Response =
+                    client
+                        .body(
+                            """{
                             | "fnr": "a2345678901",
                             | "inntektsaar": 2025
                             | }
-                                """.trimMargin(),
-                            ).post("/api/v1/hent-skattekort")
-                            .then()
-                            .assertThat()
-                            .statusCode(HttpStatusCode.BadRequest.value)
-                            .extract()
-                            .response()!!
+                            """.trimMargin(),
+                        ).post("/api/v1/hent-skattekort")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatusCode.BadRequest.value)
+                        .extract()
+                        .response()!!
 
-                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr er ugyldig. Tillatt format er 11 siffer, var a2345678901"))
-                }
+                assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("fnr er ugyldig. Tillatt format er 11 siffer, var a2345678901"))
             }
         }
         test("veldig stort inntektsaar dør på seg") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                withFullTestApplication {
-                    DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                    val response: Response =
-                        client
-                            .body(
-                                """{
+                val response: Response =
+                    client
+                        .body(
+                            """{
                             | "fnr": "12345678901",
                             | "inntektsaar": 20252
                             | }
-                                """.trimMargin(),
-                            ).post("/api/v1/hent-skattekort")
-                            .then()
-                            .assertThat()
-                            .statusCode(HttpStatusCode.BadRequest.value)
-                            .extract()
-                            .response()!!
-                    assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("Gyldig årstall er mellom 2024 og inneværende år, var 20252"))
-                }
+                            """.trimMargin(),
+                        ).post("/api/v1/hent-skattekort")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatusCode.BadRequest.value)
+                        .extract()
+                        .response()!!
+                assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("Gyldig årstall er mellom 2024 og inneværende år, var 20252"))
             }
         }
         test("vi kan hente et skattekort") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                withFullTestApplication {
-                    DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                    val response: Response =
-                        client
-                            .body(
-                                """{
+                val response: Response =
+                    client
+                        .body(
+                            """{
                             | "fnr": "12345678901",
                             | "inntektsaar": 2025
                             | }
-                                """.trimMargin(),
-                            ).post("/api/v1/hent-skattekort")
-                            .then()
-                            .assertThat()
-                            .statusCode(HttpStatusCode.OK.value)
-                            .extract()
-                            .response()!!
-                    response.body().prettyPrint().shouldEqualJson(
-                        """[
+                            """.trimMargin(),
+                        ).post("/api/v1/hent-skattekort")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatusCode.OK.value)
+                        .extract()
+                        .response()!!
+                response.body().prettyPrint().shouldEqualJson(
+                    """[
   {
     "inntektsaar": 2025,
     "arbeidstakeridentifikator": "12345678901",
@@ -155,8 +149,7 @@ class SkattekortpersonApiE2ETest :
     ]
   }
 ]""",
-                    )
-                }
+                )
             }
         }
     })

@@ -95,15 +95,6 @@ object PropertiesConfig {
             skatteetatenApiUrl = getOrEmpty("SKATTEETATEN_API_URL"),
         )
 
-    fun getSftpProperties(): SftpProperties =
-        SftpProperties(
-            host = get("SFTP_HOST"),
-            port = get("SFTP_PORT").toInt(),
-            user = getOrEmpty("SFTP_USER"),
-            privateKey = getOrEmpty("SFTP_PRIVATE_KEY"),
-            keyPassword = getOrEmpty("SFTP_KEY_PASSWORD"),
-        )
-
     fun getKafkaProperties(): KafkaProperties =
         KafkaProperties(
             enabled = getOrEmpty("KAFKA_CONSUMER_ENABLED").toBoolean(),
@@ -184,14 +175,6 @@ object PropertiesConfig {
 
     data class SkatteetatenProperties(
         val skatteetatenApiUrl: String,
-    )
-
-    data class SftpProperties(
-        val host: String,
-        val port: Int,
-        val user: String,
-        val privateKey: String,
-        val keyPassword: String,
     )
 
     data class KafkaProperties(

@@ -13,12 +13,11 @@ import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
 import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
-import no.nav.sokos.skattekort.infrastructure.SftpListener
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 
 class UtsendingEndToEndTest :
     FunSpec({
-        extensions(DbListener, MQListener, SftpListener)
+        extensions(DbListener, MQListener)
 
         test("vi kan plukke opp en utsending fra databasen og sende en JMS-melding med riktig format") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {

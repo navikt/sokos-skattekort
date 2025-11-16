@@ -66,12 +66,8 @@ spec:
   webproxy: true
   vault:
     enabled: true
-  filesFrom:
-    - secret: sokos-skattekort-private-key
-      mountPath: /var/run/secrets/sokos-skattekort-private-key
   envFrom:
     - secret: sokos-skattekort-mq-credentials
-    - secret: sokos-skattekort-sftp-credentials
 
   env:
     - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
@@ -90,8 +86,4 @@ spec:
       value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
     - name: APPLICATION_ENV
       value: DEV
-
-    # SFTP
-    - name: SFTP_PRIVATE_KEY
-      value: /var/run/secrets/sokos-skattekort-private-key/SFTP_PRIVATE_KEY
 

@@ -27,7 +27,7 @@ flowchart TD
     KortDb -- ok skattekort --> Sender
     Sender --> SKDb[(SkatteKortDb)]
     person -- systeminteresse --> Sender
-    Sender -- alltid, JMS --> OppdragZ
+    Sender -- JMS --> OppdragZ
     Sender -- hvis poc - interesse, JMS? Rest? --> POC
     SkatteKortDb --> AdminGui
     BestDb --> AdminGui

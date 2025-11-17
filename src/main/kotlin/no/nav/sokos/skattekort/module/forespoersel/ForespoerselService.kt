@@ -1,8 +1,13 @@
 package no.nav.sokos.skattekort.module.forespoersel
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.Year
 import javax.sql.DataSource
 
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.Month
+import kotlinx.datetime.toKotlinLocalDateTime
 
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
@@ -30,7 +35,7 @@ class ForespoerselService(
         saksbehandler: NavIdent? = null,
     ) {
         dataSource.transaction { tx ->
-            val forespoerselInput =
+            val forespoerselInput: ForespoerselInput =
                 when {
                     message.startsWith("<") -> return@transaction // drop Arena meldinger
                     else -> parseCopybookMessage(message)
@@ -43,23 +48,39 @@ class ForespoerselService(
 
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 
-            val forespoerselId =
-                ForespoerselRepository.insert(
-                    tx = tx,
-                    forsystem = forespoerselInput.forsystem,
-                    dataMottatt = message,
-                )
-            createBestilling(tx, forespoerselId, forespoerselInput, saksbehandler?.ident)
+            handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
+            println("Før ekstra")
+            if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
+                println("Lager ekstra")
+                val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
+                handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
+            }
         }
     }
 
+    private fun skalLagesForNesteAarOgsaa(forespoerselInput: ForespoerselInput): Boolean {
+        val naa = LocalDateTime.now().toKotlinLocalDateTime()
+        val iaar = naa.year
+        return (
+            forespoerselInput.inntektsaar == iaar &&
+                naa.month == Month.DECEMBER &&
+                naa.day > 15
+        )
+    }
+
     @OptIn(ExperimentalTime::class)
-    private fun createBestilling(
+    private fun handleForespoersel(
         tx: TransactionalSession,
-        forespoerselId: Long,
+        message: String,
         forespoerselInput: ForespoerselInput,
         brukerId: String?,
     ) {
+        val forespoerselId =
+            ForespoerselRepository.insert(
+                tx = tx,
+                forsystem = forespoerselInput.forsystem,
+                dataMottatt = message,
+            )
         var bestillingCount = 0
         forespoerselInput.fnrList.forEach { fnr ->
             val person =
@@ -95,11 +116,11 @@ class ForespoerselService(
                         bestillingCount++
                     }
                 }.let {
+                    // Skattekort finnes
                     UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)?.let {
                         logger.info {
                             "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
                         }
-                        return@forEach
                     }
                 }
         }
@@ -109,11 +130,11 @@ class ForespoerselService(
     private fun forSentAaBestille(inntektsaar: Int): Boolean {
         // Skatteetatens regel er at man kan bestille skattekort for året før frem til 01.07.
         val currentYear =
-            java.time.Year
+            Year
                 .now()
                 .value
         val currentMonth =
-            java.time.LocalDate
+            LocalDate
                 .now()
                 .monthValue
         val forSentAaBestilleForFjoraaret = currentMonth >= 7 && inntektsaar == currentYear - 1

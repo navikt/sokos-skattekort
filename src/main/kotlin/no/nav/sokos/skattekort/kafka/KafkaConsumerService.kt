@@ -14,7 +14,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.KafkaConfig
-import no.nav.sokos.skattekort.metrics.Metrics
+import no.nav.sokos.skattekort.infrastructure.Metrics
 
 private val logger = KotlinLogging.logger {}
 private const val DELAY_ON_ERROR_SECONDS = 60L

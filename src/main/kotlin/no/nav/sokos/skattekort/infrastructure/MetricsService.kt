@@ -23,6 +23,7 @@ class MetricsService(
             val timeSisteSkattekortStored = skattekortRepository.getLatestSkattekortUpdateTime(tx)
             // Bestillinger som ikke er løst i løpet av 30 minutter
             val earliestBestillingTime = bestillingRepository.getEarliestBestillingTime(tx)
+            val earliestSentBestillingTime = bestillingRepository.getEarliestSentBestillingTime(tx)
             // Utsendinger som ikke er sendt i løpet av 5 minutter
             val earliestUnsentUtsendingTime = utsendingRepository.getEarliestUnsentUtsendingTime(tx)
 

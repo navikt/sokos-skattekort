@@ -21,11 +21,13 @@ object DatabaseConfig {
     }
 
     init {
-        Runtime.getRuntime().addShutdownHook(
-            Thread {
-                (dataSource as HikariDataSource).close()
-            },
-        )
+        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+            Runtime.getRuntime().addShutdownHook(
+                Thread {
+                    (dataSource as HikariDataSource).close()
+                },
+            )
+        }
     }
 
     fun migrate(

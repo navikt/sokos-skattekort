@@ -18,7 +18,6 @@ import no.nav.sokos.skattekort.config.JobTaskConfig
 import no.nav.sokos.skattekort.config.KafkaConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.config.SftpConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.httpClient
@@ -37,7 +36,6 @@ import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
-import no.nav.sokos.skattekort.sftp.SftpService
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 
@@ -61,11 +59,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     dependencies {
         provide { httpClient }
         provide { DatabaseConfig.dataSource }
-        provide { SftpConfig() }
         provide { KafkaConfig() }
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
-        provide(SftpService::class)
         provide(MaskinportenTokenClient::class)
 
         provide { MQConfig.connectionFactory }
@@ -98,9 +94,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
-
-    val sftpService: SftpService by dependencies
-    logger.info { "SFTP connection is enabled: ${sftpService.isSftpConnectionEnabled()}" }
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()

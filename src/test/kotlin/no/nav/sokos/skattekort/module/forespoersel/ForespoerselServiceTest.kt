@@ -1,6 +1,9 @@
 package no.nav.sokos.skattekort.module.forespoersel
 
+import java.time.LocalDateTime
+
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -26,95 +29,127 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val osMessage = "OS;2025;12345678901"
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                val osMessage = "OS;2025;12345678901"
 
-            forespoerselService.taImotForespoersel(osMessage)
+                forespoerselService.taImotForespoersel(osMessage)
 
-            DbListener.dataSource.transaction { tx ->
-                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                forespoerselList.size shouldBe 1
-                val forespoersel = forespoerselList.first()
-                forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    forespoerselList.size shouldBe 1
+                    val forespoersel = forespoerselList.first()
+                    forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
 
-                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                abonnementList.size shouldBe 1
-                val bestillingList = BestillingRepository.getAllBestilling(tx)
-                bestillingList.size shouldBe 1
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 0
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    abonnementList.size shouldBe 1
+                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    bestillingList.size shouldBe 1
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendingList.size shouldBe 0
 
-                verifyData(abonnementList, bestillingList, forespoersel)
+                    verifyData(abonnementList, bestillingList, forespoersel)
+                }
+            }
+        }
+
+        test("mot slutten av året skal vi også bestille for neste år") {
+            withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                val osMessage = "OS;2025;12345678901"
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    forespoerselList.size shouldBe 2
+                    forespoerselList.first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    abonnementList.size shouldBe 2
+                    abonnementList.first().inntektsaar shouldBe 2025
+                    abonnementList.get(1).inntektsaar shouldBe 2026
+
+                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    bestillingList.size shouldBe 2
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendingList.size shouldBe 0
+                }
             }
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val message = "MANUELL;2026;12345678901"
-            val brukerId = "Z123456"
+            withConstantNow(LocalDateTime.parse("2026-04-12T00:00:00")) {
+                val message = "MANUELL;2026;12345678901"
+                val brukerId = "Z123456"
 
-            forespoerselService.taImotForespoersel(message, NavIdent(brukerId))
+                forespoerselService.taImotForespoersel(message, NavIdent(brukerId))
 
-            DbListener.dataSource.transaction { tx ->
-                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                forespoerselList.size shouldBe 1
-                val forespoersel = forespoerselList.first()
-                forespoersel.forsystem shouldBe Forsystem.MANUELL
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    forespoerselList.size shouldBe 1
+                    val forespoersel = forespoerselList.first()
+                    forespoersel.forsystem shouldBe Forsystem.MANUELL
 
-                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                abonnementList.size shouldBe 1
-                val bestillingList = BestillingRepository.getAllBestilling(tx)
-                bestillingList.size shouldBe 1
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 0
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    abonnementList.size shouldBe 1
+                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    bestillingList.size shouldBe 1
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendingList.size shouldBe 0
 
-                verifyData(abonnementList, bestillingList, forespoersel)
+                    verifyData(abonnementList, bestillingList, forespoersel)
 
-                val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                auditList.first().brukerId shouldBe brukerId
+                    val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
+                    auditList.first().brukerId shouldBe brukerId
+                }
             }
         }
 
         test("taImotForespoersel med samme person og årstall som en tidligere forespoersel, skal det opprette kun en bestilling") {
-            val message1 = "OS;2025;12345678901"
-            val message2 = "MANUELL;2025;12345678901"
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                val message1 = "OS;2025;12345678901"
+                val message2 = "MANUELL;2025;12345678901"
 
-            forespoerselService.taImotForespoersel(message1)
-            forespoerselService.taImotForespoersel(message2)
+                forespoerselService.taImotForespoersel(message1)
+                forespoerselService.taImotForespoersel(message2)
 
-            DbListener.dataSource.transaction { tx ->
-                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                forespoerselList.size shouldBe 2
-                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                abonnementList.size shouldBe 2
-                val bestillingList = BestillingRepository.getAllBestilling(tx)
-                bestillingList.size shouldBe 1
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 0
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    forespoerselList.size shouldBe 2
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    abonnementList.size shouldBe 2
+                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    bestillingList.size shouldBe 1
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendingList.size shouldBe 0
 
-                val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
-                auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
+                    auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
+                    auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                }
             }
         }
 
         test("taImotForespoersel med samme forsystem, person og årstall som en tidligere forespoersel, skal det kun audit logges dersom en utsending ikke er utført") {
-            val message = "OS;2025;12345678901"
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
 
-            forespoerselService.taImotForespoersel(message)
-            forespoerselService.taImotForespoersel(message)
+                val message = "OS;2025;12345678901"
 
-            DbListener.dataSource.transaction { tx ->
-                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                forespoerselList.size shouldBe 2
-                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                abonnementList.size shouldBe 2
-                val bestillingList = BestillingRepository.getAllBestilling(tx)
-                bestillingList.size shouldBe 1
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                utsendingList.size shouldBe 0
+                forespoerselService.taImotForespoersel(message)
+                forespoerselService.taImotForespoersel(message)
 
-                val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
-                auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    forespoerselList.size shouldBe 2
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    abonnementList.size shouldBe 2
+                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    bestillingList.size shouldBe 1
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendingList.size shouldBe 0
+
+                    val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
+                    auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
+                    auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                }
             }
         }
     })

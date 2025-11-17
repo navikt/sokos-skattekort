@@ -49,7 +49,6 @@ class ForespoerselService(
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 
             handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
-            println("Før ekstra")
             if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
                 println("Lager ekstra")
                 val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)

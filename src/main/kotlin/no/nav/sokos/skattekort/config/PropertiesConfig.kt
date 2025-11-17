@@ -10,6 +10,11 @@ import io.ktor.server.config.HoconApplicationConfig
 object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
 
+    init {
+        System.setProperty("APPLICATION_ENV", "TEST")
+        initEnvConfig()
+    }
+
     fun initEnvConfig(applicationConfig: ApplicationConfig? = null) {
         println("Environment is ${applicationConfig?.toMap()}")
         val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV") ?: applicationConfig?.propertyOrNull("APPLICATION_ENV")?.getString()

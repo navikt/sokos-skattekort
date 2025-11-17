@@ -70,18 +70,6 @@ spec:
     - secret: sokos-skattekort-mq-credentials
 
   env:
-    - name: SEND_BESTILLING_BATCH_CRON_EXPRESSION
-      value: "0 * * * * *"
-    - name: SEND_UTSENDING_CRON_EXPRESSION
-      value: "0 * * * * *"
-    - name: HENT_SKATTEKORT_BATCH_CRON_EXPRESSION
-      value: "0 * * * * *"
-    - name: HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION
-      value: "0 0/4 * * * *"
-    - name: SCHEDULER_ENABLED
-      value: "true"
-    - name: USE_AUTHENTICATION
-      value: "true"
     - name: JDK_JAVA_OPTIONS
       value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
     - name: APPLICATION_ENV

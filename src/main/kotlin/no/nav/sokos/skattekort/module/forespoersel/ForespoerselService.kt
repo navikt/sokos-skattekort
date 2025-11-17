@@ -50,7 +50,6 @@ class ForespoerselService(
 
             handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
             if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
-                println("Lager ekstra")
                 val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
                 handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
             }

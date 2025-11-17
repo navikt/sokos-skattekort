@@ -171,4 +171,90 @@ object SkattekortRepository {
         personId: PersonId,
         inntektsaar: Int,
     ): Skattekort = findAllByPersonId(tx, personId, inntektsaar).first()
+
+    fun getLatestSkattekortUpdateTime(tx: TransactionalSession): String? =
+        tx.single(
+            queryOf(
+                """
+                SELECT MAX(oppdatert) AS siste_oppdatering FROM skattekort
+                """.trimIndent(),
+            ),
+            extractor = { row -> row.stringOrNull("siste_oppdatering") },
+        )
+
+    fun numberOfSkattekortByResultatForSkattekortMetrics(tx: TransactionalSession): Map<ResultatForSkattekort, Int> =
+        tx
+            .list(
+                queryOf(
+                    """
+                    SELECT resultatForSkattekort, COUNT(1) AS antall 
+                    FROM skattekort
+                    GROUP BY resultatForSkattekort
+                    """.trimIndent(),
+                ),
+                extractor = { row ->
+                    val resultat = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort"))
+                    val count = row.int("antall")
+                    resultat to count
+                },
+            ).toMap()
+
+    fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode, Int> =
+        tx
+            .list(
+                queryOf(
+                    """
+                    SELECT trekk_kode, COUNT(1) AS antall 
+                    FROM forskuddstrekk
+                    WHERE type = :trekktabell
+                    GROUP BY trekk_kode
+                    """.trimIndent(),
+                    mapOf(
+                        "trekktabell" to TABELLKORT.type,
+                    ),
+                ),
+                extractor = { row ->
+                    val trekkode =
+                        no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
+                            .fromValue(row.string("trekk_kode"))
+                    val count = row.int("antall")
+                    trekkode to count
+                },
+            ).toMap()
+
+    fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning, Int> =
+        tx
+            .list(
+                queryOf(
+                    """
+                    SELECT opplysning, COUNT(skattekort_id) AS antall 
+                    FROM skattekort_tilleggsopplysning
+                    GROUP BY opplysning, skattekort_id
+                    """.trimIndent(),
+                ),
+                extractor = { row ->
+                    val opplysning =
+                        no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning
+                            .fromDomainModel(Tilleggsopplysning(row.string("opplysning")))
+                    val count = row.int("antall")
+                    opplysning to count
+                },
+            ).toMap()
+
+    fun numberOfForskuddstrekkByTypeMetrics(tx: TransactionalSession): Map<Forskuddstrekk.Companion.ForskuddstrekkType, Int> =
+        tx
+            .list(
+                queryOf(
+                    """
+                    SELECT type, COUNT(1) AS antall 
+                    FROM forskuddstrekk
+                    GROUP BY type
+                    """.trimIndent(),
+                ),
+                extractor = { row ->
+                    val type = Forskuddstrekk.Companion.ForskuddstrekkType.from(row.string("type"))
+                    val count = row.int("antall")
+                    type to count
+                },
+            ).toMap()
 }

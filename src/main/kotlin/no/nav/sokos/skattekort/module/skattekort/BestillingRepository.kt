@@ -105,6 +105,16 @@ object BestillingRepository {
         extractor = mapToBestilling,
     )
 
+    fun getEarliestBestillingTime(tx: TransactionalSession): Bestilling? =
+        tx.single(
+            queryOf(
+                """
+                SELECT MIN(oppdatert) FROM bestillinger
+                """.trimIndent(),
+            ),
+            extractor = mapToBestilling,
+        )
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(

@@ -89,4 +89,14 @@ object UtsendingRepository {
             ),
             extractor = { row -> Utsending(row) },
         )
+
+    fun getEarliestUnsentUtsendingTime(tx: TransactionalSession): String? =
+        tx.single(
+            queryOf(
+                """
+                SELECT MIN(opprettet) AS earliest_opprettet FROM utsendinger
+                """.trimIndent(),
+            ),
+            extractor = { row -> row.stringOrNull("earliest_opprettet") },
+        )
 }

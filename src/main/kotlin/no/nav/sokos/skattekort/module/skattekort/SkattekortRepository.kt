@@ -208,12 +208,9 @@ object SkattekortRepository {
                     """
                     SELECT trekk_kode, COUNT(1) AS antall 
                     FROM forskuddstrekk
-                    WHERE type = :trekktabell
+                    WHERE type = 'trekktabell'
                     GROUP BY trekk_kode
                     """.trimIndent(),
-                    mapOf(
-                        "trekktabell" to TABELLKORT.type,
-                    ),
                 ),
                 extractor = { row ->
                     val trekkode =
@@ -243,18 +240,28 @@ object SkattekortRepository {
                 },
             ).toMap()
 
-    fun numberOfForskuddstrekkByTypeMetrics(tx: TransactionalSession): Map<Forskuddstrekk.Companion.ForskuddstrekkType, Int> =
+    fun numberOfFrikortMedUtenBeloepsgrense(tx: TransactionalSession): Map<String, Int> =
         tx
             .list(
                 queryOf(
                     """
-                    SELECT type, COUNT(1) AS antall 
+                    SELECT 
+                       CASE WHEN
+                          frikort_beloep IS NULL OR frikort_beloep = 0 THEN 'Ubegrenset'
+                          ELSE 'Begrenset'
+                       END AS begrensning,
+                    COUNT(1) AS antall 
                     FROM forskuddstrekk
-                    GROUP BY type
+                    WHERE type = 'frikort'
+                    GROUP BY
+                      CASE WHEN
+                          frikort_beloep IS NULL OR frikort_beloep = 0 THEN 'Ubegrenset'
+                          ELSE 'Begrenset'
+                      END 
                     """.trimIndent(),
                 ),
                 extractor = { row ->
-                    val type = Forskuddstrekk.Companion.ForskuddstrekkType.from(row.string("type"))
+                    val type = row.string("begrensning")
                     val count = row.int("antall")
                     type to count
                 },

@@ -23,6 +23,7 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.httpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
@@ -102,12 +103,14 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val bestillingService: BestillingService by dependencies
         val utsendingService: UtsendingService by dependencies
         val scheduledTaskService: ScheduledTaskService by dependencies
+        val metricsService: MetricsService by dependencies
         val dataSource: DataSource by dependencies
         JobTaskConfig
             .scheduler(
                 bestillingService,
                 utsendingService,
                 scheduledTaskService,
+                metricsService,
                 dataSource,
             ).start()
     }

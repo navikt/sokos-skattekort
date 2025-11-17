@@ -12,6 +12,7 @@ import com.github.kagkarlsson.scheduler.task.helper.Tasks
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
@@ -22,12 +23,14 @@ private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
 private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
 private const val JOB_TASK_HENT_SKATTEKORT_BATCH = "hentSkattekort"
 private const val JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH = "hentOppdaterteSkattekort"
+private const val JOB_TASK_FETCH_METRICS = "fetchMetrics"
 
 object JobTaskConfig {
     fun scheduler(
         bestillingService: BestillingService,
         utsendingService: UtsendingService,
         scheduledTaskService: ScheduledTaskService,
+        metricsService: MetricsService,
         dataSource: DataSource,
     ): Scheduler =
         Scheduler
@@ -40,6 +43,7 @@ object JobTaskConfig {
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
                 recurringHentSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
+                recurringFetchMetricsTask(metricsService, scheduledTaskService),
             ).build()
 
     fun recurringSendBestillingBatchTask(
@@ -122,6 +126,27 @@ object JobTaskConfig {
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                     scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
                     bestillingService.hentOppdaterteSkattekort()
+                }
+            }
+    }
+
+    fun recurringFetchMetricsTask(
+        metricsService: MetricsService,
+        scheduledTaskService: ScheduledTaskService,
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+    ): RecurringTask<String> {
+        val showLogLocalTime = LocalDateTime.now()
+        return Tasks
+            .recurring(
+                JOB_TASK_FETCH_METRICS,
+                cron(schedulerProperties.cronFetchMetrics),
+                String::class.java,
+            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
+                withTracerId {
+                    showLog(showLogLocalTime, instance, context)
+                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
+                    metricsService.fetchMetrics()
                 }
             }
     }

@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import java.time.LocalDateTime
+
 import kotlinx.datetime.toJavaLocalDate
 
 import kotliquery.Query
@@ -172,14 +174,14 @@ object SkattekortRepository {
         inntektsaar: Int,
     ): Skattekort = findAllByPersonId(tx, personId, inntektsaar).first()
 
-    fun getLatestSkattekortUpdateTime(tx: TransactionalSession): String? =
+    fun getLatestSkattekortUpdateTime(tx: TransactionalSession): LocalDateTime? =
         tx.single(
             queryOf(
                 """
                 SELECT MAX(oppdatert) AS siste_oppdatering FROM skattekort
                 """.trimIndent(),
             ),
-            extractor = { row -> row.stringOrNull("siste_oppdatering") },
+            extractor = { row -> row.localDateTimeOrNull("siste_oppdatering") },
         )
 
     fun numberOfSkattekortByResultatForSkattekortMetrics(tx: TransactionalSession): Map<ResultatForSkattekort, Int> =

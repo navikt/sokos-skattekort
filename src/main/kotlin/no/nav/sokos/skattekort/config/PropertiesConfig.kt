@@ -10,6 +10,11 @@ import io.ktor.server.config.HoconApplicationConfig
 object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
 
+    init {
+        System.setProperty("APPLICATION_ENV", "TEST")
+        initEnvConfig()
+    }
+
     fun initEnvConfig(applicationConfig: ApplicationConfig? = null) {
         println("Environment is ${applicationConfig?.toMap()}")
         val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV") ?: applicationConfig?.propertyOrNull("APPLICATION_ENV")?.getString()
@@ -94,15 +99,6 @@ object PropertiesConfig {
     fun getSkatteetatenProperties(): SkatteetatenProperties =
         SkatteetatenProperties(
             skatteetatenApiUrl = getOrEmpty("SKATTEETATEN_API_URL"),
-        )
-
-    fun getSftpProperties(): SftpProperties =
-        SftpProperties(
-            host = get("SFTP_HOST"),
-            port = get("SFTP_PORT").toInt(),
-            user = getOrEmpty("SFTP_USER"),
-            privateKey = getOrEmpty("SFTP_PRIVATE_KEY"),
-            keyPassword = getOrEmpty("SFTP_KEY_PASSWORD"),
         )
 
     fun getKafkaProperties(): KafkaProperties =
@@ -193,14 +189,6 @@ object PropertiesConfig {
 
     data class SkatteetatenProperties(
         val skatteetatenApiUrl: String,
-    )
-
-    data class SftpProperties(
-        val host: String,
-        val port: Int,
-        val user: String,
-        val privateKey: String,
-        val keyPassword: String,
     )
 
     data class KafkaProperties(

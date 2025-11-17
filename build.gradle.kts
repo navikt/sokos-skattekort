@@ -1,3 +1,5 @@
+
+
 import kotlinx.kover.gradle.plugin.dsl.tasks.KoverReport
 
 import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
@@ -56,6 +58,7 @@ val avroVersion = "1.12.1"
 val kafkaAvroSerializerVersion = "8.1.0"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
+val unleashedVersion = "11.1.1"
 
 dependencies {
 
@@ -127,6 +130,9 @@ dependencies {
 
     // Opentelemetry
     implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
+
+    // Feature switches
+    implementation("io.getunleash:unleash-client-java:$unleashedVersion")
 
     // Test
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")

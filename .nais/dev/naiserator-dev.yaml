@@ -55,6 +55,8 @@ spec:
       rules:
         - application: logging
           namespace: nais-system
+      external:
+        - host: okonomi-unleash-api.nav.cloud.nais.io
   maskinporten:
     enabled: true
     scopes:
@@ -68,6 +70,7 @@ spec:
     enabled: true
   envFrom:
     - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-unleash-api-token
 
   env:
     - name: JDK_JAVA_OPTIONS

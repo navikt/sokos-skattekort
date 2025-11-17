@@ -31,7 +31,7 @@ import org.slf4j.event.Level
 import tools.jackson.databind.DeserializationFeature
 import tools.jackson.dataformat.xml.XmlMapper
 
-import no.nav.sokos.skattekort.metrics.Metrics
+import no.nav.sokos.skattekort.infrastructure.Metrics
 
 val TEAM_LOGS_MARKER = MarkerFactory.getMarker("TEAM_LOGS")
 private const val X_KALLENDE_SYSTEM = "x-kallende-system"

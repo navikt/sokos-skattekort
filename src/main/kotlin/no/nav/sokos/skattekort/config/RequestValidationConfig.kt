@@ -6,6 +6,7 @@ import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 
 import no.nav.sokos.skattekort.api.ForespoerselRequest
+import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.config.Validator.isValidAar
 import no.nav.sokos.skattekort.config.Validator.isValidForsystem
 import no.nav.sokos.skattekort.config.Validator.isValidPersonIdent
@@ -17,6 +18,16 @@ fun RequestValidationConfig.requestValidationSkattekortConfig() {
             !isValidPersonIdent(request.personIdent) -> ValidationResult.Invalid("personIdent er ugyldig. Tillatt format er 11 siffer")
             !isValidAar(request.aar) -> ValidationResult.Invalid("Gyldig årstall er mellom ${Year.now().minusYears(1)} og inneværende år")
             !isValidForsystem(request.forsystem) -> ValidationResult.Invalid("forsystem er ugyldig. Gyldige verdier er: ${Forsystem.entries.joinToString { it.name }}")
+            else -> ValidationResult.Valid
+        }
+    }
+}
+
+fun RequestValidationConfig.requestValidationSkattekortRequest() {
+    validate<SkattekortPersonRequest> { request ->
+        when {
+            !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
+            !isValidAar(request.inntektsaar.toInt()) -> ValidationResult.Invalid("Gyldig årstall er mellom ${Year.now().minusYears(1)} og inneværende år, var ${request.inntektsaar}")
             else -> ValidationResult.Valid
         }
     }

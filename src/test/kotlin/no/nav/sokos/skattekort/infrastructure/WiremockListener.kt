@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.listener
+package no.nav.sokos.skattekort.infrastructure
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.configureFor
@@ -12,7 +12,7 @@ import io.mockk.mockk
 
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
-private const val WIREMOCK_SERVER_PORT = 9001
+private const val WIREMOCK_SERVER_PORT = 9005
 
 object WiremockListener : BeforeSpecListener, AfterEachListener {
     val wiremock = WireMockServer(WIREMOCK_SERVER_PORT)

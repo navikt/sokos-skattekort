@@ -4,7 +4,6 @@ import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
 import com.expediagroup.graphql.plugin.gradle.tasks.GraphQLGenerateClientTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -52,7 +51,6 @@ val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
 val opentelemetryVersion = "2.20.1-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
-val jschVersion = "2.27.3"
 val kafkaClientsVersion = "4.1.0"
 val avroVersion = "1.12.1"
 val kafkaAvroSerializerVersion = "8.1.0"
@@ -112,9 +110,6 @@ dependencies {
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")
 
-    // SFTP
-    implementation("com.github.mwiede:jsch:$jschVersion")
-
     // Kafka
     implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
     implementation("org.apache.avro:avro:$avroVersion")
@@ -139,6 +134,7 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-extensions-now:$kotestVersion")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")

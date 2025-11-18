@@ -10,7 +10,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator

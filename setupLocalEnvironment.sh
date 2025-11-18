@@ -38,10 +38,3 @@ echo "POSTGRES_USER_PASSWORD=$(getFromMap "$POSTGRES_USER_MAP" password)" >> def
 
 echo "POSTGRES_ADMIN_USERNAME=$(getFromMap "$POSTGRES_ADMIN_MAP" username)" >> defaults.properties
 echo "POSTGRES_ADMIN_PASSWORD=$(getFromMap "$POSTGRES_ADMIN_MAP" password)" >> defaults.properties
-
-echo "SFTP_USER=$(vault kv get -field=serviceuser kv/preprod/fss/sokos-skattekort/okonomi/sftp)" >> defaults.properties
-echo "SFTP_KEY_PASSWORD=$(vault kv get -field=keyPassword kv/preprod/fss/sokos-skattekort/okonomi/sftp)" >> defaults.properties
-echo "SFTP_PRIVATE_KEY=privateKey" >> defaults.properties
-
-rm -f privateKey
-echo "$(vault kv get -field=privateKey kv/preprod/fss/sokos-skattekort/okonomi/sftp)" > privateKey

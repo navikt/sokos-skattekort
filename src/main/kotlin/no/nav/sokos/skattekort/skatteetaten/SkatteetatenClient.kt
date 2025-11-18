@@ -10,6 +10,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
@@ -42,7 +43,7 @@ class SkatteetatenClient(
         return response.body<BestillSkattekortResponse>()
     }
 
-    suspend fun hentSkattekort(bestillingsreferanse: String): HentSkattekortResponse {
+    suspend fun hentSkattekort(bestillingsreferanse: String): HentSkattekortResponse? {
         val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
 
         val response =
@@ -50,6 +51,10 @@ class SkatteetatenClient(
                 bearerAuth(maskinportenTokenClient.getAccessToken())
                 accept(ContentType.Application.Json)
             }
+
+        if (response.status == HttpStatusCode.NoContent) {
+            return null
+        }
 
         if (!response.status.isSuccess()) {
             throw RuntimeException("Feil ved henting av skattekort: ${response.status.value} - ${response.bodyAsText()}")

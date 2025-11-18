@@ -18,10 +18,9 @@ import no.nav.sokos.skattekort.config.JobTaskConfig
 import no.nav.sokos.skattekort.config.KafkaConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.config.SftpConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
-import no.nav.sokos.skattekort.config.httpClient
+import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
@@ -30,13 +29,12 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
-import no.nav.sokos.skattekort.module.skattekortpersonapi.v1.SkattekortPersonService
+import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
-import no.nav.sokos.skattekort.sftp.SftpService
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 
@@ -58,11 +56,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     DatabaseConfig.migrate()
 
     dependencies {
-        provide { httpClient }
+        provide { createHttpClient() }
         provide { DatabaseConfig.dataSource }
-        provide { SftpConfig() }
         provide { KafkaConfig() }
-        provide(SftpService::class)
         provide(MaskinportenTokenClient::class)
 
         provide { MQConfig.connectionFactory }
@@ -75,7 +71,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             queue
         }
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
-            AzuredTokenClient(httpClient, PropertiesConfig.getPdlProperties().pdlScope)
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
 
         provide(PersonService::class)
@@ -94,9 +90,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
-
-    val sftpService: SftpService by dependencies
-    logger.info { "SFTP connection is enabled: ${sftpService.isSftpConnectionEnabled()}" }
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()

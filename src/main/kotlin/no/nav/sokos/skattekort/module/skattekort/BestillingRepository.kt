@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import java.time.LocalDateTime
+
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
 
@@ -104,6 +106,27 @@ object BestillingRepository {
         ),
         extractor = mapToBestilling,
     )
+
+    fun getEarliestBestillingTime(tx: TransactionalSession): LocalDateTime? =
+        tx.single(
+            queryOf(
+                """
+                SELECT MIN(oppdatert) as earliest_oppdatert FROM bestillinger
+                """.trimIndent(),
+            ),
+            extractor = { row -> row.localDateTimeOrNull("earliest_oppdatert") },
+        )
+
+    fun getEarliestSentBestillingTime(tx: TransactionalSession): LocalDateTime? =
+        tx.single(
+            queryOf(
+                """
+                SELECT MIN(oppdatert) as earliest_oppdatert FROM bestillinger
+                WHERE bestillingsbatch_id IS NOT NULL
+                """.trimIndent(),
+            ),
+            extractor = { row -> row.localDateTimeOrNull("earliest_oppdatert") },
+        )
 
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->

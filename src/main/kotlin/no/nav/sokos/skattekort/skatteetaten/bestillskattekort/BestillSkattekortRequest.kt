@@ -39,6 +39,7 @@ data class ArbeidsgiverIdentifikator(
 fun bestillSkattekortRequest(
     inntektsaar: Int,
     fnr: List<Personidentifikator>,
+    bestillingOrgnr: String,
 ): BestillSkattekortRequest =
     BestillSkattekortRequest(
         inntektsaar = inntektsaar.toString(),
@@ -54,7 +55,7 @@ fun bestillSkattekortRequest(
                 arbeidsgiver =
                     listOf(
                         Arbeidsgiver(
-                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator("312978083"),
+                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator(bestillingOrgnr),
                             arbeidstakeridentifikator = fnr.map { it.value },
                         ),
                     ),

@@ -15,6 +15,7 @@ import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
@@ -40,6 +41,7 @@ class BestillingService(
     private val skatteetatenClient: SkatteetatenClient,
     private val personService: PersonService,
     private val featureToggles: UnleashIntegration,
+    private val applicationProperties: PropertiesConfig.ApplicationProperties,
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -59,7 +61,7 @@ class BestillingService(
                 return
             }
             val request =
-                bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr })
+                bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
 
             runBlocking {
                 try {

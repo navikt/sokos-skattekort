@@ -6,7 +6,7 @@ import kotlin.io.path.createDirectories
 
 import io.kotest.core.spec.style.FunSpec
 
-import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.infrastructure.DbListener
 
 class DbDumper :
     FunSpec({

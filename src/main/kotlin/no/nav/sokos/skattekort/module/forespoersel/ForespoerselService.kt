@@ -7,6 +7,7 @@ import kotlin.time.ExperimentalTime
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
@@ -34,6 +35,11 @@ class ForespoerselService(
                     message.startsWith("<") -> return@transaction // drop Arena meldinger
                     else -> parseCopybookMessage(message)
                 }
+
+            if (forespoerselInput.fnrList.none(Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr).regel)) {
+                logger.warn { "Forespørsel mottatt uten gyldig fnr, hopper over behandling" }
+                return@transaction
+            }
 
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 

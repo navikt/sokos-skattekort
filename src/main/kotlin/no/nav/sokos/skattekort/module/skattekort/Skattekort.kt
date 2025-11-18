@@ -75,7 +75,7 @@ value class SkattekortId(
     val value: Long,
 )
 
-interface Forskuddstrekk {
+sealed interface Forskuddstrekk {
     companion object {
         fun create(row: Row): Forskuddstrekk {
             val type = ForskuddstrekkType.from(row.string("type"))

@@ -100,9 +100,10 @@ fun aBestillingsBatch(
     id: Long,
     ref: String,
     status: String,
+    type: String = "BESTILLING",
 ) = """
-        INSERT INTO bestillingsbatcher (id, bestillingsreferanse, data_sendt, status)
-            VALUES ($id, '$ref', '{}', '$status');
+        INSERT INTO bestillingsbatcher (id, bestillingsreferanse, data_sendt, status, type)
+            VALUES ($id, '$ref', '{}', '$status', '$type');
     """
 
 fun aBestilling(

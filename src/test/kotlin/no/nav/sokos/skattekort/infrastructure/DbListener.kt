@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.listener
+package no.nav.sokos.skattekort.infrastructure
 
 import javax.sql.DataSource
 
@@ -15,17 +15,19 @@ import org.testcontainers.ext.ScriptUtils
 import org.testcontainers.jdbc.JdbcDatabaseDelegate
 
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}
 
 object DbListener : BeforeSpecListener, AfterEachListener {
+    private val postgresProperties = PropertiesConfig.getPostgresProperties()
     val container: PostgreSQLContainer<Nothing> =
         PostgreSQLContainer<Nothing>("postgres:latest").apply {
             withReuse(false)
-            withUsername("test-admin")
-            withPassword("test-password")
-            withDatabaseName("test")
+            withUsername(postgresProperties.username)
+            withPassword(postgresProperties.password)
+            withDatabaseName(postgresProperties.name)
             waitingFor(Wait.defaultWaitStrategy())
             start()
         }
@@ -33,7 +35,7 @@ object DbListener : BeforeSpecListener, AfterEachListener {
     val dataSource: DataSource by lazy {
         container.toDataSource()
     }.apply {
-        DatabaseConfig.migrate(container.toDataSource(), "test-admin")
+        DatabaseConfig.migrate(container.toDataSource(), postgresProperties.username)
     }
 
     fun loadDataSet(script: String) {

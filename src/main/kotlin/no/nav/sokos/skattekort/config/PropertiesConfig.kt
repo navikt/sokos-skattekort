@@ -10,8 +10,13 @@ import io.ktor.server.config.HoconApplicationConfig
 object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
 
+    init {
+        System.setProperty("APPLICATION_ENV", "TEST")
+        initEnvConfig()
+    }
+
     fun initEnvConfig(applicationConfig: ApplicationConfig? = null) {
-        val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV")
+        val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV") ?: applicationConfig?.propertyOrNull("APPLICATION_ENV")?.getString()
         val fileConfig =
             when {
                 environment == null || environment.lowercase() == "local" -> {
@@ -47,6 +52,7 @@ object PropertiesConfig {
     fun getApplicationProperties(): ApplicationProperties =
         ApplicationProperties(
             naisAppName = getOrEmpty("NAIS_APP_NAME"),
+            gyldigeFnr = getOrEmpty("GYLDIGE_FNR"),
             environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
             useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
             mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
@@ -93,15 +99,6 @@ object PropertiesConfig {
             skatteetatenApiUrl = getOrEmpty("SKATTEETATEN_API_URL"),
         )
 
-    fun getSftpProperties(): SftpProperties =
-        SftpProperties(
-            host = get("SFTP_HOST"),
-            port = get("SFTP_PORT").toInt(),
-            user = getOrEmpty("SFTP_USER"),
-            privateKey = getOrEmpty("SFTP_PRIVATE_KEY"),
-            keyPassword = getOrEmpty("SFTP_KEY_PASSWORD"),
-        )
-
     fun getKafkaProperties(): KafkaProperties =
         KafkaProperties(
             enabled = getOrEmpty("KAFKA_CONSUMER_ENABLED").toBoolean(),
@@ -136,6 +133,7 @@ object PropertiesConfig {
         val environment: Environment,
         val useAuthentication: Boolean,
         val mqListenerEnabled: Boolean,
+        val gyldigeFnr: String,
     )
 
     data class PostgresProperties(
@@ -168,6 +166,7 @@ object PropertiesConfig {
         val cronBestilling: String = get("SEND_BESTILLING_BATCH_CRON_EXPRESSION"),
         val cronUtsending: String = get("SEND_UTSENDING_CRON_EXPRESSION"),
         val cronHenting: String = get("HENT_SKATTEKORT_BATCH_CRON_EXPRESSION"),
+        val cronHentOppdaterte: String = get("HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION"),
     )
 
     data class MaskinportenProperties(
@@ -180,14 +179,6 @@ object PropertiesConfig {
 
     data class SkatteetatenProperties(
         val skatteetatenApiUrl: String,
-    )
-
-    data class SftpProperties(
-        val host: String,
-        val port: Int,
-        val user: String,
-        val privateKey: String,
-        val keyPassword: String,
     )
 
     data class KafkaProperties(

@@ -58,6 +58,7 @@ object PropertiesConfig {
             useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
             mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
             podName = getOrEmpty("NAIS_POD_NAME"),
+            bestillingOrgnr = get("BESTILLING_ORGNR"),
         )
 
     fun getPostgresProperties(): PostgresProperties =
@@ -144,6 +145,7 @@ object PropertiesConfig {
         val mqListenerEnabled: Boolean,
         val gyldigeFnr: String,
         val podName: String,
+        val bestillingOrgnr: String,
     )
 
     data class PostgresProperties(

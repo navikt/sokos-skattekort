@@ -18,6 +18,8 @@ import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.TestUtil.tx
+import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.PropertiesConfig.Environment
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.Audit
@@ -44,7 +46,13 @@ class BestillingServiceTest :
         val skatteetatenClient = mockk<SkatteetatenClient>()
 
         val bestillingService: BestillingService by lazy {
-            BestillingService(DbListener.dataSource, skatteetatenClient, PersonService(DbListener.dataSource), FakeUnleashIntegration())
+            BestillingService(
+                DbListener.dataSource,
+                skatteetatenClient,
+                PersonService(DbListener.dataSource),
+                FakeUnleashIntegration(),
+                PropertiesConfig.ApplicationProperties("", Environment.TEST, false, false, "", "", ""),
+            )
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {

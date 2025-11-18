@@ -36,6 +36,10 @@ data class ArbeidsgiverIdentifikator(
     val organisasjonsnummer: String,
 )
 
+private const val KONTAKT_EMAIL = "nav.ur.og.os@nav.no"
+
+private const val KONTAKT_TLF = "+4721070000"
+
 fun bestillSkattekortRequest(
     inntektsaar: Int,
     fnr: List<Personidentifikator>,
@@ -45,8 +49,8 @@ fun bestillSkattekortRequest(
         bestillingstype = "HENT_ALLE_OPPGITTE",
         kontaktinformasjon =
             Kontaktinformasjon(
-                epostadresse = "john.smith@example.com",
-                mobiltelefonummer = "+4794123456",
+                epostadresse = KONTAKT_EMAIL,
+                mobiltelefonummer = KONTAKT_TLF,
             ),
         varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
         forespoerselOmSkattekortTilArbeidsgiver =
@@ -67,7 +71,7 @@ fun bestillOppdateringRequest(inntektsaar: Int): BestillSkattekortRequest =
         bestillingstype = "HENT_KUN_ENDRING",
         kontaktinformasjon =
             Kontaktinformasjon(
-                epostadresse = "john.smith@example.com",
-                mobiltelefonummer = "+4794123456",
+                epostadresse = KONTAKT_EMAIL,
+                mobiltelefonummer = KONTAKT_TLF,
             ),
     )

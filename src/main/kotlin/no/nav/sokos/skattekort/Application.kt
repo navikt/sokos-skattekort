@@ -90,6 +90,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
         provide(IdentifikatorEndringService::class)
+        provide(MetricsService::class)
     }
 
     commonConfig()

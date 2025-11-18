@@ -65,6 +65,7 @@ fun bestillOppdateringRequest(inntektsaar: Int): BestillSkattekortRequest =
     BestillSkattekortRequest(
         inntektsaar = inntektsaar.toString(),
         bestillingstype = "HENT_KUN_ENDRING",
+        varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
         kontaktinformasjon =
             Kontaktinformasjon(
                 epostadresse = "john.smith@example.com",

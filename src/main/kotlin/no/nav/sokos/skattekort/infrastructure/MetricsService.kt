@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.infrastructure
 
-import java.time.Duration
-import java.time.LocalDateTime
 import javax.sql.DataSource
 
 import io.prometheus.metrics.core.metrics.Gauge
@@ -21,17 +19,13 @@ class MetricsService(
     fun fetchMetrics() {
         dataSource.transaction { tx ->
             // Varsel om vi ikke har fått skattekort på 24 timer
-            val naa = LocalDateTime.now()
-            val timeSisteSkattekortStored: LocalDateTime = SkattekortRepository.getLatestSkattekortUpdateTime(tx) ?: naa
-            timerSidenSisteSkattekortLMetric.set(Duration.between(timeSisteSkattekortStored, naa).toMinutes().div(60.0))
+            SkattekortRepository.getSecondsSinceLatestSkattekortOpprettet(tx)?.let { timerSidenSisteSkattekortLMetric.set(it) }
             // Bestillinger som ikke er løst i løpet av 30 minutter
-            val earliestBestillingTime: LocalDateTime = BestillingRepository.getEarliestBestillingTime(tx) ?: naa
-            minutterSidenBestillingMetric.labelValues("eldste_lagret").set(Duration.between(earliestBestillingTime, naa).toSeconds().div(60.0))
-            val earliestSentBestillingTime = BestillingRepository.getEarliestSentBestillingTime(tx) ?: naa
-            minutterSidenBestillingMetric.labelValues("eldste_sendt").set(Duration.between(earliestSentBestillingTime, naa).toSeconds().div(60.0))
+            sekunderSidenBestillingMetric.labelValues("eldste_lagret").set(BestillingRepository.getEarliestUnsentBestillingTime(tx))
+            sekunderSidenBestillingMetric.labelValues("eldste_sendt").set(BestillingRepository.getEarliestSentBestillingTime(tx))
+
             // Utsendinger som ikke er sendt i løpet av 5 minutter
-            val earliestUnsentUtsendingTime = UtsendingRepository.getEarliestUnsentUtsendingTime(tx) ?: naa
-            minutterSidenUtsendingMetric.set(Duration.between(earliestUnsentUtsendingTime, naa).toSeconds().div(60.0))
+            sekunderSidenUtsendingMetric.set(UtsendingRepository.getSecondsSinceEarliestUnsentUtsending(tx))
 //            Totalt antall innhentede skattekort
             val totalSkattekortCount: Map<ResultatForSkattekort, Int> = SkattekortRepository.numberOfSkattekortByResultatForSkattekortMetrics(tx)
             totalSkattekortCount.map { (resultat, count) ->
@@ -66,15 +60,15 @@ class MetricsService(
                 name = "timer_siden_skattekort",
                 helpText = "Timer siden siste skattekort ble lagret, kategorisert",
             )
-        val minutterSidenBestillingMetric =
+        val sekunderSidenBestillingMetric =
             gauge(
-                name = "oldest_bestilling_minutes",
-                helpText = "Minutter siden eldste bestilling",
+                name = "oldest_bestilling_seconds",
+                helpText = "Sekunder siden eldste bestilling",
             )
-        val minutterSidenUtsendingMetric =
+        val sekunderSidenUtsendingMetric =
             gauge(
-                name = "oldest_usendt_utsending_minutes",
-                helpText = "Minutter siden eldste usendte utsending",
+                name = "oldest_usendt_utsending_seconds",
+                helpText = "Sekunder siden eldste usendte utsending",
             )
 
         //        Totalt antall innhentede skattekort

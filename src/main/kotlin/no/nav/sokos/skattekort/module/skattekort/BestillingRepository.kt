@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.module.skattekort
 
-import java.time.LocalDateTime
-
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
 
@@ -122,26 +120,27 @@ object BestillingRepository {
         extractor = mapToBestilling,
     )
 
-    fun getEarliestBestillingTime(tx: TransactionalSession): LocalDateTime? =
+    fun getEarliestUnsentBestillingTime(tx: TransactionalSession): Double =
         tx.single(
             queryOf(
                 """
-                SELECT MIN(oppdatert) as earliest_oppdatert FROM bestillinger
+                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
+                WHERE bestillingsbatch_id IS NULL
                 """.trimIndent(),
             ),
-            extractor = { row -> row.localDateTimeOrNull("earliest_oppdatert") },
-        )
+            extractor = { row -> row.double("earliest_oppdatert") },
+        ) ?: error("Should always return something")
 
-    fun getEarliestSentBestillingTime(tx: TransactionalSession): LocalDateTime? =
+    fun getEarliestSentBestillingTime(tx: TransactionalSession): Double =
         tx.single(
             queryOf(
                 """
-                SELECT MIN(oppdatert) as earliest_oppdatert FROM bestillinger
+                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
                 WHERE bestillingsbatch_id IS NOT NULL
                 """.trimIndent(),
             ),
-            extractor = { row -> row.localDateTimeOrNull("earliest_oppdatert") },
-        )
+            extractor = { row -> row.double("earliest_oppdatert") },
+        ) ?: error("Should always return something")
 
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->

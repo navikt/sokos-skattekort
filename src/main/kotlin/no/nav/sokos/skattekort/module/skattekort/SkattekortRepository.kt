@@ -250,7 +250,7 @@ object SkattekortRepository {
                 extractor = { row ->
                     val opplysning =
                         no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning
-                            .fromDomainModel(Tilleggsopplysning(row.string("opplysning")))
+                            .fromDomainModel(Tilleggsopplysning.fromValue(row.string("opplysning")))
                     val count = row.int("antall")
                     opplysning to count
                 },

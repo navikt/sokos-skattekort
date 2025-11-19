@@ -2,20 +2,29 @@ package no.nav.sokos.skattekort.module.forespoersel
 
 import java.time.LocalDateTime
 
+import kotlin.time.ExperimentalTime
+
+import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
+import io.kotest.matchers.collections.shouldContainAllIgnoringFields
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
+import no.nav.sokos.skattekort.module.utsending.Utsending
+import no.nav.sokos.skattekort.module.utsending.UtsendingId
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
+@OptIn(ExperimentalTime::class)
 class ForespoerselServiceTest :
     FunSpec({
         extensions(DbListener)
@@ -149,6 +158,32 @@ class ForespoerselServiceTest :
                     val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
                     auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
                     auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                }
+            }
+        }
+
+        test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                val message = "OS;2025;12345678901"
+
+                forespoerselService.taImotForespoersel(message)
+
+                DbListener.dataSource.transaction { tx ->
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+
+                    assertSoftly {
+                        utsendingList shouldNotBeNull {
+                            size shouldBe 1
+                            shouldContainAllIgnoringFields(
+                                listOf(
+                                    Utsending(UtsendingId(1), AbonnementId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                                ),
+                                Utsending::opprettet,
+                            )
+                        }
+                    }
                 }
             }
         }

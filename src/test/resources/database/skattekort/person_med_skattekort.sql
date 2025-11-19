@@ -48,7 +48,8 @@ VALUES
     (3, 3, 'loennFraHovedarbeidsgiver', 'frikort', 65000, NULL, NULL, NULL),
     (4, 3, 'loennFraBiarbeidsgiver', 'trekkprosent', NULL, NULL, 28.0, 10.5),
     -- Person 3, 2025 (pensjon prosent)
-    (5, 4, 'pensjonFraNAV', 'trekkprosent', NULL, NULL, 18.5, 12);
+    (5, 4, 'pensjonFraNAV', 'trekkprosent', NULL, NULL, 18.5, 12),
+    (6, 1, 'pensjonFraNAV', 'trekkprosent', NULL, NULL, 18.5, 12);
 
 SELECT setval('forskuddstrekk_id_seq', (SELECT coalesce(max(id), 0) FROM forskuddstrekk) + 1, false);
 

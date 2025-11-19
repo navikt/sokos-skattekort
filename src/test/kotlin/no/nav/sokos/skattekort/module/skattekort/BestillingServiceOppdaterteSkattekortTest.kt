@@ -136,7 +136,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                     bestillingService.hentOppdaterteSkattekort()
 
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-                    val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
+                    val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
 
                     assertSoftly {
                         batches shouldNotBeNull {

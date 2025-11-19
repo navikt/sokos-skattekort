@@ -51,7 +51,7 @@ class UtsendingService(
             jmsConnection = jmsConnectionFactory.createConnection()
             jmsSession = jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE)
             jmsProducer = jmsSession.createProducer(leveransekoeOppdragZSkattekort)
-            val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar)
+            val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
             val message = jmsSession.createTextMessage(copybook)

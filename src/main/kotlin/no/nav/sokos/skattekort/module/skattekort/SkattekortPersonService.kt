@@ -32,6 +32,7 @@ class SkattekortPersonService(
                         tx,
                         person.id!!,
                         skattekortPersonRequest.inntektsaar.toInt(),
+                        adminRole = false,
                     )
             skattekort.map {
                 Arbeidstaker(

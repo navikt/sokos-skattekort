@@ -118,7 +118,7 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
@@ -162,7 +162,7 @@ class BestillingServiceTest :
 
             bestillingService.hentSkattekort()
 
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
 
             assertSoftly {
                 skattekort shouldNotBeNull {
@@ -171,7 +171,7 @@ class BestillingServiceTest :
                         identifikator shouldBe "54407"
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 5
+                            size shouldBe 2
                         }
                     }
                 }
@@ -199,10 +199,9 @@ class BestillingServiceTest :
                             ),
                         tilleggsopplysninger =
                             listOf(
-                                Tilleggsopplysning("oppholdPaaSvalbard"),
-                                Tilleggsopplysning("kildeskattPaaPensjon"),
-                                Tilleggsopplysning("oppholdITiltakssone"),
-                                Tilleggsopplysning("kildeskattPaaLoenn"),
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
+                                Tilleggsopplysning.fromValue("kildeskattPaaPensjon"),
+                                Tilleggsopplysning.fromValue("oppholdITiltakssone"),
                             ),
                     ),
                 )
@@ -216,7 +215,7 @@ class BestillingServiceTest :
 
             bestillingService.hentSkattekort()
 
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
@@ -233,7 +232,7 @@ class BestillingServiceTest :
                                 shouldContainExactlyInAnyOrder(
                                     listOf(
                                         Prosentkort(
-                                            trekkode = UFOERETRYGD_FRA_NAV.value,
+                                            trekkode = UFOERETRYGD_FRA_NAV,
                                             prosentSats = valueOf(43).setScale(2, RoundingMode.HALF_UP),
                                         ),
                                     ),
@@ -241,12 +240,10 @@ class BestillingServiceTest :
                             }
                         }
                         tilleggsopplysningList shouldNotBeNull {
-                            size shouldBe 4
                             shouldContainExactly(
-                                Tilleggsopplysning("oppholdPaaSvalbard"),
-                                Tilleggsopplysning("kildeskattPaaPensjon"),
-                                Tilleggsopplysning("oppholdITiltakssone"),
-                                Tilleggsopplysning("kildeskattPaaLoenn"),
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
+                                Tilleggsopplysning.fromValue("kildeskattPaaPensjon"),
+                                Tilleggsopplysning.fromValue("oppholdITiltakssone"),
                             )
                         }
                     }
@@ -291,7 +288,7 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
@@ -344,9 +341,9 @@ class BestillingServiceTest :
             val skattekortAfterSecondRun: List<Skattekort> =
                 tx {
                     listOf(
-                        SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025),
-                        SkattekortRepository.findAllByPersonId(it, PersonId(2), 2025),
-                        SkattekortRepository.findAllByPersonId(it, PersonId(3), 2025),
+                        SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false),
+                        SkattekortRepository.findAllByPersonId(it, PersonId(2), 2025, adminRole = false),
+                        SkattekortRepository.findAllByPersonId(it, PersonId(3), 2025, adminRole = false),
                     ).flatMap { it }
                 }
             val utsendingerAfterSecondRun: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
@@ -384,7 +381,7 @@ class BestillingServiceTest :
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
             val skattekort: List<Skattekort> =
                 tx {
-                    SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025)
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025, adminRole = false)
                 }
             val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
             val person2: Person = tx { PersonRepository.findPersonById(it, PersonId(2L)) }
@@ -429,7 +426,7 @@ class BestillingServiceTest :
                         inntektsaar = "2025",
                         tilleggsopplysninger =
                             listOf(
-                                Tilleggsopplysning("oppholdPaaSvalbard"),
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
                             ),
                     ),
                 )
@@ -449,7 +446,7 @@ class BestillingServiceTest :
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> =
                 tx {
-                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025)
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false)
                 }
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
 
@@ -476,7 +473,7 @@ class BestillingServiceTest :
                                     aForskuddstrekk("Prosentkort", Trekkode.PENSJON_FRA_NAV, 13.00),
                                 )
                         }
-                        tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning("oppholdPaaSvalbard"))
+                        tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
                     }
                 }

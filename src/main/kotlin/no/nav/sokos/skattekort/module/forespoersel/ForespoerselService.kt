@@ -97,7 +97,7 @@ class ForespoerselService(
             )
 
             SkattekortRepository
-                .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar)
+                .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar, adminRole = false)
                 .ifEmpty {
                     val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
                     if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }

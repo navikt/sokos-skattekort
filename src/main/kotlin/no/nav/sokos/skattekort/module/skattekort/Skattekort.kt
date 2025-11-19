@@ -76,26 +76,35 @@ value class SkattekortId(
 )
 
 sealed interface Forskuddstrekk {
+    fun trekkode(): Trekkode =
+        when (this) {
+            is Frikort -> this.trekkode
+            is Prosentkort -> this.trekkode
+            is Tabellkort -> this.trekkode
+        }
+
+    fun requiresAdminRole(): Boolean = trekkode().requiresAdminRole
+
     companion object {
         fun create(row: Row): Forskuddstrekk {
             val type = ForskuddstrekkType.from(row.string("type"))
             return when (type) {
                 ForskuddstrekkType.FRIKORT ->
                     Frikort(
-                        trekkode = row.string("trekk_kode"),
+                        trekkode = Trekkode.from(row.string("trekk_kode")),
                         frikortBeloep = row.int("frikort_beloep"),
                     )
 
                 ForskuddstrekkType.PROSENTKORT ->
                     Prosentkort(
-                        trekkode = row.string("trekk_kode"),
+                        trekkode = Trekkode.from(row.string("trekk_kode")),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
 
                 ForskuddstrekkType.TABELLKORT ->
                     Tabellkort(
-                        trekkode = row.string("trekk_kode"),
+                        trekkode = Trekkode.from(row.string("trekk_kode")),
                         tabellNummer = row.string("tabell_nummer"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
@@ -108,19 +117,19 @@ sealed interface Forskuddstrekk {
             return when (type) {
                 ForskuddstrekkType.FRIKORT ->
                     Frikort(
-                        trekkode = forskuddstrekk.trekkode,
+                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
                         frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
                     )
 
                 ForskuddstrekkType.PROSENTKORT ->
                     Prosentkort(
-                        trekkode = forskuddstrekk.trekkode,
+                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
                         prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
                     )
 
                 ForskuddstrekkType.TABELLKORT ->
                     Tabellkort(
-                        trekkode = forskuddstrekk.trekkode,
+                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
                         tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
                         prosentSats = forskuddstrekk.trekktabell.prosentsats,
                         antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
@@ -154,29 +163,45 @@ sealed interface Forskuddstrekk {
 }
 
 data class Frikort(
-    val trekkode: String,
+    val trekkode: Trekkode,
     val frikortBeloep: Int,
 ) : Forskuddstrekk
 
 data class Tabellkort(
-    val trekkode: String,
+    val trekkode: Trekkode,
     val tabellNummer: String,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal,
 ) : Forskuddstrekk
 
 data class Prosentkort(
-    val trekkode: String,
+    val trekkode: Trekkode,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal? = null,
 ) : Forskuddstrekk
 
-data class Tilleggsopplysning(
-    val opplysning: String,
+enum class Tilleggsopplysning(
+    val value: String,
+    val requiresAdminRole: Boolean,
 ) {
-    constructor(row: Row) : this(
-        opplysning = row.string("opplysning"),
-    )
+    OPPHOLD_PAA_SVALBARD("oppholdPaaSvalbard", false),
+    KILDESKATT_PAA_PENSJON("kildeskattPaaPensjon", false),
+    OPPHOLD_I_TILTAKSSONE("oppholdITiltakssone", false),
+    KILDESKATT_PAA_LOENN("kildeskattPaaLoenn", true),
+    ;
+
+    companion object {
+        private val logger = KotlinLogging.logger {}
+
+        fun fromValue(value: String): Tilleggsopplysning {
+            try {
+                return Tilleggsopplysning.entries.first { it.value == value }
+            } catch (e: NoSuchElementException) {
+                logger.error("Ukjent tilleggsopplysning funnet: $value")
+                throw e
+            }
+        }
+    }
 }
 
 enum class SkattekortKilde(
@@ -189,16 +214,22 @@ enum class SkattekortKilde(
 
 enum class Trekkode(
     val value: String,
+    val requiresAdminRole: Boolean,
 ) {
-    LOENN_FRA_HOVEDARBEIDSGIVER("loennFraHovedarbeidsgiver"),
-    LOENN_FRA_BIARBEIDSGIVER("loennFraBiarbeidsgiver"),
-    LOENN_FRA_NAV("loennFraNAV"),
-    PENSJON("pensjon"),
-    PENSJON_FRA_NAV("pensjonFraNAV"),
-    LOENN_TIL_UTENRIKSTJENESTEMANN("loennTilUtenrikstjenestemann"),
-    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER("loennKunTrygdeavgiftTilUtenlandskBorger"),
-    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER_SOM_GRENSEGJENGER("loennKunTrygdeavgiftTilUtenlandskBorgerSomGrensegjenger"),
-    UFOERETRYGD_FRA_NAV("ufoeretrygdFraNAV"),
-    UFOEREYTELSER_FRA_ANDRE("ufoereytelserFraAndre"),
-    INTRODUKSJONSSTOENAD("introduksjonsstoenad"),
+    LOENN_FRA_HOVEDARBEIDSGIVER("loennFraHovedarbeidsgiver", true),
+    LOENN_FRA_BIARBEIDSGIVER("loennFraBiarbeidsgiver", true),
+    LOENN_FRA_NAV("loennFraNAV", false),
+    PENSJON("pensjon", true),
+    PENSJON_FRA_NAV("pensjonFraNAV", false),
+    LOENN_TIL_UTENRIKSTJENESTEMANN("loennTilUtenrikstjenestemann", true),
+    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER("loennKunTrygdeavgiftTilUtenlandskBorger", true),
+    LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER_SOM_GRENSEGJENGER("loennKunTrygdeavgiftTilUtenlandskBorgerSomGrensegjenger", true),
+    UFOERETRYGD_FRA_NAV("ufoeretrygdFraNAV", false),
+    UFOEREYTELSER_FRA_ANDRE("ufoereytelserFraAndre", true),
+    INTRODUKSJONSSTOENAD("introduksjonsstoenad", true),
+    ;
+
+    companion object {
+        fun from(kode: String): Trekkode = entries.find { it.value == kode } ?: error("Ukjent trekkode: $kode")
+    }
 }

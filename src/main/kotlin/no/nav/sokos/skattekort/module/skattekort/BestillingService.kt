@@ -49,7 +49,7 @@ class BestillingService(
         if (featureToggles.isBestillingerEnabled()) {
             val bestillings: List<Bestilling> =
                 dataSource.transaction { tx ->
-                    val allBestilling = BestillingRepository.getAllBestilling(tx)
+                    val allBestilling = BestillingRepository.getAllBestilling(tx, maxYear = nextYearIfAfterDecember15())
                     allBestilling
                         .filter { it.bestillingsbatchId == null }
                         .filter { it.inntektsaar == allBestilling.firstOrNull()?.inntektsaar }
@@ -363,6 +363,15 @@ class BestillingService(
             }
         } else {
             logger.debug("Bestillinger er disablet")
+        }
+    }
+
+    fun nextYearIfAfterDecember15(): Int {
+        val now = LocalDateTime.now().toKotlinLocalDateTime()
+        return if (now.day >= 15 && now.month == Month.DECEMBER) {
+            now.year + 1
+        } else {
+            now.year
         }
     }
 

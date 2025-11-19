@@ -9,6 +9,7 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.di.dependencies
+import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
@@ -61,7 +62,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { KafkaConfig() }
         provide(MaskinportenTokenClient::class)
 
-        provide { MQConfig.connectionFactory }
+        provide<ConnectionFactory> { MQConfig.connectionFactory }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }

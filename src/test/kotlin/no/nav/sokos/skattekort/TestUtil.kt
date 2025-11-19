@@ -9,10 +9,14 @@ import kotlin.time.Duration.Companion.seconds
 
 import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.application.pluginOrNull
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.plugins.di.DI
+import io.ktor.server.plugins.di.DefaultConflictPolicy
+import io.ktor.server.plugins.di.DependencyConflictPolicy
+import io.ktor.server.plugins.di.DependencyConflictResult
 import io.ktor.server.plugins.di.DependencyInjectionConfig
-import io.ktor.server.plugins.di.IgnoreConflicts
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -49,59 +53,33 @@ object TestUtil {
     fun withFullTestApplication(thunk: suspend ApplicationTestBuilder.() -> Unit) =
         withMockOAuth2Server {
             testApplication {
-                install(DI) {
-                    configureShutdownBehavior()
-                }
-
                 application {
-                    configureDependenciesBehaviour()
-                    module(testEnvironmentConfig())
+                    configureTestModule()
                 }
                 startApplication()
                 thunk()
             }
         }
 
-    fun testEnvironmentConfig(): MapApplicationConfig =
-        MapApplicationConfig().apply {
-            put("APPLICATION_ENV", "TEST")
+    fun Application.configureTestModule() {
+        if (pluginOrNull(DI) == null) {
+            install(DI) {
+                configureShutdownBehavior()
+            }
 
-            // Database properties
-            put("POSTGRES_USER_USERNAME", DbListener.container.username)
-            put("POSTGRES_USER_PASSWORD", DbListener.container.password)
-            put("POSTGRES_ADMIN_USERNAME", DbListener.container.username)
-            put("POSTGRES_ADMIN_PASSWORD", DbListener.container.password)
-            put("POSTGRES_NAME", DbListener.container.databaseName)
-            put("POSTGRES_PORT", DbListener.container.firstMappedPort.toString())
-            put("POSTGRES_HOST", DbListener.container.host)
-        }
-
-    fun DependencyInjectionConfig.configureShutdownBehavior() {
-        conflictPolicy = IgnoreConflicts
-        onShutdown = { dependencyKey, instance ->
-            when (instance) {
-                // Vi ønsker bare en DataSource i bruk for en hel test-kjøring, selv om flere tester start/stopper
-                // applikasjonen;
-                // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
-                is DataSource -> {}
-                is ConnectionFactory -> {}
-                is AutoCloseable -> instance.close()
+            dependencies {
+                provide { mockk<MaskinportenTokenClient>(relaxed = true) }
+                provide { mockk<AzuredTokenClient>(relaxed = true) }
+                provide<ConnectionFactory> { MQListener.connectionFactory }
+                provide<Queue>(name = "forespoerselQueue") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                }
+                provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+                }
             }
         }
-    }
-
-    fun Application.configureDependenciesBehaviour() {
-        dependencies {
-            provide { mockk<MaskinportenTokenClient>() }
-            provide { mockk<AzuredTokenClient>() }
-            provide<ConnectionFactory> { MQListener.connectionFactory }
-            provide<Queue>(name = "forespoerselQueue") {
-                ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
-            }
-            provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
-                ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
-            }
-        }
+        module(testEnvironmentConfig())
     }
 
     fun runThisSql(query: String) {
@@ -115,4 +93,44 @@ object TestUtil {
     }
 
     fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
+
+    private fun testEnvironmentConfig(): MapApplicationConfig =
+        MapApplicationConfig().apply {
+            put("APPLICATION_ENV", "TEST")
+
+            // Database properties
+            put("POSTGRES_USER_USERNAME", DbListener.container.username)
+            put("POSTGRES_USER_PASSWORD", DbListener.container.password)
+            put("POSTGRES_ADMIN_USERNAME", DbListener.container.username)
+            put("POSTGRES_ADMIN_PASSWORD", DbListener.container.password)
+            put("POSTGRES_NAME", DbListener.container.databaseName)
+            put("POSTGRES_PORT", DbListener.container.firstMappedPort.toString())
+            put("POSTGRES_HOST", DbListener.container.host)
+        }
+
+    private fun DependencyInjectionConfig.configureShutdownBehavior() {
+        conflictPolicy =
+            DependencyConflictPolicy { prev, current ->
+                when (val result = DefaultConflictPolicy.resolve(prev, current)) {
+                    is DependencyConflictResult.Conflict -> DependencyConflictResult.KeepPrevious
+                    else -> result
+                }
+            }
+
+        onShutdown = { dependencyKey, instance ->
+            when (instance) {
+                // Vi ønsker bare en DataSource i bruk for en hel test-kjøring, selv om flere tester start/stopper applikasjonen
+                // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
+                is MaskinportenTokenClient -> {}
+                is MaskinportenTokenClient? -> {}
+                is AzuredTokenClient -> {}
+                is DataSource -> {}
+                is ConnectionFactory -> {}
+                is ConnectionFactory? -> {}
+                is Queue -> {}
+                is Queue? -> {}
+                is AutoCloseable -> instance.close()
+            }
+        }
+    }
 }

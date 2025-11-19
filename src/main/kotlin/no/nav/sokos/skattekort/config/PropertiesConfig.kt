@@ -11,8 +11,11 @@ object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
 
     init {
-        System.setProperty("APPLICATION_ENV", "TEST")
-        initEnvConfig()
+        initEnvConfig(
+            HoconApplicationConfig(
+                ConfigFactory.parseMap(mapOf("APPLICATION_ENV" to "TEST")),
+            ),
+        )
     }
 
     fun initEnvConfig(applicationConfig: ApplicationConfig? = null) {
@@ -30,8 +33,8 @@ object PropertiesConfig {
         // Precedence (highest -> lowest):
         // 1. system environment
         // 2. system properties
-        // 3. fileConfig (resource/local + defaults)
-        // 4. applicationConfig (if provided)
+        // 3. applicationConfig (if provided)
+        // 4. fileConfig (resource/local + defaults)
         val base =
             ConfigFactory
                 .systemEnvironment()
@@ -81,7 +84,7 @@ object PropertiesConfig {
             serviceUsername = getOrEmpty("MQ_SERVICE_USERNAME"),
             servicePassword = getOrEmpty("MQ_SERVICE_PASSWORD"),
             userAuth = true,
-            fraForSystemQueue = get("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+            fraForSystemQueue = get("MQ_FRA_FORSYSTEM_QUEUE_NAME"),
             leveransekoeOppdragZSkattekort = get("MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT"),
         )
 

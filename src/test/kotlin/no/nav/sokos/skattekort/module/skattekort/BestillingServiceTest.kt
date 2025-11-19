@@ -2,15 +2,18 @@ package no.nav.sokos.skattekort.module.skattekort
 
 import java.math.BigDecimal.valueOf
 import java.math.RoundingMode
+import java.time.LocalDateTime
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.extensions.time.withConstantNow
 import io.kotest.inspectors.forAll
 import io.kotest.inspectors.forExactly
 import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -56,48 +59,159 @@ class BestillingServiceTest :
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {
+            withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
+                coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
+                    toBestillSkattekortResponse(
+                        """
+                        {
+                          "dialogreferanse": "some-dialog-ref",
+                          "bestillingsreferanse": "some-bestillings-ref"
+                        }
+                        """.trimIndent(),
+                    )
 
+                databaseHas(
+                    aPerson(1L, "01010100001"),
+                    aPerson(2L, "02020200002"),
+                    aPerson(3L, "03030300003"),
+                    aBestilling(1L, "01010100001", 2026, null),
+                    aBestilling(2L, "02020200002", 2026, null),
+                    aBestilling(3L, "03030300003", 2026, null),
+                )
+
+                bestillingService.opprettBestillingsbatch()
+
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                assertSoftly {
+                    batches shouldNotBeNull {
+                        size shouldBe 1
+                        first() shouldNotBeNull {
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "some-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldContain("01010100001")
+                                shouldContain("02020200002")
+                                shouldContain("03030300003")
+                            }
+                        }
+                    }
+
+                    bestillings shouldNotBeNull {
+                        size shouldBe 3
+                        forAll { it.bestillingsbatchId shouldBe batches.first().id }
+                    }
+                }
+            }
+        }
+
+        test("Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
             coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
                 toBestillSkattekortResponse(
                     """
                     {
-                      "dialogreferanse": "some-dialog-ref",
-                      "bestillingsreferanse": "some-bestillings-ref"
+                      "dialogreferanse": "first-dialog-ref",
+                      "bestillingsreferanse": "first-bestillings-ref"
+                    }
+                    """.trimIndent(),
+                ) andThen
+                toBestillSkattekortResponse(
+                    """
+                    {
+                      "dialogreferanse": "second-dialog-ref",
+                      "bestillingsreferanse": "second-bestillings-ref"
                     }
                     """.trimIndent(),
                 )
-
             databaseHas(
                 aPerson(1L, "01010100001"),
                 aPerson(2L, "02020200002"),
                 aPerson(3L, "03030300003"),
                 aBestilling(1L, "01010100001", 2025, null),
-                aBestilling(2L, "02020200002", 2025, null),
-                aBestilling(3L, "03030300003", 2025, null),
+                aBestilling(2L, "02020200002", 2026, null),
+                aBestilling(3L, "03030300003", 2026, null),
             )
 
-            bestillingService.opprettBestillingsbatch()
+            withConstantNow(LocalDateTime.parse("2025-12-14T00:00:00")) {
+                // Kaller to ganger for å sjekke at den ikke plukker opp 2026 på andre kall
+                bestillingService.opprettBestillingsbatch()
+                bestillingService.opprettBestillingsbatch()
 
-            val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
-            val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
-            assertSoftly {
-                batches shouldNotBeNull {
-                    size shouldBe 1
-                    first() shouldNotBeNull {
-                        status shouldBe BestillingBatchStatus.Ny.value
-                        bestillingsreferanse shouldBe "some-bestillings-ref"
-                        dataSendt shouldNotBeNull {
-                            shouldContain("01010100001")
-                            shouldContain("02020200002")
-                            shouldContain("03030300003")
+                assertSoftly("Før 15. desember") {
+                    batches shouldNotBeNull {
+                        size shouldBe 1
+                        first() shouldNotBeNull {
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "first-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldContain("01010100001")
+                                shouldNotContain("02020200002")
+                                shouldNotContain("03030300003")
+                            }
+                        }
+                    }
+
+                    bestillings shouldNotBeNull {
+                        size shouldBe 3
+                        forOne {
+                            it.id shouldNotBeNull { id shouldBe 1L }
+                            it.inntektsaar shouldBe 2025
+                            it.bestillingsbatchId shouldBe batches.first().id
+                        }
+                        forExactly(2) {
+                            it.inntektsaar shouldBe 2026
+                            it.bestillingsbatchId shouldBe null
                         }
                     }
                 }
+            }
+            withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
+                bestillingService.opprettBestillingsbatch()
 
-                bestillings shouldNotBeNull {
-                    size shouldBe 3
-                    forAll { it.bestillingsbatchId shouldBe batches.first().id }
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                assertSoftly("Etter 15.desember") {
+                    batches shouldNotBeNull {
+                        size shouldBe 2
+                        first() shouldNotBeNull {
+                            id shouldNotBeNull { id shouldBe 1L }
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "first-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldNotContain("01010100001")
+                                shouldNotContain("02020200002")
+                                shouldNotContain("03030300003")
+                            }
+                        }
+                        last() shouldNotBeNull {
+                            id shouldNotBeNull { id shouldBe 2L }
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "second-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldNotContain("01010100001")
+                                shouldContain("02020200002")
+                                shouldContain("03030300003")
+                            }
+                        }
+                    }
+
+                    bestillings shouldNotBeNull {
+                        size shouldBe 3
+                        forOne {
+                            it.id shouldNotBeNull { id shouldBe 1L }
+                            it.inntektsaar shouldBe 2025
+                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 1L }
+                        }
+                        forExactly(2) {
+                            it.inntektsaar shouldBe 2026
+                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 2L }
+                        }
+                    }
                 }
             }
         }
@@ -150,8 +264,7 @@ class BestillingServiceTest :
         }
 
         test("henter skattekort reell response") {
-            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns
-                aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
+            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
 
             databaseHas(
                 aPerson(1L, "12345678901"),
@@ -547,8 +660,7 @@ class BestillingServiceTest :
         }
 
         test("plukker ikke opp batch med status FEILET men tar den andre istedenfor") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
-                aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
 
             databaseHas(
                 aPerson(fnr = "01010100001", personId = 1L),

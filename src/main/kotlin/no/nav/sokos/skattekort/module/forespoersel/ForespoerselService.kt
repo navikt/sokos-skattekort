@@ -19,6 +19,7 @@ import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -89,12 +90,15 @@ class ForespoerselService(
                     brukerId = brukerId,
                 )
 
-            AbonnementRepository.insert(
-                tx = tx,
-                forespoerselId = forespoerselId,
-                inntektsaar = forespoerselInput.inntektsaar,
-                personId = person.id!!.value,
-            )
+            val abonnementId =
+                AbonnementId(
+                    AbonnementRepository.insert(
+                        tx = tx,
+                        forespoerselId = forespoerselId,
+                        inntektsaar = forespoerselInput.inntektsaar,
+                        personId = person.id!!.value,
+                    ) ?: throw IllegalStateException("Kunne ikke lage abonnement"),
+                )
 
             SkattekortRepository
                 .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar)
@@ -119,7 +123,7 @@ class ForespoerselService(
                         logger.info {
                             "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
                         }
-                    }
+                    } ?: UtsendingRepository.insert(tx, Utsending(null, abonnementId, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
                 }
         }
         logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }

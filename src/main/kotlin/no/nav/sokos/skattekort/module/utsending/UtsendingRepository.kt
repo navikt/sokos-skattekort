@@ -90,13 +90,13 @@ object UtsendingRepository {
             extractor = { row -> Utsending(row) },
         )
 
-    fun getEarliestUnsentUtsendingTime(tx: TransactionalSession): java.time.LocalDateTime? =
+    fun getSecondsSinceEarliestUnsentUtsending(tx: TransactionalSession): Double =
         tx.single(
             queryOf(
                 """
-                SELECT MIN(opprettet) AS earliest_opprettet FROM utsendinger
+                EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM utsendinger
                 """.trimIndent(),
             ),
-            extractor = { row -> row.localDateTimeOrNull("earliest_opprettet") },
-        )
+            extractor = { row -> row.double("earliest_opprettet") },
+        ) ?: error("Should always return a number")
 }

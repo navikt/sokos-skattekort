@@ -12,18 +12,6 @@ import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 
 @Serializable
-data class SkattekortTilArbeidsgiver(
-    var navn: String? = null,
-    val arbeidsgiver: List<Arbeidsgiver>,
-)
-
-@Serializable
-data class Arbeidsgiver(
-    val arbeidstaker: List<Arbeidstaker>,
-    val arbeidsgiveridentifikator: IdentifikatorForEnhetEllerPerson,
-)
-
-@Serializable
 data class Arbeidstaker(
     val inntektsaar: Long,
     val arbeidstakeridentifikator: String,
@@ -103,7 +91,7 @@ enum class Tilleggsopplysning(
 
     companion object {
         fun fromDomainModel(tilleggsopplysning: no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning): Tilleggsopplysning =
-            entries.find { it.value == tilleggsopplysning.opplysning } ?: throw IllegalArgumentException("Ukjent tilleggsopplysning ${tilleggsopplysning.opplysning}")
+            entries.find { it.value == tilleggsopplysning.value } ?: throw IllegalArgumentException("Ukjent tilleggsopplysning ${tilleggsopplysning.value}")
     }
 }
 
@@ -124,19 +112,19 @@ sealed interface Forskuddstrekk {
             when (forskuddstrekk) {
                 is no.nav.sokos.skattekort.module.skattekort.Frikort ->
                     Frikort(
-                        Trekkode.fromValue(forskuddstrekk.trekkode),
+                        Trekkode.fromValue(forskuddstrekk.trekkode.value),
                         BigDecimal(forskuddstrekk.frikortBeloep),
                     )
                 is Tabellkort ->
                     Trekktabell(
-                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode.value),
                         tabellnummer = forskuddstrekk.tabellNummer,
                         prosentsats = forskuddstrekk.prosentSats,
                         antallMaanederForTrekk = forskuddstrekk.antallMndForTrekk,
                     )
                 is Prosentkort ->
                     Trekkprosent(
-                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode.value),
                         prosentsats = forskuddstrekk.prosentSats,
                         antallMaanederForTrekk = forskuddstrekk.antallMndForTrekk,
                     )

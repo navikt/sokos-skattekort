@@ -135,16 +135,14 @@ class SkattekortpersonApiE2ETest :
       "skattekortidentifikator": 17,
       "forskuddstrekk": [
         {
-          "type": "Trekktabell",
-          "trekkode": "LOENN_FRA_HOVEDARBEIDSGIVER",
-          "tabellnummer": "7100",
-          "prosentsats": 27.50,
+          "type": "Trekkprosent",
+          "trekkode": "PENSJON_FRA_NAV",
+          "prosentsats": 18.50,
           "antallMaanederForTrekk": 12.0
         }
       ]
     },
     "tilleggsopplysning": [
-      "kildeskattPaaLoenn"
     ]
   }
 ]""",

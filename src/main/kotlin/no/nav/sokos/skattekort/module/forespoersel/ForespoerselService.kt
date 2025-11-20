@@ -63,7 +63,7 @@ class ForespoerselService(
         return (
             forespoerselInput.inntektsaar == iaar &&
                 naa.month == Month.DECEMBER &&
-                naa.day > 15
+                naa.day >= 15
         )
     }
 

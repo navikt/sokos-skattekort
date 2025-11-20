@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.module.skattekort
 
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.time.LocalDateTime.now
 import javax.sql.DataSource
 
 import kotlin.time.ExperimentalTime
@@ -48,7 +49,17 @@ class BestillingService(
         if (featureToggles.isBestillingerEnabled()) {
             val bestillings: List<Bestilling> =
                 dataSource.transaction { tx ->
-                    val allBestilling = BestillingRepository.getAllBestilling(tx)
+                    val now = now().toKotlinLocalDateTime()
+                    val allBestilling =
+                        BestillingRepository.getAllBestilling(
+                            tx,
+                            maxYear =
+                                if (now.day >= 15 && now.month == Month.DECEMBER) {
+                                    now.year + 1
+                                } else {
+                                    now.year
+                                },
+                        )
                     allBestilling
                         .filter { it.bestillingsbatchId == null }
                         .filter { it.inntektsaar == allBestilling.firstOrNull()?.inntektsaar }

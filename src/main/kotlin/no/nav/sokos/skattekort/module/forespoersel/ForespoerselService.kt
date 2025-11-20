@@ -19,6 +19,7 @@ import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -62,7 +63,7 @@ class ForespoerselService(
         return (
             forespoerselInput.inntektsaar == iaar &&
                 naa.month == Month.DECEMBER &&
-                naa.day > 15
+                naa.day >= 15
         )
     }
 
@@ -89,38 +90,45 @@ class ForespoerselService(
                     brukerId = brukerId,
                 )
 
-            AbonnementRepository.insert(
-                tx = tx,
-                forespoerselId = forespoerselId,
-                inntektsaar = forespoerselInput.inntektsaar,
-                personId = person.id!!.value,
-            )
+            val abonnementId =
+                AbonnementId(
+                    AbonnementRepository.insert(
+                        tx = tx,
+                        forespoerselId = forespoerselId,
+                        inntektsaar = forespoerselInput.inntektsaar,
+                        personId = person.id!!.value,
+                    ) ?: throw IllegalStateException("Kunne ikke lage abonnement"),
+                )
 
-            SkattekortRepository
-                .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar)
-                .ifEmpty {
-                    val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
-                    if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                    if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {
-                        BestillingRepository.insert(
-                            tx = tx,
-                            bestilling =
-                                Bestilling(
-                                    personId = person.id,
-                                    fnr = Personidentifikator(fnr),
-                                    inntektsaar = forespoerselInput.inntektsaar,
-                                ),
-                        )
-                        bestillingCount++
-                    }
-                }.let {
-                    // Skattekort finnes
-                    UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)?.let {
-                        logger.info {
-                            "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
-                        }
-                    }
+            val skattekort =
+                SkattekortRepository
+                    .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar)
+            if (skattekort == null || skattekort.isEmpty()) {
+                val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
+                if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
+                if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {
+                    BestillingRepository.insert(
+                        tx = tx,
+                        bestilling =
+                            Bestilling(
+                                personId = person.id,
+                                fnr = Personidentifikator(fnr),
+                                inntektsaar = forespoerselInput.inntektsaar,
+                            ),
+                    )
+                    bestillingCount++
                 }
+            } else {
+                // Skattekort finnes
+                val utsending = UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)
+                if (utsending != null) {
+                    logger.info {
+                        "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
+                    }
+                } else {
+                    UtsendingRepository.insert(tx, Utsending(null, abonnementId, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
+                }
+            }
         }
         logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }
     }

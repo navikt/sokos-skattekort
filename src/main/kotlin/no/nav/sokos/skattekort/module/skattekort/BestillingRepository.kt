@@ -23,6 +23,21 @@ object BestillingRepository {
             extractor = mapToBestilling,
         )
 
+    fun getAllBestilling(
+        tx: TransactionalSession,
+        maxYear: Int,
+    ): List<Bestilling> =
+        tx.list(
+            queryOf(
+                """
+                SELECT * FROM bestillinger
+                WHERE inntektsaar <= :maxYear
+                """.trimIndent(),
+                mapOf("maxYear" to maxYear),
+            ),
+            extractor = mapToBestilling,
+        )
+
     fun insert(
         tx: TransactionalSession,
         bestilling: Bestilling,

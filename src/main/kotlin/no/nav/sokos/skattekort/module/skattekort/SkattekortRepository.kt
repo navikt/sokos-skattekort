@@ -55,7 +55,7 @@ object SkattekortRepository {
                             is Frikort ->
                                 mapOf(
                                     "skattekortId" to id,
-                                    "trekk_kode" to forskuddstrekk.trekkode,
+                                    "trekk_kode" to forskuddstrekk.trekkode.value,
                                     "type" to FRIKORT.type,
                                     "frikort_beloep" to forskuddstrekk.frikortBeloep,
                                     "tabell_nummer" to null,
@@ -66,7 +66,7 @@ object SkattekortRepository {
                             is Prosentkort ->
                                 mapOf(
                                     "skattekortId" to id,
-                                    "trekk_kode" to forskuddstrekk.trekkode,
+                                    "trekk_kode" to forskuddstrekk.trekkode.value,
                                     "type" to PROSENTKORT.type,
                                     "frikort_beloep" to null,
                                     "tabell_nummer" to null,
@@ -77,7 +77,7 @@ object SkattekortRepository {
                             is Tabellkort ->
                                 mapOf(
                                     "skattekortId" to id,
-                                    "trekk_kode" to forskuddstrekk.trekkode,
+                                    "trekk_kode" to forskuddstrekk.trekkode.value,
                                     "type" to TABELLKORT.type,
                                     "frikort_beloep" to null,
                                     "tabell_nummer" to forskuddstrekk.tabellNummer,
@@ -97,7 +97,7 @@ object SkattekortRepository {
                     skattekort.tilleggsopplysningList.map { tilleggsopplysning ->
                         mapOf(
                             "skattekortId" to id,
-                            "opplysning" to tilleggsopplysning.opplysning,
+                            "opplysning" to tilleggsopplysning.value,
                         )
                     },
                 )
@@ -109,6 +109,7 @@ object SkattekortRepository {
         tx: TransactionalSession,
         personId: PersonId,
         inntektsaar: Int,
+        adminRole: Boolean,
     ): List<Skattekort> =
         tx.list(
             queryOf(
@@ -124,53 +125,68 @@ object SkattekortRepository {
             ),
             extractor = { row ->
                 val id = SkattekortId(row.long("id"))
-                Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id), findAllTilleggsopplysningBySkattekortId(tx, id))
+                Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id, adminRole = adminRole), findAllTilleggsopplysningBySkattekortId(tx, id, adminRole))
             },
         )
 
     fun findAllForskuddstrekkBySkattekortId(
         tx: TransactionalSession,
         id: SkattekortId,
+        adminRole: Boolean,
     ): List<Forskuddstrekk> =
-        tx.list(
-            queryOf(
-                """
-                SELECT * FROM forskuddstrekk 
-                WHERE skattekort_id = :skattekortId
-                """.trimIndent(),
-                mapOf(
-                    "skattekortId" to id.value,
+        tx
+            .list(
+                queryOf(
+                    """
+                    SELECT * FROM forskuddstrekk 
+                    WHERE skattekort_id = :skattekortId
+                    """.trimIndent(),
+                    mapOf(
+                        "skattekortId" to id.value,
+                    ),
                 ),
-            ),
-            extractor = { row ->
-                Forskuddstrekk.create(row)
-            },
-        )
+                extractor = { row ->
+                    val ft = Forskuddstrekk.create(row)
+                    if (ft.requiresAdminRole() && !adminRole) {
+                        null
+                    } else {
+                        ft
+                    }
+                },
+            ).filterNotNull()
 
     private fun findAllTilleggsopplysningBySkattekortId(
         tx: TransactionalSession,
         id: SkattekortId,
+        adminRole: Boolean,
     ): List<Tilleggsopplysning> =
-        tx.list(
-            queryOf(
-                """
-                SELECT * FROM skattekort_tilleggsopplysning 
-                WHERE skattekort_id = :skattekkortId
-                """.trimIndent(),
-                mapOf(
-                    "skattekkortId" to id.value,
+        tx
+            .list(
+                queryOf(
+                    """
+                    SELECT * FROM skattekort_tilleggsopplysning 
+                    WHERE skattekort_id = :skattekortId
+                    """.trimIndent(),
+                    mapOf(
+                        "skattekortId" to id.value,
+                    ),
                 ),
-            ),
-            extractor = { row ->
-                Tilleggsopplysning(row)
-            },
-        )
+                extractor = { row ->
+                    val to = Tilleggsopplysning.fromValue(row.string("opplysning"))
+                    if (to.requiresAdminRole && !adminRole) {
+                        null
+                    } else {
+                        to
+                    }
+                },
+            ).filterNotNull()
 
     fun findLatestByPersonId(
         tx: TransactionalSession,
         personId: PersonId,
         inntektsaar: Int,
-    ): Skattekort = findAllByPersonId(tx, personId, inntektsaar).first()
+        adminRole: Boolean,
+    ): Skattekort = findAllByPersonId(tx, personId, inntektsaar, adminRole).first()
 
     fun getSecondsSinceLatestSkattekortOpprettet(tx: TransactionalSession): Double? =
         tx.single(
@@ -233,7 +249,7 @@ object SkattekortRepository {
                 extractor = { row ->
                     val opplysning =
                         no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning
-                            .fromDomainModel(Tilleggsopplysning(row.string("opplysning")))
+                            .fromDomainModel(Tilleggsopplysning.fromValue(row.string("opplysning")))
                     val count = row.int("antall")
                     opplysning to count
                 },

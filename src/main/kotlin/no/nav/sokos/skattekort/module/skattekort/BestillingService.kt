@@ -15,7 +15,6 @@ import io.prometheus.metrics.core.metrics.Counter
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
@@ -220,7 +219,7 @@ class BestillingService(
                     kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
                     forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
 
             ResultatForSkattekort.IkkeSkattekort -> {
@@ -235,7 +234,7 @@ class BestillingService(
                     kilde = kilde.value,
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
                     forskuddstrekkList = forskuddstrekkList,
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
             }
 
@@ -247,7 +246,7 @@ class BestillingService(
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
         }
 
@@ -260,15 +259,15 @@ class BestillingService(
             tilleggsopplysning.contains("oppholdPaaSvalbard") ->
                 listOf<Forskuddstrekk>(
                     Prosentkort(
-                        trekkode = Trekkode.LOENN_FRA_NAV.value,
+                        trekkode = Trekkode.LOENN_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(15.70),
                     ),
                     Prosentkort(
-                        trekkode = Trekkode.UFOERETRYGD_FRA_NAV.value,
+                        trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(15.70),
                     ),
                     Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                        trekkode = Trekkode.PENSJON_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(13.00),
                     ),
                 )
@@ -276,7 +275,7 @@ class BestillingService(
             tilleggsopplysning.contains("kildeskattpensjonist") ->
                 listOf<Forskuddstrekk>(
                     Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                        trekkode = Trekkode.PENSJON_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(15.00),
                     ),
                 )

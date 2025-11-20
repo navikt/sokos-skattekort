@@ -23,14 +23,14 @@ fun aForskuddstrekk(
     when (type) {
         Prosentkort::class.simpleName ->
             Prosentkort(
-                trekkode.value,
+                trekkode,
                 BigDecimal(prosentSats).setScale(2, RoundingMode.HALF_UP),
                 antMndForTrekk?.let { belop -> BigDecimal(belop).setScale(1, RoundingMode.HALF_UP) },
             )
 
         Tabellkort::class.simpleName ->
             Tabellkort(
-                trekkode.value,
+                trekkode,
                 tabellNummer!!,
                 BigDecimal(prosentSats).setScale(2, RoundingMode.HALF_UP),
                 BigDecimal(antMndForTrekk ?: 12.0).setScale(1, RoundingMode.HALF_UP),
@@ -61,7 +61,7 @@ fun anArbeidstaker(
         arbeidstakeridentifikator = fnr,
         resultatForSkattekort = resultat.value,
         skattekort = skattekort,
-        tilleggsopplysning = tilleggsopplysninger?.map { it.opplysning },
+        tilleggsopplysning = tilleggsopplysninger?.map { it.value },
         inntektsaar = inntektsaar,
     )
 

@@ -264,7 +264,8 @@ class BestillingServiceTest :
         }
 
         test("henter skattekort reell response") {
-            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
+            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns
+                aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
 
             databaseHas(
                 aPerson(1L, "12345678901"),
@@ -660,7 +661,8 @@ class BestillingServiceTest :
         }
 
         test("plukker ikke opp batch med status FEILET men tar den andre istedenfor") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
 
             databaseHas(
                 aPerson(fnr = "01010100001", personId = 1L),

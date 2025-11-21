@@ -103,7 +103,7 @@ class ForespoerselService(
             val skattekort =
                 SkattekortRepository
                     .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar, adminRole = false)
-            if (skattekort == null || skattekort.isEmpty()) {
+            if (skattekort.isEmpty()) {
                 val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
                 if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
                 if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {

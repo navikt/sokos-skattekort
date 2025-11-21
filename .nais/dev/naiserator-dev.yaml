@@ -65,6 +65,27 @@ spec:
         - name: "altinn:authentication/systemregister.write"
   kafka:
     pool: nav-dev
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_18
+        highAvailability: true
+        diskAutoresize: true
+        pointInTimeRecovery: true
+        autoBackupHour: 3
+        tier: db-custom-4-3840
+        databases:
+          - name: sokos-skattekort
+            users:
+              - name: skattekort_user
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "on"
+          - name: "pgaudit.log"
+            value: "write,ddl,role"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+          - name: "cloudsql.logical_decoding"
+            value: "on"
   webproxy: true
   vault:
     enabled: true

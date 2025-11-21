@@ -115,7 +115,7 @@ Ingen
 
 Swagger
 
-- [Dev-fss](https://sokos-skattekort.intern.dev.nav.no/api/v1/skattekort/docs)
+- [dev-gcp](https://sokos-skattekort.intern.dev.nav.no/api/v1/skattekort/docs)
 - [Lokalt](http://0.0.0.0:8080/api/v1/skattekort/docs)
 
 ### Maskinporten og systembrukere

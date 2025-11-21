@@ -51,7 +51,7 @@ class ForespoerselServiceTest :
 
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 1
-                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
                     bestillingList.size shouldBe 1
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -76,7 +76,7 @@ class ForespoerselServiceTest :
                     abonnementList.first().inntektsaar shouldBe 2025
                     abonnementList.get(1).inntektsaar shouldBe 2026
 
-                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
                     bestillingList.size shouldBe 2
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -99,7 +99,7 @@ class ForespoerselServiceTest :
 
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 1
-                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
                     bestillingList.size shouldBe 1
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -125,7 +125,7 @@ class ForespoerselServiceTest :
                     forespoerselList.size shouldBe 2
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 2
-                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
                     bestillingList.size shouldBe 1
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -150,7 +150,7 @@ class ForespoerselServiceTest :
                     forespoerselList.size shouldBe 2
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 2
-                    val bestillingList = BestillingRepository.getAllBestilling(tx)
+                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
                     bestillingList.size shouldBe 1
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0

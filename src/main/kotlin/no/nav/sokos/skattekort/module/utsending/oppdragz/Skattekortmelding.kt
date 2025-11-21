@@ -28,7 +28,6 @@ data class Skattekortmelding(
                             is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(it.trekkode.value), BigDecimal(it.frikortBeloep))
                             is Prosentkort -> Trekkprosent(Trekkode.fromValue(it.trekkode.value), it.prosentSats, it.antallMndForTrekk)
                             is Tabellkort -> Trekktabell(Trekkode.fromValue(it.trekkode.value), Tabelltype.TREKKTABELL_FOR_LOENN, it.tabellNummer, it.prosentSats, it.antallMndForTrekk)
-                            else -> error("Unexpected $it")
                         }
                     },
             ),

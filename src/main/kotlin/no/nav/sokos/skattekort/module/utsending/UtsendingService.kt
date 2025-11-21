@@ -36,6 +36,48 @@ class UtsendingService(
 ) {
     private val logger = KotlinLogging.logger {}
 
+    fun handleUtsending() {
+        if (featureToggles.isUtsendingEnabled()) {
+            dataSource.transaction { tx ->
+                val utsendinger: List<Utsending> =
+                    try {
+                        UtsendingRepository.getAllUtsendinger(tx)
+                    } catch (e: Exception) {
+                        logger.error("Feil under henting av utsendinger", e)
+                        throw e
+                    }
+                utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
+                utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
+                utsendinger
+                    .forEach { utsending ->
+                        when (utsending.forsystem) {
+                            Forsystem.OPPDRAGSSYSTEMET -> {
+                                try {
+                                    sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar)
+                                    UtsendingRepository.delete(tx, utsending.id!!)
+                                    utsendingOppdragzCounter.inc()
+                                } catch (e: Exception) {
+                                    logger.error("Feil under sending til oppdragz", e)
+                                    dataSource.transaction { errorTx ->
+                                        PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
+                                            AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet: ${e.message}")
+                                        }
+                                        UtsendingRepository.increaseFailCount(errorTx, utsending.id, e.message ?: "Ukjent feil")
+                                        feiledeUtsendingerOppdragzCounter.inc()
+                                    }
+                                }
+                            }
+                            Forsystem.MANUELL -> {
+                                UtsendingRepository.delete(tx, utsending.id!!)
+                            }
+                        }
+                    }
+            }
+        } else {
+            logger.debug("Utsending er disablet")
+        }
+    }
+
     private fun sendTilOppdragz(
         tx: TransactionalSession,
         fnr: Personidentifikator,
@@ -69,49 +111,6 @@ class UtsendingService(
             jmsProducer?.close()
             jmsSession?.close()
             jmsConnection?.close()
-        }
-    }
-
-    fun handleUtsending() {
-        if (featureToggles.isUtsendingEnabled()) {
-            val utsendinger: List<Utsending> =
-                try {
-                    dataSource.transaction { tx ->
-                        UtsendingRepository.getAllUtsendinger(tx)
-                    }
-                } catch (e: Exception) {
-                    logger.error("Feil under henting av utsendinger", e)
-                    throw e
-                }
-            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
-            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
-            utsendinger
-                .forEach { utsending ->
-                    dataSource.transaction { tx ->
-                        when (utsending.forsystem) {
-                            Forsystem.OPPDRAGSSYSTEMET -> {
-                                try {
-                                    sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar)
-                                    UtsendingRepository.delete(tx, utsending.id!!)
-                                    utsendingOppdragzCounter.inc()
-                                } catch (e: Exception) {
-                                    // TODO: logg feil
-                                    logger.error("Feil under sending til oppdragz", e)
-                                    dataSource.transaction { errorsession ->
-                                        UtsendingRepository.increaseFailCount(errorsession, utsending.id, e.message ?: "Ukjent feil")
-                                        feiledeUtsendingerOppdragzCounter.inc()
-                                    }
-                                }
-                            }
-
-                            Forsystem.MANUELL -> {
-                                UtsendingRepository.delete(tx, utsending.id!!)
-                            }
-                        }
-                    }
-                }
-        } else {
-            logger.debug("Utsending er disablet")
         }
     }
 

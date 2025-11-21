@@ -10,6 +10,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.person.Foedselsnummer
+import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.pdl.PdlClientService
@@ -57,7 +58,7 @@ class IdentifikatorEndringService(
         val identifikasjonsnummer = folkeregisteridentifikator.identifikasjonsnummer
 
         dataSource.transaction { tx ->
-            if (personService.findPersonByFnr(tx, Personidentifikator(identifikasjonsnummer)) == null) {
+            if (PersonRepository.findPersonByFnr(tx, Personidentifikator(identifikasjonsnummer)) == null) {
                 val pdlResponse = runBlocking { pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer)) }
                 val identList = pdlResponse[identifikasjonsnummer]!!.filter { it.historisk }.map { it.ident }
 

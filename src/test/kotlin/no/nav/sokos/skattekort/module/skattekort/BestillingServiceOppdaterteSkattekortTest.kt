@@ -15,7 +15,6 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 
@@ -30,7 +29,6 @@ class BestillingServiceOppdaterteSkattekortTest :
                 BestillingService(
                     DbListener.dataSource,
                     skatteetatenClient,
-                    PersonService(DbListener.dataSource),
                     FakeUnleashIntegration(),
                     PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, false, "", "", ""),
                 )

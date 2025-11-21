@@ -8,6 +8,8 @@ import javax.sql.DataSource
 import kotlin.time.Duration.Companion.seconds
 
 import io.kotest.assertions.nondeterministic.eventuallyConfig
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.pluginOrNull
@@ -57,6 +59,14 @@ object TestUtil {
                     configureTestModule()
                 }
                 startApplication()
+
+                client =
+                    createClient {
+                        install(ContentNegotiation) {
+                            json()
+                        }
+                    }
+
                 thunk()
             }
         }
@@ -121,14 +131,8 @@ object TestUtil {
             when (instance) {
                 // Vi ønsker bare en DataSource i bruk for en hel test-kjøring, selv om flere tester start/stopper applikasjonen
                 // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
-                is MaskinportenTokenClient -> {}
-                is MaskinportenTokenClient? -> {}
-                is AzuredTokenClient -> {}
                 is DataSource -> {}
                 is ConnectionFactory -> {}
-                is ConnectionFactory? -> {}
-                is Queue -> {}
-                is Queue? -> {}
                 is AutoCloseable -> instance.close()
             }
         }

@@ -2,9 +2,15 @@ package no.nav.sokos.skattekort.module.forespoersel
 
 import kotlinx.datetime.LocalDate
 
+import mu.KotlinLogging
+
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+
+private val logger = KotlinLogging.logger { }
+
 enum class Foedselsnummerkategori(
     val value: String,
-    val regel: (String) -> Boolean,
+    val erGyldig: (String) -> Boolean,
 ) {
     GYLDIGE("GYLDIGE", ::gyldigFnrEllerDnrRegel),
     TENOR("TENOR", ::tenorRegel),
@@ -12,19 +18,36 @@ enum class Foedselsnummerkategori(
 }
 
 fun gyldigFnrEllerDnrRegel(fnr: String): Boolean =
-    lengdeOgTallRegel(fnr) &&
+    if (lengdeOgTallRegel(fnr) &&
         (
             isDateParseable(fnr) ||
                 isDateParseable(fnr, dayOffset = 40)
         )
+    ) {
+        true
+    } else {
+        logger.warn(marker = TEAM_LOGS_MARKER) { "GyldigFnrEllerDnrRegel fant ugyldig fnr: $fnr" }
+        false
+    }
 
 fun tenorRegel(fnr: String): Boolean =
-    lengdeOgTallRegel(fnr) &&
+    if (lengdeOgTallRegel(fnr) &&
         isDateParseable(fnr, monthOffset = 80)
+    ) {
+        true
+    } else {
+        logger.warn(marker = TEAM_LOGS_MARKER) { "TenorRegel fant ugyldig fnr: $fnr" }
+        false
+    }
 
 fun lengdeOgTallRegel(fnr: String): Boolean {
     val regex = Regex("^[0-9]{11}$")
-    return regex.matches(fnr)
+    return if (regex.matches(fnr)) {
+        true
+    } else {
+        logger.warn(marker = TEAM_LOGS_MARKER) { "LengdeOgTallRegel fant ugyldig fnr: $fnr" }
+        false
+    }
 }
 
 private fun isDateParseable(

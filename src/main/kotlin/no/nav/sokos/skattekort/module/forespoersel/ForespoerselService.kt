@@ -40,12 +40,7 @@ class ForespoerselService(
                 when {
                     message.startsWith("<") -> return@transaction // drop Arena meldinger
                     else -> parseCopybookMessage(message)
-                }
-
-            if (forespoerselInput.fnrList.none(Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr).regel)) {
-                logger.warn { "Forespørsel mottatt uten gyldig fnr, hopper over behandling" }
-                return@transaction
-            }
+                }.let { it.copy(fnrList = it.fnrList.filter(Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr).erGyldig)) }
 
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 

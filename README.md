@@ -86,3 +86,24 @@ Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) fi
 - Spørsmål knyttet til koden eller prosjektet utenfra NAV kan stilles som issues her på github.
 - Henvendelser om endringer kan gjøres i henhold til [dokumentasjonen av grensesnittene](dokumentasjon/arkitektur/arkitektur.md).
 
+# Feilsituasjoner
+
+## Feil i forespørsler
+
+## Feil under bestilling av skattekort
+
+### Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering
+
+Av en eller annen grunn liker ikke skatteetaten bestillingen. Vi får ikke bestille skattekort for neste år før 15. desember, og ikke etter juni for foregående år.
+
+Vurder situasjonen. Veier ut:
+- slett bestillingene og batchen. Dette vil potensielt medføre 50% skatt for brukerne det gjelder, og bør godkjennes av noen som jobber i linja
+- bestillingsbatchen kan utføres på nytt ved å slette bestillingsbatch-innslaget i databasen
+
+### Bestillingsbatch $batchId feilet: ${response.status}
+
+Dette er en generell catch-all for feil under bestilling. Situasjonen er ukjent, og må debugges manuelt.
+
+## Feil under utsending av skattekort
+
+

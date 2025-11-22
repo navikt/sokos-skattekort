@@ -12,6 +12,7 @@ import io.ktor.server.plugins.di.dependencies
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.JobTaskConfig
@@ -64,6 +65,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
+        provide(AuditLogger::class)
 
         provide { MQConfig.connectionFactory }
         provide<Queue>(name = "forespoerselQueue") {

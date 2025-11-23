@@ -5,6 +5,7 @@ stateDiagram-v2
     state "Forespørsel mottatt" as fm
     state "Endringer etterspørres periodisk" as endring
     state "FNR ikke godtatt" as not_fnr
+    state "Ingen retur - normaltilstand" as ingen_retur
     state "Tom retur - normaltilstand" as tomt_normal
     state "Bestilling gjort mot skatt" as best_sendt
     state "Bestilling feiler" as best_feiler
@@ -23,7 +24,7 @@ stateDiagram-v2
     [*] --> endring
     endring --> best_sendt
     fm --> not_fnr
-    not_fnr --> tomt_normal
+    not_fnr --> ingen_retur
     fm --> best_sendt
     best_sendt --> best_feiler
     best_feiler --> error
@@ -44,4 +45,5 @@ stateDiagram-v2
     retur --> [*]
     synt --> [*]
     synt_frikort --> [*]
+    ingen_retur --> [*]
 ```

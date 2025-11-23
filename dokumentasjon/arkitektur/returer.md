@@ -5,7 +5,7 @@ stateDiagram-v2
     state "Forespørsel mottatt" as fm
     state "Endringer etterspørres periodisk" as endring
     state "FNR ikke godtatt" as not_fnr
-    state "Ingenting returneres - normaltilstand" as tomt_normal
+    state "Tom retur - normaltilstand" as tomt_normal
     state "Bestilling gjort mot skatt" as best_sendt
     state "Bestilling feiler" as best_feiler
     state "Ingenting returneres - errorlogg" as error

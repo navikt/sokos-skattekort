@@ -241,7 +241,7 @@ class BestillingService(
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = SkattekortKilde.SYNTETISERT.value,
-                    resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
+                    resultatForSkattekort = ResultatForSkattekort.IkkeTrekkplikt,
                     forskuddstrekkList = forskuddstrekkList,
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )

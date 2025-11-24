@@ -1,7 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.LocalDateTime.now
 import javax.sql.DataSource
 
 import kotlin.time.ExperimentalTime
@@ -14,18 +14,20 @@ import io.prometheus.metrics.core.metrics.Counter
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
-import no.nav.sokos.skattekort.metrics.METRICS_NAMESPACE
-import no.nav.sokos.skattekort.metrics.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
+import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
-import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortRequest
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillOppdateringRequest
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillSkattekortRequest
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
@@ -35,59 +37,70 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 // TODO: Metrikk for varsling: tid siden siste mottatte bestilling
 // TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingService(
-    val dataSource: DataSource,
-    val skatteetatenClient: SkatteetatenClient,
-    val personService: PersonService,
+    private val dataSource: DataSource,
+    private val skatteetatenClient: SkatteetatenClient,
+    private val featureToggles: UnleashIntegration,
+    private val applicationProperties: PropertiesConfig.ApplicationProperties,
 ) {
     private val logger = KotlinLogging.logger {}
 
     fun opprettBestillingsbatch() {
-        val bestillings: List<Bestilling> =
+        if (featureToggles.isBestillingerEnabled()) {
             dataSource.transaction { tx ->
-                val allBestilling = BestillingRepository.getAllBestilling(tx)
-                allBestilling
-                    .filter { it.bestillingsbatchId == null }
-                    .filter { it.inntektsaar == allBestilling.firstOrNull()?.inntektsaar }
-                    .take(500)
-                    .toList()
-            }
-        if (bestillings.isEmpty()) {
-            logger.info("Ingen bestillinger å sende")
-            return
-        }
-        val request =
-            bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr })
-
-        runBlocking {
-            try {
-                val response = skatteetatenClient.bestillSkattekort(request)
-                logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                dataSource.transaction { tx ->
-                    val bestillingsbatchId =
-                        BestillingBatchRepository.insertBestillingsBatch(
-                            tx,
-                            bestillingsreferanse = response.bestillingsreferanse,
-                            request = request,
-                        )
-                    logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
-                    AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillings.map { it.personId }, "Bestilling sendt")
-                    BestillingRepository.updateBestillingsWithBatchId(
+                val now = now().toKotlinLocalDateTime()
+                val bestillings: List<Bestilling> =
+                    BestillingRepository.getBestillingsKandidaterForBatch(
                         tx,
-                        bestillings.map { it.id!!.id },
-                        bestillingsbatchId,
+                        maxYear =
+                            if (now.day >= 15 && now.month == Month.DECEMBER) {
+                                now.year + 1
+                            } else {
+                                now.year
+                            },
                     )
+                if (bestillings.isEmpty()) {
+                    logger.info("Ingen bestillinger å sende")
+                } else {
+                    val request =
+                        bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
+
+                    runBlocking {
+                        try {
+                            val response = skatteetatenClient.bestillSkattekort(request)
+                            logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
+                            val bestillingsbatchId =
+                                BestillingBatchRepository.insertBestillingsBatch(
+                                    tx,
+                                    bestillingsreferanse = response.bestillingsreferanse,
+                                    request = request,
+                                )
+                            logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
+                            AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillings.map { it.personId }, "Bestilling sendt")
+                            BestillingRepository.updateBestillingsWithBatchId(
+                                tx,
+                                bestillings.map { it.id!!.id },
+                                bestillingsbatchId,
+                            )
+                        } catch (ex: Exception) {
+                            dataSource.transaction { errorTx ->
+                                AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Bestilling feilet")
+                            }
+                            logger.error(ex) { "Bestillingsbatch feilet: ${ex.message}" }
+                            throw ex
+                        }
+                    }
                 }
-            } catch (ex: Exception) {
-                dataSource.transaction { tx ->
-                    AuditRepository.insertBatch(tx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Bestilling feilet")
-                }
-                logger.error(ex) { "Bestillingsbatch feilet: ${ex.message}" }
             }
+        } else {
+            logger.debug("Bestillinger er disablet")
         }
     }
 
     @OptIn(ExperimentalTime::class)
     fun hentSkattekort() {
+        /* denne er med vilje ikke underlagt feature switch-styring for å unngå at en sendt bestilling
+        ikke timer ut mens feature-toggelen er slått av
+         */
         dataSource.transaction { tx ->
             BestillingBatchRepository.getUnprocessedBestillingsBatch(tx)?.let { bestillingsbatch ->
                 val batchId = bestillingsbatch.id!!.id
@@ -99,7 +112,7 @@ class BestillingService(
                             logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
                             when (response.status) {
                                 ResponseStatus.FORESPOERSEL_OK.name -> {
-                                    response.arbeidsgiver!!.first().arbeidstaker.map { arbeidstaker ->
+                                    response.arbeidsgiver!!.first().arbeidstaker.forEach { arbeidstaker ->
                                         handleNyttSkattekort(tx, arbeidstaker)
                                     }
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
@@ -108,7 +121,7 @@ class BestillingService(
                                 }
 
                                 else -> {
-                                    logger.error { "Bestillingsbatch feilet: ${response.status}" }
+                                    logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
                                     AuditRepository.insertBatch(
                                         tx,
@@ -125,14 +138,17 @@ class BestillingService(
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
                     } catch (ex: Exception) {
-                        logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
-                        BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
-                        AuditRepository.insertBatch(
-                            tx,
-                            AuditTag.HENTING_AV_SKATTEKORT_FEILET,
-                            BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                            "Batchhenting av skattekort feilet",
-                        )
+                        dataSource.transaction { errorTx ->
+                            logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
+                            BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)
+                            AuditRepository.insertBatch(
+                                errorTx,
+                                AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                "Batchhenting av skattekort feilet",
+                            )
+                        }
+                        throw ex
                     }
                 }
             }
@@ -144,23 +160,16 @@ class BestillingService(
         arbeidstaker: Arbeidstaker,
     ) {
         val person =
-            dataSource.transaction { tx ->
-                personService.findPersonByFnr(
-                    tx = tx,
-                    fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
-                ) ?: error("Person med fnr ${arbeidstaker.arbeidstakeridentifikator} ikke funnet ved behandling av skattekortbestilling")
-            }
+            PersonRepository.findPersonByFnr(
+                tx = tx,
+                fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
+            ) ?: error("Person med fnr ${arbeidstaker.arbeidstakeridentifikator} ikke funnet ved behandling av skattekortbestilling")
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
         val skattekort = toSkattekort(arbeidstaker, person)
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
-            personService.flaggPerson(tx, person.id!!)
+            PersonRepository.flaggPerson(tx, person.id!!)
         }
-        SkattekortRepository.insertBatch(
-            tx,
-            listOf(
-                skattekort,
-            ),
-        )
+        SkattekortRepository.insert(tx, skattekort)
         opprettUtsendingerForAbonnementer(tx, person, inntektsaar)
     }
 
@@ -198,7 +207,7 @@ class BestillingService(
                     kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
                     forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
 
             ResultatForSkattekort.IkkeSkattekort -> {
@@ -213,7 +222,7 @@ class BestillingService(
                     kilde = kilde.value,
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
                     forskuddstrekkList = forskuddstrekkList,
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
             }
 
@@ -225,11 +234,11 @@ class BestillingService(
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning(it) } ?: emptyList(),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
         }
 
-    fun genererForskuddstrekk(tilleggsopplysning: List<String>?): List<Forskuddstrekk> {
+    private fun genererForskuddstrekk(tilleggsopplysning: List<String>?): List<Forskuddstrekk> {
         if (tilleggsopplysning.isNullOrEmpty()) {
             return emptyList()
         }
@@ -238,15 +247,15 @@ class BestillingService(
             tilleggsopplysning.contains("oppholdPaaSvalbard") ->
                 listOf<Forskuddstrekk>(
                     Prosentkort(
-                        trekkode = Trekkode.LOENN_FRA_NAV.value,
+                        trekkode = Trekkode.LOENN_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(15.70),
                     ),
                     Prosentkort(
-                        trekkode = Trekkode.UFOERETRYGD_FRA_NAV.value,
+                        trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(15.70),
                     ),
                     Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                        trekkode = Trekkode.PENSJON_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(13.00),
                     ),
                 )
@@ -254,7 +263,7 @@ class BestillingService(
             tilleggsopplysning.contains("kildeskattpensjonist") ->
                 listOf<Forskuddstrekk>(
                     Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV.value,
+                        trekkode = Trekkode.PENSJON_FRA_NAV,
                         prosentSats = BigDecimal.valueOf(15.00),
                     ),
                 )
@@ -264,89 +273,103 @@ class BestillingService(
     }
 
     fun hentOppdaterteSkattekort() {
-        dataSource.transaction { tx ->
-            val oppdateringsbatch = BestillingBatchRepository.getUnprocessedOppdateringsBatch(tx)
-            if (oppdateringsbatch != null) {
-                val batchId = oppdateringsbatch.id!!.id
-                logger.info("Henter skattekort for ${oppdateringsbatch.bestillingsreferanse}")
-                runBlocking {
-                    try {
-                        val response = skatteetatenClient.hentSkattekort(oppdateringsbatch.bestillingsreferanse)
-                        if (response != null) {
-                            logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
-                            when (response.status) {
-                                ResponseStatus.FORESPOERSEL_OK.name -> {
-                                    val arbeidstakere = response.arbeidsgiver!!.first().arbeidstaker
-                                    oppdateringerMottattCounter.inc(arbeidstakere.size.toLong())
-                                    arbeidstakere.map { arbeidstaker ->
-                                        handleNyttSkattekort(tx, arbeidstaker)
-                                    }
-                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
-                                }
+        if (featureToggles.isBestillingerEnabled()) {
+            dataSource.transaction { tx ->
+                val oppdateringsbatch = BestillingBatchRepository.getUnprocessedOppdateringsBatch(tx)
+                if (oppdateringsbatch != null) {
+                    haandterOppdateringsbestilling(tx, oppdateringsbatch)
+                } else {
+                    // Fant ikke noen eksisterende batch, gå og lag ny
+                    bestillOppdateringer(tx)
+                }
+            }
+        } else {
+            logger.debug("Bestillinger er disablet")
+        }
+    }
 
-                                else -> {
-                                    logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
-                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
-                                    AuditRepository.insertBatch(
-                                        tx,
-                                        AuditTag.HENTING_AV_SKATTEKORT_FEILET,
-                                        BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                                        "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
-                                    )
-                                }
+    private fun haandterOppdateringsbestilling(
+        tx: TransactionalSession,
+        oppdateringsbatch: BestillingBatch,
+    ): Any {
+        val batchId = oppdateringsbatch.id!!.id
+        logger.info("Henter skattekort for ${oppdateringsbatch.bestillingsreferanse}")
+        return runBlocking {
+            try {
+                val response = skatteetatenClient.hentSkattekort(oppdateringsbatch.bestillingsreferanse)
+                if (response != null) {
+                    logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
+                    when (response.status) {
+                        ResponseStatus.FORESPOERSEL_OK.name -> {
+                            val arbeidstakere = response.arbeidsgiver!!.first().arbeidstaker
+                            oppdateringerMottattCounter.inc(arbeidstakere.size.toLong())
+                            arbeidstakere.forEach { arbeidstaker ->
+                                handleNyttSkattekort(tx, arbeidstaker)
                             }
-                        } else {
-                            // Ingen oppdateringer
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
-                    } catch (ex: Exception) {
-                        logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
-                        dataSource.transaction { err ->
-                            BestillingBatchRepository.markAs(err, batchId, BestillingBatchStatus.Feilet)
+
+                        else -> {
+                            logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
                             AuditRepository.insertBatch(
-                                err,
+                                tx,
                                 AuditTag.HENTING_AV_SKATTEKORT_FEILET,
-                                BestillingRepository.getAllBestillingsInBatch(err, batchId).map { bestilling -> bestilling.personId },
-                                "Batchhenting av skattekort feilet",
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
                             )
                         }
-                        throw ex // For å rulle tilbake "tx"
                     }
+                } else {
+                    // Ingen oppdateringer
+                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
                 }
-            } else {
-                // Fant ikke noen eksisterende batch, gå og lag ny
-                val now = LocalDateTime.now().toKotlinLocalDateTime()
-                val erEtterMidtenAvDesember = (now.day > 15 && now.month == Month.DECEMBER)
-                val relevanteAar =
-                    if (erEtterMidtenAvDesember) {
-                        listOf(now.year, now.year + 1)
-                    } else {
-                        listOf(now.year)
-                    }
-                val requests =
-                    relevanteAar.map { aar ->
-                        bestillOppdateringRequest(aar)
-                    }
+            } catch (ex: Exception) {
+                logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
+                dataSource.transaction { errorTx ->
+                    BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)
+                    AuditRepository.insertBatch(
+                        errorTx,
+                        AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                        BestillingRepository.getAllBestillingsInBatch(errorTx, batchId).map { bestilling -> bestilling.personId },
+                        "Batchhenting av skattekort feilet",
+                    )
+                }
+                throw ex // For å rulle tilbake "tx"
+            }
+        }
+    }
 
-                runBlocking {
-                    try {
-                        requests.forEach { request ->
-                            val response = skatteetatenClient.bestillSkattekort(request)
-                            logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                            val bestillingsbatchId =
-                                BestillingBatchRepository.insertOppdateringsBatch(
-                                    tx,
-                                    bestillingsreferanse = response.bestillingsreferanse,
-                                    request = request,
-                                )
-                            logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
-                        }
-                    } catch (ex: Exception) {
-                        logger.error(ex) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${ex.message}" }
-                    }
+    private fun bestillOppdateringer(tx: TransactionalSession) {
+        val now = now().toKotlinLocalDateTime()
+        val erEtterMidtenAvDesember = (now.day > 15 && now.month == Month.DECEMBER)
+        val requests: List<BestillSkattekortRequest> =
+            if (erEtterMidtenAvDesember) {
+                listOf(now.year, now.year + 1)
+            } else {
+                listOf(now.year)
+            }.map { aar ->
+                bestillOppdateringRequest(aar)
+            }
+
+        runBlocking {
+            try {
+                requests.forEach { request ->
+                    val response = skatteetatenClient.bestillSkattekort(request)
+                    logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
+                    val bestillingsbatchId =
+                        BestillingBatchRepository.insertOppdateringsBatch(
+                            tx,
+                            bestillingsreferanse = response.bestillingsreferanse,
+                            request = request,
+                        )
+                    logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
                 }
+            } catch (ex: Exception) {
+                logger.error(ex) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${ex.message}" }
+                throw ex
             }
         }
     }

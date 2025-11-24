@@ -36,25 +36,30 @@ data class ArbeidsgiverIdentifikator(
     val organisasjonsnummer: String,
 )
 
+private const val KONTAKT_EMAIL = "nav.ur.og.os@nav.no"
+
+private const val KONTAKT_TLF = "+4721070000"
+
 fun bestillSkattekortRequest(
     inntektsaar: Int,
     fnr: List<Personidentifikator>,
+    bestillingOrgnr: String,
 ): BestillSkattekortRequest =
     BestillSkattekortRequest(
         inntektsaar = inntektsaar.toString(),
         bestillingstype = "HENT_ALLE_OPPGITTE",
         kontaktinformasjon =
             Kontaktinformasjon(
-                epostadresse = "john.smith@example.com",
-                mobiltelefonummer = "+4794123456",
+                epostadresse = KONTAKT_EMAIL,
+                mobiltelefonummer = KONTAKT_TLF,
             ),
-        varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
+        varslingstype = "INGEN_VARSEL",
         forespoerselOmSkattekortTilArbeidsgiver =
             ForespoerselOmSkattekortTilArbeidsgiver(
                 arbeidsgiver =
                     listOf(
                         Arbeidsgiver(
-                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator("312978083"),
+                            arbeidsgiveridentifikator = ArbeidsgiverIdentifikator(bestillingOrgnr),
                             arbeidstakeridentifikator = fnr.map { it.value },
                         ),
                     ),
@@ -65,9 +70,10 @@ fun bestillOppdateringRequest(inntektsaar: Int): BestillSkattekortRequest =
     BestillSkattekortRequest(
         inntektsaar = inntektsaar.toString(),
         bestillingstype = "HENT_KUN_ENDRING",
+        varslingstype = "INGEN_VARSEL",
         kontaktinformasjon =
             Kontaktinformasjon(
-                epostadresse = "john.smith@example.com",
-                mobiltelefonummer = "+4794123456",
+                epostadresse = KONTAKT_EMAIL,
+                mobiltelefonummer = KONTAKT_TLF,
             ),
     )

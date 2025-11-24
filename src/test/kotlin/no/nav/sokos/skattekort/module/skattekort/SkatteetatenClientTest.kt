@@ -34,6 +34,7 @@ class SkatteetatenClientTest :
                     listOf(
                         Personidentifikator("01010100001"),
                     ),
+                    "",
                 )
             val skatteetatenClient = setupClient(readFile("/skatteetaten/bestillSkattekort/bestillSkattekortResponse.json"))
 

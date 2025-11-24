@@ -24,6 +24,8 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.infrastructure.MetricsService
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
@@ -60,6 +62,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { createHttpClient() }
         provide { DatabaseConfig.dataSource }
         provide { KafkaConfig() }
+        provide { PropertiesConfig.getUnleashProperties() }
+        provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
 
         provide<ConnectionFactory> { MQConfig.connectionFactory }
@@ -74,6 +78,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
+        provide(UnleashIntegration::class)
 
         provide(PersonService::class)
         provide(ForespoerselService::class)
@@ -86,6 +91,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
         provide(IdentifikatorEndringService::class)
+        provide(MetricsService::class)
     }
 
     commonConfig()
@@ -99,12 +105,14 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val bestillingService: BestillingService by dependencies
         val utsendingService: UtsendingService by dependencies
         val scheduledTaskService: ScheduledTaskService by dependencies
+        val metricsService: MetricsService by dependencies
         val dataSource: DataSource by dependencies
         JobTaskConfig
             .scheduler(
                 bestillingService,
                 utsendingService,
                 scheduledTaskService,
+                metricsService,
                 dataSource,
             ).start()
     }

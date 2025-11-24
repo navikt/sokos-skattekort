@@ -6,6 +6,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Arbeidstaker
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
+import no.nav.sokos.skattekort.exception.PersonNotFoundException
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -20,18 +21,19 @@ class SkattekortPersonService(
             require(skattekortPersonRequest.fnr.all { it.isDigit() }, { "fnr kan bare inneholde siffer, var ${skattekortPersonRequest.fnr}" })
             require(skattekortPersonRequest.fnr.length == 11, { "fnr må ha lengde 11, var ${skattekortPersonRequest.fnr}" })
             require(
-                skattekortPersonRequest.inntektsaar < 2100 && skattekortPersonRequest.inntektsaar > 2024,
+                skattekortPersonRequest.inntektsaar in 2025..<2100,
                 { "inntektsaar ser ikke ut som et gyldig årstall, var ${skattekortPersonRequest.inntektsaar}" },
             )
             val person =
                 PersonRepository.findPersonByFnr(tx, Personidentifikator(skattekortPersonRequest.fnr))
-                    ?: throw IllegalArgumentException("Fant ikke person med fnr ${skattekortPersonRequest.fnr}")
+                    ?: throw PersonNotFoundException("Fant ikke person med fnr ${skattekortPersonRequest.fnr}")
             val skattekort: List<Skattekort> =
                 SkattekortRepository
                     .findAllByPersonId(
                         tx,
                         person.id!!,
                         skattekortPersonRequest.inntektsaar.toInt(),
+                        adminRole = false,
                     )
             skattekort.map {
                 Arbeidstaker(

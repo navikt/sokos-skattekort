@@ -2,15 +2,19 @@ package no.nav.sokos.skattekort.module.skattekort
 
 import java.math.BigDecimal.valueOf
 import java.math.RoundingMode
+import java.time.LocalDateTime
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.extensions.time.withConstantNow
 import io.kotest.inspectors.forAll
 import io.kotest.inspectors.forExactly
 import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -18,14 +22,16 @@ import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.TestUtil.tx
+import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.PropertiesConfig.Environment
 import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV
@@ -43,52 +49,168 @@ class BestillingServiceTest :
         val skatteetatenClient = mockk<SkatteetatenClient>()
 
         val bestillingService: BestillingService by lazy {
-            BestillingService(DbListener.dataSource, skatteetatenClient, PersonService(DbListener.dataSource))
+            BestillingService(
+                DbListener.dataSource,
+                skatteetatenClient,
+                FakeUnleashIntegration(),
+                PropertiesConfig.ApplicationProperties("", Environment.TEST, false, false, "", "", ""),
+            )
         }
 
         test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {
+            withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
+                coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
+                    toBestillSkattekortResponse(
+                        """
+                        {
+                          "dialogreferanse": "some-dialog-ref",
+                          "bestillingsreferanse": "some-bestillings-ref"
+                        }
+                        """.trimIndent(),
+                    )
 
+                databaseHas(
+                    aPerson(1L, "01010100001"),
+                    aPerson(2L, "02020200002"),
+                    aPerson(3L, "03030300003"),
+                    aBestilling(1L, "01010100001", 2026, null),
+                    aBestilling(2L, "02020200002", 2026, null),
+                    aBestilling(3L, "03030300003", 2026, null),
+                )
+
+                bestillingService.opprettBestillingsbatch()
+
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                assertSoftly {
+                    batches shouldNotBeNull {
+                        size shouldBe 1
+                        first() shouldNotBeNull {
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "some-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldContain("01010100001")
+                                shouldContain("02020200002")
+                                shouldContain("03030300003")
+                            }
+                        }
+                    }
+
+                    bestillings shouldNotBeNull {
+                        size shouldBe 3
+                        forAll { it.bestillingsbatchId shouldBe batches.first().id }
+                    }
+                }
+            }
+        }
+
+        test("Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
             coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
                 toBestillSkattekortResponse(
                     """
                     {
-                      "dialogreferanse": "some-dialog-ref",
-                      "bestillingsreferanse": "some-bestillings-ref"
+                      "dialogreferanse": "first-dialog-ref",
+                      "bestillingsreferanse": "first-bestillings-ref"
+                    }
+                    """.trimIndent(),
+                ) andThen
+                toBestillSkattekortResponse(
+                    """
+                    {
+                      "dialogreferanse": "second-dialog-ref",
+                      "bestillingsreferanse": "second-bestillings-ref"
                     }
                     """.trimIndent(),
                 )
-
             databaseHas(
                 aPerson(1L, "01010100001"),
                 aPerson(2L, "02020200002"),
                 aPerson(3L, "03030300003"),
                 aBestilling(1L, "01010100001", 2025, null),
-                aBestilling(2L, "02020200002", 2025, null),
-                aBestilling(3L, "03030300003", 2025, null),
+                aBestilling(2L, "02020200002", 2026, null),
+                aBestilling(3L, "03030300003", 2026, null),
             )
 
-            bestillingService.opprettBestillingsbatch()
+            withConstantNow(LocalDateTime.parse("2025-12-14T00:00:00")) {
+                // Kaller to ganger for å sjekke at den ikke plukker opp 2026 på andre kall
+                bestillingService.opprettBestillingsbatch()
+                bestillingService.opprettBestillingsbatch()
 
-            val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
-            val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
-            assertSoftly {
-                batches shouldNotBeNull {
-                    size shouldBe 1
-                    first() shouldNotBeNull {
-                        status shouldBe BestillingBatchStatus.Ny.value
-                        bestillingsreferanse shouldBe "some-bestillings-ref"
-                        dataSendt shouldNotBeNull {
-                            shouldContain("01010100001")
-                            shouldContain("02020200002")
-                            shouldContain("03030300003")
+                assertSoftly("Før 15. desember") {
+                    batches shouldNotBeNull {
+                        size shouldBe 1
+                        first() shouldNotBeNull {
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "first-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldContain("01010100001")
+                                shouldNotContain("02020200002")
+                                shouldNotContain("03030300003")
+                            }
+                        }
+                    }
+
+                    bestillings shouldNotBeNull {
+                        size shouldBe 3
+                        forOne {
+                            it.id shouldNotBeNull { id shouldBe 1L }
+                            it.inntektsaar shouldBe 2025
+                            it.bestillingsbatchId shouldBe batches.first().id
+                        }
+                        forExactly(2) {
+                            it.inntektsaar shouldBe 2026
+                            it.bestillingsbatchId shouldBe null
                         }
                     }
                 }
+            }
+            withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
+                bestillingService.opprettBestillingsbatch()
 
-                bestillings shouldNotBeNull {
-                    size shouldBe 3
-                    forAll { it.bestillingsbatchId shouldBe batches.first().id }
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                assertSoftly("Etter 15.desember") {
+                    batches shouldNotBeNull {
+                        size shouldBe 2
+                        first() shouldNotBeNull {
+                            id shouldNotBeNull { id shouldBe 1L }
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "first-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldNotContain("01010100001")
+                                shouldNotContain("02020200002")
+                                shouldNotContain("03030300003")
+                            }
+                        }
+                        last() shouldNotBeNull {
+                            id shouldNotBeNull { id shouldBe 2L }
+                            status shouldBe BestillingBatchStatus.Ny.value
+                            bestillingsreferanse shouldBe "second-bestillings-ref"
+                            dataSendt shouldNotBeNull {
+                                shouldNotContain("01010100001")
+                                shouldContain("02020200002")
+                                shouldContain("03030300003")
+                            }
+                        }
+                    }
+
+                    bestillings shouldNotBeNull {
+                        size shouldBe 3
+                        forOne {
+                            it.id shouldNotBeNull { id shouldBe 1L }
+                            it.inntektsaar shouldBe 2025
+                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 1L }
+                        }
+                        forExactly(2) {
+                            it.inntektsaar shouldBe 2026
+                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 2L }
+                        }
+                    }
                 }
             }
         }
@@ -109,8 +231,8 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
             assertSoftly {
@@ -153,7 +275,7 @@ class BestillingServiceTest :
 
             bestillingService.hentSkattekort()
 
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
 
             assertSoftly {
                 skattekort shouldNotBeNull {
@@ -162,7 +284,7 @@ class BestillingServiceTest :
                         identifikator shouldBe "54407"
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 5
+                            size shouldBe 2
                         }
                     }
                 }
@@ -190,10 +312,9 @@ class BestillingServiceTest :
                             ),
                         tilleggsopplysninger =
                             listOf(
-                                Tilleggsopplysning("oppholdPaaSvalbard"),
-                                Tilleggsopplysning("kildeskattPaaPensjon"),
-                                Tilleggsopplysning("oppholdITiltakssone"),
-                                Tilleggsopplysning("kildeskattPaaLoenn"),
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
+                                Tilleggsopplysning.fromValue("kildeskattPaaPensjon"),
+                                Tilleggsopplysning.fromValue("oppholdITiltakssone"),
                             ),
                     ),
                 )
@@ -207,8 +328,8 @@ class BestillingServiceTest :
 
             bestillingService.hentSkattekort()
 
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
             assertSoftly {
@@ -224,7 +345,7 @@ class BestillingServiceTest :
                                 shouldContainExactlyInAnyOrder(
                                     listOf(
                                         Prosentkort(
-                                            trekkode = UFOERETRYGD_FRA_NAV.value,
+                                            trekkode = UFOERETRYGD_FRA_NAV,
                                             prosentSats = valueOf(43).setScale(2, RoundingMode.HALF_UP),
                                         ),
                                     ),
@@ -232,12 +353,10 @@ class BestillingServiceTest :
                             }
                         }
                         tilleggsopplysningList shouldNotBeNull {
-                            size shouldBe 4
                             shouldContainExactly(
-                                Tilleggsopplysning("oppholdPaaSvalbard"),
-                                Tilleggsopplysning("kildeskattPaaPensjon"),
-                                Tilleggsopplysning("oppholdITiltakssone"),
-                                Tilleggsopplysning("kildeskattPaaLoenn"),
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
+                                Tilleggsopplysning.fromValue("kildeskattPaaPensjon"),
+                                Tilleggsopplysning.fromValue("oppholdITiltakssone"),
                             )
                         }
                     }
@@ -282,8 +401,8 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
             assertSoftly("Etter første kjøring skal en batch få status Ferdig") {
@@ -331,13 +450,13 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatchesSecondRun: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val bestillingsAfterSecondRun: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfterSecondRun: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val skattekortAfterSecondRun: List<Skattekort> =
                 tx {
                     listOf(
-                        SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025),
-                        SkattekortRepository.findAllByPersonId(it, PersonId(2), 2025),
-                        SkattekortRepository.findAllByPersonId(it, PersonId(3), 2025),
+                        SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false),
+                        SkattekortRepository.findAllByPersonId(it, PersonId(2), 2025, adminRole = false),
+                        SkattekortRepository.findAllByPersonId(it, PersonId(3), 2025, adminRole = false),
                     ).flatMap { it }
                 }
             val utsendingerAfterSecondRun: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
@@ -372,10 +491,10 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val skattekort: List<Skattekort> =
                 tx {
-                    SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025)
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025, adminRole = false)
                 }
             val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
             val person2: Person = tx { PersonRepository.findPersonById(it, PersonId(2L)) }
@@ -420,7 +539,7 @@ class BestillingServiceTest :
                         inntektsaar = "2025",
                         tilleggsopplysninger =
                             listOf(
-                                Tilleggsopplysning("oppholdPaaSvalbard"),
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
                             ),
                     ),
                 )
@@ -440,9 +559,9 @@ class BestillingServiceTest :
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> =
                 tx {
-                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025)
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false)
                 }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
 
             assertSoftly {
                 updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
@@ -467,7 +586,7 @@ class BestillingServiceTest :
                                     aForskuddstrekk("Prosentkort", Trekkode.PENSJON_FRA_NAV, 13.00),
                                 )
                         }
-                        tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning("oppholdPaaSvalbard"))
+                        tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
                     }
                 }
@@ -503,13 +622,15 @@ class BestillingServiceTest :
                 aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 1L),
             )
 
-            bestillingService.hentSkattekort()
+            shouldThrow<RuntimeException> {
+                bestillingService.hentSkattekort()
+            }
 
             val updatedBatches = tx(BestillingBatchRepository::list)
             val auditPerson1: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(1L)) }
             val auditPerson2: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(2L)) }
             val auditPerson3: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(3L)) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
 
             assertSoftly {
                 withClue("Should mark batch as FEILET") {
@@ -553,7 +674,7 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
 
             assertSoftly {

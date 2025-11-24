@@ -14,6 +14,7 @@ import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
+
 import no.nav.sokos.skattekort.exception.PersonNotFoundException
 
 fun StatusPagesConfig.statusPageConfig() {

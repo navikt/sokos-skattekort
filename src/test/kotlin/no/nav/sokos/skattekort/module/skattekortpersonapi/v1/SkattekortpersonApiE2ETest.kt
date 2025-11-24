@@ -160,8 +160,7 @@ class SkattekortpersonApiE2ETest :
 ]""",
                     )
                     listAppender.list.size shouldBe 1
-                    val formattedMessage = listAppender.list.get(0).formattedMessage
-                    formattedMessage shouldMatch
+                    listAppender.list.get(0).formattedMessage shouldMatch
                         "CEF\\:0\\|Utbetalingsportalen\\|sokos\\-skattekort\\|1\\.0\\|audit\\:access\\|sokos\\-skattekort\\|INFO\\|suid\\=Z123456 duid\\=12345678901 end=\\d+ msg\\=NAV\\-ansatt har søkt etter skattekort for bruker"
                 } finally {
                     auditLogger.detachAppender(listAppender)

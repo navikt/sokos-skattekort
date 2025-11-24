@@ -18,6 +18,7 @@ import no.nav.sokos.skattekort.JmsTestUtil
 
 const val MQ_FRA_FORSYSTEM_QUEUE = "FRA_FORSYSTEM"
 const val MQ_TIL_OPPDRAGZ_QUEUE = "FRA_OS_ESKATT"
+const val MQ_TIL_DARE_POC_QUEUE = "TIL_DARE_POC"
 
 object MQListener : BeforeSpecListener, AfterTestListener {
     val server: EmbeddedActiveMQ =
@@ -34,8 +35,9 @@ object MQListener : BeforeSpecListener, AfterTestListener {
     }
 
     val bestillingsQueue: Queue = ActiveMQQueue(MQ_FRA_FORSYSTEM_QUEUE)
-    val utsendingsQueue: Queue = ActiveMQQueue(MQ_TIL_OPPDRAGZ_QUEUE)
-    val allQueues: List<Queue> = listOf(bestillingsQueue, utsendingsQueue)
+    val utsendingOppdragZQueue: Queue = ActiveMQQueue(MQ_TIL_OPPDRAGZ_QUEUE)
+    val utsendingDarePocQueue: Queue = ActiveMQQueue(MQ_TIL_DARE_POC_QUEUE)
+    val allQueues: List<Queue> = listOf(bestillingsQueue, utsendingOppdragZQueue, utsendingDarePocQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }
     val producer: JMSProducer by lazy { jmsContext.createProducer() }

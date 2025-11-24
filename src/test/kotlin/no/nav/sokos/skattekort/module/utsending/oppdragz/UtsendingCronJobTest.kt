@@ -1,10 +1,11 @@
 package no.nav.sokos.skattekort.module.utsending.oppdragz
 
-import kotlin.test.assertTrue
-
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.toDataSource
-import junit.framework.TestCase.assertEquals
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -14,17 +15,23 @@ import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditService
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
+import no.nav.sokos.skattekort.mq.JmsProducerService
+import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class UtsendingCronJobTest :
     FunSpec(
         {
             extensions(listOf(MQListener, DbListener))
-            val uut =
+
+            val jmsProducerService = JmsProducerService(MQListener.connectionFactory)
+            val utsendingService =
                 UtsendingService(
                     DbListener.dataSource,
-                    MQListener.connectionFactory,
-                    MQListener.utsendingsQueue,
+                    jmsProducerService,
+                    MQListener.utsendingOppdragZQueue,
+                    MQListener.utsendingDarePocQueue,
                     FakeUnleashIntegration(),
                 )
             val auditService = AuditService(DbListener.dataSource)
@@ -32,14 +39,17 @@ class UtsendingCronJobTest :
             test("Vi skal kunne sende ut et skattekort til oppdragz") {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz.sql")
-                uut.handleUtsending()
+                utsendingService.handleUtsending()
                 val auditEntries: List<Audit> = auditService.getAuditByPersonId(PersonId(3))
-                assertTrue(auditEntries.map { it.tag }.contains(AuditTag.UTSENDING_OK))
-                val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
-                assertTrue(messages.size == 1)
-                assertTrue(messages.first().contains("12345678903"))
-                val utsendinger = uut.getAllUtsendinger()
-                assertEquals(0, utsendinger.size)
+                auditEntries.map { it.tag } shouldContain AuditTag.UTSENDING_OK
+
+                val messages = JmsTestUtil.getMessages(MQListener.utsendingOppdragZQueue)
+                messages.size shouldBe 1
+                messages.first() shouldContain "12345678903"
+                DbListener.dataSource.transaction { tx ->
+                    val utsendinger = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendinger shouldBe emptyList()
+                }
             }
 
             test("Vi skal håndtere feil i utsendelse til oppdragz") {
@@ -50,14 +60,17 @@ class UtsendingCronJobTest :
                         statement.execute("UPDATE forskuddstrekk SET trekk_kode='foobar' WHERE id=5") // Vil ikke eksistere i Trekkode-enumen
                     }
                 }
-                uut.handleUtsending()
+                utsendingService.handleUtsending()
                 val auditEntries: List<Audit> = auditService.getAuditByPersonId(PersonId(3))
-                assertTrue(auditEntries.map { it.tag }.contains(AuditTag.UTSENDING_FEILET))
-                val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
-                assertTrue(messages.size == 0)
-                val utsendinger = uut.getAllUtsendinger()
-                assertEquals("Skal ha en utsending", 1, utsendinger.size)
-                assertEquals("Skal ha failcount på en", 1, utsendinger[0].failCount)
+                auditEntries.map { it.tag } shouldContain AuditTag.UTSENDING_FEILET
+
+                JmsTestUtil.getMessages(MQListener.utsendingDarePocQueue) shouldBe emptyList()
+                DbListener.dataSource.transaction { tx ->
+                    val utsendinger = UtsendingRepository.getAllUtsendinger(tx)
+
+                    withClue("Skal ha en utsending") { utsendinger.size shouldBe 1 }
+                    withClue("Skal ha failcount på en") { utsendinger[0].failCount shouldBe 1 }
+                }
             }
         },
     )

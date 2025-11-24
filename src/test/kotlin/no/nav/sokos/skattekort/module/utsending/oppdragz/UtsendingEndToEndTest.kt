@@ -29,7 +29,7 @@ class UtsendingEndToEndTest :
 
                     uut.handleUtsending()
                     eventually(eventuallyConfiguration) {
-                        val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
+                        val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingOppdragZQueue)
                         messages.size shouldBe 1
                         messages[0] shouldBe
                             "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"

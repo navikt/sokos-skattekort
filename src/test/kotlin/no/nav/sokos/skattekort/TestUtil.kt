@@ -124,6 +124,9 @@ object TestUtil {
             provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
                 ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
             }
+            provide<Queue>(name = "leveransekoeDarePocSkattekort") {
+                ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeDarePocSkattekort)
+            }
         }
     }
 

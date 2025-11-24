@@ -23,11 +23,11 @@ data class Skattekortmelding(
                 utstedtDato = sk.utstedtDato?.toString()?.let { DatatypeFactory.newInstance().newXMLGregorianCalendar(it) },
                 skattekortidentifikator = sk.identifikator?.toLong(),
                 forskuddstrekk =
-                    sk.forskuddstrekkList.map {
-                        when (it) {
-                            is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(it.trekkode.value), BigDecimal(it.frikortBeloep))
-                            is Prosentkort -> Trekkprosent(Trekkode.fromValue(it.trekkode.value), it.prosentSats, it.antallMndForTrekk)
-                            is Tabellkort -> Trekktabell(Trekkode.fromValue(it.trekkode.value), Tabelltype.TREKKTABELL_FOR_LOENN, it.tabellNummer, it.prosentSats, it.antallMndForTrekk)
+                    sk.forskuddstrekkList.map { trekk ->
+                        when (trekk) {
+                            is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(trekk.trekkode.value), BigDecimal(trekk.frikortBeloep))
+                            is Prosentkort -> Trekkprosent(Trekkode.fromValue(trekk.trekkode.value), trekk.prosentSats, trekk.antallMndForTrekk)
+                            is Tabellkort -> Trekktabell(Trekkode.fromValue(trekk.trekkode.value), Tabelltype.TREKKTABELL_FOR_LOENN, trekk.tabellNummer, trekk.prosentSats, trekk.antallMndForTrekk)
                         }
                     },
             ),

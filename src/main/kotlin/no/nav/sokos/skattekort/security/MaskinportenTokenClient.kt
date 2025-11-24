@@ -68,8 +68,8 @@ class MaskinportenTokenClient(
         } else {
             logger.error("Kunne ikke hente accessToken, se sikker log for meldingen som string")
             val feilmelding = response.body<TokenError>()
-            logger.error("Feil fra tokenprovider, Token: $jwtAssertion, Feilmelding: $feilmelding")
-            throw Exception("Feil fra tokenprovider, Token: $jwtAssertion, Feilmelding: $feilmelding")
+            logger.error("Feil fra tokenprovider, Feilmelding: $feilmelding")
+            throw Exception("Feil fra tokenprovider, Feilmelding: $feilmelding")
         }
     }
 

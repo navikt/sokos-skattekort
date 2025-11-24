@@ -628,7 +628,7 @@ class BestillingServiceTest :
                     first() shouldNotBeNull {
                         resultatForSkattekort shouldBe IkkeTrekkplikt
                         identifikator shouldBe null
-                        withClue("Should generate forskuddstrekk for svalbard") {
+                        withClue("Should generate frikort") {
                             forskuddstrekkList shouldContainExactly
                                 listOf(
                                     aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),

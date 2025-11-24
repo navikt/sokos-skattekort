@@ -92,7 +92,7 @@ sealed interface Forskuddstrekk {
                 ForskuddstrekkType.FRIKORT ->
                     Frikort(
                         trekkode = Trekkode.from(row.string("trekk_kode")),
-                        frikortBeloep = row.int("frikort_beloep"),
+                        frikortBeloep = row.intOrNull("frikort_beloep"),
                     )
 
                 ForskuddstrekkType.PROSENTKORT ->

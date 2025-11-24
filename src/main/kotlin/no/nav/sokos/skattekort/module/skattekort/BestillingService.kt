@@ -233,6 +233,10 @@ class BestillingService(
                             trekkode = Trekkode.PENSJON_FRA_NAV,
                             frikortBeloep = null,
                         ),
+                        Frikort(
+                            trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                            frikortBeloep = null,
+                        ),
                     )
 
                 Skattekort(

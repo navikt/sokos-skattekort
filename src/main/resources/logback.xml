@@ -31,6 +31,24 @@
         </filter>
     </appender>
 
+    <appender name="auditLogger" class="com.papertrailapp.logback.Syslog4jAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%m%n%xEx</pattern>
+        </layout>
+
+        <syslogConfig class="org.productivity.java.syslog4j.impl.net.tcp.TCPNetSyslogConfig">
+            <!-- remote system to log to -->
+            <host>audit.nais</host>
+            <!-- remote port to log to -->
+            <port>6514</port>
+            <!-- IMPORTANT: Set to your application name. -->
+            <ident>sokos-skattekort</ident>
+            <!-- max log message length in bytes -->
+            <maxMessageLength>128000</maxMessageLength>
+        </syslogConfig>
+    </appender>
+
+
     <appender name="default-json" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
@@ -41,6 +59,14 @@
             <OnMismatch>ACCEPT</OnMismatch>
         </filter>
     </appender>
+
+    <if condition='isDefined("NAIS_CLUSTER_NAME")'>
+        <then>
+            <logger level="INFO" name="auditLogger" additivity="false">
+                <appender-ref ref="${LOG_APPENDER:-auditLogger}"/>
+            </logger>
+        </then>
+    </if>
 
     <if condition='isDefined("NAIS_CLUSTER_NAME")'>
         <then>

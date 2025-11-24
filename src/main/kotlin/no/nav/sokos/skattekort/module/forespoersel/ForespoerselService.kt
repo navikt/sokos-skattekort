@@ -1,8 +1,13 @@
 package no.nav.sokos.skattekort.module.forespoersel
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.Year
 import javax.sql.DataSource
 
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.Month
+import kotlinx.datetime.toKotlinLocalDateTime
 
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
@@ -14,6 +19,7 @@ import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.security.NavIdent
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -30,7 +36,7 @@ class ForespoerselService(
         saksbehandler: NavIdent? = null,
     ) {
         dataSource.transaction { tx ->
-            val forespoerselInput =
+            val forespoerselInput: ForespoerselInput =
                 when {
                     message.startsWith("<") -> return@transaction // drop Arena meldinger
                     else -> parseCopybookMessage(message)
@@ -43,23 +49,37 @@ class ForespoerselService(
 
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 
-            val forespoerselId =
-                ForespoerselRepository.insert(
-                    tx = tx,
-                    forsystem = forespoerselInput.forsystem,
-                    dataMottatt = message,
-                )
-            createBestilling(tx, forespoerselId, forespoerselInput, saksbehandler?.ident)
+            handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
+            if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
+                val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
+                handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
+            }
         }
     }
 
+    private fun skalLagesForNesteAarOgsaa(forespoerselInput: ForespoerselInput): Boolean {
+        val naa = LocalDateTime.now().toKotlinLocalDateTime()
+        val iaar = naa.year
+        return (
+            forespoerselInput.inntektsaar == iaar &&
+                naa.month == Month.DECEMBER &&
+                naa.day >= 15
+        )
+    }
+
     @OptIn(ExperimentalTime::class)
-    private fun createBestilling(
+    private fun handleForespoersel(
         tx: TransactionalSession,
-        forespoerselId: Long,
+        message: String,
         forespoerselInput: ForespoerselInput,
         brukerId: String?,
     ) {
+        val forespoerselId =
+            ForespoerselRepository.insert(
+                tx = tx,
+                forsystem = forespoerselInput.forsystem,
+                dataMottatt = message,
+            )
         var bestillingCount = 0
         forespoerselInput.fnrList.forEach { fnr ->
             val person =
@@ -70,38 +90,45 @@ class ForespoerselService(
                     brukerId = brukerId,
                 )
 
-            AbonnementRepository.insert(
-                tx = tx,
-                forespoerselId = forespoerselId,
-                inntektsaar = forespoerselInput.inntektsaar,
-                personId = person.id!!.value,
-            )
+            val abonnementId =
+                AbonnementId(
+                    AbonnementRepository.insert(
+                        tx = tx,
+                        forespoerselId = forespoerselId,
+                        inntektsaar = forespoerselInput.inntektsaar,
+                        personId = person.id!!.value,
+                    ) ?: throw IllegalStateException("Kunne ikke lage abonnement"),
+                )
 
-            SkattekortRepository
-                .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar)
-                .ifEmpty {
-                    val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
-                    if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                    if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {
-                        BestillingRepository.insert(
-                            tx = tx,
-                            bestilling =
-                                Bestilling(
-                                    personId = person.id,
-                                    fnr = Personidentifikator(fnr),
-                                    inntektsaar = forespoerselInput.inntektsaar,
-                                ),
-                        )
-                        bestillingCount++
-                    }
-                }.let {
-                    UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)?.let {
-                        logger.info {
-                            "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
-                        }
-                        return@forEach
-                    }
+            val skattekort =
+                SkattekortRepository
+                    .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar, adminRole = false)
+            if (skattekort.isEmpty()) {
+                val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
+                if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
+                if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {
+                    BestillingRepository.insert(
+                        tx = tx,
+                        bestilling =
+                            Bestilling(
+                                personId = person.id,
+                                fnr = Personidentifikator(fnr),
+                                inntektsaar = forespoerselInput.inntektsaar,
+                            ),
+                    )
+                    bestillingCount++
                 }
+            } else {
+                // Skattekort finnes
+                val utsending = UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)
+                if (utsending != null) {
+                    logger.info {
+                        "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
+                    }
+                } else {
+                    UtsendingRepository.insert(tx, Utsending(null, abonnementId, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
+                }
+            }
         }
         logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }
     }
@@ -109,11 +136,11 @@ class ForespoerselService(
     private fun forSentAaBestille(inntektsaar: Int): Boolean {
         // Skatteetatens regel er at man kan bestille skattekort for året før frem til 01.07.
         val currentYear =
-            java.time.Year
+            Year
                 .now()
                 .value
         val currentMonth =
-            java.time.LocalDate
+            LocalDate
                 .now()
                 .monthValue
         val forSentAaBestilleForFjoraaret = currentMonth >= 7 && inntektsaar == currentYear - 1

@@ -8,6 +8,7 @@ import junit.framework.TestCase.assertEquals
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditService
@@ -24,6 +25,7 @@ class UtsendingCronJobTest :
                     DbListener.dataSource,
                     MQListener.connectionFactory,
                     MQListener.utsendingsQueue,
+                    FakeUnleashIntegration(),
                 )
             val auditService = AuditService(DbListener.dataSource)
 

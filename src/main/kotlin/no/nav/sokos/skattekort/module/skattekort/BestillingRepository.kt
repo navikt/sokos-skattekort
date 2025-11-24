@@ -11,12 +11,30 @@ import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 
 object BestillingRepository {
-    fun getAllBestilling(tx: TransactionalSession): List<Bestilling> =
+    fun getBestillingsKandidaterForBatch(tx: TransactionalSession): List<Bestilling> =
         tx.list(
             queryOf(
                 """
                 SELECT * FROM bestillinger
                 """.trimIndent(),
+            ),
+            extractor = mapToBestilling,
+        )
+
+    fun getBestillingsKandidaterForBatch(
+        tx: TransactionalSession,
+        maxYear: Int,
+    ): List<Bestilling> =
+        tx.list(
+            queryOf(
+                """
+                SELECT b.* FROM bestillinger b
+                WHERE b.inntektsaar <= :maxYear
+                AND b.inntektsaar = (SELECT MIN(b2.inntektsaar) FROM bestillinger b2 WHERE b2.bestillingsbatch_id IS NULL)
+                AND b.bestillingsbatch_id IS NULL
+                LIMIT 500
+                """.trimIndent(),
+                mapOf("maxYear" to maxYear),
             ),
             extractor = mapToBestilling,
         )
@@ -104,6 +122,28 @@ object BestillingRepository {
         ),
         extractor = mapToBestilling,
     )
+
+    fun getEarliestUnsentBestillingTime(tx: TransactionalSession): Double =
+        tx.single(
+            queryOf(
+                """
+                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
+                WHERE bestillingsbatch_id IS NULL
+                """.trimIndent(),
+            ),
+            extractor = { row -> row.double("earliest_oppdatert") },
+        ) ?: error("Should always return something")
+
+    fun getEarliestSentBestillingTime(tx: TransactionalSession): Double =
+        tx.single(
+            queryOf(
+                """
+                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
+                WHERE bestillingsbatch_id IS NOT NULL
+                """.trimIndent(),
+            ),
+            extractor = { row -> row.double("earliest_oppdatert") },
+        ) ?: error("Should always return something")
 
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->

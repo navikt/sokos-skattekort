@@ -59,6 +59,8 @@ object PropertiesConfig {
             environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
             useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
             mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
+            podName = getOrEmpty("NAIS_POD_NAME"),
+            bestillingOrgnr = get("BESTILLING_ORGNR"),
         )
 
     fun getPostgresProperties(): PostgresProperties =
@@ -124,6 +126,13 @@ object PropertiesConfig {
             pdlScope = getOrEmpty("PDL_SCOPE"),
         )
 
+    fun getUnleashProperties(): UnleashProperties =
+        UnleashProperties(
+            unleashAPI = getOrEmpty("UNLEASH_SERVER_API_URL"),
+            apiKey = getOrEmpty("UNLEASH_SERVER_API_TOKEN"),
+            environment = getOrEmpty("UNLEASH_SERVER_API_ENV"),
+        )
+
     data class AzureAdProperties(
         val clientId: String = getOrEmpty("AZURE_APP_CLIENT_ID"),
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
@@ -137,6 +146,8 @@ object PropertiesConfig {
         val useAuthentication: Boolean,
         val mqListenerEnabled: Boolean,
         val gyldigeFnr: String,
+        val podName: String,
+        val bestillingOrgnr: String,
     )
 
     data class PostgresProperties(
@@ -170,6 +181,7 @@ object PropertiesConfig {
         val cronUtsending: String = get("SEND_UTSENDING_CRON_EXPRESSION"),
         val cronHenting: String = get("HENT_SKATTEKORT_BATCH_CRON_EXPRESSION"),
         val cronHentOppdaterte: String = get("HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION"),
+        val cronFetchMetrics: String = get("FETCH_METRICS_CRON_EXPRESSION"),
     )
 
     data class MaskinportenProperties(
@@ -202,6 +214,12 @@ object PropertiesConfig {
     data class PdlProperties(
         val pdlUrl: String,
         val pdlScope: String,
+    )
+
+    data class UnleashProperties(
+        val unleashAPI: String,
+        val apiKey: String,
+        val environment: String,
     )
 
     enum class Environment {

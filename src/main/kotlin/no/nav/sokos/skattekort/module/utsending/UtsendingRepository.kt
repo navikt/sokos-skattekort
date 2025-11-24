@@ -41,7 +41,7 @@ object UtsendingRepository {
     fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> =
         tx.list(
             queryOf(
-                """SELECT * FROM utsendinger FOR UPDATE""".trimIndent(),
+                """SELECT * FROM utsendinger""".trimIndent(),
             ),
             extractor = { row -> Utsending(row) },
         )
@@ -89,4 +89,14 @@ object UtsendingRepository {
             ),
             extractor = { row -> Utsending(row) },
         )
+
+    fun getSecondsSinceEarliestUnsentUtsending(tx: TransactionalSession): Double =
+        tx.single(
+            queryOf(
+                """
+                EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM utsendinger
+                """.trimIndent(),
+            ),
+            extractor = { row -> row.double("earliest_opprettet") },
+        ) ?: error("Should always return a number")
 }

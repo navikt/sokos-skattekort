@@ -11,9 +11,10 @@ import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.TestUtil.tx
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 
@@ -25,7 +26,12 @@ class BestillingServiceOppdaterteSkattekortTest :
             val skatteetatenClient = mockk<SkatteetatenClient>()
 
             val bestillingService: BestillingService by lazy {
-                BestillingService(DbListener.dataSource, skatteetatenClient, PersonService(DbListener.dataSource))
+                BestillingService(
+                    DbListener.dataSource,
+                    skatteetatenClient,
+                    FakeUnleashIntegration(),
+                    PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, false, "", "", ""),
+                )
             }
 
             test("Når vi gjør et kall med tom database i midten av året skal det opprettes én batch") {
@@ -128,7 +134,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                     bestillingService.hentOppdaterteSkattekort()
 
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-                    val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025) }
+                    val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
 
                     assertSoftly {
                         batches shouldNotBeNull {

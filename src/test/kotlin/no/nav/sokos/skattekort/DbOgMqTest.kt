@@ -34,7 +34,7 @@ class DbOgMqTest :
 
             eventually(eventuallyConfiguration) {
                 DbListener.dataSource.transaction { session ->
-                    val result = BestillingRepository.getAllBestilling(session)
+                    val result = BestillingRepository.getBestillingsKandidaterForBatch(session)
                     result.size shouldBe 1
                     result.first().inntektsaar shouldBe 2025
                 }

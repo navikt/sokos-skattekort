@@ -31,6 +31,7 @@ spec:
       memory: 512Mi
   ingresses:
     - https://sokos-skattekort.intern.dev.nav.no
+    - https://sokos-skattekort.dev-fss-pub.nais.io
   prometheus:
     enabled: true
     path: /internal/metrics
@@ -51,10 +52,15 @@ spec:
         - application: azure-token-generator
           namespace: nais
           cluster: dev-gcp
+        - application: sokos-up-skattekort-ssr
+          namespace: okonomi
+          cluster: dev-gcp
     outbound:
       rules:
         - application: logging
           namespace: nais-system
+      external:
+        - host: okonomi-unleash-api.nav.cloud.nais.io
   maskinporten:
     enabled: true
     scopes:
@@ -68,6 +74,7 @@ spec:
     enabled: true
   envFrom:
     - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-unleash-api-token
 
   env:
     - name: JDK_JAVA_OPTIONS

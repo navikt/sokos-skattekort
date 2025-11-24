@@ -86,3 +86,8 @@ Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) fi
 - Spørsmål knyttet til koden eller prosjektet utenfra NAV kan stilles som issues her på github.
 - Henvendelser om endringer kan gjøres i henhold til [dokumentasjonen av grensesnittene](dokumentasjon/arkitektur/arkitektur.md).
 
+# Periodiske tester
+
+## Sjekk at auditlogging fungerer
+
+Vi har ikke testdekning for at oppsettet av audit-logging faktisk når frem til audit-systemet. Dette må testes manuelt jevnlig.

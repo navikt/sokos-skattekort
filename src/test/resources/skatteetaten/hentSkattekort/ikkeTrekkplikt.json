@@ -1,0 +1,17 @@
+{
+  "status": "FORESPOERSEL_OK",
+  "arbeidsgiver": [
+    {
+      "arbeidsgiveridentifikator": {
+        "organisasjonsnummer": "312978083"
+      },
+      "arbeidstaker": [
+        {
+          "arbeidstakeridentifikator": "19906396974",
+          "resultatForSkattekort": "ikkeTrekkplikt",
+          "inntektsaar": "2025"
+        }
+      ]
+    }
+  ]
+}

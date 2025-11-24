@@ -2,10 +2,16 @@ package no.nav.sokos.skattekort.module.skattekortpersonapi.v1
 
 import java.time.LocalDateTime
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.atlassian.oai.validator.restassured.OpenApiValidationFilter
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.mockk.mockk
@@ -14,6 +20,7 @@ import io.restassured.RestAssured
 import io.restassured.response.Response
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.slf4j.LoggerFactory
 
 import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -109,23 +116,29 @@ class SkattekortpersonApiE2ETest :
         test("vi kan hente et skattekort") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-
-                val response: Response =
-                    client
-                        .body(
-                            """{
+                val listAppender = ListAppender<ILoggingEvent>()
+                val auditLogger: Logger =
+                    LoggerFactory
+                        .getLogger("auditLogger") as Logger
+                listAppender.start()
+                auditLogger.addAppender(listAppender)
+                try {
+                    val response: Response =
+                        client
+                            .body(
+                                """{
                             | "fnr": "12345678901",
                             | "inntektsaar": 2025
                             | }
-                            """.trimMargin(),
-                        ).post("/api/v1/hent-skattekort")
-                        .then()
-                        .assertThat()
-                        .statusCode(HttpStatusCode.OK.value)
-                        .extract()
-                        .response()!!
-                response.body().prettyPrint().shouldEqualJson(
-                    """[
+                                """.trimMargin(),
+                            ).post("/api/v1/hent-skattekort")
+                            .then()
+                            .assertThat()
+                            .statusCode(HttpStatusCode.OK.value)
+                            .extract()
+                            .response()!!
+                    response.body().prettyPrint().shouldEqualJson(
+                        """[
   {
     "inntektsaar": 2025,
     "arbeidstakeridentifikator": "12345678901",
@@ -146,7 +159,17 @@ class SkattekortpersonApiE2ETest :
     ]
   }
 ]""",
-                )
+                    )
+                    listAppender.list.size shouldBe 1
+                    val formattedMessage = listAppender.list.get(0).formattedMessage
+                    formattedMessage shouldStartWith
+                        "CEF:0|Utbetalingsportalen|sokos-skattekort|1.0|audit:access|sokos-skattekort|INFO|suid=Z123456 duid=12345678901"
+                    formattedMessage shouldEndWith
+                        "msg=NAV-ansatt har søkt etter skattekort for bruker"
+                } finally {
+                    auditLogger.detachAppender(listAppender)
+                    listAppender.stop()
+                }
             }
         }
     })

@@ -164,7 +164,7 @@ sealed interface Forskuddstrekk {
 
 data class Frikort(
     val trekkode: Trekkode,
-    val frikortBeloep: Int,
+    val frikortBeloep: Int?,
 ) : Forskuddstrekk
 
 data class Tabellkort(

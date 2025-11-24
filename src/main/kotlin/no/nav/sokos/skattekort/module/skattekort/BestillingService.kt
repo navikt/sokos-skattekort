@@ -273,7 +273,7 @@ class BestillingService(
     }
 
     fun hentOppdaterteSkattekort() {
-        if (featureToggles.isBestillingerEnabled()) {
+        if (featureToggles.isOppdateringEnabled()) {
             dataSource.transaction { tx ->
                 val oppdateringsbatch = BestillingBatchRepository.getUnprocessedOppdateringsBatch(tx)
                 if (oppdateringsbatch != null) {

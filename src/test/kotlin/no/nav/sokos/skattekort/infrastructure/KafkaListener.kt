@@ -10,6 +10,8 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 import org.testcontainers.kafka.KafkaContainer
 import org.testcontainers.utility.DockerImageName
 
+import no.nav.sokos.skattekort.config.KafkaConfig
+
 private val logger = KotlinLogging.logger {}
 
 object KafkaListener : BeforeSpecListener {
@@ -28,6 +30,8 @@ object KafkaListener : BeforeSpecListener {
             logger.info { "Kafka setup finished listening on ${kafkaContainer.bootstrapServers}." }
         }
     }
+
+    fun getKakfaConfig() = KafkaConfig()
 
     fun createKafkaTopic(vararg topics: String) {
         val newTopics = topics.map { topic -> NewTopic(topic, 1, 1.toShort()) }

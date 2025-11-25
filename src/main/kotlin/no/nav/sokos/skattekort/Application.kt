@@ -35,7 +35,6 @@ import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
-import no.nav.sokos.skattekort.util.launchBackgroundTask
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -115,12 +114,12 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     val kafkaProperties = PropertiesConfig.getKafkaProperties()
     if (kafkaProperties.enabled) {
-        applicationState.onReady = {
-            val kafkaConsumerService: KafkaConsumerService by dependencies
-            launchBackgroundTask(applicationState) {
-                kafkaConsumerService.start(applicationState)
-            }
-        }
+//        applicationState.onReady = {
+//            val kafkaConsumerService: KafkaConsumerService by dependencies
+//            launchBackgroundTask(applicationState) {
+//                kafkaConsumerService.start(applicationState)
+//            }
+//        }
     }
 
     logger.info { "Kafka consumer is enabled: ${kafkaProperties.enabled}" }

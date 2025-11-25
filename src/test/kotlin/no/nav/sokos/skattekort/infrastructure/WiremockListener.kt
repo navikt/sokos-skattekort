@@ -19,8 +19,8 @@ object WiremockListener : BeforeSpecListener, AfterEachListener {
 
     override suspend fun beforeSpec(spec: Spec) {
         if (!wiremock.isRunning) {
-            configureFor(wiremock.port())
             wiremock.start()
+            configureFor(wiremock.port())
             coEvery { azuredTokenClient.getSystemToken() } returns "token"
         }
     }

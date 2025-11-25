@@ -12,7 +12,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.server.plugins.di.annotations.Named
-import io.ktor.server.plugins.di.annotations.Property
 import mu.KotlinLogging
 
 import no.nav.pdl.HentIdenterBolk
@@ -23,7 +22,7 @@ private val logger = KotlinLogging.logger {}
 
 class PdlClientService(
     private val client: HttpClient,
-    @Property("PDL_URL") private val pdlUrl: String,
+    @Named("pdlUrl") private val pdlUrl: String,
     @Named("pdlAzuredTokenClient") private val azuredTokenClient: AzuredTokenClient,
 ) {
     suspend fun getIdenterBolk(identer: List<String>): Map<String, List<IdentInformasjon>> {

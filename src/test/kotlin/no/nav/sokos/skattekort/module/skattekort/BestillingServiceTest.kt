@@ -565,6 +565,30 @@ class BestillingServiceTest :
             shouldThrow<IllegalStateException> {
                 bestillingService.hentSkattekort()
             }
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+            val skattekort: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025, adminRole = false)
+                }
+            val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
+
+            updatedBatches shouldNotBeNull {
+                size shouldBe 1
+                forOne { it.status shouldBe BestillingBatchStatus.Feilet.value }
+            }
+
+            bestillingsAfter shouldNotBeNull {
+                size shouldBe 1
+                forOne { it.bestillingsbatchId!!.id shouldBe 1L }
+            }
+
+            skattekort shouldBe emptyList()
+
+            person1 shouldNotBeNull {
+                flagget shouldBe false
+            }
         }
 
         test("ikkeSkattekort med oppholdPaaSvalbard") {

@@ -11,6 +11,7 @@ import jakarta.jms.Queue
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.KafkaConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
@@ -19,9 +20,21 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.infrastructure.MetricsService
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.skattekort.BestillingService
+import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
+import no.nav.sokos.skattekort.module.utsending.UtsendingService
+import no.nav.sokos.skattekort.pdl.PdlClientService
+import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
+import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 
 fun main() {
@@ -43,7 +56,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     dependencies {
         provide { createHttpClient() }
-        // provide { DatabaseConfig.dataSource }
+        provide { DatabaseConfig.dataSource }
         provide { KafkaConfig() }
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
@@ -61,20 +74,20 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
-//        provide(UnleashIntegration::class)
-//
-//        provide(PersonService::class)
-//        provide(ForespoerselService::class)
-//        provide(ForespoerselListener::class)
-//        provide(UtsendingService::class)
-//        provide(BestillingService::class)
-//        provide(SkatteetatenClient::class)
-//        provide(ScheduledTaskService::class)
-//        provide(SkattekortPersonService::class)
-//        provide(KafkaConsumerService::class)
-//        provide(PdlClientService::class)
-//        provide(IdentifikatorEndringService::class)
-//        provide(MetricsService::class)
+        provide(UnleashIntegration::class)
+
+        provide(PersonService::class)
+        provide(ForespoerselService::class)
+        provide(ForespoerselListener::class)
+        provide(UtsendingService::class)
+        provide(BestillingService::class)
+        provide(SkatteetatenClient::class)
+        provide(ScheduledTaskService::class)
+        provide(SkattekortPersonService::class)
+        provide(KafkaConsumerService::class)
+        provide(PdlClientService::class)
+        provide(IdentifikatorEndringService::class)
+        provide(MetricsService::class)
     }
 
     commonConfig()

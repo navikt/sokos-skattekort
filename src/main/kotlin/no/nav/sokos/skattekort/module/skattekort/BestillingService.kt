@@ -255,6 +255,10 @@ class BestillingService(
                 )
             }
 
+            ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
+                error("Ugyldig organisasjonsnummer")
+            }
+
             else ->
                 Skattekort(
                     personId = person.id!!,

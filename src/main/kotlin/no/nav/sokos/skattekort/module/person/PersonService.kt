@@ -43,16 +43,6 @@ class PersonService(
             PersonRepository.findPersonById(tx, PersonId(personId))
         }
 
-    fun findPersonByFnr(
-        tx: TransactionalSession,
-        fnr: Personidentifikator,
-    ): Person? = PersonRepository.findPersonByFnr(tx, fnr)
-
-    fun flaggPerson(
-        tx: TransactionalSession,
-        personId: PersonId,
-    ) = PersonRepository.flaggPerson(tx, personId)
-
     fun findPersonIdByPersonidentifikator(
         tx: TransactionalSession,
         personidentifikatorList: List<String>,

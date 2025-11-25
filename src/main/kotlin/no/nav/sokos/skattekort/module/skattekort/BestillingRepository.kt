@@ -11,7 +11,7 @@ import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 
 object BestillingRepository {
-    fun getAllBestilling(tx: TransactionalSession): List<Bestilling> =
+    fun getBestillingsKandidaterForBatch(tx: TransactionalSession): List<Bestilling> =
         tx.list(
             queryOf(
                 """
@@ -21,15 +21,18 @@ object BestillingRepository {
             extractor = mapToBestilling,
         )
 
-    fun getAllBestilling(
+    fun getBestillingsKandidaterForBatch(
         tx: TransactionalSession,
         maxYear: Int,
     ): List<Bestilling> =
         tx.list(
             queryOf(
                 """
-                SELECT * FROM bestillinger
-                WHERE inntektsaar <= :maxYear
+                SELECT b.* FROM bestillinger b
+                WHERE b.inntektsaar <= :maxYear
+                AND b.inntektsaar = (SELECT MIN(b2.inntektsaar) FROM bestillinger b2 WHERE b2.bestillingsbatch_id IS NULL)
+                AND b.bestillingsbatch_id IS NULL
+                LIMIT 500
                 """.trimIndent(),
                 mapOf("maxYear" to maxYear),
             ),

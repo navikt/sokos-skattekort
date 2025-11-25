@@ -21,7 +21,7 @@ class MetricsService(
             // Varsel om vi ikke har fått skattekort på 24 timer
             SkattekortRepository.getSecondsSinceLatestSkattekortOpprettet(tx)?.let { timerSidenSisteSkattekortLMetric.set(it) }
             // Bestillinger som ikke er løst i løpet av 30 minutter
-            sekunderSidenBestillingMetric.labelValues("eldste_lagret").set(BestillingRepository.getEarliestUnsentBestillingTime(tx))
+            sekunderSidenBestillingMetric.labelValues("eldste_usendt").set(BestillingRepository.getEarliestUnsentBestillingTime(tx))
             sekunderSidenBestillingMetric.labelValues("eldste_sendt").set(BestillingRepository.getEarliestSentBestillingTime(tx))
 
             // Utsendinger som ikke er sendt i løpet av 5 minutter
@@ -64,6 +64,7 @@ class MetricsService(
             gauge(
                 name = "oldest_bestilling_seconds",
                 helpText = "Sekunder siden eldste bestilling",
+                labelNames = "type",
             )
         val sekunderSidenUtsendingMetric =
             gauge(
@@ -76,22 +77,26 @@ class MetricsService(
             gauge(
                 name = "total_skattekort_count",
                 helpText = "Totalt antall innhentede skattekort",
+                labelNames = "resultatForSkattekort",
             )
         val numberOfTabelltrekkByTrekkodeMetric =
             gauge(
                 name = "antall_tabellkort_per_trekkode",
                 helpText = "Totalt antall tabellkort per trekkode",
+                labelNames = "trekkode",
             )
         val skattekortMedTilleggsopplysningMetric =
             gauge(
                 name = "skattekort_med_tilleggsopplysning_count",
                 helpText = "Skattekort med tilleggsopplysning",
+                labelNames = "tilleggsopplysning",
             )
 
         val frikortByBeloepsGrenseJaNeiMetric =
             gauge(
                 name = "frikort_by_beloep",
                 helpText = "Frikort fordelt på om det er begrensning på beløp",
+                labelNames = "beloepsgrense",
             )
 
         fun gauge(
@@ -100,6 +105,19 @@ class MetricsService(
         ): Gauge =
             Gauge
                 .builder()
+                .name("${METRICS_NAMESPACE}_$name")
+                .help(helpText)
+                .withoutExemplars()
+                .register(prometheusMeterRegistry.prometheusRegistry)
+
+        fun gauge(
+            name: String,
+            helpText: String,
+            labelNames: String,
+        ): Gauge =
+            Gauge
+                .builder()
+                .labelNames(labelNames)
                 .name("${METRICS_NAMESPACE}_$name")
                 .help(helpText)
                 .withoutExemplars()

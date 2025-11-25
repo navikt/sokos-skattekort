@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort
 
-import javax.sql.DataSource
-
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -13,20 +11,15 @@ import jakarta.jms.Queue
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
-import no.nav.sokos.skattekort.config.DatabaseConfig
-import no.nav.sokos.skattekort.config.JobTaskConfig
+import no.nav.sokos.skattekort.config.KafkaConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
-import no.nav.sokos.skattekort.config.httpClient
+import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
-import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
-import no.nav.sokos.skattekort.module.skattekort.BestillingService
-import no.nav.sokos.skattekort.module.utsending.UtsendingService
-import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.util.launchBackgroundTask
@@ -46,17 +39,17 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val useAuthentication = applicationProperties.useAuthentication
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 
-    DatabaseConfig.migrate()
+    // DatabaseConfig.migrate()
 
     dependencies {
-        provide { httpClient }
+        provide { createHttpClient() }
         // provide { DatabaseConfig.dataSource }
-        // provide { KafkaConfig() }
+        provide { KafkaConfig() }
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
-
         provide { MQConfig.connectionFactory }
+        provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
@@ -66,7 +59,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             queue
         }
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
-            AzuredTokenClient(httpClient, PropertiesConfig.getPdlProperties().pdlScope)
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
 //        provide(UnleashIntegration::class)
 //
@@ -92,19 +85,19 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 //    forespoerselListener.start()
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
-        val bestillingService: BestillingService by dependencies
-        val utsendingService: UtsendingService by dependencies
-        val scheduledTaskService: ScheduledTaskService by dependencies
-        val metricsService: MetricsService by dependencies
-        val dataSource: DataSource by dependencies
-        JobTaskConfig
-            .scheduler(
-                bestillingService,
-                utsendingService,
-                scheduledTaskService,
-                metricsService,
-                dataSource,
-            ).start()
+//        val bestillingService: BestillingService by dependencies
+//        val utsendingService: UtsendingService by dependencies
+//        val scheduledTaskService: ScheduledTaskService by dependencies
+//        val metricsService: MetricsService by dependencies
+//        val dataSource: DataSource by dependencies
+//        JobTaskConfig
+//            .scheduler(
+//                bestillingService,
+//                utsendingService,
+//                scheduledTaskService,
+//                metricsService,
+//                dataSource,
+//            ).start()
     }
 
     val kafkaProperties = PropertiesConfig.getKafkaProperties()

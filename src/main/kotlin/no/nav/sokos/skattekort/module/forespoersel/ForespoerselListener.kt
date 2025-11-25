@@ -10,11 +10,11 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
-    jmsConnectionFactory: ConnectionFactory,
+    connectionFactory: ConnectionFactory,
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
 ) {
-    private val jmsContext = jmsConnectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+    private val jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
     private val listener = jmsContext.createConsumer(forespoerselQueue)
 
     // TODO: Legg til Opentelemetry trace

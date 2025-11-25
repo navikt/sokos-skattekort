@@ -33,9 +33,6 @@ import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillSkattekortR
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
-// TODO: Metrikk: bestillinger per system
-// TODO: Metrikk for varsling: tid siden siste mottatte bestilling
-// TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
@@ -137,6 +134,23 @@ class BestillingService(
                             BestillingRepository.deleteProcessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
+                    } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
+                        dataSource.transaction { errorTx ->
+                            logger.error(ugyldigOrgnummerEx) { "Henting av skattekort for batch $batchId feilet: ${ugyldigOrgnummerEx.message}" }
+                            BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)
+                            BestillingRepository.updateBestillingsWithBatchId(
+                                errorTx,
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { it.id!!.id },
+                                null,
+                            )
+                            AuditRepository.insertBatch(
+                                errorTx,
+                                AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                "Batchhenting av skattekort feilet pga. ugyldig organisasjonsnummer",
+                            )
+                        }
+                        throw ugyldigOrgnummerEx
                     } catch (ex: Exception) {
                         dataSource.transaction { errorTx ->
                             logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
@@ -256,7 +270,7 @@ class BestillingService(
             }
 
             ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
-                error("Ugyldig organisasjonsnummer")
+                throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
             }
 
             else ->

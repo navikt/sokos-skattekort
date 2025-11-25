@@ -74,6 +74,6 @@ jobs:
 #    name: Deploy to prod-gcp
 #    uses: navikt/mob-gha-workflows/.github/workflows/nais-deploy.yaml@main
 #    with:
-#      cluster: prod-fss
+#      cluster: prod-gcp
 #      resource: .nais/prod/naiserator-prod.yaml
 #      image: ${{ needs.assemble-build-push-image-prod.outputs.image }}

@@ -84,7 +84,7 @@ object PropertiesConfig {
             serviceUsername = getOrEmpty("MQ_SERVICE_USERNAME"),
             servicePassword = getOrEmpty("MQ_SERVICE_PASSWORD"),
             userAuth = true,
-            fraForSystemQueue = get("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+            fraForSystemQueue = get("MQ_FRA_FORSYSTEM_QUEUE_NAME"),
             leveransekoeOppdragZSkattekort = get("MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT"),
         )
 

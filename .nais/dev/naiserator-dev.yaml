@@ -30,7 +30,7 @@ spec:
       cpu: 100m
       memory: 512Mi
   ingresses:
-    - https://sokos-skattekort.intern.dev.nav.no
+    - https://sokos-skattekort-gcp.intern.dev.nav.no
   prometheus:
     enabled: true
     path: /internal/metrics
@@ -72,7 +72,7 @@ spec:
         diskAutoresize: true
         pointInTimeRecovery: true
         autoBackupHour: 3
-        tier: db-custom-4-3840
+        tier: db-custom-1-3840
         databases:
           - name: sokos-skattekort
             users:

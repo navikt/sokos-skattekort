@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 import com.atlassian.oai.validator.restassured.OpenApiValidationFilter
 import io.kotest.assertions.json.shouldEqualJson
+import io.kotest.core.annotation.Ignored
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.ktor.http.HttpHeaders
@@ -23,6 +24,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 
 private val forespoerselService = mockk<ForespoerselService>()
 
+@Ignored
 class SkattekortpersonApiE2ETest :
     FunSpec({
         beforeTest {

@@ -562,7 +562,7 @@ class BestillingServiceTest :
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
             )
 
-            shouldThrow<IllegalStateException> {
+            shouldThrow<UgyldigOrganisasjonsnummerException> {
                 bestillingService.hentSkattekort()
             }
 
@@ -581,7 +581,7 @@ class BestillingServiceTest :
 
             bestillingsAfter shouldNotBeNull {
                 size shouldBe 1
-                forOne { it.bestillingsbatchId!!.id shouldBe 1L }
+                forOne { it.bestillingsbatchId shouldBe null }
             }
 
             skattekort shouldBe emptyList()

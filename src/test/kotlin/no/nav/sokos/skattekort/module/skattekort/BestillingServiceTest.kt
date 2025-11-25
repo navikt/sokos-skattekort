@@ -631,6 +631,7 @@ class BestillingServiceTest :
                         withClue("Should generate frikort") {
                             forskuddstrekkList shouldContainExactly
                                 listOf(
+                                    aForskuddstrekk("Frikort", LOENN_FRA_NAV, frikortbeløp = null),
                                     aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),
                                     aForskuddstrekk("Frikort", UFOERETRYGD_FRA_NAV, frikortbeløp = null),
                                 )

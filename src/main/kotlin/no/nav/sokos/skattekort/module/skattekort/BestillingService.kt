@@ -230,6 +230,10 @@ class BestillingService(
                 val forskuddstrekkList =
                     listOf<Forskuddstrekk>(
                         Frikort(
+                            trekkode = Trekkode.LOENN_FRA_NAV,
+                            frikortBeloep = null,
+                        ),
+                        Frikort(
                             trekkode = Trekkode.PENSJON_FRA_NAV,
                             frikortBeloep = null,
                         ),

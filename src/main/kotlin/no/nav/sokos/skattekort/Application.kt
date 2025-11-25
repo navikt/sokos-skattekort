@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort
 
 import javax.sql.DataSource
 
+import kotlinx.coroutines.runBlocking
+
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -97,6 +99,13 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
+
+    val pdlClientService: PdlClientService by dependencies
+
+    runBlocking {
+        pdlClientService.getIdenterBolk(listOf("00000000000"))
+        println("PDL is reachable")
+    }
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()

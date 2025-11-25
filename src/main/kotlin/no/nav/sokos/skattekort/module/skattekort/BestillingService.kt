@@ -212,7 +212,7 @@ class BestillingService(
 
             ResultatForSkattekort.IkkeSkattekort -> {
                 val forskuddstrekkList = genererForskuddstrekk(arbeidstaker.tilleggsopplysning)
-                val kilde = if (forskuddstrekkList.isEmpty()) SkattekortKilde.MANGLER else SkattekortKilde.SYNTETISERT
+                val kilde = if (forskuddstrekkList.isEmpty()) SkattekortKilde.SKATTEETATEN else SkattekortKilde.SYNTETISERT
 
                 Skattekort(
                     personId = person.id!!,
@@ -221,6 +221,35 @@ class BestillingService(
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                     kilde = kilde.value,
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
+                    forskuddstrekkList = forskuddstrekkList,
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+                )
+            }
+
+            ResultatForSkattekort.IkkeTrekkplikt -> {
+                val forskuddstrekkList =
+                    listOf<Forskuddstrekk>(
+                        Frikort(
+                            trekkode = Trekkode.LOENN_FRA_NAV,
+                            frikortBeloep = null,
+                        ),
+                        Frikort(
+                            trekkode = Trekkode.PENSJON_FRA_NAV,
+                            frikortBeloep = null,
+                        ),
+                        Frikort(
+                            trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                            frikortBeloep = null,
+                        ),
+                    )
+
+                Skattekort(
+                    personId = person.id!!,
+                    utstedtDato = null,
+                    identifikator = null,
+                    inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                    kilde = SkattekortKilde.SYNTETISERT.value,
+                    resultatForSkattekort = ResultatForSkattekort.IkkeTrekkplikt,
                     forskuddstrekkList = forskuddstrekkList,
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )

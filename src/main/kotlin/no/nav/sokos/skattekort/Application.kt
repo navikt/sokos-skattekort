@@ -2,8 +2,6 @@ package no.nav.sokos.skattekort
 
 import javax.sql.DataSource
 
-import kotlinx.coroutines.runBlocking
-
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -11,7 +9,6 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.di.dependencies
-import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
@@ -67,8 +64,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
-
-        provide<ConnectionFactory> { MQConfig.connectionFactory }
+        provide { MQConfig.connectionFactory }
+        provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
@@ -99,13 +96,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     commonConfig()
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
-
-    val pdlClientService: PdlClientService by dependencies
-
-    runBlocking {
-        pdlClientService.getIdenterBolk(listOf("00000000000"))
-        println("PDL is reachable")
-    }
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()

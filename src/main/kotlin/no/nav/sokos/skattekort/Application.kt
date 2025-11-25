@@ -9,6 +9,7 @@ import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.di.dependencies
+import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
@@ -20,7 +21,7 @@ import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
-import no.nav.sokos.skattekort.config.httpClient
+import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.infrastructure.MetricsService
@@ -58,14 +59,14 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     DatabaseConfig.migrate()
 
     dependencies {
-        provide { httpClient }
+        provide { createHttpClient() }
         provide { DatabaseConfig.dataSource }
         provide { KafkaConfig() }
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
 
-        provide { MQConfig.connectionFactory }
+        provide<ConnectionFactory> { MQConfig.connectionFactory }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
@@ -75,7 +76,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             queue
         }
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
-            AzuredTokenClient(httpClient, PropertiesConfig.getPdlProperties().pdlScope)
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
         provide(UnleashIntegration::class)
 

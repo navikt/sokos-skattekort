@@ -6,13 +6,10 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
 
-import no.nav.sokos.skattekort.TestUtil
-import no.nav.sokos.skattekort.TestUtil.overriddenTestComponents
-import no.nav.sokos.skattekort.module
+import no.nav.sokos.skattekort.TestUtil.configureTestModule
 
 private fun Application.applicationTestModule() {
-    overriddenTestComponents()
-    module(TestUtil.testEnvironmentConfig())
+    configureTestModule()
 }
 
 object FullNettyApplication {

@@ -7,17 +7,17 @@ import io.kotest.engine.test.TestResult
 import jakarta.jms.JMSContext
 import jakarta.jms.JMSProducer
 import jakarta.jms.Queue
+import org.apache.activemq.artemis.api.core.SimpleString
 import org.apache.activemq.artemis.api.core.TransportConfiguration
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMAcceptorFactory
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
+import org.apache.activemq.artemis.core.settings.impl.AddressSettings
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
-
-const val MQ_FRA_FORSYSTEM_QUEUE = "FRA_FORSYSTEM"
-const val MQ_TIL_OPPDRAGZ_QUEUE = "FRA_OS_ESKATT"
+import no.nav.sokos.skattekort.config.PropertiesConfig
 
 object MQListener : BeforeSpecListener, AfterTestListener {
     val server: EmbeddedActiveMQ =
@@ -26,15 +26,22 @@ object MQListener : BeforeSpecListener, AfterTestListener {
                 ConfigurationImpl()
                     .setPersistenceEnabled(false)
                     .setSecurityEnabled(false)
-                    .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name)),
+                    .addAcceptorConfiguration(TransportConfiguration(InVMAcceptorFactory::class.java.name))
+                    .addAddressSetting(
+                        "#",
+                        AddressSettings().apply {
+                            deadLetterAddress = SimpleString.of("DLQ")
+                            expiryAddress = SimpleString.of("ExpiryQueue")
+                        },
+                    ),
             ).start()
 
     val connectionFactory: ActiveMQConnectionFactory by lazy {
         ActiveMQConnectionFactory("vm:localhost?create=false")
     }
 
-    val bestillingsQueue: Queue = ActiveMQQueue(MQ_FRA_FORSYSTEM_QUEUE)
-    val utsendingsQueue: Queue = ActiveMQQueue(MQ_TIL_OPPDRAGZ_QUEUE)
+    val bestillingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+    val utsendingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
     val allQueues: List<Queue> = listOf(bestillingsQueue, utsendingsQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }

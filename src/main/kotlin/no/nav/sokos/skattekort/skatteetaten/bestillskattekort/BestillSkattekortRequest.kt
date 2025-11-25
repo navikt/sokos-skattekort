@@ -53,7 +53,7 @@ fun bestillSkattekortRequest(
                 epostadresse = KONTAKT_EMAIL,
                 mobiltelefonummer = KONTAKT_TLF,
             ),
-        varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
+        varslingstype = "INGEN_VARSEL",
         forespoerselOmSkattekortTilArbeidsgiver =
             ForespoerselOmSkattekortTilArbeidsgiver(
                 arbeidsgiver =
@@ -70,7 +70,7 @@ fun bestillOppdateringRequest(inntektsaar: Int): BestillSkattekortRequest =
     BestillSkattekortRequest(
         inntektsaar = inntektsaar.toString(),
         bestillingstype = "HENT_KUN_ENDRING",
-        varslingstype = "VARSEL_VED_FOERSTE_ENDRING",
+        varslingstype = "INGEN_VARSEL",
         kontaktinformasjon =
             Kontaktinformasjon(
                 epostadresse = KONTAKT_EMAIL,

@@ -14,96 +14,95 @@ import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.Forsku
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT
 
 object SkattekortRepository {
-    fun insertBatch(
+    fun insert(
         tx: TransactionalSession,
-        skattekortList: List<Skattekort>,
-    ): List<Long> =
-        skattekortList.map { skattekort ->
-            AuditRepository.insert(
-                tx,
-                AuditTag.SKATTEKORTINFORMASJON_MOTTATT,
-                skattekort.personId,
-                "Lagret skattekortresultat ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar}",
-            )
-            val id =
-                tx.updateAndReturnGeneratedKey(
-                    Query(
-                        statement =
-                            """
-                            INSERT INTO skattekort (person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
-                            VALUES (:personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
-                            """.trimIndent(),
-                        paramMap =
-                            mapOf(
-                                "personId" to skattekort.personId.value,
-                                "utstedtDato" to skattekort.utstedtDato?.toJavaLocalDate(),
-                                "identifikator" to skattekort.identifikator,
-                                "inntektsaar" to skattekort.inntektsaar,
-                                "kilde" to skattekort.kilde,
-                                "resultatForSkattekort" to skattekort.resultatForSkattekort.value,
-                            ),
-                    ),
-                )
-            if (skattekort.forskuddstrekkList.isNotEmpty()) {
-                tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
-                    """
-                    INSERT INTO forskuddstrekk (skattekort_id, trekk_kode, type, frikort_beloep, tabell_nummer, prosentsats, antall_mnd_for_trekk)
-                    VALUES (:skattekortId, :trekk_kode, :type, :frikort_beloep, :tabell_nummer, :prosentsats, :antall_mnd_for_trekk)
-                    """.trimIndent(),
-                    skattekort.forskuddstrekkList.map { forskuddstrekk ->
-                        when (forskuddstrekk) {
-                            is Frikort ->
-                                mapOf(
-                                    "skattekortId" to id,
-                                    "trekk_kode" to forskuddstrekk.trekkode.value,
-                                    "type" to FRIKORT.type,
-                                    "frikort_beloep" to forskuddstrekk.frikortBeloep,
-                                    "tabell_nummer" to null,
-                                    "prosentsats" to null,
-                                    "antall_mnd_for_trekk" to null,
-                                )
-
-                            is Prosentkort ->
-                                mapOf(
-                                    "skattekortId" to id,
-                                    "trekk_kode" to forskuddstrekk.trekkode.value,
-                                    "type" to PROSENTKORT.type,
-                                    "frikort_beloep" to null,
-                                    "tabell_nummer" to null,
-                                    "prosentsats" to forskuddstrekk.prosentSats,
-                                    "antall_mnd_for_trekk" to null,
-                                )
-
-                            is Tabellkort ->
-                                mapOf(
-                                    "skattekortId" to id,
-                                    "trekk_kode" to forskuddstrekk.trekkode.value,
-                                    "type" to TABELLKORT.type,
-                                    "frikort_beloep" to null,
-                                    "tabell_nummer" to forskuddstrekk.tabellNummer,
-                                    "prosentsats" to forskuddstrekk.prosentSats,
-                                    "antall_mnd_for_trekk" to forskuddstrekk.antallMndForTrekk,
-                                )
-                        }
-                    },
-                )
-            }
-            if (skattekort.tilleggsopplysningList.isNotEmpty()) {
-                tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
-                    """
-                    INSERT INTO skattekort_tilleggsopplysning (skattekort_id, opplysning)
-                    VALUES (:skattekortId, :opplysning)
-                    """.trimIndent(),
-                    skattekort.tilleggsopplysningList.map { tilleggsopplysning ->
+        skattekort: Skattekort,
+    ): Long {
+        AuditRepository.insert(
+            tx,
+            AuditTag.SKATTEKORTINFORMASJON_MOTTATT,
+            skattekort.personId,
+            "Lagret skattekortresultat ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar}",
+        )
+        val id =
+            tx.updateAndReturnGeneratedKey(
+                Query(
+                    statement =
+                        """
+                        INSERT INTO skattekort (person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
+                        VALUES (:personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
+                        """.trimIndent(),
+                    paramMap =
                         mapOf(
-                            "skattekortId" to id,
-                            "opplysning" to tilleggsopplysning.value,
-                        )
-                    },
-                )
-            }
-            id ?: error("Failed to insert skattekort record")
+                            "personId" to skattekort.personId.value,
+                            "utstedtDato" to skattekort.utstedtDato?.toJavaLocalDate(),
+                            "identifikator" to skattekort.identifikator,
+                            "inntektsaar" to skattekort.inntektsaar,
+                            "kilde" to skattekort.kilde,
+                            "resultatForSkattekort" to skattekort.resultatForSkattekort.value,
+                        ),
+                ),
+            )
+        if (skattekort.forskuddstrekkList.isNotEmpty()) {
+            tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+                """
+                INSERT INTO forskuddstrekk (skattekort_id, trekk_kode, type, frikort_beloep, tabell_nummer, prosentsats, antall_mnd_for_trekk)
+                VALUES (:skattekortId, :trekk_kode, :type, :frikort_beloep, :tabell_nummer, :prosentsats, :antall_mnd_for_trekk)
+                """.trimIndent(),
+                skattekort.forskuddstrekkList.map { forskuddstrekk ->
+                    when (forskuddstrekk) {
+                        is Frikort ->
+                            mapOf(
+                                "skattekortId" to id,
+                                "trekk_kode" to forskuddstrekk.trekkode.value,
+                                "type" to FRIKORT.type,
+                                "frikort_beloep" to forskuddstrekk.frikortBeloep,
+                                "tabell_nummer" to null,
+                                "prosentsats" to null,
+                                "antall_mnd_for_trekk" to null,
+                            )
+
+                        is Prosentkort ->
+                            mapOf(
+                                "skattekortId" to id,
+                                "trekk_kode" to forskuddstrekk.trekkode.value,
+                                "type" to PROSENTKORT.type,
+                                "frikort_beloep" to null,
+                                "tabell_nummer" to null,
+                                "prosentsats" to forskuddstrekk.prosentSats,
+                                "antall_mnd_for_trekk" to null,
+                            )
+
+                        is Tabellkort ->
+                            mapOf(
+                                "skattekortId" to id,
+                                "trekk_kode" to forskuddstrekk.trekkode.value,
+                                "type" to TABELLKORT.type,
+                                "frikort_beloep" to null,
+                                "tabell_nummer" to forskuddstrekk.tabellNummer,
+                                "prosentsats" to forskuddstrekk.prosentSats,
+                                "antall_mnd_for_trekk" to forskuddstrekk.antallMndForTrekk,
+                            )
+                    }
+                },
+            )
         }
+        if (skattekort.tilleggsopplysningList.isNotEmpty()) {
+            tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+                """
+                INSERT INTO skattekort_tilleggsopplysning (skattekort_id, opplysning)
+                VALUES (:skattekortId, :opplysning)
+                """.trimIndent(),
+                skattekort.tilleggsopplysningList.map { tilleggsopplysning ->
+                    mapOf(
+                        "skattekortId" to id,
+                        "opplysning" to tilleggsopplysning.value,
+                    )
+                },
+            )
+        }
+        return id ?: error("Failed to insert skattekort record")
+    }
 
     fun findAllByPersonId(
         tx: TransactionalSession,
@@ -153,7 +152,7 @@ object SkattekortRepository {
                         ft
                     }
                 },
-            ).filterNotNull()
+            )
 
     private fun findAllTilleggsopplysningBySkattekortId(
         tx: TransactionalSession,
@@ -179,7 +178,7 @@ object SkattekortRepository {
                         to
                     }
                 },
-            ).filterNotNull()
+            )
 
     fun findLatestByPersonId(
         tx: TransactionalSession,

@@ -5,6 +5,7 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
@@ -31,10 +32,11 @@ import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV
+import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
@@ -52,7 +54,6 @@ class BestillingServiceTest :
             BestillingService(
                 DbListener.dataSource,
                 skatteetatenClient,
-                PersonService(DbListener.dataSource),
                 FakeUnleashIntegration(),
                 PropertiesConfig.ApplicationProperties("", Environment.TEST, false, false, "", "", ""),
             )
@@ -81,7 +82,7 @@ class BestillingServiceTest :
 
                 bestillingService.opprettBestillingsbatch()
 
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
                 assertSoftly {
@@ -138,7 +139,7 @@ class BestillingServiceTest :
                 bestillingService.opprettBestillingsbatch()
                 bestillingService.opprettBestillingsbatch()
 
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
                 assertSoftly("Før 15. desember") {
@@ -172,7 +173,7 @@ class BestillingServiceTest :
             withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
                 bestillingService.opprettBestillingsbatch()
 
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
                 assertSoftly("Etter 15.desember") {
@@ -233,7 +234,7 @@ class BestillingServiceTest :
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
             assertSoftly {
@@ -330,7 +331,7 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
             assertSoftly {
@@ -403,7 +404,7 @@ class BestillingServiceTest :
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
             assertSoftly("Etter første kjøring skal en batch få status Ferdig") {
@@ -451,7 +452,7 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatchesSecondRun: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val bestillingsAfterSecondRun: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfterSecondRun: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val skattekortAfterSecondRun: List<Skattekort> =
                 tx {
                     listOf(
@@ -492,7 +493,7 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val skattekort: List<Skattekort> =
                 tx {
                     SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025, adminRole = false)
@@ -562,7 +563,7 @@ class BestillingServiceTest :
                 tx {
                     SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false)
                 }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
 
             assertSoftly {
                 updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
@@ -584,10 +585,57 @@ class BestillingServiceTest :
                                 listOf(
                                     aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
                                     aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                    aForskuddstrekk("Prosentkort", Trekkode.PENSJON_FRA_NAV, 13.00),
+                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.00),
                                 )
                         }
                         tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
+                        kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                    }
+                }
+            }
+        }
+        test("ikkeTrekkplikt") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    anArbeidstaker(
+                        resultat = IkkeTrekkplikt,
+                        fnr = "01010100001",
+                        inntektsaar = "2025",
+                    ),
+                )
+            databaseHas(
+                aPerson(personId = 1L, fnr = "01010100001"),
+                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val skattekort: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false)
+                }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+
+            assertSoftly {
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+
+                bestillingsAfter shouldBe emptyList()
+
+                skattekort shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        resultatForSkattekort shouldBe IkkeTrekkplikt
+                        identifikator shouldBe null
+                        withClue("Should generate frikort") {
+                            forskuddstrekkList shouldContainExactly
+                                listOf(
+                                    aForskuddstrekk("Frikort", LOENN_FRA_NAV, frikortbeløp = null),
+                                    aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),
+                                    aForskuddstrekk("Frikort", UFOERETRYGD_FRA_NAV, frikortbeløp = null),
+                                )
+                        }
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
                     }
                 }
@@ -623,13 +671,15 @@ class BestillingServiceTest :
                 aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 1L),
             )
 
-            bestillingService.hentSkattekort()
+            shouldThrow<RuntimeException> {
+                bestillingService.hentSkattekort()
+            }
 
             val updatedBatches = tx(BestillingBatchRepository::list)
             val auditPerson1: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(1L)) }
             val auditPerson2: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(2L)) }
             val auditPerson3: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(3L)) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
 
             assertSoftly {
                 withClue("Should mark batch as FEILET") {
@@ -673,7 +723,7 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getAllBestilling)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
 
             assertSoftly {

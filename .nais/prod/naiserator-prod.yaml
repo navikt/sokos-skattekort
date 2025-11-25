@@ -56,9 +56,5 @@ spec:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
 
   env:
-    - name: USE_AUTHENTICATION
-      value: "true"
-    - name: JDK_JAVA_OPTIONS
-      value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
     - name: APPLICATION_ENV
       value: PROD

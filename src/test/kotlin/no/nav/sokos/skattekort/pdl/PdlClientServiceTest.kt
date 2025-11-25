@@ -46,10 +46,10 @@ internal class PdlClientServiceTest :
 
             response.size shouldBe 3
 
-            response["12345678912"]?.size shouldBe 2
-            response["12345678912"]?.get(0)?.historisk shouldBe true
-            response["12345678912"]?.get(1)?.historisk shouldBe false
-            response["12345678912"]?.get(0)?.gruppe shouldBe IdentGruppe.FOLKEREGISTERIDENT
+            response["24519539620"]?.size shouldBe 2
+            response["24519539620"]?.get(0)?.historisk shouldBe true
+            response["24519539620"]?.get(1)?.historisk shouldBe false
+            response["24519539620"]?.get(0)?.gruppe shouldBe IdentGruppe.FOLKEREGISTERIDENT
 
             response["01111953488"]?.size shouldBe 1
             response["01111953488"]?.get(0)?.historisk shouldBe false

@@ -89,9 +89,6 @@ spec:
             value: "on"
           - name: "cloudsql.logical_decoding"
             value: "on"
-  webproxy: true
-  vault:
-    enabled: true
   envFrom:
     - secret: sokos-skattekort-mq-credentials
     - secret: sokos-skattekort-unleash-api-token

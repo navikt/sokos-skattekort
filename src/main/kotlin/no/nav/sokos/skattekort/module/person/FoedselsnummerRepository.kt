@@ -1,11 +1,10 @@
 package no.nav.sokos.skattekort.module.person
 
+import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-
-import no.nav.sokos.skattekort.util.SQLUtils.asMap
 
 object FoedselsnummerRepository {
     fun insert(
@@ -18,7 +17,11 @@ object FoedselsnummerRepository {
                 INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr) 
                 VALUES (:personId, :gjelderFom, :fnr)
                 """.trimIndent(),
-                foedselsnummer.asMap(),
+                mapOf(
+                    "personId" to foedselsnummer.personId?.value,
+                    "gjelderFom" to foedselsnummer.gjelderFom.toJavaLocalDate(),
+                    "fnr" to foedselsnummer.fnr.value,
+                ),
             ),
         )
 
@@ -52,8 +55,9 @@ object FoedselsnummerRepository {
             queryOf(
                 """
                 SELECT person_id FROM foedselsnumre
-                WHERE fnr = ANY(ARRAY[${personidentifikatorList.joinToString(separator = "','", prefix = "'", postfix = "'")}]))
+                WHERE fnr = ANY(?)
                 """.trimIndent(),
+                personidentifikatorList.toTypedArray(),
             ),
             extractor = { row -> PersonId(row.long("person_id")) },
         )

@@ -1,0 +1,22 @@
+{
+  "errors": [
+    {
+      "message": "Ingen identer angitt.",
+      "locations": [
+        {
+          "line": 2,
+          "column": 3
+        }
+      ],
+      "path": [
+        "hentIdenterBolk"
+      ],
+      "extensions": {
+        "id": "mangler_ident",
+        "code": "bad_request",
+        "classification": "ValidationError"
+      }
+    }
+  ],
+  "data": null
+}

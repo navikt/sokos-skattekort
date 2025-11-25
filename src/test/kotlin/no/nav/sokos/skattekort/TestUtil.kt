@@ -15,7 +15,6 @@ import io.ktor.server.application.install
 import io.ktor.server.application.pluginOrNull
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.plugins.di.DI
-import io.ktor.server.plugins.di.DefaultConflictPolicy
 import io.ktor.server.plugins.di.DependencyConflictPolicy
 import io.ktor.server.plugins.di.DependencyConflictResult
 import io.ktor.server.plugins.di.DependencyInjectionConfig
@@ -120,11 +119,8 @@ object TestUtil {
 
     private fun DependencyInjectionConfig.configureShutdownBehavior() {
         conflictPolicy =
-            DependencyConflictPolicy { prev, current ->
-                when (val result = DefaultConflictPolicy.resolve(prev, current)) {
-                    is DependencyConflictResult.Conflict -> DependencyConflictResult.KeepPrevious
-                    else -> result
-                }
+            DependencyConflictPolicy { _, _ ->
+                DependencyConflictResult.KeepPrevious
             }
 
         onShutdown = { dependencyKey, instance ->

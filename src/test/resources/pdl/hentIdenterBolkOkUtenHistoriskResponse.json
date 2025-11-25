@@ -5,11 +5,6 @@
         "ident": "24519539620",
         "identer": [
           {
-            "ident": "01010100001",
-            "historisk": true,
-            "gruppe": "FOLKEREGISTERIDENT"
-          },
-          {
             "ident": "24519539620",
             "historisk": false,
             "gruppe": "FOLKEREGISTERIDENT"

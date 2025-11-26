@@ -90,14 +90,12 @@ class ForespoerselService(
                     brukerId = brukerId,
                 )
 
-            AbonnementId(
-                AbonnementRepository.insert(
-                    tx = tx,
-                    forespoerselId = forespoerselId,
-                    inntektsaar = forespoerselInput.inntektsaar,
-                    personId = person.id!!.value,
-                ) ?: throw IllegalStateException("Kunne ikke lage abonnement"),
-            )
+            AbonnementRepository.insert(
+                tx = tx,
+                forespoerselId = forespoerselId,
+                inntektsaar = forespoerselInput.inntektsaar,
+                personId = person.id!!.value,
+            ) ?: throw IllegalStateException("Kunne ikke lage abonnement")
 
             val skattekort =
                 SkattekortRepository

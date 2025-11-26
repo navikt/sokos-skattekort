@@ -77,7 +77,7 @@ object UtsendingRepository {
         tx.single(
             queryOf(
                 """
-                SELECT id, abonnement_id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
+                SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
                 WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
                 """.trimIndent(),
                 mapOf(

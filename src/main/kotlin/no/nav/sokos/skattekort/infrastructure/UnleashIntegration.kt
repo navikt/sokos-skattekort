@@ -19,6 +19,8 @@ open class UnleashIntegration(
 
     fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled", true)
 
+    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled", true)
+
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||
             appProperties.environment == PropertiesConfig.Environment.LOCAL

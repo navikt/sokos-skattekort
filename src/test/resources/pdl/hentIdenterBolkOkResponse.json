@@ -1,0 +1,41 @@
+{
+  "data": {
+    "hentIdenterBolk": [
+      {
+        "ident": "24519539620",
+        "identer": [
+          {
+            "ident": "01010100001",
+            "historisk": true,
+            "gruppe": "FOLKEREGISTERIDENT"
+          },
+          {
+            "ident": "24519539620",
+            "historisk": false,
+            "gruppe": "FOLKEREGISTERIDENT"
+          }
+        ]
+      },
+      {
+        "ident": "01111953488",
+        "identer": [
+          {
+            "ident": "01111953488",
+            "historisk": false,
+            "gruppe": "FOLKEREGISTERIDENT"
+          }
+        ]
+      },
+      {
+        "ident": "40074203226",
+        "identer": [
+          {
+            "ident": "30074203236",
+            "historisk": false,
+            "gruppe": "FOLKEREGISTERIDENT"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -16,21 +16,18 @@ import mu.KotlinLogging
 
 import no.nav.pdl.HentIdenterBolk
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
 private val logger = KotlinLogging.logger {}
 
 class PdlClientService(
     private val client: HttpClient,
+    @Named("pdlUrl") private val pdlUrl: String,
     @Named("pdlAzuredTokenClient") private val azuredTokenClient: AzuredTokenClient,
 ) {
-    private val pdlUrl: String = PropertiesConfig.getPdlProperties().pdlUrl
-
     suspend fun getIdenterBolk(identer: List<String>): Map<String, List<IdentInformasjon>> {
         val request = HentIdenterBolk(HentIdenterBolk.Variables(identer))
 
-        logger.info { "Henter accesstoken for oppslag mot PDL" }
         val accessToken = azuredTokenClient.getSystemToken()
 
         logger.info { "Henter identer fra PDL" }

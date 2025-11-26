@@ -16,15 +16,16 @@ import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
 fun aForskuddstrekk(
     type: String,
     trekkode: Trekkode,
-    prosentSats: Double,
+    prosentSats: Double? = null,
     antMndForTrekk: Double? = null,
     tabellNummer: String? = null,
+    frikortbeløp: Int? = null,
 ): Forskuddstrekk =
     when (type) {
         Prosentkort::class.simpleName ->
             Prosentkort(
                 trekkode,
-                BigDecimal(prosentSats).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
                 antMndForTrekk?.let { belop -> BigDecimal(belop).setScale(1, RoundingMode.HALF_UP) },
             )
 
@@ -32,8 +33,14 @@ fun aForskuddstrekk(
             Tabellkort(
                 trekkode,
                 tabellNummer!!,
-                BigDecimal(prosentSats).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
                 BigDecimal(antMndForTrekk ?: 12.0).setScale(1, RoundingMode.HALF_UP),
+            )
+
+        Frikort::class.simpleName ->
+            Frikort(
+                trekkode,
+                frikortbeløp,
             )
 
         else -> error("Ukjent forskuddstrekk-type: $type")

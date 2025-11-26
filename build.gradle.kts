@@ -1,5 +1,3 @@
-
-
 import kotlinx.kover.gradle.plugin.dsl.tasks.KoverReport
 
 import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
@@ -59,6 +57,7 @@ val avroVersion = "1.12.1"
 val kafkaAvroSerializerVersion = "8.1.0"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
+val wiremockVersion = "3.13.1"
 val unleashedVersion = "11.1.1"
 
 dependencies {
@@ -147,9 +146,11 @@ dependencies {
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
+    testImplementation("org.testcontainers:kafka:$testcontainersVersion")
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
     testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
+    testImplementation("org.wiremock:wiremock:$wiremockVersion")
 }
 
 // Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5

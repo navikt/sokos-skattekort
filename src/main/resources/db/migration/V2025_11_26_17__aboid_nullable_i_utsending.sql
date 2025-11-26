@@ -1,0 +1,1 @@
+ALTER TABLE utsendinger ALTER COLUMN abonnement_id DROP NOT NULL;

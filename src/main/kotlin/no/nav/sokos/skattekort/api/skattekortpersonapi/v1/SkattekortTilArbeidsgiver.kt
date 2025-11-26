@@ -113,8 +113,9 @@ sealed interface Forskuddstrekk {
                 is no.nav.sokos.skattekort.module.skattekort.Frikort ->
                     Frikort(
                         Trekkode.fromValue(forskuddstrekk.trekkode.value),
-                        BigDecimal(forskuddstrekk.frikortBeloep),
+                        forskuddstrekk.frikortBeloep?.let { BigDecimal(it) },
                     )
+
                 is Tabellkort ->
                     Trekktabell(
                         trekkode = Trekkode.fromValue(forskuddstrekk.trekkode.value),
@@ -122,6 +123,7 @@ sealed interface Forskuddstrekk {
                         prosentsats = forskuddstrekk.prosentSats,
                         antallMaanederForTrekk = forskuddstrekk.antallMndForTrekk,
                     )
+
                 is Prosentkort ->
                     Trekkprosent(
                         trekkode = Trekkode.fromValue(forskuddstrekk.trekkode.value),

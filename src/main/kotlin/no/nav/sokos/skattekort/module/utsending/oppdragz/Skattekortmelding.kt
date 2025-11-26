@@ -25,7 +25,7 @@ data class Skattekortmelding(
                 forskuddstrekk =
                     sk.forskuddstrekkList.map {
                         when (it) {
-                            is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(it.trekkode.value), BigDecimal(it.frikortBeloep))
+                            is no.nav.sokos.skattekort.module.skattekort.Frikort -> Frikort(Trekkode.fromValue(it.trekkode.value), it.frikortBeloep?.let { belop -> BigDecimal(belop) })
                             is Prosentkort -> Trekkprosent(Trekkode.fromValue(it.trekkode.value), it.prosentSats, it.antallMndForTrekk)
                             is Tabellkort -> Trekktabell(Trekkode.fromValue(it.trekkode.value), Tabelltype.TREKKTABELL_FOR_LOENN, it.tabellNummer, it.prosentSats, it.antallMndForTrekk)
                         }

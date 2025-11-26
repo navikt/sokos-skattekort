@@ -74,7 +74,7 @@ class ForespoerselServiceTest :
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 2
                     abonnementList.first().inntektsaar shouldBe 2025
-                    abonnementList.get(1).inntektsaar shouldBe 2026
+                    abonnementList[1].inntektsaar shouldBe 2026
 
                     val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
                     bestillingList.size shouldBe 2
@@ -178,7 +178,7 @@ class ForespoerselServiceTest :
                             size shouldBe 1
                             shouldContainAllIgnoringFields(
                                 listOf(
-                                    Utsending(UtsendingId(1), AbonnementId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                                    Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
                                 ),
                                 Utsending::opprettet,
                             )

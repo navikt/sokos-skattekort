@@ -14,11 +14,10 @@ object UtsendingRepository {
         tx.updateAndReturnGeneratedKey(
             queryOf(
                 """
-                INSERT INTO utsendinger (abonnement_id, fnr, inntektsaar, forsystem)
-                VALUES (:abonnementId, :fnr, :inntektsaar, :forsystem)
+                INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
+                VALUES (:fnr, :inntektsaar, :forsystem)
                 """.trimIndent(),
                 mapOf(
-                    "abonnementId" to utsending.abonnementId.value,
                     "fnr" to utsending.fnr.value,
                     "inntektsaar" to utsending.inntektsaar,
                     "forsystem" to utsending.forsystem.value,
@@ -78,7 +77,7 @@ object UtsendingRepository {
         tx.single(
             queryOf(
                 """
-                SELECT id, abonnement_id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
+                SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
                 WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
                 """.trimIndent(),
                 mapOf(

@@ -55,22 +55,21 @@ object AbonnementRepository {
             mapToAbonnement,
         )
 
-    fun finnAktiveAbonnement(
+    fun finnAktiveSystemer(
         tx: TransactionalSession,
         personId: PersonId,
-    ): List<Pair<AbonnementId, Forsystem>> =
+        inntektsaar: Int,
+    ): List<Forsystem> =
         tx.list(
             queryOf(
-                """SELECT a.id as aboid, f.forsystem as forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id WHERE a.person_id = :personId""",
+                """SELECT distinct f.forsystem as forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id WHERE a.person_id = :personId and a.inntektsaar = :inntektsaar""",
                 mapOf(
                     "personId" to personId.value,
+                    "inntektsaar" to inntektsaar,
                 ),
             ),
             { row ->
-                Pair(
-                    AbonnementId(row.long("aboid")),
-                    Forsystem.fromValue(row.string("forsystem")),
-                )
+                Forsystem.fromValue(row.string("forsystem"))
             },
         )
 

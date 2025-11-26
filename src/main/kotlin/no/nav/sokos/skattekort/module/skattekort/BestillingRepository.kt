@@ -60,7 +60,7 @@ object BestillingRepository {
     fun updateBestillingsWithBatchId(
         tx: TransactionalSession,
         bestillingsIds: List<Long>,
-        bestillingsbatchId: Long,
+        bestillingsbatchId: Long?,
     ) {
         if (bestillingsIds.isEmpty()) return
         tx.batchPreparedNamedStatement(

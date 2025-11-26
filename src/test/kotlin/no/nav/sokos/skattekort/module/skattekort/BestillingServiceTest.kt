@@ -42,6 +42,7 @@ import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
 
 class BestillingServiceTest :
@@ -529,6 +530,64 @@ class BestillingServiceTest :
                 person2 shouldNotBeNull {
                     flagget shouldBe false
                 }
+            }
+        }
+
+        test("UgyldigOrganisasjonsnummer") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                HentSkattekortResponse(
+                    status = "FORESPOERSEL_OK",
+                    arbeidsgiver =
+                        listOf(
+                            no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiver(
+                                arbeidsgiveridentifikator =
+                                    no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiveridentifikator(
+                                        organisasjonsnummer = "666",
+                                    ),
+                                arbeidstaker =
+                                    listOf(
+                                        anArbeidstaker(
+                                            resultat = ResultatForSkattekort.UgyldigOrganisasjonsnummer,
+                                            fnr = "01010100001",
+                                            inntektsaar = "2025",
+                                        ),
+                                    ),
+                            ),
+                        ),
+                )
+
+            databaseHas(
+                aPerson(1L, "01010100001"),
+                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+            )
+
+            shouldThrow<UgyldigOrganisasjonsnummerException> {
+                bestillingService.hentSkattekort()
+            }
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+            val skattekort: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025, adminRole = false)
+                }
+            val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
+
+            updatedBatches shouldNotBeNull {
+                size shouldBe 1
+                forOne { it.status shouldBe BestillingBatchStatus.Feilet.value }
+            }
+
+            bestillingsAfter shouldNotBeNull {
+                size shouldBe 1
+                forOne { it.bestillingsbatchId shouldBe null }
+            }
+
+            skattekort shouldBe emptyList()
+
+            person1 shouldNotBeNull {
+                flagget shouldBe false
             }
         }
 

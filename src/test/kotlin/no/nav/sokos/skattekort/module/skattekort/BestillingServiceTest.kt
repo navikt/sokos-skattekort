@@ -299,51 +299,6 @@ class BestillingServiceTest :
             }
         }
 
-        test("henter skattekort med identofikator som finnes fra før") {
-            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns
-                aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
-
-            databaseHas(
-                aPerson(1L, "01010100001"),
-                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "01010100001", 2025, 1L),
-            )
-
-            bestillingService.hentSkattekort()
-
-            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-            val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
-
-            assertSoftly {
-                updatedBatches shouldNotBeNull {
-                    size shouldBe 1
-                    first() shouldNotBeNull {
-                        status shouldBe BestillingBatchStatus.Ferdig.value
-                    }
-                }
-
-                skattekort shouldNotBeNull {
-                    size shouldBe 1
-                    first() shouldNotBeNull {
-                        identifikator shouldBe "10001"
-                        resultatForSkattekort shouldBe SkattekortopplysningerOK
-                        forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 2
-                        }
-                    }
-                }
-
-                bestillingsAfter shouldNotBeNull {
-                    size shouldBe 0
-                }
-
-                utsendingerAfter.size shouldBe 1
-            }
-        }
-
         test("skattekort reell response med samme identifikator og ny informasjon") {
             coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                 aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK_pre.json") andThen

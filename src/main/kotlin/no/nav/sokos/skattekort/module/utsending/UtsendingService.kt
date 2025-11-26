@@ -96,9 +96,13 @@ class UtsendingService(
             val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
-            val message = jmsSession.createTextMessage(copybook)
-            jmsProducer.send(message)
-            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt")
+            if (!copybook.trim().isEmpty()) {
+                val message = jmsSession.createTextMessage(copybook)
+                jmsProducer.send(message)
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt")
+            } else {
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
+            }
         } catch (e: Exception) {
             logger.error(e) { "Feil under sending til oppdragz" }
             personId?.let { id ->

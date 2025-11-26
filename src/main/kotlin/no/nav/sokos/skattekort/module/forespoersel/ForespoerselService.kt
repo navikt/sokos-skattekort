@@ -90,15 +90,14 @@ class ForespoerselService(
                     brukerId = brukerId,
                 )
 
-            val abonnementId =
-                AbonnementId(
-                    AbonnementRepository.insert(
-                        tx = tx,
-                        forespoerselId = forespoerselId,
-                        inntektsaar = forespoerselInput.inntektsaar,
-                        personId = person.id!!.value,
-                    ) ?: throw IllegalStateException("Kunne ikke lage abonnement"),
-                )
+            AbonnementId(
+                AbonnementRepository.insert(
+                    tx = tx,
+                    forespoerselId = forespoerselId,
+                    inntektsaar = forespoerselInput.inntektsaar,
+                    personId = person.id!!.value,
+                ) ?: throw IllegalStateException("Kunne ikke lage abonnement"),
+            )
 
             val skattekort =
                 SkattekortRepository
@@ -126,7 +125,7 @@ class ForespoerselService(
                         "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
                     }
                 } else {
-                    UtsendingRepository.insert(tx, Utsending(null, abonnementId, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
+                    UtsendingRepository.insert(tx, Utsending(null, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
                 }
             }
         }

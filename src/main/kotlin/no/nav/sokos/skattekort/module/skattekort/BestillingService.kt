@@ -193,11 +193,10 @@ class BestillingService(
         person: Person,
         inntektsaar: Int,
     ) {
-        AbonnementRepository.finnAktiveAbonnement(tx, person.id!!).forEach { (aboid, system) ->
+        AbonnementRepository.finnAktiveSystemer(tx, person.id!!, inntektsaar).forEach { system ->
             UtsendingRepository.insert(
                 tx,
                 Utsending(
-                    abonnementId = aboid,
                     inntektsaar = inntektsaar,
                     fnr = person.foedselsnummer.fnr,
                     forsystem = system,

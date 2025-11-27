@@ -38,18 +38,20 @@ class UtsendingService(
 
     fun handleUtsending() {
         if (featureToggles.isUtsendingEnabled()) {
-            dataSource.transaction { tx ->
-                val utsendinger: List<Utsending> =
-                    try {
+            val utsendinger: List<Utsending> =
+                try {
+                    dataSource.transaction { tx ->
                         UtsendingRepository.getAllUtsendinger(tx)
-                    } catch (e: Exception) {
-                        logger.error("Feil under henting av utsendinger", e)
-                        throw e
                     }
-                utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
-                utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
-                utsendinger
-                    .forEach { utsending ->
+                } catch (e: Exception) {
+                    logger.error("Feil under henting av utsendinger", e)
+                    throw e
+                }
+            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
+            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
+            utsendinger
+                .forEach { utsending ->
+                    dataSource.transaction { tx ->
                         when (utsending.forsystem) {
                             Forsystem.OPPDRAGSSYSTEMET -> {
                                 try {
@@ -72,9 +74,12 @@ class UtsendingService(
                             }
                         }
                     }
-            }
+                }
         } else {
             logger.debug("Utsending er disablet")
+        }
+        dataSource.transaction { tx ->
+            UtsendingRepository.slettGamleBevis(tx)
         }
     }
 
@@ -96,9 +101,18 @@ class UtsendingService(
             val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
-            val message = jmsSession.createTextMessage(copybook)
-            jmsProducer.send(message)
-            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt")
+
+            if (featureToggles.isBevisForSendingEnabled()) {
+                UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, fnr, copybook)
+            }
+
+            if (!copybook.trim().isEmpty()) {
+                val message = jmsSession.createTextMessage(copybook)
+                jmsProducer.send(message)
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt")
+            } else {
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
+            }
         } catch (e: Exception) {
             logger.error(e) { "Feil under sending til oppdragz" }
             personId?.let { id ->

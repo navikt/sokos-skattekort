@@ -33,9 +33,6 @@ import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillSkattekortR
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
-// TODO: Metrikk: bestillinger per system
-// TODO: Metrikk for varsling: tid siden siste mottatte bestilling
-// TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
@@ -119,6 +116,19 @@ class BestillingService(
                                     BestillingRepository.deleteProcessedBestillings(tx, batchId)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet")
                                 }
+                                ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
+                                    // her har det skjedd noe alvorlig feil.
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                                    logger.error(
+                                        "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
+                                    )
+                                }
+                                ResponseStatus.INGEN_ENDRINGER.name -> {
+                                    // ingenting å se her
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                                    BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                                }
 
                                 else -> {
                                     logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
@@ -137,6 +147,23 @@ class BestillingService(
                             BestillingRepository.deleteProcessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
+                    } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
+                        dataSource.transaction { errorTx ->
+                            logger.error(ugyldigOrgnummerEx) { "Henting av skattekort for batch $batchId feilet: ${ugyldigOrgnummerEx.message}" }
+                            BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)
+                            BestillingRepository.updateBestillingsWithBatchId(
+                                errorTx,
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { it.id!!.id },
+                                null,
+                            )
+                            AuditRepository.insertBatch(
+                                errorTx,
+                                AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                "Batchhenting av skattekort feilet pga. ugyldig organisasjonsnummer",
+                            )
+                        }
+                        throw ugyldigOrgnummerEx
                     } catch (ex: Exception) {
                         dataSource.transaction { errorTx ->
                             logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
@@ -179,11 +206,10 @@ class BestillingService(
         person: Person,
         inntektsaar: Int,
     ) {
-        AbonnementRepository.finnAktiveAbonnement(tx, person.id!!).forEach { (aboid, system) ->
+        AbonnementRepository.finnAktiveSystemer(tx, person.id!!, inntektsaar).forEach { system ->
             UtsendingRepository.insert(
                 tx,
                 Utsending(
-                    abonnementId = aboid,
                     inntektsaar = inntektsaar,
                     fnr = person.foedselsnummer.fnr,
                     forsystem = system,
@@ -253,6 +279,10 @@ class BestillingService(
                     forskuddstrekkList = forskuddstrekkList,
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
+            }
+
+            ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
+                throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
             }
 
             else ->
@@ -336,6 +366,19 @@ class BestillingService(
                                 handleNyttSkattekort(tx, arbeidstaker)
                             }
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                        }
+                        ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
+                            // her har det skjedd noe alvorlig feil.
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                            logger.error(
+                                "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
+                            )
+                        }
+                        ResponseStatus.INGEN_ENDRINGER.name -> {
+                            // ingenting å se her
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            BestillingRepository.deleteProcessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
 

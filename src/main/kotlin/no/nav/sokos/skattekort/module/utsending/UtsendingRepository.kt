@@ -5,6 +5,7 @@ import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.SkattekortId
 
 object UtsendingRepository {
     fun insert(
@@ -14,11 +15,10 @@ object UtsendingRepository {
         tx.updateAndReturnGeneratedKey(
             queryOf(
                 """
-                INSERT INTO utsendinger (abonnement_id, fnr, inntektsaar, forsystem)
-                VALUES (:abonnementId, :fnr, :inntektsaar, :forsystem)
+                INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
+                VALUES (:fnr, :inntektsaar, :forsystem)
                 """.trimIndent(),
                 mapOf(
-                    "abonnementId" to utsending.abonnementId.value,
                     "fnr" to utsending.fnr.value,
                     "inntektsaar" to utsending.inntektsaar,
                     "forsystem" to utsending.forsystem.value,
@@ -78,7 +78,7 @@ object UtsendingRepository {
         tx.single(
             queryOf(
                 """
-                SELECT id, abonnement_id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
+                SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
                 WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
                 """.trimIndent(),
                 mapOf(
@@ -94,9 +94,39 @@ object UtsendingRepository {
         tx.single(
             queryOf(
                 """
-                EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM utsendinger
+                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(opprettet), NOW())) as earliest_oppdatert FROM utsendinger
                 """.trimIndent(),
             ),
             extractor = { row -> row.double("earliest_opprettet") },
         ) ?: error("Should always return a number")
+
+    fun lagreBevis(
+        tx: TransactionalSession,
+        id: SkattekortId,
+        forsystem: Forsystem,
+        fnr: Personidentifikator,
+        copybook: String,
+    ) {
+        tx.update(
+            queryOf(
+                """INSERT INTO bevis_sending
+                    |(skattekort_id, forsystem, fnr, sending) VALUES (:id, :forsystem, :fnr, :sending)
+                """.trimMargin(),
+                mapOf(
+                    "id" to id.value,
+                    "forsystem" to forsystem.value,
+                    "fnr" to fnr.value,
+                    "sending" to copybook,
+                ),
+            ),
+        )
+    }
+
+    fun slettGamleBevis(tx: TransactionalSession) {
+        tx.update(
+            queryOf(
+                """DELETE FROM bevis_sending WHERE opprettet < now() - interval '7 days'""",
+            ),
+        )
+    }
 }

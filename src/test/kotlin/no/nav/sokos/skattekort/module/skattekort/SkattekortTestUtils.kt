@@ -72,9 +72,12 @@ fun anArbeidstaker(
         inntektsaar = inntektsaar,
     )
 
-fun aHentSkattekortResponse(vararg arbeidstakere: Arbeidstaker): HentSkattekortResponse =
+fun aHentSkattekortResponse(
+    vararg arbeidstakere: Arbeidstaker,
+    response: ResponseStatus = ResponseStatus.FORESPOERSEL_OK,
+): HentSkattekortResponse =
     HentSkattekortResponse(
-        status = "FORESPOERSEL_OK",
+        status = response.name,
         arbeidsgiver =
             listOf(
                 no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiver(

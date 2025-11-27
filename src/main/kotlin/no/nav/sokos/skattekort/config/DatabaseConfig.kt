@@ -62,6 +62,13 @@ object DatabaseConfig {
                     portNumbers = intArrayOf(postgresProperties.port.toInt())
                     connectionTimeout = Duration.ofSeconds(10).toMillis()
                     initializationFailTimeout = Duration.ofMinutes(5).toMillis()
+
+                    if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+                        sslMode = postgresProperties.sslMode
+                        sslCert = postgresProperties.sslCert
+                        sslKey = postgresProperties.sslKey
+                        sslRootCert = postgresProperties.sslRootCert
+                    }
                 }
             metricsTrackerFactory = MicrometerMetricsTrackerFactory(prometheusMeterRegistry)
         }

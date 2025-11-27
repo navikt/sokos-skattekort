@@ -63,14 +63,21 @@ object PropertiesConfig {
             bestillingOrgnr = get("BESTILLING_ORGNR"),
         )
 
-    fun getPostgresProperties(): PostgresProperties =
-        PostgresProperties(
-            name = get("DB_DATABASE"),
-            host = getOrEmpty("DB_HOST"),
-            port = getOrEmpty("DB_PORT"),
-            username = get("DB_USERNAME"),
-            password = get("DB_PASSWORD"),
-        )
+    fun getPostgresProperties(): PostgresProperties {
+        val postgresProperties =
+            PostgresProperties(
+                name = get("DB_DATABASE"),
+                host = getOrEmpty("DB_HOST"),
+                port = getOrEmpty("DB_PORT"),
+                username = get("DB_USERNAME"),
+                password = get("DB_PASSWORD"),
+                sslCert = getOrEmpty("DB_SSLCERT"),
+                sslKey = getOrEmpty("DB_SSLKEY"),
+                sslMode = get("DB_SSLMODE"),
+                sslRootCert = getOrEmpty("DB_SSLROOTCERT"),
+            )
+        return postgresProperties
+    }
 
     fun getMQProperties(): MQProperties =
         MQProperties(
@@ -151,6 +158,10 @@ object PropertiesConfig {
         val port: String,
         val username: String,
         val password: String,
+        val sslCert: String,
+        val sslKey: String,
+        val sslMode: String,
+        val sslRootCert: String,
     )
 
     data class MQProperties(

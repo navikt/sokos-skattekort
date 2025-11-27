@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort
 
+import javax.sql.DataSource
+
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -12,6 +14,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.JobTaskConfig
 import no.nav.sokos.skattekort.config.KafkaConfig
 import no.nav.sokos.skattekort.config.MQConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
@@ -35,6 +38,7 @@ import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.util.launchBackgroundTask
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -51,7 +55,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val useAuthentication = applicationProperties.useAuthentication
     logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
 
-    // DatabaseConfig.migrate()
+    DatabaseConfig.migrate()
 
     dependencies {
         provide { createHttpClient() }
@@ -93,33 +97,33 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     securityConfig(useAuthentication)
     routingConfig(useAuthentication, applicationState)
 
-//    val forespoerselListener: ForespoerselListener by dependencies
-//    forespoerselListener.start()
+    val forespoerselListener: ForespoerselListener by dependencies
+    forespoerselListener.start()
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
-//        val bestillingService: BestillingService by dependencies
-//        val utsendingService: UtsendingService by dependencies
-//        val scheduledTaskService: ScheduledTaskService by dependencies
-//        val metricsService: MetricsService by dependencies
-//        val dataSource: DataSource by dependencies
-//        JobTaskConfig
-//            .scheduler(
-//                bestillingService,
-//                utsendingService,
-//                scheduledTaskService,
-//                metricsService,
-//                dataSource,
-//            ).start()
+        val bestillingService: BestillingService by dependencies
+        val utsendingService: UtsendingService by dependencies
+        val scheduledTaskService: ScheduledTaskService by dependencies
+        val metricsService: MetricsService by dependencies
+        val dataSource: DataSource by dependencies
+        JobTaskConfig
+            .scheduler(
+                bestillingService,
+                utsendingService,
+                scheduledTaskService,
+                metricsService,
+                dataSource,
+            ).start()
     }
 
     val kafkaProperties = PropertiesConfig.getKafkaProperties()
     if (kafkaProperties.enabled) {
-//        applicationState.onReady = {
-//            val kafkaConsumerService: KafkaConsumerService by dependencies
-//            launchBackgroundTask(applicationState) {
-//                kafkaConsumerService.start(applicationState)
-//            }
-//        }
+        applicationState.onReady = {
+            val kafkaConsumerService: KafkaConsumerService by dependencies
+            launchBackgroundTask(applicationState) {
+                kafkaConsumerService.start(applicationState)
+            }
+        }
     }
 
     logger.info { "Kafka consumer is enabled: ${kafkaProperties.enabled}" }

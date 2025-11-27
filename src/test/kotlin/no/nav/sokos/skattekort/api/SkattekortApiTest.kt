@@ -8,7 +8,6 @@ import kotlinx.serialization.json.Json
 import com.atlassian.oai.validator.OpenApiInteractionValidator
 import com.atlassian.oai.validator.model.SimpleRequest
 import com.atlassian.oai.validator.model.SimpleResponse
-import io.kotest.core.annotation.Ignored
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
@@ -29,7 +28,6 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
-@Ignored
 @OptIn(ExperimentalTime::class)
 class SkattekortApiTest :
     FunSpec({

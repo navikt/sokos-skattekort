@@ -262,6 +262,60 @@ class BestillingServiceTest :
             }
         }
 
+        test("henter skattekort, ingen endring-respons") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    response = ResponseStatus.INGEN_ENDRINGER,
+                )
+
+            databaseHas(
+                aPerson(1L, "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, "01010100001", 2025, 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+            assertSoftly {
+                updatedBatches shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        status shouldBe BestillingBatchStatus.Ferdig.value
+                    }
+                }
+            }
+        }
+
+        test("henter skattekort, ugyldig inntektsaar returneres") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    response = ResponseStatus.UGYLDIG_INNTEKTSAAR,
+                )
+
+            databaseHas(
+                aPerson(1L, "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, "01010100001", 2025, 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+            assertSoftly {
+                updatedBatches shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        status shouldBe BestillingBatchStatus.Feilet.value
+                    }
+                }
+            }
+        }
+
         test("henter skattekort reell response") {
             coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns
                 aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")

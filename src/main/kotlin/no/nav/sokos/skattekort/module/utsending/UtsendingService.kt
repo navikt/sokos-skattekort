@@ -102,7 +102,7 @@ class UtsendingService(
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
 
-            if (featureToggles.isSBevisForSendingEnabled()) {
+            if (featureToggles.isBevisForSendingEnabled()) {
                 UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, fnr, copybook)
             }
 

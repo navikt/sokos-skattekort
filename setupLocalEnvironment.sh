@@ -23,7 +23,7 @@ kubectl config set-context --current --namespace=okonomi
 [[ "$(vault token lookup -format=json | jq '.data.display_name' -r; exit ${PIPESTATUS[0]})" =~ "nav.no" ]] &>/dev/null || vault login -method=oidc -no-print
 
 # Get AZURE system variables
-envValue=$(kubectl exec -it $(kubectl get pods | grep sokos-skattekort | cut -f1 -d' ') -c sokos-skattekort -- env | egrep "^AZURE|^MASKINPORTEN|^MQ_SERVICE"| sort)
+envValue=$(kubectl exec -it $(kubectl get pods | grep sokos-skattekort | cut -f1 -d' ') -c sokos-skattekort -- env | egrep "^AZURE|^MASKINPORTEN|^MQ_SERVICE|^NAIS_DATABASE_SKATTEKORT_USER_SOKOS_SKATTEKORT"| sort)
 
 POSTGRES_USER_MAP=$(vault kv get -field=data postgresql/preprod-fss/creds/sokos-skattekort-user)
 POSTGRES_ADMIN_MAP=$(vault kv get -field=data postgresql/preprod-fss/creds/sokos-skattekort-admin)

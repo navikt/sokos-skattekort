@@ -73,7 +73,7 @@ object PropertiesConfig {
                 password = get("DB_PASSWORD"),
                 sslCert = getOrEmpty("DB_SSLCERT"),
                 sslKey = getOrEmpty("DB_SSLKEY"),
-                sslMode = get("DB_SSLMODE"),
+                sslMode = getOrEmpty("DB_SSLMODE"),
                 sslRootCert = getOrEmpty("DB_SSLROOTCERT"),
             )
         return postgresProperties

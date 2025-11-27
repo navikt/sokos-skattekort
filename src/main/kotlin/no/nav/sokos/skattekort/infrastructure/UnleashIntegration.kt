@@ -15,11 +15,14 @@ open class UnleashIntegration(
     private lateinit var unleashClient: Unleash
     private val logger = KotlinLogging.logger {}
 
+    // Kill switcher:
     fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", true)
 
     fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled", true)
 
     fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled", true)
+
+    fun isSBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled", true)
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||

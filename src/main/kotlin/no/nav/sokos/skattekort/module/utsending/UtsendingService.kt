@@ -78,6 +78,9 @@ class UtsendingService(
         } else {
             logger.debug("Utsending er disablet")
         }
+        dataSource.transaction { tx ->
+            UtsendingRepository.slettGamleBevis(tx)
+        }
     }
 
     private fun sendTilOppdragz(
@@ -98,6 +101,11 @@ class UtsendingService(
             val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
+
+            if (featureToggles.isSBevisForSendingEnabled()) {
+                UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, fnr, copybook)
+            }
+
             if (!copybook.trim().isEmpty()) {
                 val message = jmsSession.createTextMessage(copybook)
                 jmsProducer.send(message)

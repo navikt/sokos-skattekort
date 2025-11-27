@@ -5,6 +5,7 @@ import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.SkattekortId
 
 object UtsendingRepository {
     fun insert(
@@ -98,4 +99,34 @@ object UtsendingRepository {
             ),
             extractor = { row -> row.double("earliest_opprettet") },
         ) ?: error("Should always return a number")
+
+    fun lagreBevis(
+        tx: TransactionalSession,
+        id: SkattekortId,
+        forsystem: Forsystem,
+        fnr: Personidentifikator,
+        copybook: String,
+    ) {
+        tx.update(
+            queryOf(
+                """INSERT INTO bevis_sending
+                    |(skattekort_id, forsystem, fnr, sending) VALUES (:id, :forsystem, :fnr, :sending)
+                """.trimMargin(),
+                mapOf(
+                    "id" to id.value,
+                    "forsystem" to forsystem.value,
+                    "fnr" to fnr.value,
+                    "sending" to copybook,
+                ),
+            ),
+        )
+    }
+
+    fun slettGamleBevis(tx: TransactionalSession) {
+        tx.update(
+            queryOf(
+                """DELETE FROM bevis_sending WHERE opprettet < now() - interval '7 days'""",
+            ),
+        )
+    }
 }

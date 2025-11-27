@@ -66,15 +66,12 @@ object PropertiesConfig {
     fun getPostgresProperties(): PostgresProperties {
         val postgresProperties =
             PostgresProperties(
+                jdbcUrl = getOrEmpty("DB_URL"),
                 name = get("DB_DATABASE"),
                 host = getOrEmpty("DB_HOST"),
                 port = getOrEmpty("DB_PORT"),
                 username = get("DB_USERNAME"),
                 password = get("DB_PASSWORD"),
-                sslCert = getOrEmpty("DB_SSLCERT"),
-                sslKey = getOrEmpty("DB_SSLKEY"),
-                sslMode = getOrEmpty("DB_SSLMODE"),
-                sslRootCert = getOrEmpty("DB_SSLROOTCERT"),
             )
         return postgresProperties
     }
@@ -153,15 +150,12 @@ object PropertiesConfig {
     )
 
     data class PostgresProperties(
+        val jdbcUrl: String,
         val name: String,
         val host: String,
         val port: String,
         val username: String,
         val password: String,
-        val sslCert: String,
-        val sslKey: String,
-        val sslMode: String,
-        val sslRootCert: String,
     )
 
     data class MQProperties(

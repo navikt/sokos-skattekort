@@ -55,20 +55,18 @@ object DatabaseConfig {
             transactionIsolation = "TRANSACTION_SERIALIZABLE"
             this.dataSource =
                 PGSimpleDataSource().apply {
-                    user = postgresProperties.username
-                    password = postgresProperties.password
-                    serverNames = arrayOf(postgresProperties.host)
-                    databaseName = postgresProperties.name
-                    portNumbers = intArrayOf(postgresProperties.port.toInt())
+                    if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+                        jdbcUrl = postgresProperties.jdbcUrl
+                    } else {
+                        user = postgresProperties.username
+                        password = postgresProperties.password
+                        serverNames = arrayOf(postgresProperties.host)
+                        databaseName = postgresProperties.name
+                        portNumbers = intArrayOf(postgresProperties.port.toInt())
+                    }
+
                     connectionTimeout = Duration.ofSeconds(10).toMillis()
                     initializationFailTimeout = Duration.ofMinutes(5).toMillis()
-
-                    if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
-                        sslMode = postgresProperties.sslMode
-                        sslCert = postgresProperties.sslCert
-                        sslKey = postgresProperties.sslKey
-                        sslRootCert = postgresProperties.sslRootCert
-                    }
                 }
             metricsTrackerFactory = MicrometerMetricsTrackerFactory(prometheusMeterRegistry)
         }

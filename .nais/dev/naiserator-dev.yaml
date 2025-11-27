@@ -78,6 +78,7 @@ spec:
         tier: db-custom-1-3840
         databases:
           - name: sokos-skattekort
+            envVarPrefix: DB
             users:
               - name: skattekort_user
         flags:

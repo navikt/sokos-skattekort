@@ -66,7 +66,7 @@ object PropertiesConfig {
     fun getPostgresProperties(): PostgresProperties {
         val postgresProperties =
             PostgresProperties(
-                jdbcUrl = getOrEmpty("DB_URL"),
+                jdbcUrl = getOrEmpty("DB_JDBC_URL"),
                 name = get("DB_DATABASE"),
                 host = getOrEmpty("DB_HOST"),
                 port = getOrEmpty("DB_PORT"),

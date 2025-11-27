@@ -190,10 +190,7 @@ object SkattekortRepository {
     fun getSecondsSinceLatestSkattekortOpprettet(tx: TransactionalSession): Double? =
         tx.single(
             queryOf(
-                """
-                SELECT EXTRACT(EPOCH FROM NOW() - MAX(opprettet)) AS sekunder_siden_siste_skattekort
-                    FROM skattekort
-                """.trimIndent(),
+                """SELECT EXTRACT(EPOCH FROM NOW() - MAX(opprettet)) AS sekunder_siden_siste_skattekort FROM skattekort""",
             ),
             extractor = { row -> row.doubleOrNull("sekunder_siden_siste_skattekort") },
         )
@@ -242,7 +239,7 @@ object SkattekortRepository {
                     """
                     SELECT opplysning, COUNT(skattekort_id) AS antall 
                     FROM skattekort_tilleggsopplysning
-                    GROUP BY opplysning, skattekort_id
+                    GROUP BY opplysning
                     """.trimIndent(),
                 ),
                 extractor = { row ->

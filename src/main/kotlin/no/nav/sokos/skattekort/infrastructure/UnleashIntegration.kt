@@ -22,7 +22,7 @@ open class UnleashIntegration(
 
     fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled", true)
 
-    fun isSBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled", true)
+    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled", true)
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||

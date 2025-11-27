@@ -79,7 +79,7 @@ object TestUtil {
             dependencies {
                 provide { mockk<MaskinportenTokenClient>(relaxed = true) }
                 provide { mockk<AzuredTokenClient>(relaxed = true) }
-                provide<ConnectionFactory> { MQListener.connectionFactory }
+                provide { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
                 }

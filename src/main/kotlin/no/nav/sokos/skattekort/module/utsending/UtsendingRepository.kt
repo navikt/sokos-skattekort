@@ -94,7 +94,7 @@ object UtsendingRepository {
         tx.single(
             queryOf(
                 """
-                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(opprettet), NOW())) as earliest_oppdatert FROM utsendinger
+                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(opprettet), NOW())) as earliest_opprettet FROM utsendinger
                 """.trimIndent(),
             ),
             extractor = { row -> row.double("earliest_opprettet") },

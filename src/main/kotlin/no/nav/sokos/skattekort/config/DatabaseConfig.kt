@@ -59,9 +59,11 @@ object DatabaseConfig {
             when {
                 !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {
                     jdbcUrl = postgresProperties.jdbcUrl
+                    logger.info { "Setting up PostgreSQL" }
                 }
 
                 else -> {
+                    logger.info { "Setting up local PostgreSQL" }
                     this.dataSource =
                         PGSimpleDataSource().apply {
                             jdbcUrl = postgresProperties.jdbcUrl

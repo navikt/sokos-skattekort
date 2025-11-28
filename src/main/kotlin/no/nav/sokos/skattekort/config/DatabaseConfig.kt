@@ -53,21 +53,27 @@ object DatabaseConfig {
             minimumIdle = 1
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_SERIALIZABLE"
-            this.dataSource =
-                PGSimpleDataSource().apply {
-                    if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
-                        jdbcUrl = postgresProperties.jdbcUrl
-                    } else {
-                        user = postgresProperties.username
-                        password = postgresProperties.password
-                        serverNames = arrayOf(postgresProperties.host)
-                        databaseName = postgresProperties.name
-                        portNumbers = intArrayOf(postgresProperties.port.toInt())
-                    }
+            connectionTimeout = Duration.ofSeconds(10).toMillis()
+            initializationFailTimeout = Duration.ofMinutes(5).toMillis()
 
-                    connectionTimeout = Duration.ofSeconds(10).toMillis()
-                    initializationFailTimeout = Duration.ofMinutes(5).toMillis()
+            when {
+                !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {
+                    jdbcUrl = postgresProperties.jdbcUrl
                 }
+
+                else -> {
+                    this.dataSource =
+                        PGSimpleDataSource().apply {
+                            jdbcUrl = postgresProperties.jdbcUrl
+
+                            user = postgresProperties.username
+                            password = postgresProperties.password
+                            serverNames = arrayOf(postgresProperties.host)
+                            databaseName = postgresProperties.name
+                            portNumbers = intArrayOf(postgresProperties.port.toInt())
+                        }
+                }
+            }
             metricsTrackerFactory = MicrometerMetricsTrackerFactory(prometheusMeterRegistry)
         }
     }

@@ -60,7 +60,7 @@ spec:
           namespace: nais-system
       external:
         - host: okonomi-unleash-api.nav.cloud.nais.io
-        - host: b27apvl219.preprod.local
+        - host: mqls01.preprod.local
           ports:
             - port: 1413
   maskinporten:

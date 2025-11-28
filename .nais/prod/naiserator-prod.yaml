@@ -55,6 +55,10 @@ spec:
       rules:
         - application: logging
           namespace: nais-system
+      external:
+        - host: mpls02.adeo.no
+          ports:
+            - port: 1414
   maskinporten:
     enabled: true
     scopes:

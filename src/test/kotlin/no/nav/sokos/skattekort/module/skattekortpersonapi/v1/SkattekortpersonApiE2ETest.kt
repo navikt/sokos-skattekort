@@ -125,27 +125,54 @@ class SkattekortpersonApiE2ETest :
                         .extract()
                         .response()!!
                 response.body().prettyPrint().shouldEqualJson(
-                    """[
-  {
-    "inntektsaar": 2025,
-    "arbeidstakeridentifikator": "12345678901",
-    "resultatPaaForespoersel": "skattekortopplysningerOK",
-    "skattekort": {
-      "utstedtDato": "2025-11-11",
-      "skattekortidentifikator": 17,
-      "forskuddstrekk": [
-        {
-          "type": "Trekkprosent",
-          "trekkode": "PENSJON_FRA_NAV",
-          "prosentsats": 18.50,
-          "antallMaanederForTrekk": 12.0
-        }
+                    """{
+  "data": [
+    {
+      "inntektsaar": 2025,
+      "arbeidstakeridentifikator": "12345678901",
+      "resultatPaaForespoersel": "skattekortopplysningerOK",
+      "skattekort": {
+        "utstedtDato": "2025-11-11",
+        "skattekortidentifikator": 17,
+        "forskuddstrekk": [
+          {
+            "type": "Trekkprosent",
+            "trekkode": "PENSJON_FRA_NAV",
+            "prosentsats": 18.50,
+            "antallMaanederForTrekk": 12.0
+          }
+        ]
+      },
+      "tilleggsopplysning": [
       ]
-    },
-    "tilleggsopplysning": [
-    ]
-  }
-]""",
+    }
+  ]
+}""",
+                )
+            }
+        }
+        test("person ikke funnet returnerer 200 OK med melding") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                val response: Response =
+                    client
+                        .body(
+                            """{
+                            | "fnr": "13131313111",
+                            | "inntektsaar": 2025
+                            | }
+                            """.trimMargin(),
+                        ).post("/api/v1/hent-skattekort")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatusCode.OK.value)
+                        .extract()
+                        .response()!!
+                response.body().prettyPrint().shouldEqualJson(
+                    """{
+  "message": "Fant ikke person med fnr 13131313111"
+}""",
                 )
             }
         }

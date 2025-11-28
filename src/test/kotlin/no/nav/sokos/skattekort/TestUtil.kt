@@ -79,7 +79,7 @@ object TestUtil {
             dependencies {
                 provide { mockk<MaskinportenTokenClient>(relaxed = true) }
                 provide { mockk<AzuredTokenClient>(relaxed = true) }
-                provide<ConnectionFactory> { MQListener.connectionFactory }
+                provide { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
                 }
@@ -108,13 +108,11 @@ object TestUtil {
             put("APPLICATION_ENV", "TEST")
 
             // Database properties
-            put("POSTGRES_USER_USERNAME", DbListener.container.username)
-            put("POSTGRES_USER_PASSWORD", DbListener.container.password)
-            put("POSTGRES_ADMIN_USERNAME", DbListener.container.username)
-            put("POSTGRES_ADMIN_PASSWORD", DbListener.container.password)
-            put("POSTGRES_NAME", DbListener.container.databaseName)
-            put("POSTGRES_PORT", DbListener.container.firstMappedPort.toString())
-            put("POSTGRES_HOST", DbListener.container.host)
+            put("DB_USERNAME", DbListener.container.username)
+            put("DB_PASSWORD", DbListener.container.password)
+            put("DB_DATABASE", DbListener.container.databaseName)
+            put("DB_PORT", DbListener.container.firstMappedPort.toString())
+            put("DB_HOST", DbListener.container.host)
         }
 
     private fun DependencyInjectionConfig.configureShutdownBehavior() {

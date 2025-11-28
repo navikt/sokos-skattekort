@@ -63,19 +63,18 @@ object PropertiesConfig {
             bestillingOrgnr = get("BESTILLING_ORGNR"),
         )
 
-    fun getPostgresProperties(): PostgresProperties =
-        PostgresProperties(
-            name = getOrEmpty("POSTGRES_NAME"),
-            host = getOrEmpty("POSTGRES_HOST"),
-            port = getOrEmpty("POSTGRES_PORT"),
-            username = getOrEmpty("POSTGRES_USER_USERNAME"),
-            password = getOrEmpty("POSTGRES_USER_PASSWORD"),
-            adminUsername = getOrEmpty("POSTGRES_ADMIN_USERNAME"),
-            adminPassword = getOrEmpty("POSTGRES_ADMIN_PASSWORD"),
-            adminRole = "${get("POSTGRES_NAME")}-admin",
-            userRole = "${getOrEmpty("POSTGRES_NAME")}-user",
-            vaultMountPath = getOrEmpty("VAULT_MOUNTPATH"),
-        )
+    fun getPostgresProperties(): PostgresProperties {
+        val postgresProperties =
+            PostgresProperties(
+                jdbcUrl = getOrEmpty("DB_JDBC_URL"),
+                name = get("DB_DATABASE"),
+                host = getOrEmpty("DB_HOST"),
+                port = getOrEmpty("DB_PORT"),
+                username = get("DB_USERNAME"),
+                password = get("DB_PASSWORD"),
+            )
+        return postgresProperties
+    }
 
     fun getMQProperties(): MQProperties =
         MQProperties(
@@ -151,16 +150,12 @@ object PropertiesConfig {
     )
 
     data class PostgresProperties(
+        val jdbcUrl: String,
         val name: String,
         val host: String,
         val port: String,
         val username: String,
         val password: String,
-        val adminUsername: String,
-        val adminPassword: String,
-        val adminRole: String,
-        val userRole: String,
-        val vaultMountPath: String,
     )
 
     data class MQProperties(

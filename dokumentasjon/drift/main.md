@@ -3,15 +3,21 @@
 ### Logging
 
 Feilmeldinger og infomeldinger som ikke innheholder sensitive data logges til `Grafana Loki`.
-https://grafana.nav.cloud.nais.io/a/grafana-lokiexplore-app/explore/service_name/sokos-skattekort/logs?from=now-15m&to=now&var-filters=service_name%7C%3D%7Csokos-skattekort
+https://grafana.nav.cloud.nais.io/a/grafana-lokiexplore-app/explore/service_name/sokos-skattekort/logs?var-filters=service_name%7C%3D%7Csokos-skattekort
 
-Sensetive meldinger logges til `Securelogs` [Team Logs](https://console.cloud.google.com/logs/query;query=SEARCH%2528%22%60sokos-skattekort%60%22%2529).
+- For Produksjon
+    * Datasource: prod-gcp-loki
 
-- Filter for Produksjon
-    * application:sokos-skattekort AND envclass:p
+- For Dev
+    * Datasource: dev-gcp-loki
 
-- Filter for Dev
-    * application:sokos-skattekort AND envclass:q
+Sensitive meldinger logges til `Securelogs` [Team Logs](https://console.cloud.google.com/logs/query;query=sokos%20skattekort).
+
+- For Produksjon
+    * Project: okonomi-prod
+
+- For Dev
+    * Project: okonomi-dev
 
 ### Kubectl
 
@@ -19,7 +25,7 @@ TBD
 
 ### Alarmer
 
-Vi bruker [Grafana alerts](https://docs.nais.io/observability/alerting/how-to/grafana/?h=alert) for å sette opp alarmer.
+Vi bruker [Grafana alerts](https://grafana.nav.cloud.nais.io/alerting/list?search=sokos-skattekort) for å sette opp alarmer.
 
 ### Grafana
 

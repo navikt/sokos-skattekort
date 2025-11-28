@@ -6,7 +6,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Arbeidstaker
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
-import no.nav.sokos.skattekort.exception.PersonNotFoundException
+import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonResponse
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -16,17 +16,20 @@ private val logger = KotlinLogging.logger {}
 class SkattekortPersonService(
     val dataSource: DataSource,
 ) {
-    fun hentSkattekortPerson(skattekortPersonRequest: SkattekortPersonRequest): List<Arbeidstaker> =
+    fun hentSkattekortPerson(skattekortPersonRequest: SkattekortPersonRequest): SkattekortPersonResponse =
         dataSource.transaction { tx ->
             require(skattekortPersonRequest.fnr.all { it.isDigit() }, { "fnr kan bare inneholde siffer, var ${skattekortPersonRequest.fnr}" })
             require(skattekortPersonRequest.fnr.length == 11, { "fnr må ha lengde 11, var ${skattekortPersonRequest.fnr}" })
             require(
                 skattekortPersonRequest.inntektsaar in 2025..<2100,
-                { "inntektsaar ser ikke ut som et gyldig årstall, var ${skattekortPersonRequest.inntektsaar}" },
-            )
-            val person =
-                PersonRepository.findPersonByFnr(tx, Personidentifikator(skattekortPersonRequest.fnr))
-                    ?: throw PersonNotFoundException("Fant ikke person med fnr ${skattekortPersonRequest.fnr}")
+            ) { "inntektsaar ser ikke ut som et gyldig årstall, var ${skattekortPersonRequest.inntektsaar}" }
+            val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(skattekortPersonRequest.fnr))
+
+            if (person == null) {
+                logger.info { "Fant ikke personen" }
+                return@transaction SkattekortPersonResponse(message = "Fant ikke person med fnr ${skattekortPersonRequest.fnr}")
+            }
+
             val skattekort: List<Skattekort> =
                 SkattekortRepository
                     .findAllByPersonId(
@@ -35,12 +38,14 @@ class SkattekortPersonService(
                         skattekortPersonRequest.inntektsaar.toInt(),
                         adminRole = false,
                     )
-            skattekort.map {
-                Arbeidstaker(
-                    skattekortPersonRequest.inntektsaar.toLong(),
-                    skattekortPersonRequest.fnr,
-                    it,
-                )
-            }
+            val arbeidstakere =
+                skattekort.map {
+                    Arbeidstaker(
+                        skattekortPersonRequest.inntektsaar.toLong(),
+                        skattekortPersonRequest.fnr,
+                        it,
+                    )
+                }
+            SkattekortPersonResponse(data = arbeidstakere)
         }
 }

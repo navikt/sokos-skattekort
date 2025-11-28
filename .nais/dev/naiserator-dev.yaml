@@ -52,8 +52,6 @@ spec:
           namespace: nais
           cluster: dev-gcp
         - application: sokos-up-skattekort-ssr
-          namespace: okonomi
-          cluster: dev-gcp
     outbound:
       rules:
         - application: logging

@@ -2,10 +2,10 @@
 
 ### Logging
 
-https://logs.adeo.no.
+Feilmeldinger og infomeldinger som ikke innheholder sensitive data logges til `Grafana Loki`.
+https://grafana.nav.cloud.nais.io/a/grafana-lokiexplore-app/explore/service_name/sokos-skattekort/logs?from=now-15m&to=now&var-filters=service_name%7C%3D%7Csokos-skattekort
 
-Feilmeldinger og infomeldinger som ikke innheholder sensitive data logges til data view `Applikasjonslogger`.  
-Sensetive meldinger logges til data view `Securelogs` [sikker-utvikling/logging](https://sikkerhet.nav.no/docs/sikker-utvikling/logging)).
+Sensetive meldinger logges til `Securelogs` [Team Logs](https://console.cloud.google.com/logs/query;query=SEARCH%2528%22%60sokos-skattekort%60%22%2529).
 
 - Filter for Produksjon
     * application:sokos-skattekort AND envclass:p
@@ -19,8 +19,7 @@ TBD
 
 ### Alarmer
 
-Vi bruker [nais-alerts](https://doc.nais.io/observability/alerts) for å sette opp alarmer.
-Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) filen og [.nais/alerts-prod.yaml](.nais/alerts-prod.yaml)
+Vi bruker [Grafana alerts](https://docs.nais.io/observability/alerting/how-to/grafana/?h=alert) for å sette opp alarmer.
 
 ### Grafana
 

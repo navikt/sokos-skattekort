@@ -11,13 +11,12 @@ import org.flywaydb.core.Flyway
 import org.postgresql.ds.PGSimpleDataSource
 
 import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
-import no.nav.vault.jdbc.hikaricp.HikariCPVaultUtil
 
 private val logger = KotlinLogging.logger {}
 
 object DatabaseConfig {
     val dataSource: DataSource by lazy {
-        initDataSource()
+        HikariDataSource(initHikariConfig())
     }
 
     init {
@@ -30,19 +29,11 @@ object DatabaseConfig {
         }
     }
 
-    fun migrate(
-        dataSource: HikariDataSource =
-            initDataSource(
-                hikariConfig = initHikariConfig("postgres-admin-pool"),
-                role = PropertiesConfig.getPostgresProperties().adminRole,
-            ),
-        adminRole: String = PropertiesConfig.getPostgresProperties().adminRole,
-    ) {
+    fun migrate(dataSource: HikariDataSource = HikariDataSource(initHikariConfig("postgres-admin-pool"))) {
         dataSource.use { connection ->
             Flyway
                 .configure()
                 .dataSource(connection)
-                .initSql("""SET ROLE "$adminRole"""")
                 .lockRetryCount(-1)
                 .validateMigrationNaming(true)
                 .sqlMigrationSeparator("__")
@@ -58,37 +49,34 @@ object DatabaseConfig {
         val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
         return HikariConfig().apply {
             poolName = poolname
-            maximumPoolSize = 5
+            maximumPoolSize = 10
             minimumIdle = 1
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_SERIALIZABLE"
-            this.dataSource =
-                PGSimpleDataSource().apply {
-                    if (PropertiesConfig.isLocal() || PropertiesConfig.isTest()) {
-                        user = postgresProperties.adminUsername
-                        password = postgresProperties.adminPassword
-                    }
-                    serverNames = arrayOf(postgresProperties.host)
-                    databaseName = postgresProperties.name
-                    portNumbers = intArrayOf(postgresProperties.port.toInt())
-                    connectionTimeout = Duration.ofSeconds(10).toMillis()
-                    initializationFailTimeout = Duration.ofMinutes(5).toMillis()
+            connectionTimeout = Duration.ofSeconds(10).toMillis()
+            initializationFailTimeout = Duration.ofMinutes(5).toMillis()
+
+            when {
+                !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {
+                    jdbcUrl = postgresProperties.jdbcUrl
+                    logger.info { "Setting up PostgreSQL" }
                 }
+
+                else -> {
+                    logger.info { "Setting up local PostgreSQL" }
+                    this.dataSource =
+                        PGSimpleDataSource().apply {
+                            jdbcUrl = postgresProperties.jdbcUrl
+
+                            user = postgresProperties.username
+                            password = postgresProperties.password
+                            serverNames = arrayOf(postgresProperties.host)
+                            databaseName = postgresProperties.name
+                            portNumbers = intArrayOf(postgresProperties.port.toInt())
+                        }
+                }
+            }
             metricsTrackerFactory = MicrometerMetricsTrackerFactory(prometheusMeterRegistry)
         }
     }
-
-    private fun initDataSource(
-        hikariConfig: HikariConfig = initHikariConfig(),
-        role: String = PropertiesConfig.getPostgresProperties().userRole,
-    ): HikariDataSource =
-        when {
-            PropertiesConfig.isLocal() || PropertiesConfig.isTest() -> HikariDataSource(hikariConfig)
-            else ->
-                HikariCPVaultUtil.createHikariDataSourceWithVaultIntegration(
-                    hikariConfig,
-                    PropertiesConfig.getPostgresProperties().vaultMountPath,
-                    role,
-                )
-        }
 }

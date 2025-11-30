@@ -40,7 +40,14 @@ class ForespoerselService(
                 when {
                     message.startsWith("<") -> return@transaction // drop Arena meldinger
                     else -> parseCopybookMessage(message)
-                }.let { it.copy(fnrList = it.fnrList.filter(Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr).erGyldig)) }
+                }.let {
+                    val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+                    val ugyldigeFnr = it.fnrList.filterNot(kategoriMapper.erGyldig)
+                    if (ugyldigeFnr.isNotEmpty()) {
+                        logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldige fnr fra kall: ${ugyldigeFnr.joinToString(", ")}" }
+                    }
+                    it.copy(fnrList = it.fnrList.minus(ugyldigeFnr))
+                }
 
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 

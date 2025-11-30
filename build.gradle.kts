@@ -47,7 +47,6 @@ val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.3"
 val flywayVersion = "11.10.3"
 val postgresVersion = "42.7.7"
-val vaultVersion = "1.3.10"
 val activemqVersion = "2.41.0"
 val ibmmqVersion = "9.4.3.0"
 val opentelemetryVersion = "2.20.1-alpha"
@@ -107,9 +106,6 @@ dependencies {
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
     // For syslog.
     runtimeOnly("com.papertrailapp:logback-syslog4j:$papertrailappVersion")
-
-    // Config
-    implementation("no.nav:vault-jdbc:$vaultVersion")
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")

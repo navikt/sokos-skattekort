@@ -35,7 +35,7 @@ object DbListener : BeforeSpecListener, AfterEachListener {
     val dataSource: DataSource by lazy {
         container.toDataSource()
     }.apply {
-        DatabaseConfig.migrate(container.toDataSource(), postgresProperties.username)
+        DatabaseConfig.migrate(container.toDataSource())
     }
 
     fun loadDataSet(script: String) {

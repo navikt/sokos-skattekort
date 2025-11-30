@@ -41,24 +41,54 @@ spec:
   azure:
     application:
       enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - NAVident
   accessPolicy:
+    inbound:
+      rules:
+        - application: sokos-up-skattekort-ssr
+          namespace: okonomi
+          cluster: prod-gcp
     outbound:
       rules:
         - application: logging
           namespace: nais-system
-  webproxy: true
-  vault:
-    enabled: true
+      external:
+        - host: mpls02.adeo.no
+          ports:
+            - port: 1414
   maskinporten:
     enabled: true
     scopes:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
+        - name: "altinn:authentication/systemregister.write"
+  kafka:
+    pool: nav-prod
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_18
+        highAvailability: true
+        diskAutoresize: true
+        pointInTimeRecovery: true
+        autoBackupHour: 3
+        tier: db-custom-4-3840
+        databases:
+          - name: sokos-skattekort
+            users:
+              - name: skattekort_user
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "on"
+          - name: "pgaudit.log"
+            value: "write,ddl,role"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+          - name: "cloudsql.logical_decoding"
+            value: "on"
 
   env:
-    - name: USE_AUTHENTICATION
-      value: "true"
-    - name: JDK_JAVA_OPTIONS
-      value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
     - name: APPLICATION_ENV
       value: PROD

@@ -116,6 +116,19 @@ class BestillingService(
                                     BestillingRepository.deleteProcessedBestillings(tx, batchId)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet")
                                 }
+                                ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
+                                    // her har det skjedd noe alvorlig feil.
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                                    logger.error(
+                                        "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
+                                    )
+                                }
+                                ResponseStatus.INGEN_ENDRINGER.name -> {
+                                    // ingenting å se her
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                                    BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                                }
 
                                 else -> {
                                     logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
@@ -353,6 +366,19 @@ class BestillingService(
                                 handleNyttSkattekort(tx, arbeidstaker)
                             }
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                        }
+                        ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
+                            // her har det skjedd noe alvorlig feil.
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                            logger.error(
+                                "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
+                            )
+                        }
+                        ResponseStatus.INGEN_ENDRINGER.name -> {
+                            // ingenting å se her
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            BestillingRepository.deleteProcessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
 

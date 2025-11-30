@@ -158,5 +158,61 @@ class BestillingServiceOppdaterteSkattekortTest :
                     }
                 }
             }
+
+            test("Henting av oppdaterte skattekort uten oppdateringer skal fungere") {
+                withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                        aHentSkattekortResponse(response = ResponseStatus.INGEN_ENDRINGER)
+                    databaseHas(
+                        aPerson(1L, "01010100001"),
+                        aPerson(2L, "02020200002"),
+                        aPerson(3L, "03030300003"),
+                        aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
+                    )
+
+                    bestillingService.hentOppdaterteSkattekort()
+
+                    val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                    assertSoftly {
+                        batches shouldNotBeNull {
+                            size shouldBe 1
+                            first() shouldNotBeNull {
+                                status shouldBe BestillingBatchStatus.Ferdig.value
+                                type shouldBe "OPPDATERING"
+                                bestillingsreferanse shouldBe "REF0001"
+                            }
+                        }
+                    }
+                }
+            }
+
+            test("Henting av oppdaterte skattekort med ugyldig inntektsår skal feile") {
+                withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                        aHentSkattekortResponse(response = ResponseStatus.UGYLDIG_INNTEKTSAAR)
+                    databaseHas(
+                        aPerson(1L, "01010100001"),
+                        aPerson(2L, "02020200002"),
+                        aPerson(3L, "03030300003"),
+                        aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
+                    )
+
+                    bestillingService.hentOppdaterteSkattekort()
+
+                    val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                    assertSoftly {
+                        batches shouldNotBeNull {
+                            size shouldBe 1
+                            first() shouldNotBeNull {
+                                status shouldBe BestillingBatchStatus.Feilet.value
+                                type shouldBe "OPPDATERING"
+                                bestillingsreferanse shouldBe "REF0001"
+                            }
+                        }
+                    }
+                }
+            }
         },
     )

@@ -44,6 +44,7 @@ data class Skattekort
     @OptIn(ExperimentalTime::class)
     constructor(
         val id: SkattekortId? = null,
+        val generertFra: SkattekortId? = null,
         val personId: PersonId,
         val utstedtDato: LocalDate?,
         val identifikator: String?,
@@ -57,6 +58,7 @@ data class Skattekort
         @OptIn(ExperimentalTime::class)
         constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
             id = SkattekortId(row.long("id")),
+            generertFra = row.longOrNull("generert_fra")?.let { SkattekortId(it) },
             personId = PersonId(row.long("person_id")),
             utstedtDato = row.localDateOrNull("utstedt_dato")?.toKotlinLocalDate(),
             identifikator = row.stringOrNull("identifikator"),

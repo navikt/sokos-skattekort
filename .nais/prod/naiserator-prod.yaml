@@ -64,7 +64,6 @@ spec:
     scopes:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
-        - name: "altinn:authentication/systemregister.write"
   kafka:
     pool: nav-prod
   gcp:

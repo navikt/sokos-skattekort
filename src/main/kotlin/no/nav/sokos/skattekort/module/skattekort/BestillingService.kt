@@ -196,9 +196,9 @@ class BestillingService(
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
             PersonRepository.flaggPerson(tx, person.id!!)
         }
-        SkattekortRepository.insert(tx, skattekort)
+        val id = SkattekortId(SkattekortRepository.insert(tx, skattekort))
 
-        Syntetisering.evtSyntetiserSkattekort(skattekort)?.let { syntetisertSkattekort ->
+        Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { syntetisertSkattekort ->
             SkattekortRepository.insert(tx, syntetisertSkattekort)
             AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, person.id!!, "Syntetisert skattekort opprettet")
         }

@@ -363,6 +363,7 @@ class BestillingServiceTest :
                     last() shouldNotBeNull {
                         identifikator shouldBe null
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe first().id
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly
@@ -438,6 +439,7 @@ class BestillingServiceTest :
                 size shouldBe 3
                 forOne { it shouldBe skattekortFirstRun.first() }
                 forOne {
+                    it.id shouldBe SkattekortId(2L)
                     it.identifikator shouldBe "54407"
                     it.opprettet.toJavaInstant() shouldBeAfter skattekortFirstRun.first().opprettet.toJavaInstant()
                     it.resultatForSkattekort shouldBe SkattekortopplysningerOK
@@ -451,6 +453,7 @@ class BestillingServiceTest :
                 forOne {
                     it.identifikator shouldBe null
                     it.kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                    it.generertFra shouldBe SkattekortId(2L)
                     it.resultatForSkattekort shouldBe SkattekortopplysningerOK
                     withClue("Should generate forskuddstrekk for svalbard") {
                         it.forskuddstrekkList shouldContainExactly
@@ -536,6 +539,7 @@ class BestillingServiceTest :
                     last() shouldNotBeNull {
                         identifikator shouldBe null
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe first().id
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly
@@ -835,6 +839,8 @@ class BestillingServiceTest :
                     }
                     last() shouldNotBeNull {
                         resultatForSkattekort shouldBe IkkeSkattekort
+                        kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe first().id
                         identifikator shouldBe null
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly
@@ -845,7 +851,6 @@ class BestillingServiceTest :
                                 )
                         }
                         tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
-                        kilde shouldBe SkattekortKilde.SYNTETISERT.value
                     }
                 }
             }
@@ -900,13 +905,15 @@ class BestillingServiceTest :
                 skattekort shouldNotBeNull {
                     size shouldBe 2
                     withClue("The original Skattekort from Skattekort") {
-                        forOne {
-                            it.resultatForSkattekort shouldBe SkattekortopplysningerOK
-                            it.kilde shouldBe SkattekortKilde.SKATTEETATEN.value
-                            it.identifikator shouldBe "10001"
-                            it.utstedtDato shouldBe kotlinx.datetime.LocalDate.parse("2025-11-01")
+                        first() shouldNotBeNull {
+                            id shouldBe SkattekortId(1L)
+                            generertFra shouldBe null
+                            resultatForSkattekort shouldBe SkattekortopplysningerOK
+                            kilde shouldBe SkattekortKilde.SKATTEETATEN.value
+                            identifikator shouldBe "10001"
+                            utstedtDato shouldBe kotlinx.datetime.LocalDate.parse("2025-11-01")
                             withClue("Should contain the received forskuddstrekk unchanged") {
-                                it.forskuddstrekkList shouldContainAll
+                                forskuddstrekkList shouldContainAll
                                     listOf(
                                         aForskuddstrekk("Tabellkort", LOENN_FRA_HOVEDARBEIDSGIVER, tabellNummer = "1337", prosentSats = 43.21, antMndForTrekk = 12.0),
                                         aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 66.60),
@@ -914,14 +921,14 @@ class BestillingServiceTest :
                                         aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 12.34),
                                     )
                             }
-                            it.tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
+                            tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
                         }
                     }
                     withClue("A second Skattekort should be generated") {
-
                         forOne {
                             it.resultatForSkattekort shouldBe SkattekortopplysningerOK
                             it.kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                            it.generertFra shouldBe SkattekortId(1L)
                             it.identifikator shouldBe null
                             withClue("Should generate forskuddstrekk for svalbard") {
                                 it.forskuddstrekkList shouldContainExactly
@@ -978,6 +985,7 @@ class BestillingServiceTest :
                     }
                     last() shouldNotBeNull {
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe first().id
                         resultatForSkattekort shouldBe IkkeTrekkplikt
                         utstedtDato shouldBe null
                         identifikator shouldBe null

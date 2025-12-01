@@ -15,11 +15,12 @@ import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 fun Application.routingConfig(
     useAuthentication: Boolean,
     applicationState: ApplicationState,
+    azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties(),
 ) {
     routing {
         internalNaisRoutes(applicationState)
         swaggerApi()
-        authenticate(useAuthentication, AUTHENTICATION_NAME) {
+        authenticate(useAuthentication, azureAdProperties.providerName) {
             val forespoerselService: ForespoerselService by dependencies
             val skattekortPersonService: SkattekortPersonService by dependencies
 

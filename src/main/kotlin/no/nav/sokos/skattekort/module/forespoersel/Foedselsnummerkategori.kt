@@ -2,9 +2,13 @@ package no.nav.sokos.skattekort.module.forespoersel
 
 import kotlinx.datetime.LocalDate
 
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger { }
+
 enum class Foedselsnummerkategori(
     val value: String,
-    val regel: (String) -> Boolean,
+    val erGyldig: (String) -> Boolean,
 ) {
     GYLDIGE("GYLDIGE", ::gyldigFnrEllerDnrRegel),
     TENOR("TENOR", ::tenorRegel),
@@ -12,20 +16,21 @@ enum class Foedselsnummerkategori(
 }
 
 fun gyldigFnrEllerDnrRegel(fnr: String): Boolean =
-    lengdeOgTallRegel(fnr) &&
-        (
-            isDateParseable(fnr) ||
-                isDateParseable(fnr, dayOffset = 40)
-        )
+    (
+        lengdeOgTallRegel(fnr) &&
+            (
+                isDateParseable(fnr) ||
+                    isDateParseable(fnr, dayOffset = 40)
+            )
+    )
 
 fun tenorRegel(fnr: String): Boolean =
-    lengdeOgTallRegel(fnr) &&
-        isDateParseable(fnr, monthOffset = 80)
+    (
+        lengdeOgTallRegel(fnr) &&
+            isDateParseable(fnr, monthOffset = 80)
+    )
 
-fun lengdeOgTallRegel(fnr: String): Boolean {
-    val regex = Regex("^[0-9]{11}$")
-    return regex.matches(fnr)
-}
+fun lengdeOgTallRegel(fnr: String): Boolean = (Regex("^[0-9]{11}$").matches(fnr))
 
 private fun isDateParseable(
     fnr: String,

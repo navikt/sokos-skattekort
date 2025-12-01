@@ -6,7 +6,6 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.atlassian.oai.validator.restassured.OpenApiValidationFilter
-import com.nimbusds.jwt.SignedJWT
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
@@ -30,30 +29,38 @@ import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT
 class SkattekortpersonApiE2ETest :
     FunSpec({
         beforeTest {
-            try {
-                FullNettyApplication.start()
-            } catch (t: Throwable) {
-                println("Ouchie! " + t)
-            }
+            FullNettyApplication.start()
         }
 
         extensions(DbListener, MQListener)
 
-        val tokenWithNavIdent: SignedJWT =
-            FullNettyApplication.oauthServer.issueToken(
-                issuerId = "default",
-                claims =
-                    mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
-            )
+        val tokenWithNavIdent: String =
+            FullNettyApplication.oauthServer
+                .issueToken(
+                    issuerId = "default",
+                    claims =
+                        mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
+                ).serialize()
         val openApiValidationFilter = OpenApiValidationFilter("openapi/sokos-skattekort-person-v1-swagger.yaml")
 
-        fun client(): RequestSpecification =
-            RestAssured
-                .given()
-                .filter(openApiValidationFilter)
+        fun client(
+            token: String? = tokenWithNavIdent,
+            withAPIVerification: Boolean = true,
+        ): RequestSpecification {
+            val client =
+                if (withAPIVerification) {
+                    RestAssured
+                        .given()
+                        .filter(openApiValidationFilter)
+                } else {
+                    RestAssured
+                        .given()
+                }
+            return client
                 .header(HttpHeaders.ContentType, APPLICATION_JSON.toString())
-                .header(HttpHeaders.Authorization, "Bearer ${tokenWithNavIdent.serialize()}")
+                .header(HttpHeaders.Authorization, "Bearer $token")
                 .port(FullNettyApplication.PORT)
+        }
 
         test("for kort fnr dør på seg") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
@@ -215,6 +222,73 @@ class SkattekortpersonApiE2ETest :
   }
 ]""",
                 )
+            }
+        }
+        test("Auth: bogus token blir avvist") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                client(token = "bogus", withAPIVerification = false)
+                    .body(
+                        """{
+                            | "fnr": "12345678901",
+                            | "inntektsaar": 2025
+                            | }
+                        """.trimMargin(),
+                    ).post("/api/v1/hent-skattekort")
+                    .then()
+                    .assertThat()
+                    .statusCode(HttpStatusCode.Unauthorized.value)
+                    .extract()
+                    .response()!!
+            }
+        }
+        test("Auth: token uten navident blir avvist") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                val tokenWithoutNavIdent: String =
+                    FullNettyApplication.oauthServer
+                        .issueToken(
+                            issuerId = "default",
+                        ).serialize()
+
+                client(token = tokenWithoutNavIdent, withAPIVerification = false)
+                    .body(
+                        """{
+                            | "fnr": "12345678901",
+                            | "inntektsaar": 2025
+                            | }
+                        """.trimMargin(),
+                    ).post("/api/v1/hent-skattekort")
+                    .then()
+                    .assertThat()
+                    .statusCode(HttpStatusCode.Unauthorized.value)
+                    .extract()
+                    .response()!!
+            }
+        }
+        test("Auth: token fra feil issuer blir avvist") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                val tokenWithoutNavIdent: String =
+                    FullNettyApplication.oauthServer
+                        .issueToken(
+                            issuerId = "bogus",
+                        ).serialize()
+
+                client(token = tokenWithoutNavIdent, withAPIVerification = false)
+                    .body(
+                        """{
+                            | "fnr": "12345678901",
+                            | "inntektsaar": 2025
+                            | }
+                        """.trimMargin(),
+                    ).post("/api/v1/hent-skattekort")
+                    .then()
+                    .assertThat()
+                    .statusCode(HttpStatusCode.Unauthorized.value)
+                    .extract()
+                    .response()!!
             }
         }
     })

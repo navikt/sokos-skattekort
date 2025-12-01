@@ -9,7 +9,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.toKotlinLocalDateTime
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.prometheus.metrics.core.metrics.Counter
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
@@ -58,8 +57,7 @@ class BestillingService(
                 if (bestillings.isEmpty()) {
                     logger.info("Ingen bestillinger å sende")
                 } else {
-                    val request =
-                        bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
+                    val request = bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
 
                     runBlocking {
                         try {
@@ -382,13 +380,6 @@ class BestillingService(
             }.map { aar ->
                 bestillOppdateringRequest(aar)
             }
-
-        var req = bestillOppdateringRequest(2025)
-
-        val objectMapper = jacksonObjectMapper()
-        val json = objectMapper.writeValueAsString(req)
-
-        println("now = $now")
 
         runBlocking {
             try {

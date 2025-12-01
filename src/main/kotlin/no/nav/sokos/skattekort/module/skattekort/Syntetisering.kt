@@ -6,7 +6,10 @@ import kotlin.time.ExperimentalTime
 
 object Syntetisering {
     @OptIn(ExperimentalTime::class)
-    fun evtSyntetiserSkattekort(skattekort: Skattekort): Skattekort? {
+    fun evtSyntetiserSkattekort(
+        skattekort: Skattekort,
+        id: SkattekortId,
+    ): Skattekort? {
         val syntetiserteForskuddstrekk =
             genererForskuddstrekk(skattekort.resultatForSkattekort, skattekort.tilleggsopplysningList)
 
@@ -22,7 +25,7 @@ object Syntetisering {
                 opprettet = skattekort.opprettet,
                 tilleggsopplysningList = skattekort.tilleggsopplysningList,
                 forskuddstrekkList = syntetiserteForskuddstrekk,
-                generertFra = skattekort.id,
+                generertFra = id,
             )
         }
     }

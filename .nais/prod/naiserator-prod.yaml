@@ -53,8 +53,6 @@ spec:
           cluster: prod-gcp
         - application: saas-proxy
           namespace: teamcrm
-          cluster: prod-gcp
-
     outbound:
       rules:
         - application: logging

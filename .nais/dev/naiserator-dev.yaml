@@ -54,7 +54,6 @@ spec:
         - application: sokos-up-skattekort-ssr
         - application: saas-proxy
           namespace: teamcrm
-          cluster: dev-gcp
     outbound:
       rules:
         - application: logging

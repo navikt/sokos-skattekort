@@ -137,6 +137,7 @@ object PropertiesConfig {
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
         val tenantId: String = getOrEmpty("AZURE_APP_TENANT_ID"),
         val clientSecret: String = getOrEmpty("AZURE_APP_CLIENT_SECRET"),
+        val providerName: String = get("AZURE_APP_AUTH_PROVIDER_NAME"),
     )
 
     data class ApplicationProperties(

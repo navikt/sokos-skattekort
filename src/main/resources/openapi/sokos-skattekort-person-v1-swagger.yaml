@@ -2,7 +2,7 @@ openapi: '3.0.3'
 
 info:
   version: 1.0.0
-  title: sokos-skattekort-person API
+  title: sokos-skattekort API
   description: API-tjeneste for å hente ut skattekort på person for gjeldende år +/- 1 år som får ytelser i NAV
   contact:
     name: PO Utbetaling

@@ -48,9 +48,6 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: sokos-up-skattekort-ssr
-          namespace: okonomi
-          cluster: prod-gcp
         - application: saas-proxy
           namespace: teamcrm
     outbound:
@@ -61,6 +58,9 @@ spec:
         - host: mpls02.adeo.no
           ports:
             - port: 1414
+        - host: okonomi-unleash-api.nav.cloud.nais.io
+        - host: pdl-api.prod-fss-pub.nais.io
+        - host: api.skatteetaten.no
   maskinporten:
     enabled: true
     scopes:
@@ -89,6 +89,9 @@ spec:
             value: "on"
           - name: "cloudsql.logical_decoding"
             value: "on"
+  envFrom:
+    - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-unleash-api-token
 
   env:
     - name: APPLICATION_ENV

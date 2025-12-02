@@ -52,6 +52,7 @@ spec:
           namespace: nais
           cluster: dev-gcp
         - application: sokos-up-skattekort-ssr
+        - application: sokos-utbetalingsportalen
         - application: saas-proxy
           namespace: teamcrm
     outbound:

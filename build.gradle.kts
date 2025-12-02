@@ -31,7 +31,6 @@ val ktorVersion = "3.3.1"
 val nimbusVersion = "10.4.1"
 val logbackVersion = "1.5.18"
 val logstashVersion = "8.1"
-val papertrailappVersion = "1.0.0"
 val micrometerVersion = "1.15.2"
 val dbSchedulerVersion = "16.2.0"
 val kotlinLoggingVersion = "3.0.5"
@@ -104,8 +103,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     runtimeOnly("org.codehaus.janino:janino:$janionVersion")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
-    // For syslog.
-    runtimeOnly("com.papertrailapp:logback-syslog4j:$papertrailappVersion")
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")

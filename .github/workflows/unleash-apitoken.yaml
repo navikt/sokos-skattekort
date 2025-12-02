@@ -2,6 +2,8 @@ name: Unleash api-tokens
 
 on:
   push:
+    branches:
+      - main
     paths:
       - .github/workflows/unleash-apitoken.yaml
       - .nais/dev/unleash-apitoken.yaml

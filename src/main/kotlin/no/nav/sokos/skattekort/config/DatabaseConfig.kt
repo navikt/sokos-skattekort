@@ -66,8 +66,6 @@ object DatabaseConfig {
                     logger.info { "Setting up local PostgreSQL" }
                     this.dataSource =
                         PGSimpleDataSource().apply {
-                            jdbcUrl = postgresProperties.jdbcUrl
-
                             user = postgresProperties.username
                             password = postgresProperties.password
                             serverNames = arrayOf(postgresProperties.host)

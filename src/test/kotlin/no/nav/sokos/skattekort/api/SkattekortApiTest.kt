@@ -20,12 +20,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 
 import no.nav.sokos.skattekort.TestUtil
-import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 @OptIn(ExperimentalTime::class)
@@ -38,12 +38,18 @@ class SkattekortApiTest :
                 .createForSpecificationUrl("openapi/skattekort-v1-swagger.yaml")
                 .build()
 
-        val tokenWithNavIdent = readFile("/tokenWithNavIdent.txt")
         val aar = Year.now().value
 
         test("bestille skattekort skal returnere 201 Created") {
             TestUtil.withFullTestApplication {
                 val request = ForespoerselRequest(personIdent = "12345678901", aar = aar, forsystem = Forsystem.MANUELL.value)
+                val tokenWithNavIdent =
+                    TestUtil.authServer!!
+                        .issueToken(
+                            issuerId = "default",
+                            claims =
+                                mapOf<kotlin.String, kotlin.String>(JWT_CLAIM_NAVIDENT to "aUser"),
+                        ).serialize()
 
                 val response =
                     client.post("$BASE_PATH/bestille") {
@@ -77,6 +83,13 @@ class SkattekortApiTest :
             TestUtil.withFullTestApplication {
 
                 val request = ForespoerselRequest(personIdent = "1234567", aar = aar, forsystem = Forsystem.MANUELL.value)
+                val tokenWithNavIdent =
+                    TestUtil.authServer!!
+                        .issueToken(
+                            issuerId = "default",
+                            claims =
+                                mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
+                        ).serialize()
 
                 val response =
                     client.post("$BASE_PATH/bestille") {
@@ -118,6 +131,13 @@ class SkattekortApiTest :
             TestUtil.withFullTestApplication {
                 val aar = Year.now().minusYears(2).value
                 val request = ForespoerselRequest(personIdent = "12345678901", aar = aar, forsystem = Forsystem.MANUELL.value)
+                val tokenWithNavIdent =
+                    TestUtil.authServer!!
+                        .issueToken(
+                            issuerId = "default",
+                            claims =
+                                mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
+                        ).serialize()
 
                 val response =
                     client.post("$BASE_PATH/bestille") {
@@ -158,6 +178,14 @@ class SkattekortApiTest :
         test("bestille skattekort skal returnere 400 Ugyldig request med feil forsystem") {
             TestUtil.withFullTestApplication {
                 val request = ForespoerselRequest(personIdent = "12345678901", aar = aar, forsystem = "")
+
+                val tokenWithNavIdent =
+                    TestUtil.authServer!!
+                        .issueToken(
+                            issuerId = "default",
+                            claims =
+                                mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
+                        ).serialize()
 
                 val response =
                     client.post("$BASE_PATH/bestille") {

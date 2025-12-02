@@ -31,6 +31,7 @@ val ktorVersion = "3.3.1"
 val nimbusVersion = "10.4.1"
 val logbackVersion = "1.5.18"
 val logstashVersion = "8.1"
+val papertrailappVersion = "1.0.0"
 val micrometerVersion = "1.15.2"
 val dbSchedulerVersion = "16.2.0"
 val kotlinLoggingVersion = "3.0.5"
@@ -39,7 +40,7 @@ val kotestVersion = "6.0.0.M17"
 val kotlinxSerializationVersion = "1.9.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
 val jacksonVersion = "3.0.0"
-val mockOAuth2ServerVersion = "2.2.1"
+val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.5"
 val hikariVersion = "6.3.1"
 val kotliqueryVersion = "1.9.1"
@@ -100,9 +101,11 @@ dependencies {
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
     runtimeOnly("org.codehaus.janino:janino:$janionVersion")
-    runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
+    // For syslog.
+    runtimeOnly("com.papertrailapp:logback-syslog4j:$papertrailappVersion")
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")

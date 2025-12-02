@@ -49,6 +49,8 @@ spec:
     inbound:
       rules:
         - application: sokos-up-skattekort-ssr
+        - application: saas-proxy
+          namespace: teamcrm
     outbound:
       rules:
         - application: logging

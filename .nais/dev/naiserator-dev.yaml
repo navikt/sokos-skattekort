@@ -51,6 +51,7 @@ spec:
         - application: azure-token-generator
           namespace: nais
         - application: sokos-up-skattekort-ssr
+        - application: sokos-utbetalingsportalen
         - application: saas-proxy
           namespace: teamcrm
     outbound:

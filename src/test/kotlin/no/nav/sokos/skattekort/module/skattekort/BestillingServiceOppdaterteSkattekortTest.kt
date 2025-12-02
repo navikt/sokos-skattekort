@@ -30,7 +30,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                     DbListener.dataSource,
                     skatteetatenClient,
                     FakeUnleashIntegration(),
-                    PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, false, "", "", ""),
+                    PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, "", "", ""),
                 )
             }
 

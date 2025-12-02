@@ -48,7 +48,6 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: sokos-up-skattekort-ssr
         - application: saas-proxy
           namespace: teamcrm
     outbound:

@@ -104,8 +104,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     runtimeOnly("org.codehaus.janino:janino:$janionVersion")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
-    // For syslog.
-    runtimeOnly("com.papertrailapp:logback-syslog4j:$papertrailappVersion")
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")
     implementation("com.ibm.mq:com.ibm.mq.jakarta.client:$ibmmqVersion")

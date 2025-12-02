@@ -61,7 +61,7 @@ class BestillingServiceTest :
                 DbListener.dataSource,
                 skatteetatenClient,
                 FakeUnleashIntegration(),
-                PropertiesConfig.ApplicationProperties("", Environment.TEST, false, false, "", "", ""),
+                PropertiesConfig.ApplicationProperties("", Environment.TEST, false, "", "", ""),
             )
         }
 

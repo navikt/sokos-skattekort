@@ -6,8 +6,8 @@ on:
       - main
     paths:
       - '.github/workflows/unleash-apitoken.yaml'
-      - '.nais/dev/unleash-apitoken-tss.yaml'
-      - '.nais/prod/unleash-apitoken-tss.yaml'
+      - '../../.nais/dev/unleash-apitoken.yaml'
+      - '../../.nais/prod/unleash-apitoken.yaml'
 
 jobs:
   deploy-unleash-api-token-to-dev-gcp:
@@ -24,7 +24,7 @@ jobs:
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
-          RESOURCE: .nais/dev/unleash-apitoken-tss.yaml
+          RESOURCE: .nais/dev/unleash-apitoken.yaml
 
   deploy-unleash-api-token-to-prod-gcp:
     name: Deploy unleash api-token to prod-gcp
@@ -39,4 +39,4 @@ jobs:
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: prod-gcp
-          RESOURCE: .nais/prod/unleash-apitoken-tss.yaml
+          RESOURCE: .nais/prod/unleash-apitoken.yaml

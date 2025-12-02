@@ -2,12 +2,10 @@ name: Unleash api-tokens
 
 on:
   push:
-    branches:
-      - main
     paths:
-      - '.github/workflows/unleash-apitoken.yaml'
-      - '../../.nais/dev/unleash-apitoken.yaml'
-      - '../../.nais/prod/unleash-apitoken.yaml'
+      - .github/workflows/unleash-apitoken.yaml
+      - .nais/dev/unleash-apitoken.yaml
+      - .nais/prod/unleash-apitoken.yaml
 
 jobs:
   deploy-unleash-api-token-to-dev-gcp:
@@ -22,7 +20,6 @@ jobs:
       - name: Deploy to dev-gcp
         uses: nais/deploy/actions/deploy@v2
         env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
           RESOURCE: .nais/dev/unleash-apitoken.yaml
 

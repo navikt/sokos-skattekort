@@ -20,6 +20,8 @@ import no.nav.sokos.skattekort.security.AzuredTokenClient
 
 private val logger = KotlinLogging.logger {}
 
+private const val BEHANDLINGSKATALOGNUMMER = "B749"
+
 class PdlClientService(
     private val client: HttpClient,
     @Named("pdlUrl") private val pdlUrl: String,
@@ -34,7 +36,7 @@ class PdlClientService(
         val response =
             client.post("$pdlUrl/graphql") {
                 header(HttpHeaders.Authorization, "Bearer $accessToken")
-                header("behandlingsnummer", "B154")
+                header("behandlingsnummer", BEHANDLINGSKATALOGNUMMER)
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }

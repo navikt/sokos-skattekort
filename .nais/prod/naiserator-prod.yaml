@@ -78,8 +78,7 @@ spec:
         tier: db-custom-4-3840
         databases:
           - name: sokos-skattekort
-            users:
-              - name: skattekort_user
+            envVarPrefix: DB
         flags:
           - name: "cloudsql.enable_pgaudit"
             value: "on"

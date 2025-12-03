@@ -38,6 +38,7 @@ object JobTaskConfig {
             .enableImmediateExecution()
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
+            .threads(5)
             .startTasks(
                 recurringSendBestillingBatchTask(bestillingService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),

@@ -10,7 +10,6 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import mu.KotlinLogging
-import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder
 import org.apache.hc.client5.http.impl.routing.SystemDefaultRoutePlanner
 
 private val logger = KotlinLogging.logger {}
@@ -22,13 +21,6 @@ fun createHttpClient(): HttpClient =
         engine {
             customizeClient {
                 setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-                setConnectionManager(
-                    PoolingAsyncClientConnectionManagerBuilder
-                        .create()
-                        .setMaxConnTotal(100)
-                        .setMaxConnPerRoute(20)
-                        .build(),
-                )
             }
         }
 

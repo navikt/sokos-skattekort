@@ -52,7 +52,15 @@ fun createHttpClient(): HttpClient =
     }.also { client ->
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                client.close()
+                logger.info { "Starting graceful shutdown of HTTP client" }
+                try {
+                    client.engine.close()
+                    Thread.sleep(500) // Allow reactor threads to wind down
+                    client.close()
+                    logger.info { "HTTP client closed successfully" }
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
             },
         )
     }

@@ -91,6 +91,22 @@ object BestillingBatchRepository {
             extractor = mapToBestillingBatch,
         )
 
+    fun findById(
+        tx: TransactionalSession,
+        bestillingsbatchId: Long,
+    ): BestillingBatch? =
+        tx.single(
+            queryOf(
+                """
+                    |SELECT * 
+                    |FROM bestillingsbatcher
+                    |WHERE id = :id
+                """.trimMargin(),
+                mapOf("id" to bestillingsbatchId),
+            ),
+            extractor = mapToBestillingBatch,
+        )
+
     fun markAs(
         tx: TransactionalSession,
         bestillingsbatchId: Long,

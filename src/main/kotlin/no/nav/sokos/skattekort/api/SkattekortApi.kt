@@ -24,10 +24,21 @@ fun Route.skattekortApi(forespoerselService: ForespoerselService) {
             val request = call.receive<ForespoerselRequest>()
             val saksbehandler = getSaksbehandler(call)
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Mottat request: $request" }
+            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Mottatt forespørsel: $request" }
 
             val message = "${request.forsystem};${request.aar};${request.personIdent}"
             forespoerselService.taImotForespoersel(message, saksbehandler)
+            call.respond(HttpStatusCode.Created)
+        }
+    }
+    route(BASE_PATH) {
+        post("status") {
+            val request = call.receive<ForespoerselRequest>()
+            val saksbehandler = getSaksbehandler(call)
+
+            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Ber om status på forespørsel: $request" }
+
+            forespoerselService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)
             call.respond(HttpStatusCode.Created)
         }
     }

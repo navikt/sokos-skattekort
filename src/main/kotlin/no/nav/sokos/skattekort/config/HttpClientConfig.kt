@@ -10,7 +10,9 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import mu.KotlinLogging
+import org.apache.hc.client5.http.impl.DefaultConnectionKeepAliveStrategy
 import org.apache.hc.client5.http.impl.routing.SystemDefaultRoutePlanner
+import org.apache.hc.core5.util.TimeValue
 
 private val logger = KotlinLogging.logger {}
 
@@ -21,6 +23,11 @@ fun createHttpClient(): HttpClient =
         engine {
             customizeClient {
                 setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
+                setKeepAliveStrategy { response, context ->
+                    val defaultStrategy = DefaultConnectionKeepAliveStrategy.INSTANCE
+                    val duration = defaultStrategy.getKeepAliveDuration(response, context)
+                    duration ?: TimeValue.ofSeconds(30)
+                }
             }
         }
 

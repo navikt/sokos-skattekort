@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort
 
-import javax.sql.DataSource
-
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -88,7 +86,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(UtsendingService::class)
         provide(BestillingService::class)
         provide(SkatteetatenClient::class)
-        provide(ScheduledTaskService::class)
         provide(SkattekortPersonService::class)
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
@@ -106,16 +103,16 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
         val utsendingService: UtsendingService by dependencies
-        val scheduledTaskService: ScheduledTaskService by dependencies
+        val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceReadCommit)
         val metricsService: MetricsService by dependencies
-        val dataSource: DataSource by dependencies
+
         JobTaskConfig
             .scheduler(
                 bestillingService,
                 utsendingService,
                 scheduledTaskService,
                 metricsService,
-                dataSource,
+                DatabaseConfig.dataSourceReadCommit,
             ).start()
     }
 

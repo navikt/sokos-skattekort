@@ -14,6 +14,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    name: Deploy to dev-gcp
     uses: navikt/mob-gha-workflows/.github/workflows/unleash-deploy.yaml@main
     with:
       cluster: dev-gcp
@@ -23,7 +24,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    needs: [ deploy-dev ]
+    name: Deploy to prod-gcp
     uses: navikt/mob-gha-workflows/.github/workflows/unleash-deploy.yaml@main
     with:
       cluster: prod-gcp
-      resource: .nais/dev/unleash-prod.yaml
+      resource: .nais/prod/unleash-prod.yaml

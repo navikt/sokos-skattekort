@@ -370,7 +370,7 @@ class BestillingServiceTest :
                                 listOf(
                                     aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
                                     aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.00),
+                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
                                 )
                         }
                     }
@@ -460,7 +460,7 @@ class BestillingServiceTest :
                             listOf(
                                 aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
                                 aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.00),
+                                aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
                             )
                     }
                 }
@@ -546,7 +546,7 @@ class BestillingServiceTest :
                                 listOf(
                                     aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
                                     aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.00),
+                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
                                 )
                         }
                         tilleggsopplysningList shouldNotBeNull {
@@ -847,7 +847,7 @@ class BestillingServiceTest :
                                 listOf(
                                     aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
                                     aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.00),
+                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
                                 )
                         }
                         tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
@@ -935,7 +935,7 @@ class BestillingServiceTest :
                                     listOf(
                                         aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
                                         aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                        aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.00),
+                                        aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
                                     )
                             }
                             it.tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))

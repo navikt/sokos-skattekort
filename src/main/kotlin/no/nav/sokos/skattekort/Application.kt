@@ -53,8 +53,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     PropertiesConfig.initEnvConfig(applicationConfig)
     val applicationProperties = PropertiesConfig.getApplicationProperties()
-    val useAuthentication = applicationProperties.useAuthentication
-    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
+    logger.info { "Application started with environment: ${applicationProperties.environment}" }
 
     DatabaseConfig.migrate()
 
@@ -97,8 +96,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     }
 
     commonConfig()
-    securityConfig(useAuthentication)
-    routingConfig(useAuthentication, applicationState)
+    securityConfig()
+    routingConfig(applicationState)
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()

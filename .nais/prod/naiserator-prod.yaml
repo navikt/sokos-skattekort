@@ -62,6 +62,9 @@ spec:
         - host: mpls02.adeo.no
           ports:
             - port: 1414
+        - host: okonomi-unleash-api.nav.cloud.nais.io
+        - host: pdl-api.prod-fss-pub.nais.io
+        - host: api.skatteetaten.no
   maskinporten:
     enabled: true
     scopes:
@@ -79,8 +82,7 @@ spec:
         tier: db-custom-4-3840
         databases:
           - name: sokos-skattekort
-            users:
-              - name: skattekort_user
+            envVarPrefix: DB
         flags:
           - name: "cloudsql.enable_pgaudit"
             value: "on"
@@ -90,6 +92,9 @@ spec:
             value: "on"
           - name: "cloudsql.logical_decoding"
             value: "on"
+  envFrom:
+    - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-unleash-api-token
 
   env:
     - name: APPLICATION_ENV

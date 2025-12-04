@@ -29,20 +29,18 @@ object DatabaseConfig {
         }
     }
 
-    fun migrate(dataSource: HikariDataSource = HikariDataSource(initHikariConfig("postgres-admin-pool"))) {
-        dataSource.use { connection ->
-            Flyway
-                .configure()
-                .dataSource(connection)
-                .lockRetryCount(-1)
-                .validateMigrationNaming(true)
-                .sqlMigrationSeparator("__")
-                .sqlMigrationPrefix("V")
-                .load()
-                .migrate()
-                .migrationsExecuted
-            logger.info { "Migration finished" }
-        }
+    fun migrate(dataSource: DataSource = this.dataSource) {
+        Flyway
+            .configure()
+            .dataSource(dataSource)
+            .lockRetryCount(-1)
+            .validateMigrationNaming(true)
+            .sqlMigrationSeparator("__")
+            .sqlMigrationPrefix("V")
+            .load()
+            .migrate()
+            .migrationsExecuted
+        logger.info { "Migration finished" }
     }
 
     private fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
@@ -66,8 +64,6 @@ object DatabaseConfig {
                     logger.info { "Setting up local PostgreSQL" }
                     this.dataSource =
                         PGSimpleDataSource().apply {
-                            jdbcUrl = postgresProperties.jdbcUrl
-
                             user = postgresProperties.username
                             password = postgresProperties.password
                             serverNames = arrayOf(postgresProperties.host)

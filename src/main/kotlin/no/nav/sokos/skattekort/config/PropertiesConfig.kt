@@ -7,6 +7,9 @@ import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.HoconApplicationConfig
 
+/**
+ * Konfigurasjonssettinger er dokumentert i dokumentasjon/drift/konfigurasjon.md
+ */
 object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
 
@@ -57,7 +60,6 @@ object PropertiesConfig {
             naisAppName = getOrEmpty("NAIS_APP_NAME"),
             gyldigeFnr = getOrEmpty("GYLDIGE_FNR"),
             environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
-            useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
             mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
             podName = getOrEmpty("NAIS_POD_NAME"),
             bestillingOrgnr = get("BESTILLING_ORGNR"),
@@ -113,7 +115,6 @@ object PropertiesConfig {
             schemaRegistry = getOrEmpty("KAFKA_SCHEMA_REGISTRY"),
             schemaRegistryUser = getOrEmpty("KAFKA_SCHEMA_REGISTRY_USER"),
             schemaRegistryPassword = getOrEmpty("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
-            useSSLSecurity = getOrEmpty("KAFKA_USE_SSL_SECURITY").toBoolean(),
             truststorePath = getOrEmpty("KAFKA_TRUSTSTORE_PATH"),
             credstorePassword = getOrEmpty("KAFKA_CREDSTORE_PASSWORD"),
             keystorePath = getOrEmpty("KAFKA_KEYSTORE_PATH"),
@@ -143,7 +144,6 @@ object PropertiesConfig {
     data class ApplicationProperties(
         val naisAppName: String,
         val environment: Environment,
-        val useAuthentication: Boolean,
         val mqListenerEnabled: Boolean,
         val gyldigeFnr: String,
         val podName: String,
@@ -201,7 +201,6 @@ object PropertiesConfig {
         val schemaRegistry: String,
         val schemaRegistryUser: String,
         val schemaRegistryPassword: String,
-        val useSSLSecurity: Boolean,
         val truststorePath: String,
         val credstorePassword: String,
         val keystorePath: String,

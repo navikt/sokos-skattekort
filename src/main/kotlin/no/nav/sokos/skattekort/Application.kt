@@ -57,7 +57,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     DatabaseConfig.migrate()
 
     dependencies {
-        provide { createHttpClient() }
+        provide { createHttpClient() } cleanup { client ->
+            client.close()
+        }
         provide { DatabaseConfig.dataSource }
         provide { KafkaConfig() }
         provide { PropertiesConfig.getUnleashProperties() }

@@ -44,12 +44,4 @@ fun createHttpClient(): HttpClient =
             }
             exponentialDelay()
         }
-    }.also { client ->
-        Runtime.getRuntime().addShutdownHook(
-            Thread {
-                logger.info { "Starting graceful shutdown of HTTP client" }
-                client.close()
-                logger.info { "HTTP client closed successfully" }
-            },
-        )
     }

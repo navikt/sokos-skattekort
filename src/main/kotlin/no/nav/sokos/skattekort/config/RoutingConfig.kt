@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.config
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.di.dependencies
-import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 
 import no.nav.sokos.skattekort.api.skattekortApi
@@ -13,14 +12,13 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 
 fun Application.routingConfig(
-    useAuthentication: Boolean,
     applicationState: ApplicationState,
     azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties(),
 ) {
     routing {
         internalNaisRoutes(applicationState)
         swaggerApi()
-        authenticate(useAuthentication, azureAdProperties.providerName) {
+        authenticate(azureAdProperties.providerName) {
             val forespoerselService: ForespoerselService by dependencies
             val skattekortPersonService: SkattekortPersonService by dependencies
 
@@ -28,12 +26,4 @@ fun Application.routingConfig(
             skattekortPersonApi(skattekortPersonService)
         }
     }
-}
-
-fun Route.authenticate(
-    useAuthentication: Boolean,
-    authenticationProviderId: String? = null,
-    block: Route.() -> Unit,
-) {
-    if (useAuthentication) authenticate(authenticationProviderId) { block() } else block()
 }

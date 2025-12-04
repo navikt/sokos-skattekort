@@ -1,0 +1,41 @@
+name: Unleash api-tokens
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/unleash-apitoken.yaml
+      - .nais/dev/unleash-apitoken.yaml
+      - .nais/prod/unleash-apitoken.yaml
+
+jobs:
+  deploy-unleash-api-token-to-dev-gcp:
+    name: Deploy unleash api-token to dev-gcp
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Deploy to dev-gcp
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/dev/unleash-apitoken.yaml
+
+  deploy-unleash-api-token-to-prod-gcp:
+    name: Deploy unleash api-token to prod-gcp
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Deploy to prod-gcp
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/prod/unleash-apitoken.yaml

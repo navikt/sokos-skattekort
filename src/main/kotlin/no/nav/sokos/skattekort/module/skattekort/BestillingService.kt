@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.module.skattekort
 
-import java.math.BigDecimal
 import java.time.LocalDateTime.now
 import javax.sql.DataSource
 
@@ -58,8 +57,7 @@ class BestillingService(
                 if (bestillings.isEmpty()) {
                     logger.info("Ingen bestillinger å sende")
                 } else {
-                    val request =
-                        bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
+                    val request = bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
 
                     runBlocking {
                         try {
@@ -116,6 +114,7 @@ class BestillingService(
                                     BestillingRepository.deleteProcessedBestillings(tx, batchId)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet")
                                 }
+
                                 ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
                                     // her har det skjedd noe alvorlig feil.
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
@@ -123,6 +122,7 @@ class BestillingService(
                                         "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
                                     )
                                 }
+
                                 ResponseStatus.INGEN_ENDRINGER.name -> {
                                     // ingenting å se her
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
@@ -196,7 +196,13 @@ class BestillingService(
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
             PersonRepository.flaggPerson(tx, person.id!!)
         }
-        SkattekortRepository.insert(tx, skattekort)
+        val id = SkattekortId(SkattekortRepository.insert(tx, skattekort))
+
+        Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, aarsak) ->
+            SkattekortRepository.insert(tx, syntetisertSkattekort)
+            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, person.id!!, aarsak)
+        }
+
         opprettUtsendingerForAbonnementer(tx, person, inntektsaar)
     }
 
@@ -237,46 +243,27 @@ class BestillingService(
                 )
 
             ResultatForSkattekort.IkkeSkattekort -> {
-                val forskuddstrekkList = genererForskuddstrekk(arbeidstaker.tilleggsopplysning)
-                val kilde = if (forskuddstrekkList.isEmpty()) SkattekortKilde.SKATTEETATEN else SkattekortKilde.SYNTETISERT
-
                 Skattekort(
                     personId = person.id!!,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = kilde.value,
+                    kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
-                    forskuddstrekkList = forskuddstrekkList,
+                    forskuddstrekkList = emptyList(),
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
             }
 
             ResultatForSkattekort.IkkeTrekkplikt -> {
-                val forskuddstrekkList =
-                    listOf<Forskuddstrekk>(
-                        Frikort(
-                            trekkode = Trekkode.LOENN_FRA_NAV,
-                            frikortBeloep = null,
-                        ),
-                        Frikort(
-                            trekkode = Trekkode.PENSJON_FRA_NAV,
-                            frikortBeloep = null,
-                        ),
-                        Frikort(
-                            trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                            frikortBeloep = null,
-                        ),
-                    )
-
                 Skattekort(
                     personId = person.id!!,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = SkattekortKilde.SYNTETISERT.value,
+                    kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.IkkeTrekkplikt,
-                    forskuddstrekkList = forskuddstrekkList,
+                    forskuddstrekkList = emptyList(),
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
             }
@@ -296,40 +283,6 @@ class BestillingService(
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
         }
-
-    private fun genererForskuddstrekk(tilleggsopplysning: List<String>?): List<Forskuddstrekk> {
-        if (tilleggsopplysning.isNullOrEmpty()) {
-            return emptyList()
-        }
-
-        return when {
-            tilleggsopplysning.contains("oppholdPaaSvalbard") ->
-                listOf<Forskuddstrekk>(
-                    Prosentkort(
-                        trekkode = Trekkode.LOENN_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(15.70),
-                    ),
-                    Prosentkort(
-                        trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(15.70),
-                    ),
-                    Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(13.00),
-                    ),
-                )
-
-            tilleggsopplysning.contains("kildeskattpensjonist") ->
-                listOf<Forskuddstrekk>(
-                    Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(15.00),
-                    ),
-                )
-
-            else -> emptyList()
-        }
-    }
 
     fun hentOppdaterteSkattekort() {
         if (featureToggles.isOppdateringEnabled()) {
@@ -368,6 +321,7 @@ class BestillingService(
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
+
                         ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
                             // her har det skjedd noe alvorlig feil.
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
@@ -375,6 +329,7 @@ class BestillingService(
                                 "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
                             )
                         }
+
                         ResponseStatus.INGEN_ENDRINGER.name -> {
                             // ingenting å se her
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)

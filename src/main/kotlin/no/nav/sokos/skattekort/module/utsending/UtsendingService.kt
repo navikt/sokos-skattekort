@@ -23,6 +23,7 @@ import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.module.utsending.oppdragz.SkattekortFixedRecordFormatter
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekortmelding
@@ -69,6 +70,7 @@ class UtsendingService(
                                     }
                                 }
                             }
+
                             Forsystem.MANUELL -> {
                                 UtsendingRepository.delete(tx, utsending.id!!)
                             }
@@ -98,7 +100,7 @@ class UtsendingService(
             jmsConnection = jmsConnectionFactory.createConnection()
             jmsSession = jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE)
             jmsProducer = jmsSession.createProducer(leveransekoeOppdragZSkattekort)
-            val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
+            val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
 

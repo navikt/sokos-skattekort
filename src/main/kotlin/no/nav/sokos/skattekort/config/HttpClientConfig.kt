@@ -10,7 +10,6 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import mu.KotlinLogging
-import org.apache.hc.client5.http.impl.DefaultConnectionKeepAliveStrategy
 import org.apache.hc.client5.http.impl.routing.SystemDefaultRoutePlanner
 import org.apache.hc.core5.util.TimeValue
 
@@ -23,11 +22,7 @@ fun createHttpClient(): HttpClient =
         engine {
             customizeClient {
                 setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-                setKeepAliveStrategy { response, context ->
-                    val defaultStrategy = DefaultConnectionKeepAliveStrategy.INSTANCE
-                    val duration = defaultStrategy.getKeepAliveDuration(response, context)
-                    duration ?: TimeValue.ofSeconds(30)
-                }
+                setKeepAliveStrategy { _, _ -> TimeValue.ofSeconds(300) }
             }
         }
 
@@ -53,14 +48,8 @@ fun createHttpClient(): HttpClient =
         Runtime.getRuntime().addShutdownHook(
             Thread {
                 logger.info { "Starting graceful shutdown of HTTP client" }
-                try {
-                    client.engine.close()
-                    Thread.sleep(500) // Allow reactor threads to wind down
-                    client.close()
-                    logger.info { "HTTP client closed successfully" }
-                } catch (e: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                }
+                client.close()
+                logger.info { "HTTP client closed successfully" }
             },
         )
     }

@@ -48,9 +48,6 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: sokos-up-skattekort-ssr
-          namespace: okonomi
-          cluster: prod-gcp
         - application: sokos-utbetalingsportalen
         - application: saas-proxy
           namespace: teamcrm

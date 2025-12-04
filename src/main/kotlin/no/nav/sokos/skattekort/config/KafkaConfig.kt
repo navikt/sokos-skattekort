@@ -30,7 +30,7 @@ class KafkaConfig(
             put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1")
             put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "200000")
             put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
-            put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+            put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaProperties.offsetReset)
             put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed")
             put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true)
             put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.brokers)

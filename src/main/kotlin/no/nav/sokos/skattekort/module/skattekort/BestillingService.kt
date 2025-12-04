@@ -198,9 +198,9 @@ class BestillingService(
         }
         val id = SkattekortId(SkattekortRepository.insert(tx, skattekort))
 
-        Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { syntetisertSkattekort ->
+        Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, aarsak) ->
             SkattekortRepository.insert(tx, syntetisertSkattekort)
-            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, person.id!!, "Syntetisert skattekort opprettet")
+            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, person.id!!, aarsak)
         }
 
         opprettUtsendingerForAbonnementer(tx, person, inntektsaar)

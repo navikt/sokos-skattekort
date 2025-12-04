@@ -10,23 +10,3 @@ updates:
       gradle:
         patterns:
           - "*"
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    cooldown:
-      default-days: 7
-    groups:
-      gha:
-        patterns:
-          - '*'
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    cooldown:
-      default-days: 7
-    groups:
-      docker:
-        patterns:
-          - '*'

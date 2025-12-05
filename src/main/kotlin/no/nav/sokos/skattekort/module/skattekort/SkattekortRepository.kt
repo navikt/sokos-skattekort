@@ -233,7 +233,7 @@ object SkattekortRepository {
                 },
             ).toMap()
 
-    fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning, Int> =
+    fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<Tilleggsopplysning, Int> =
         tx
             .list(
                 queryOf(
@@ -245,8 +245,7 @@ object SkattekortRepository {
                 ),
                 extractor = { row ->
                     val opplysning =
-                        no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning
-                            .fromDomainModel(Tilleggsopplysning.fromValue(row.string("opplysning")))
+                        Tilleggsopplysning.fromValue(row.string("opplysning"))
                     val count = row.int("antall")
                     opplysning to count
                 },

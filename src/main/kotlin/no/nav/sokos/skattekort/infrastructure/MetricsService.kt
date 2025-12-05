@@ -4,12 +4,12 @@ import javax.sql.DataSource
 
 import io.prometheus.metrics.core.metrics.Gauge
 
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
 import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 

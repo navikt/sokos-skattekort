@@ -124,7 +124,7 @@ class SkattekortpersonApiE2ETest :
                         .statusCode(HttpStatusCode.BadRequest.value)
                         .extract()
                         .response()!!
-                assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("Gyldig årstall er mellom 2024 og inneværende år, var 20252"))
+                assertThat("Vi får en sane feilmelding", response.body().prettyPrint(), containsString("inntektsaar ser ikke ut som et gyldig årstall, var 20252"))
             }
         }
         test("vi kan hente et prosent-skattekort") {
@@ -152,27 +152,29 @@ class SkattekortpersonApiE2ETest :
                             .extract()
                             .response()!!
                     response.body().prettyPrint().shouldEqualJson(
-                        """[
-  {
-    "inntektsaar": 2025,
-    "arbeidstakeridentifikator": "12345678901",
-    "resultatPaaForespoersel": "skattekortopplysningerOK",
-    "skattekort": {
-      "utstedtDato": "2025-11-11",
-      "skattekortidentifikator": 17,
-      "forskuddstrekk": [
-        {
-          "type": "Trekkprosent",
-          "trekkode": "PENSJON_FRA_NAV",
-          "prosentsats": 18.50,
-          "antallMaanederForTrekk": 12.0
-        }
+                        """{
+  "data": [
+    {
+      "inntektsaar": 2025,
+      "arbeidstakeridentifikator": "12345678901",
+      "resultatPaaForespoersel": "skattekortopplysningerOK",
+      "skattekort": {
+        "utstedtDato": "2025-11-11",
+        "skattekortidentifikator": 17,
+        "forskuddstrekk": [
+          {
+            "type": "Trekkprosent",
+            "trekkode": "PENSJON_FRA_NAV",
+            "prosentsats": 18.50,
+            "antallMaanederForTrekk": 12.0
+          }
+        ]
+      },
+      "tilleggsopplysning": [
       ]
-    },
-    "tilleggsopplysning": [
-    ]
-  }
-]""",
+    }
+  ]
+}""",
                     )
                     listAppender.list.size shouldBe 1
                     listAppender.list.get(0).formattedMessage shouldMatch
@@ -202,25 +204,27 @@ class SkattekortpersonApiE2ETest :
                         .extract()
                         .response()!!
                 response.body().prettyPrint().shouldEqualJson(
-                    """[
-  {
-    "inntektsaar": 2025,
-    "arbeidstakeridentifikator": "12345678902",
-    "resultatPaaForespoersel": "skattekortopplysningerOK",
-    "skattekort": {
-      "utstedtDato": "2025-11-11",
-      "skattekortidentifikator": 18,
-      "forskuddstrekk": [
-        {
-          "type": "Frikort",
-          "trekkode": "LOENN_FRA_NAV",
-          "frikortbeloep": 65000
-        }
-      ]
-    },
-    "tilleggsopplysning": []
-  }
-]""",
+                    """{
+  "data": [
+    {
+      "inntektsaar": 2025,
+      "arbeidstakeridentifikator": "12345678902",
+      "resultatPaaForespoersel": "skattekortopplysningerOK",
+      "skattekort": {
+        "utstedtDato": "2025-11-11",
+        "skattekortidentifikator": 18,
+        "forskuddstrekk": [
+          {
+            "type": "Frikort",
+            "trekkode": "LOENN_FRA_NAV",
+            "frikortbeloep": 65000
+          }
+        ]
+      },
+      "tilleggsopplysning": []
+    }
+  ]
+}""",
                 )
             }
         }
@@ -289,6 +293,58 @@ class SkattekortpersonApiE2ETest :
                     .statusCode(HttpStatusCode.Unauthorized.value)
                     .extract()
                     .response()!!
+            }
+        }
+        test("person ikke funnet returnerer 200 med melding") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                val response: Response =
+                    client()
+                        .body(
+                            """{
+                            | "fnr": "99999999999",
+                            | "inntektsaar": 2025
+                            | }
+                            """.trimMargin(),
+                        ).post("/api/v1/hent-skattekort")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatusCode.OK.value)
+                        .extract()
+                        .response()!!
+
+                response.body().prettyPrint().shouldEqualJson(
+                    """{
+  "message": "Fant ikke person med fnr 99999999999"
+}""",
+                )
+            }
+        }
+        test("skattekort ikke funnet returnerer 200 med melding") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_uten_skattekort.sql")
+
+                val response: Response =
+                    client()
+                        .body(
+                            """{
+                            | "fnr": "12345678903",
+                            | "inntektsaar": 2025
+                            | }
+                            """.trimMargin(),
+                        ).post("/api/v1/hent-skattekort")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatusCode.OK.value)
+                        .extract()
+                        .response()!!
+
+                response.body().prettyPrint().shouldEqualJson(
+                    """{
+  "message": "Fant ikke skattekort for person med fnr 12345678903"
+}""",
+                )
             }
         }
     })

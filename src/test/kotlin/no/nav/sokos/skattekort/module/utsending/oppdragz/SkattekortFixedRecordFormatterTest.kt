@@ -3,11 +3,17 @@ package no.nav.sokos.skattekort.module.utsending.oppdragz
 import javax.xml.datatype.DatatypeFactory
 
 import kotlin.test.assertEquals
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.TestUtil.readFile
+import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
@@ -64,6 +70,7 @@ Forhåpentligvis vil dette gjenskape den gamle oppførselen bra.
 Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringen, gjør endringen, lager et nytt testdatasett,
 og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
  */
+@OptIn(ExperimentalTime::class)
 class SkattekortFixedRecordFormatterDuplicatorTest :
     FunSpec({
         test("gå gjennom alle skattekort og sjekk at vi får et stabilt svar") {
@@ -84,5 +91,29 @@ class SkattekortFixedRecordFormatterDuplicatorTest :
                     }.toMap()
             // Kommentert ut for enkel oppdatering av referansedataene når vi eventuelt endrer serialiseringen
             // File("src/test/resources/oppdragz/skattekortreferanser.json").writeText(Json { prettyPrint = true }.encodeToString(nyeReferanseVerdier))
+        }
+
+        test("vi kan serialisere et frikort med beløpsgrense") {
+            val skattekort =
+                no.nav.sokos.skattekort.module.skattekort.Skattekort(
+                    id = null,
+                    personId = PersonId(value = 1),
+                    utstedtDato = LocalDate.parse("2020-09-09"),
+                    identifikator = "123",
+                    inntektsaar = 2025,
+                    kilde = "TJAFS",
+                    resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+                    opprettet = Instant.parse("2020-08-30T18:43:00.50Z"),
+                    forskuddstrekkList =
+                        listOf(
+                            no.nav.sokos.skattekort.module.skattekort
+                                .Frikort(no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV, 7890),
+                        ),
+                    tilleggsopplysningList = listOf(),
+                )
+            val skattekortmelding = Skattekortmelding(skattekort, "12345678901")
+            val copybook = SkattekortFixedRecordFormatter(skattekortmelding, 2025.toString()).format()
+            copybook shouldBe
+                "12345678901skattekortopplysningerOK                20252020-09-09123                                                         1Frikort     loennFraNAV                                                      0007890    "
         }
     })

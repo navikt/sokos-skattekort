@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort
 
-import javax.sql.DataSource
-
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -12,6 +10,7 @@ import io.ktor.server.plugins.di.dependencies
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.JobTaskConfig
@@ -52,18 +51,21 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     PropertiesConfig.initEnvConfig(applicationConfig)
     val applicationProperties = PropertiesConfig.getApplicationProperties()
-    val useAuthentication = applicationProperties.useAuthentication
-    logger.info { "Application started with environment: ${applicationProperties.environment}, useAuthentication: $useAuthentication" }
+    logger.info { "Application started with environment: ${applicationProperties.environment}" }
 
     DatabaseConfig.migrate()
 
     dependencies {
-        provide { createHttpClient() }
+        provide { createHttpClient() } cleanup { client ->
+            client.close()
+        }
         provide { DatabaseConfig.dataSource }
         provide { KafkaConfig() }
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
+        provide(AuditLogger::class)
+
         provide { MQConfig.connectionFactory }
         provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
         provide<Queue>(name = "forespoerselQueue") {
@@ -85,7 +87,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(UtsendingService::class)
         provide(BestillingService::class)
         provide(SkatteetatenClient::class)
-        provide(ScheduledTaskService::class)
         provide(SkattekortPersonService::class)
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
@@ -94,8 +95,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     }
 
     commonConfig()
-    securityConfig(useAuthentication)
-    routingConfig(useAuthentication, applicationState)
+    securityConfig()
+    routingConfig(applicationState)
 
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.start()
@@ -103,16 +104,16 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
         val utsendingService: UtsendingService by dependencies
-        val scheduledTaskService: ScheduledTaskService by dependencies
+        val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceReadCommit)
         val metricsService: MetricsService by dependencies
-        val dataSource: DataSource by dependencies
+
         JobTaskConfig
             .scheduler(
                 bestillingService,
                 utsendingService,
                 scheduledTaskService,
                 metricsService,
-                dataSource,
+                DatabaseConfig.dataSourceReadCommit,
             ).start()
     }
 

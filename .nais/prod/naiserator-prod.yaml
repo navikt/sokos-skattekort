@@ -9,8 +9,8 @@ spec:
   image: "{{{ image }}}"
   port: 8080
   replicas:
-    min: 1
-    max: 2
+    min: 2
+    max: 3
     cpuThresholdPercentage: 75
   liveness:
     path: /internal/isAlive
@@ -48,9 +48,8 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: sokos-up-skattekort-ssr
-          namespace: okonomi
-          cluster: prod-gcp
+        - application: saas-proxy
+          namespace: teamcrm
     outbound:
       rules:
         - application: logging
@@ -59,12 +58,14 @@ spec:
         - host: mpls02.adeo.no
           ports:
             - port: 1414
+        - host: okonomi-unleash-api.nav.cloud.nais.io
+        - host: pdl-api.prod-fss-pub.nais.io
+        - host: api.skatteetaten.no
   maskinporten:
     enabled: true
     scopes:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
-        - name: "altinn:authentication/systemregister.write"
   kafka:
     pool: nav-prod
   gcp:
@@ -77,8 +78,7 @@ spec:
         tier: db-custom-4-3840
         databases:
           - name: sokos-skattekort
-            users:
-              - name: skattekort_user
+            envVarPrefix: DB
         flags:
           - name: "cloudsql.enable_pgaudit"
             value: "on"
@@ -88,6 +88,9 @@ spec:
             value: "on"
           - name: "cloudsql.logical_decoding"
             value: "on"
+  envFrom:
+    - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-unleash-api-token
 
   env:
     - name: APPLICATION_ENV

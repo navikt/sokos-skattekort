@@ -12,6 +12,8 @@ import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekktabell
 
 fun aForskuddstrekk(
     type: String,
@@ -45,6 +47,23 @@ fun aForskuddstrekk(
 
         else -> error("Ukjent forskuddstrekk-type: $type")
     }
+
+fun aSkdForskuddstrekk(
+    trekkode: Trekkode,
+    trekkprosent: Double? = null,
+    tabellNummer: String? = null,
+    frikortbeloep: Int? = null,
+): no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk =
+    no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk(
+        trekkode = trekkode.value,
+        trekktabell = tabellNummer?.let { Trekktabell(it, BigDecimal(trekkprosent!!).setScale(2, RoundingMode.HALF_UP), BigDecimal(12).setScale(1, RoundingMode.HALF_UP)) },
+        trekkprosent = trekkprosent?.let { Trekkprosent(BigDecimal(it).setScale(2, RoundingMode.HALF_UP), null) },
+        frikort =
+            frikortbeloep?.let {
+                no.nav.sokos.skattekort.skatteetaten.hentskattekort
+                    .Frikort(BigDecimal(frikortbeloep).setScale(2, RoundingMode.HALF_UP))
+            },
+    )
 
 fun aSkattekort(
     utstedtDato: String,

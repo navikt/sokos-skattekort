@@ -45,7 +45,7 @@ VALUES
     -- Person 1, 2024 (prosentkort)
     (2, 2, 'loennFraHovedarbeidsgiver', 'trekkprosent', NULL, NULL, 30.0, 12),
     -- Person 2, 2025 (frikort + biarbeidsgiver prosent)
-    (3, 3, 'loennFraHovedarbeidsgiver', 'frikort', 65000, NULL, NULL, NULL),
+    (3, 3, 'loennFraNAV', 'frikort', 65000, NULL, NULL, NULL),
     (4, 3, 'loennFraBiarbeidsgiver', 'trekkprosent', NULL, NULL, 28.0, 10.5),
     -- Person 3, 2025 (pensjon prosent)
     (5, 4, 'pensjonFraNAV', 'trekkprosent', NULL, NULL, 18.5, 12),

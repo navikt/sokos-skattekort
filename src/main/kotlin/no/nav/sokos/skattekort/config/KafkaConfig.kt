@@ -41,15 +41,13 @@ class KafkaConfig(
             put(SchemaRegistryClientConfig.USER_INFO_CONFIG, "${kafkaProperties.schemaRegistryUser}:${kafkaProperties.schemaRegistryPassword}")
 
             // SSL Configuration
-            if (kafkaProperties.useSSLSecurity) {
-                put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.SSL.name)
-                put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "")
-                put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "jks")
-                put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, "PKCS12")
-                put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, kafkaProperties.truststorePath)
-                put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, kafkaProperties.credstorePassword)
-                put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, kafkaProperties.keystorePath)
-                put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, kafkaProperties.credstorePassword)
-            }
+            put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.SSL.name)
+            put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "")
+            put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "jks")
+            put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, "PKCS12")
+            put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, kafkaProperties.truststorePath)
+            put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, kafkaProperties.credstorePassword)
+            put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, kafkaProperties.keystorePath)
+            put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, kafkaProperties.credstorePassword)
         }
 }

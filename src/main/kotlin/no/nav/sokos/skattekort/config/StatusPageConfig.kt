@@ -15,12 +15,20 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
 
+import no.nav.sokos.skattekort.exception.PersonNotFoundException
+
+class UnauthorizedException(
+    override val message: String,
+) : RuntimeException(message)
+
 fun StatusPagesConfig.statusPageConfig() {
     exception<Throwable> { call, cause ->
         val (responseStatus, apiError) =
             when (cause) {
+                is PersonNotFoundException -> createApiError(HttpStatusCode.NotFound, cause.message, call)
                 is RequestValidationException -> createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
                 is IllegalArgumentException -> createApiError(HttpStatusCode.BadRequest, cause.message, call)
+                is UnauthorizedException -> createApiError(HttpStatusCode.Unauthorized, cause.message, call)
                 else -> createApiError(HttpStatusCode.InternalServerError, cause.message ?: "En teknisk feil har oppstått. Ta kontakt med utviklerne", call)
             }
 

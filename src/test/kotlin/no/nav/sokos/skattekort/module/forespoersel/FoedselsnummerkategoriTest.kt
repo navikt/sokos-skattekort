@@ -9,11 +9,11 @@ import io.kotest.matchers.shouldBe
 class FoedselsnummerkategoriTest :
     FunSpec({
         test("GYLDIGE.regel skal returnere true for gyldig fødselsnumre") {
-            Foedselsnummerkategori.GYLDIGE.regel("01010112345") shouldBe true
-            Foedselsnummerkategori.GYLDIGE.regel("61010112345") shouldBe true
+            Foedselsnummerkategori.GYLDIGE.erGyldig("01010112345") shouldBe true
+            Foedselsnummerkategori.GYLDIGE.erGyldig("61010112345") shouldBe true
         }
         test("GYLDIGE.regel skal returnere false for ugyldige fnr") {
-            Foedselsnummerkategori.GYLDIGE.regel shouldNotBeNull {
+            Foedselsnummerkategori.GYLDIGE.erGyldig shouldNotBeNull {
                 assertSoftly {
                     withClue("dag > 31") { this("32010112345") shouldBe false }
                     withClue("måned > 12") { this("01130112345") shouldBe false }
@@ -28,17 +28,17 @@ class FoedselsnummerkategoriTest :
             }
         }
         test("TENOR.regel skal returnere false for ekte fødselsnumre og ugyldige datoer") {
-            Foedselsnummerkategori.TENOR.regel("01010112345") shouldBe false
-            Foedselsnummerkategori.TENOR.regel("31820112345") shouldBe false
+            Foedselsnummerkategori.TENOR.erGyldig("01010112345") shouldBe false
+            Foedselsnummerkategori.TENOR.erGyldig("31820112345") shouldBe false
         }
         test("TENOR.regel skal returnere true for tenorbrukere") {
-            Foedselsnummerkategori.TENOR.regel shouldNotBeNull {
+            Foedselsnummerkategori.TENOR.erGyldig shouldNotBeNull {
                 this("01810112345") shouldBe true
                 this("31920112345") shouldBe true
             }
         }
         test("ALLE.regel skal returnere true så lenge det er 11-sifre") {
-            Foedselsnummerkategori.ALLE.regel shouldNotBeNull {
+            Foedselsnummerkategori.ALLE.erGyldig shouldNotBeNull {
                 this("01010112345") shouldBe true
                 this("61010112345") shouldBe true
                 this("01810112345") shouldBe true
@@ -46,7 +46,7 @@ class FoedselsnummerkategoriTest :
             }
         }
         test("ALLE.regel skal returnere false for feil lengde eller bokstaver") {
-            Foedselsnummerkategori.ALLE.regel shouldNotBeNull {
+            Foedselsnummerkategori.ALLE.erGyldig shouldNotBeNull {
                 assertSoftly {
                     withClue("Skal bli false pga feil lengde") { this("010101") shouldBe false }
                     withClue("Skal bli false pga bokstaver") { this("abcdefghijk") shouldBe false }

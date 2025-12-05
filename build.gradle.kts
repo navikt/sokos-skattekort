@@ -7,10 +7,10 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.2.0"
-    kotlin("plugin.serialization") version "2.2.0"
-    id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
-    id("org.jetbrains.kotlinx.kover") version "0.9.1"
+    kotlin("jvm") version "2.2.21"
+    kotlin("plugin.serialization") version "2.2.21"
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+    id("org.jetbrains.kotlinx.kover") version "0.9.3"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "8.8.1"
 
@@ -28,34 +28,34 @@ repositories {
 }
 
 val ktorVersion = "3.3.3"
-val nimbusVersion = "10.4.1"
-val logbackVersion = "1.5.18"
-val logstashVersion = "8.1"
-val micrometerVersion = "1.15.2"
-val dbSchedulerVersion = "16.2.0"
+val nimbusVersion = "10.6"
+val logbackVersion = "1.5.21"
+val logstashVersion = "9.0"
+val micrometerVersion = "1.16.0"
+val dbSchedulerVersion = "16.6.0"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
-val kotestVersion = "6.0.0.M17"
+val kotestVersion = "6.0.5"
 val kotlinxSerializationVersion = "1.9.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
-val jacksonVersion = "3.0.0"
+val jacksonVersion = "3.0.2"
 val mockOAuth2ServerVersion = "3.0.1"
-val mockkVersion = "1.14.5"
-val hikariVersion = "6.3.1"
+val mockkVersion = "1.14.6"
+val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.3"
-val flywayVersion = "11.10.3"
-val postgresVersion = "42.7.7"
-val activemqVersion = "2.41.0"
-val ibmmqVersion = "9.4.3.0"
-val opentelemetryVersion = "2.20.1-alpha"
+val flywayVersion = "11.18.0"
+val postgresVersion = "42.7.8"
+val activemqVersion = "2.44.0"
+val ibmmqVersion = "9.4.4.0"
+val opentelemetryVersion = "2.22.0-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
-val kafkaClientsVersion = "4.1.0"
+val kafkaClientsVersion = "8.1.1-ce"
 val avroVersion = "1.12.1"
-val kafkaAvroSerializerVersion = "8.1.0"
+val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
-val wiremockVersion = "3.13.1"
+val wiremockVersion = "3.13.2"
 val unleashedVersion = "11.1.1"
 
 dependencies {
@@ -113,7 +113,7 @@ dependencies {
     implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
 
     // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
-    implementation("org.apache.commons:commons-lang3:3.18.0")
+    implementation("org.apache.commons:commons-lang3:3.20.0")
 
     // Scheduler
     implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")

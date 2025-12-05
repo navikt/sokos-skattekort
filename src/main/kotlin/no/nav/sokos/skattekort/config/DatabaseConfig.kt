@@ -19,6 +19,15 @@ object DatabaseConfig {
         HikariDataSource(initHikariConfig())
     }
 
+    val dataSourceReadCommit: DataSource by lazy {
+        HikariDataSource(
+            initHikariConfig(
+                poolname = "postgres-read-commited-pool",
+                transactionIsolation = "TRANSACTION_READ_COMMITTED",
+            ),
+        )
+    }
+
     init {
         if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
             Runtime.getRuntime().addShutdownHook(
@@ -29,30 +38,31 @@ object DatabaseConfig {
         }
     }
 
-    fun migrate(dataSource: HikariDataSource = HikariDataSource(initHikariConfig("postgres-admin-pool"))) {
-        dataSource.use { connection ->
-            Flyway
-                .configure()
-                .dataSource(connection)
-                .lockRetryCount(-1)
-                .validateMigrationNaming(true)
-                .sqlMigrationSeparator("__")
-                .sqlMigrationPrefix("V")
-                .load()
-                .migrate()
-                .migrationsExecuted
-            logger.info { "Migration finished" }
-        }
+    fun migrate(dataSource: DataSource = this.dataSource) {
+        Flyway
+            .configure()
+            .dataSource(dataSource)
+            .lockRetryCount(-1)
+            .validateMigrationNaming(true)
+            .sqlMigrationSeparator("__")
+            .sqlMigrationPrefix("V")
+            .load()
+            .migrate()
+            .migrationsExecuted
+        logger.info { "Migration finished" }
     }
 
-    private fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
+    private fun initHikariConfig(
+        poolname: String = "postgres-pool",
+        transactionIsolation: String = "TRANSACTION_SERIALIZABLE",
+    ): HikariConfig {
         val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
         return HikariConfig().apply {
             poolName = poolname
             maximumPoolSize = 10
             minimumIdle = 1
             isAutoCommit = false
-            transactionIsolation = "TRANSACTION_SERIALIZABLE"
+            this.transactionIsolation = transactionIsolation
             connectionTimeout = Duration.ofSeconds(10).toMillis()
             initializationFailTimeout = Duration.ofMinutes(5).toMillis()
 
@@ -66,8 +76,6 @@ object DatabaseConfig {
                     logger.info { "Setting up local PostgreSQL" }
                     this.dataSource =
                         PGSimpleDataSource().apply {
-                            jdbcUrl = postgresProperties.jdbcUrl
-
                             user = postgresProperties.username
                             password = postgresProperties.password
                             serverNames = arrayOf(postgresProperties.host)

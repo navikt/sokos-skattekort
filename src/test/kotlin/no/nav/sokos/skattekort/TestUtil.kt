@@ -28,6 +28,7 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
+import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -51,11 +52,14 @@ object TestUtil {
             .collect(Collectors.joining("\n"))
     }
 
+    var authServer: MockOAuth2Server? = null
+
     fun withFullTestApplication(thunk: suspend ApplicationTestBuilder.() -> Unit) =
         withMockOAuth2Server {
+            authServer = this
             testApplication {
                 application {
-                    configureTestModule()
+                    configureTestModule(authServer!!)
                 }
                 startApplication()
 
@@ -70,7 +74,7 @@ object TestUtil {
             }
         }
 
-    fun Application.configureTestModule() {
+    fun Application.configureTestModule(authServer: MockOAuth2Server) {
         if (pluginOrNull(DI) == null) {
             install(DI) {
                 configureShutdownBehavior()
@@ -88,7 +92,7 @@ object TestUtil {
                 }
             }
         }
-        module(testEnvironmentConfig())
+        module(testEnvironmentConfig(authServer))
     }
 
     fun runThisSql(query: String) {
@@ -103,7 +107,7 @@ object TestUtil {
 
     fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
 
-    private fun testEnvironmentConfig(): MapApplicationConfig =
+    private fun testEnvironmentConfig(authServer: MockOAuth2Server): MapApplicationConfig =
         MapApplicationConfig().apply {
             put("APPLICATION_ENV", "TEST")
 
@@ -113,6 +117,8 @@ object TestUtil {
             put("DB_DATABASE", DbListener.container.databaseName)
             put("DB_PORT", DbListener.container.firstMappedPort.toString())
             put("DB_HOST", DbListener.container.host)
+            put("AZURE_APP_CLIENT_ID", "default")
+            put("AZURE_APP_WELL_KNOWN_URL", authServer.wellKnownUrl("default").toUrl().toString())
         }
 
     private fun DependencyInjectionConfig.configureShutdownBehavior() {

@@ -13,7 +13,6 @@ class FakeUnleashIntegration :
             "foo",
             Environment.TEST,
             false,
-            false,
             "",
             "",
             "",

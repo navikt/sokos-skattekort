@@ -18,19 +18,13 @@ import io.ktor.server.auth.jwt.jwt
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
-const val AUTHENTICATION_NAME = "azureAd"
 
-fun Application.securityConfig(
-    useAuthentication: Boolean,
-    azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties(),
-) {
-    if (!useAuthentication) return
-
+fun Application.securityConfig(azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties()) {
     val openIdMetadata: OpenIdMetadata = wellKnowConfig(azureAdProperties.wellKnownUrl)
     val jwkProvider = cachedJwkProvider(openIdMetadata.jwksUri)
 
     authentication {
-        jwt(AUTHENTICATION_NAME) {
+        jwt(azureAdProperties.providerName) {
             realm = PropertiesConfig.getApplicationProperties().naisAppName
             verifier(
                 jwkProvider = jwkProvider,

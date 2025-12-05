@@ -98,6 +98,13 @@ components:
         forsystem:
           type: string
           example: "MANUELL"
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "VENTER_PAA_UTSENDING"
+          description: Status for forespørselen
     ApiError:
       type: object
       required:

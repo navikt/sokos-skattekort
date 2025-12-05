@@ -12,6 +12,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.security.AuthToken.getSaksbehandler
 
 private val logger = KotlinLogging.logger { }
@@ -38,11 +39,17 @@ fun Route.skattekortApi(forespoerselService: ForespoerselService) {
 
             logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Ber om status på forespørsel: $request" }
 
-            forespoerselService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)
-            call.respond(HttpStatusCode.Created)
+            call.respond(
+                StatusResponse(forespoerselService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)),
+            )
         }
     }
 }
+
+@Serializable
+data class StatusResponse(
+    val status: Status,
+)
 
 @Serializable
 data class ForespoerselRequest(

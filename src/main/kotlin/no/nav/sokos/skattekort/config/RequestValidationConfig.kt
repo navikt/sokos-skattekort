@@ -27,7 +27,7 @@ fun RequestValidationConfig.requestValidationSkattekortRequest() {
     validate<SkattekortPersonRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
-            !isValidAar(request.inntektsaar.toInt()) -> ValidationResult.Invalid("Gyldig årstall er mellom ${Year.now().minusYears(1)} og inneværende år, var ${request.inntektsaar}")
+            !Validator.isValidInntektsaar(request.inntektsaar.toInt()) -> ValidationResult.Invalid("inntektsaar ser ikke ut som et gyldig årstall, var ${request.inntektsaar}")
             else -> ValidationResult.Valid
         }
     }
@@ -40,6 +40,8 @@ object Validator {
         val currentYear = Year.now().value
         return aar in (currentYear - 1)..currentYear
     }
+
+    fun isValidInntektsaar(aar: Int): Boolean = aar in 2025..<2100
 
     fun isValidForsystem(forsystem: String): Boolean = !forsystem.isEmpty() && Forsystem.entries.any { it.value == forsystem }
 }

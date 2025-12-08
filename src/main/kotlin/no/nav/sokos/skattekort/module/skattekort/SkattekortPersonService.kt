@@ -9,10 +9,10 @@ import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonReques
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonResponse
 import no.nav.sokos.skattekort.audit.AuditLogg
 import no.nav.sokos.skattekort.audit.AuditLogger
-import no.nav.sokos.skattekort.audit.Saksbehandler
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}

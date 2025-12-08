@@ -26,7 +26,6 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.TestUtil.tx
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig.Environment
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -52,6 +51,7 @@ import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 @OptIn(ExperimentalTime::class)
 class BestillingServiceTest :

@@ -9,8 +9,6 @@ import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 
-import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
-import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.infrastructure.MQListener.bestillingsQueue
@@ -19,6 +17,8 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
+import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
 
 class MottaBestillingEndToEndTest :
     FunSpec({

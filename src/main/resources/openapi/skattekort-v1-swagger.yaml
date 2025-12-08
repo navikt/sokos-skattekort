@@ -15,7 +15,7 @@ tags:
   - name: sokos-skattekort
     description: API for å håndtere skattekort-forespørsler
 paths:
-  /bestille:
+  /api/v1/skattekort/bestille:
     post:
       tags:
         - skattekort

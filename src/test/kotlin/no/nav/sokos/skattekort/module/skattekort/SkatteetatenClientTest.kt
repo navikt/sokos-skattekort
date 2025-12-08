@@ -18,11 +18,11 @@ import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillSkattekortRequest
+import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 class SkatteetatenClientTest :
     FunSpec({

@@ -48,6 +48,7 @@ spec:
   accessPolicy:
     inbound:
       rules:
+        - application: sokos-utbetalingsportalen
         - application: saas-proxy
           namespace: teamcrm
     outbound:

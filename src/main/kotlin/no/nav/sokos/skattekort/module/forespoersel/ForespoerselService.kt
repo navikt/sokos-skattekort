@@ -21,7 +21,7 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
-import no.nav.sokos.skattekort.security.NavIdent
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private const val FORESPOERSEL_DELIMITER = ";"
@@ -33,7 +33,7 @@ class ForespoerselService(
 ) {
     fun taImotForespoersel(
         message: String,
-        saksbehandler: NavIdent? = null,
+        saksbehandler: Saksbehandler? = null,
     ) {
         dataSource.transaction { tx ->
             val forespoerselInput: ForespoerselInput =

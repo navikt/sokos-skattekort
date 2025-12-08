@@ -13,12 +13,12 @@ import io.ktor.server.plugins.di.dependencies
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.JmsTestUtil
-import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
-import no.nav.sokos.skattekort.TestUtil.withFullTestApplication
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
+import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
 
 class UtsendingEndToEndTest :
     FunSpec({

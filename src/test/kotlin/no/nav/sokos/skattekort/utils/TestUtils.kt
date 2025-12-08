@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort
+package no.nav.sokos.skattekort.utils
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -33,11 +33,13 @@ import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.module
 import no.nav.sokos.skattekort.security.AzuredTokenClient
+import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
-object TestUtil {
+object TestUtils {
     val eventuallyConfiguration =
         eventuallyConfig {
             initialDelay = 1.seconds
@@ -53,10 +55,19 @@ object TestUtil {
     }
 
     var authServer: MockOAuth2Server? = null
+    var tokenWithNavIdent: String? = null
 
     fun withFullTestApplication(thunk: suspend ApplicationTestBuilder.() -> Unit) =
         withMockOAuth2Server {
             authServer = this
+            tokenWithNavIdent =
+                this
+                    .issueToken(
+                        issuerId = "default",
+                        claims =
+                            mapOf<kotlin.String, kotlin.String>(JWT_CLAIM_NAVIDENT to "aUser"),
+                    ).serialize()
+
             testApplication {
                 application {
                     configureTestModule(authServer!!)

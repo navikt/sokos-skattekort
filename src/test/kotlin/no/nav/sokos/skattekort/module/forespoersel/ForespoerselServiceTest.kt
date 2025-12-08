@@ -21,7 +21,7 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingId
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
-import no.nav.sokos.skattekort.security.NavIdent
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 @OptIn(ExperimentalTime::class)
@@ -89,7 +89,7 @@ class ForespoerselServiceTest :
                 val message = "MANUELL;2026;12345678901"
                 val brukerId = "Z123456"
 
-                forespoerselService.taImotForespoersel(message, NavIdent(brukerId))
+                forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
 
                 DbListener.dataSource.transaction { tx ->
                     val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)

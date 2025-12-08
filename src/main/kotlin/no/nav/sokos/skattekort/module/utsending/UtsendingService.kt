@@ -3,8 +3,6 @@ package no.nav.sokos.skattekort.module.utsending
 import javax.sql.DataSource
 
 import io.ktor.server.plugins.di.annotations.Named
-import io.prometheus.metrics.core.metrics.Counter
-import io.prometheus.metrics.core.metrics.Gauge
 import jakarta.jms.Connection
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
@@ -14,8 +12,8 @@ import jakarta.jms.Session
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
-import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.Metrics.counter
+import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.AuditRepository
@@ -137,26 +135,22 @@ class UtsendingService(
 
     companion object {
         val utsendingOppdragzCounter =
-            Counter
-                .builder()
-                .name("${METRICS_NAMESPACE}_utsendinger_oppdragz_total")
-                .help("Utsendinger til oppdrag z")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
+            counter(
+                name = "utsendinger_oppdragz_total",
+                helpText = "Utsendinger til oppdrag z",
+            )
+
         val feiledeUtsendingerOppdragzCounter =
-            Counter
-                .builder()
-                .name("${METRICS_NAMESPACE}_utsendinger_oppdragz_feil_total")
-                .help("Feilede forsøk på utsendinger til oppdrag z")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
+            counter(
+                name = "utsendinger_oppdragz_feil_total",
+                helpText = "Feilede forsøk på utsendinger til oppdrag z",
+            )
+
         val utsendingerIKoe =
-            Gauge
-                .builder()
-                .name("${METRICS_NAMESPACE}_utsendinger_i_koe")
-                .help("Utsendinger i koe, enda ikke håndtert")
-                .labelNames("status")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
+            gauge(
+                name = "utsendinger_i_koe",
+                helpText = "Utsendinger i kø, enda ikke håndtert",
+                labelNames = "status",
+            )
     }
 }

@@ -9,13 +9,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.toKotlinLocalDateTime
 
-import io.prometheus.metrics.core.metrics.Counter
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
-import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.AuditRepository
@@ -403,11 +401,9 @@ class BestillingService(
 
     companion object {
         val oppdateringerMottattCounter =
-            Counter
-                .builder()
-                .name("${METRICS_NAMESPACE}_oppdaterte_skattekort")
-                .help("Mottatte oppdateringer av skattekort")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
+            counter(
+                name = "oppdaterte_skattekort",
+                helpText = "Mottatte oppdateringer av skattekort",
+            )
     }
 }

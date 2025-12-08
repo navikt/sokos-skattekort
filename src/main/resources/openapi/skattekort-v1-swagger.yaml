@@ -49,6 +49,40 @@ paths:
       security:
         - BearerAuth: [ ]
 
+  /api/v1/skattekort/status:
+    post:
+      tags:
+        - skattekort
+      summary: Bestille skattekort
+      description: Status om forespørsel
+      operationId: statusForespoeresel
+      requestBody:
+        description: Status om forespørsel
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForespoerselRequest'
+        required: true
+      responses:
+        '200':
+          description: Returnerer status
+        '400':
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Ingen tilgang
+        '500':
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - BearerAuth: [ ]
+
 components:
   schemas:
     ForespoerselRequest:
@@ -64,6 +98,13 @@ components:
         forsystem:
           type: string
           example: "MANUELL"
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "VENTER_PAA_UTSENDING"
+          description: Status for forespørselen
     ApiError:
       type: object
       required:

@@ -12,6 +12,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.security.AuthToken.getSaksbehandler
 
 private val logger = KotlinLogging.logger { }
@@ -24,14 +25,31 @@ fun Route.skattekortApi(forespoerselService: ForespoerselService) {
             val request = call.receive<ForespoerselRequest>()
             val saksbehandler = getSaksbehandler(call)
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Mottat request: $request" }
+            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Mottatt forespørsel: $request" }
 
             val message = "${request.forsystem};${request.aar};${request.personIdent}"
             forespoerselService.taImotForespoersel(message, saksbehandler)
             call.respond(HttpStatusCode.Created)
         }
     }
+    route(BASE_PATH) {
+        post("status") {
+            val request = call.receive<ForespoerselRequest>()
+            val saksbehandler = getSaksbehandler(call)
+
+            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Ber om status på forespørsel: $request" }
+
+            call.respond(
+                StatusResponse(forespoerselService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)),
+            )
+        }
+    }
 }
+
+@Serializable
+data class StatusResponse(
+    val status: Status,
+)
 
 @Serializable
 data class ForespoerselRequest(

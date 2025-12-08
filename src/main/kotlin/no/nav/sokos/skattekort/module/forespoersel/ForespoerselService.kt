@@ -68,7 +68,7 @@ class ForespoerselService(
         fnr: String,
         aar: Int,
         forsystem: String,
-        saksbehandler: NavIdent? = null,
+        saksbehandler: Saksbehandler? = null,
     ): Status {
         val person: Person? =
             dataSource.transaction { tx ->

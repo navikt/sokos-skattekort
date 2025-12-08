@@ -9,7 +9,6 @@ import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 
-import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.WiremockListener
@@ -22,6 +21,7 @@ import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 class IdentifikatorEndringServiceTest :
     FunSpec({

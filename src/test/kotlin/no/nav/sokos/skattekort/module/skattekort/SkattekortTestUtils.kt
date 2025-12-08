@@ -7,13 +7,13 @@ import java.nio.file.Paths
 
 import kotlinx.serialization.json.Json
 
-import no.nav.sokos.skattekort.TestUtil.runThisSql
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekktabell
+import no.nav.sokos.skattekort.utils.TestUtils.runThisSql
 
 fun aForskuddstrekk(
     type: String,

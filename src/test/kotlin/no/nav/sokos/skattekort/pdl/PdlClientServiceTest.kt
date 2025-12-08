@@ -11,9 +11,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 
 import no.nav.pdl.enums.IdentGruppe
-import no.nav.sokos.skattekort.TestUtil.readFile
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.WiremockListener
+import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 internal class PdlClientServiceTest :
     FunSpec({

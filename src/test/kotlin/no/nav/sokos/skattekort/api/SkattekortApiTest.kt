@@ -6,27 +6,26 @@ import kotlin.time.ExperimentalTime
 import kotlinx.serialization.json.Json
 
 import com.atlassian.oai.validator.OpenApiInteractionValidator
-import com.atlassian.oai.validator.model.SimpleRequest
-import com.atlassian.oai.validator.model.SimpleResponse
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 
-import no.nav.sokos.skattekort.TestUtil
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.TestUtils
+import no.nav.sokos.skattekort.utils.TestUtils.tokenWithNavIdent
+import no.nav.sokos.skattekort.utils.validationReport
 
 @OptIn(ExperimentalTime::class)
 class SkattekortApiTest :
@@ -38,38 +37,19 @@ class SkattekortApiTest :
                 .createForSpecificationUrl("openapi/skattekort-v1-swagger.yaml")
                 .build()
 
-        val aar = Year.now().value
+        val inntektsaar = Year.now().value
 
         test("bestille skattekort skal returnere 201 Created") {
-            TestUtil.withFullTestApplication {
-                val request = ForespoerselRequest(personIdent = "12345678901", aar = aar, forsystem = Forsystem.MANUELL.value)
-                val tokenWithNavIdent =
-                    TestUtil.authServer!!
-                        .issueToken(
-                            issuerId = "default",
-                            claims =
-                                mapOf<kotlin.String, kotlin.String>(JWT_CLAIM_NAVIDENT to "aUser"),
-                        ).serialize()
-
+            TestUtils.withFullTestApplication {
+                val request = ForespoerselRequest(personIdent = "12345678901", aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
                         setBody(request)
                     }
+                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
 
-                val validationReport =
-                    validator.validate(
-                        SimpleRequest
-                            .Builder("POST", "$BASE_PATH/bestille")
-                            .withHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            .withHeader(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
-                            .withBody(Json.encodeToString(request))
-                            .build(),
-                        SimpleResponse
-                            .Builder(response.status.value)
-                            .build(),
-                    )
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.Created
 
@@ -80,17 +60,9 @@ class SkattekortApiTest :
         }
 
         test("bestille skattekort skal returnere 400 Ugyldig request med feil personIdent") {
-            TestUtil.withFullTestApplication {
+            TestUtils.withFullTestApplication {
 
-                val request = ForespoerselRequest(personIdent = "1234567", aar = aar, forsystem = Forsystem.MANUELL.value)
-                val tokenWithNavIdent =
-                    TestUtil.authServer!!
-                        .issueToken(
-                            issuerId = "default",
-                            claims =
-                                mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
-                        ).serialize()
-
+                val request = ForespoerselRequest(personIdent = "1234567", aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -98,19 +70,7 @@ class SkattekortApiTest :
                         setBody(request)
                     }
 
-                val validationReport =
-                    validator.validate(
-                        SimpleRequest
-                            .Builder("POST", "$BASE_PATH/bestille")
-                            .withHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            .withHeader(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
-                            .withBody(Json.encodeToString(request))
-                            .build(),
-                        SimpleResponse
-                            .Builder(response.status.value)
-                            .withBody(response.bodyAsText())
-                            .build(),
-                    )
+                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
 
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -128,17 +88,10 @@ class SkattekortApiTest :
         }
 
         test("bestille skattekort skal returnere 400 Ugyldig request med feil aar") {
-            TestUtil.withFullTestApplication {
-                val aar = Year.now().minusYears(2).value
-                val request = ForespoerselRequest(personIdent = "12345678901", aar = aar, forsystem = Forsystem.MANUELL.value)
-                val tokenWithNavIdent =
-                    TestUtil.authServer!!
-                        .issueToken(
-                            issuerId = "default",
-                            claims =
-                                mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
-                        ).serialize()
+            TestUtils.withFullTestApplication {
+                val inntekstaar = Year.now().minusYears(2).value
 
+                val request = ForespoerselRequest(personIdent = "12345678901", aar = inntekstaar, forsystem = Forsystem.MANUELL.value)
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -146,19 +99,7 @@ class SkattekortApiTest :
                         setBody(request)
                     }
 
-                val validationReport =
-                    validator.validate(
-                        SimpleRequest
-                            .Builder("POST", "$BASE_PATH/bestille")
-                            .withHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            .withHeader(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
-                            .withBody(Json.encodeToString(request))
-                            .build(),
-                        SimpleResponse
-                            .Builder(response.status.value)
-                            .withBody(response.bodyAsText())
-                            .build(),
-                    )
+                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
 
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -176,17 +117,8 @@ class SkattekortApiTest :
         }
 
         test("bestille skattekort skal returnere 400 Ugyldig request med feil forsystem") {
-            TestUtil.withFullTestApplication {
-                val request = ForespoerselRequest(personIdent = "12345678901", aar = aar, forsystem = "")
-
-                val tokenWithNavIdent =
-                    TestUtil.authServer!!
-                        .issueToken(
-                            issuerId = "default",
-                            claims =
-                                mapOf(JWT_CLAIM_NAVIDENT to "aUser"),
-                        ).serialize()
-
+            TestUtils.withFullTestApplication {
+                val request = ForespoerselRequest(personIdent = "12345678901", aar = inntektsaar, forsystem = "")
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -194,19 +126,7 @@ class SkattekortApiTest :
                         setBody(request)
                     }
 
-                val validationReport =
-                    validator.validate(
-                        SimpleRequest
-                            .Builder("POST", "$BASE_PATH/bestille")
-                            .withHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            .withHeader(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
-                            .withBody(Json.encodeToString(request))
-                            .build(),
-                        SimpleResponse
-                            .Builder(response.status.value)
-                            .withBody(response.bodyAsText())
-                            .build(),
-                    )
+                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
 
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.BadRequest

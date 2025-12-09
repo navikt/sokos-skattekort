@@ -52,23 +52,43 @@ object Syntetisering {
             }
 
             skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD) -> {
-                Pair(
-                    listOf<Forskuddstrekk>(
-                        Prosentkort(
-                            trekkode = Trekkode.LOENN_FRA_NAV,
-                            prosentSats = BigDecimal.valueOf(15.70),
+                if (skattekort.inntektsaar < 2026) {
+                    Pair(
+                        listOf<Forskuddstrekk>(
+                            Prosentkort(
+                                trekkode = Trekkode.LOENN_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.70),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.70),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.PENSJON_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(13.10),
+                            ),
                         ),
-                        Prosentkort(
-                            trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                            prosentSats = BigDecimal.valueOf(15.70),
+                        "Prosentkort med default skattesatser for Svalbard syntetisert pga mottatt tilleggsinformasjon ${Tilleggsopplysning.OPPHOLD_PAA_SVALBARD.value}",
+                    )
+                } else {
+                    Pair(
+                        listOf<Forskuddstrekk>(
+                            Prosentkort(
+                                trekkode = Trekkode.LOENN_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.60),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.60),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.PENSJON_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(13.10),
+                            ),
                         ),
-                        Prosentkort(
-                            trekkode = Trekkode.PENSJON_FRA_NAV,
-                            prosentSats = BigDecimal.valueOf(13.10),
-                        ),
-                    ),
-                    "Prosentkort med default skattesatser for Svalbard syntetisert pga mottatt tilleggsinformasjon ${Tilleggsopplysning.OPPHOLD_PAA_SVALBARD.value}",
-                )
+                        "Prosentkort med default skattesatser for Svalbard syntetisert pga mottatt tilleggsinformasjon ${Tilleggsopplysning.OPPHOLD_PAA_SVALBARD.value}",
+                    )
+                }
             }
 
             skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.KILDESKATT_PAA_PENSJON) -> {

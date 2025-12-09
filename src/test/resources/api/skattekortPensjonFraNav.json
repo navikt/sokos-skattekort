@@ -10,7 +10,7 @@
         "forskuddstrekk": [
           {
             "type": "Trekkprosent",
-            "trekkode": "PENSJON_FRA_NAV",
+            "trekkode": "pensjonFraNAV",
             "prosentsats": 18.50,
             "antallMaanederForTrekk": 12.0
           }

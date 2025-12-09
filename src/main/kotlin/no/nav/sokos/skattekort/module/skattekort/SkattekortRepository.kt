@@ -216,7 +216,7 @@ object SkattekortRepository {
                 },
             ).toMap()
 
-    fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode, Int> =
+    fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<String, Int> =
         tx
             .list(
                 queryOf(
@@ -228,9 +228,7 @@ object SkattekortRepository {
                     """.trimIndent(),
                 ),
                 extractor = { row ->
-                    val trekkode =
-                        no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
-                            .fromValue(row.string("trekk_kode"))
+                    val trekkode = row.string("trekk_kode")
                     val count = row.int("antall")
                     trekkode to count
                 },

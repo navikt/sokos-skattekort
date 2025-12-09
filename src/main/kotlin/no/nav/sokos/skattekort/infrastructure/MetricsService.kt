@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.infrastructure
 
 import javax.sql.DataSource
 
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
 import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
@@ -33,9 +32,9 @@ class MetricsService(
 //            Skattekort tabell på trekkodene Lønn fra Nav
 //            Skattekort tabell på trekkodene pensjon fra Nav
 //            Skattekort tabell på trekkodene uføretrygd fra Nav
-            val numberOfTabelltrekkByTrekkode: Map<Trekkode, Int> = SkattekortRepository.numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx)
+            val numberOfTabelltrekkByTrekkode: Map<String, Int> = SkattekortRepository.numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx)
             numberOfTabelltrekkByTrekkode.map { (trekkode, count) ->
-                numberOfTabelltrekkByTrekkodeMetric.labelValues(trekkode.value).set(count.toDouble())
+                numberOfTabelltrekkByTrekkodeMetric.labelValues(trekkode).set(count.toDouble())
             }
 //            Skattekort med tilleggsopplysning kildeskattpensjonist
 //            Skattekort med tilleggsopplysning opphold på Svalbard

@@ -2,10 +2,8 @@ package no.nav.sokos.skattekort.infrastructure
 
 import javax.sql.DataSource
 
-import io.prometheus.metrics.core.metrics.Gauge
-
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
-import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
@@ -98,29 +96,5 @@ class MetricsService(
                 helpText = "Frikort fordelt på om det er begrensning på beløp",
                 labelNames = "beloepsgrense",
             )
-
-        fun gauge(
-            name: String,
-            helpText: String,
-        ): Gauge =
-            Gauge
-                .builder()
-                .name("${METRICS_NAMESPACE}_$name")
-                .help(helpText)
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
-
-        fun gauge(
-            name: String,
-            helpText: String,
-            labelNames: String,
-        ): Gauge =
-            Gauge
-                .builder()
-                .labelNames(labelNames)
-                .name("${METRICS_NAMESPACE}_$name")
-                .help(helpText)
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
     }
 }

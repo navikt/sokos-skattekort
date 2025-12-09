@@ -70,6 +70,10 @@ class ForespoerselService(
         forsystem: String,
         saksbehandler: Saksbehandler? = null,
     ): Status {
+        val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        if (!kategoriMapper.erGyldig(fnr)) {
+            return Status.UGYLDIG_FNR
+        }
         val person: Person? =
             dataSource.transaction { tx ->
                 PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr))

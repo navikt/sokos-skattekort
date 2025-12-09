@@ -33,12 +33,6 @@ data class Arbeidstaker(
 }
 
 @Serializable
-data class IdentifikatorForEnhetEllerPerson(
-    val organisasjonsnummer: String? = null,
-    val personidentifikator: String? = null,
-)
-
-@Serializable
 data class Skattekort(
     val utstedtDato: LocalDate? = null,
     val skattekortidentifikator: Long? = null,

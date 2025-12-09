@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.infrastructure
 
-import io.micrometer.core.instrument.config.MeterFilter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.core.metrics.Counter
@@ -9,10 +8,7 @@ import io.prometheus.metrics.core.metrics.Gauge
 const val METRICS_NAMESPACE = "sokos_skattekort"
 
 object Metrics {
-    val prometheusMeterRegistry =
-        PrometheusMeterRegistry(PrometheusConfig.DEFAULT).apply {
-            config().meterFilter(MeterFilter.ignoreTags("unwanted_tag"))
-        }
+    val prometheusMeterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     fun counter(
         name: String,

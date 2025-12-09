@@ -27,7 +27,8 @@ fun gyldigFnrEllerDnrRegel(fnr: String): Boolean =
 fun tenorRegel(fnr: String): Boolean =
     (
         lengdeOgTallRegel(fnr) &&
-            isDateParseable(fnr, monthOffset = 80)
+            isDateParseable(fnr, monthOffset = 80) ||
+            isDateParseable(fnr, dayOffset = 40, monthOffset = 80)
     )
 
 fun lengdeOgTallRegel(fnr: String): Boolean = (Regex("^[0-9]{11}$").matches(fnr))

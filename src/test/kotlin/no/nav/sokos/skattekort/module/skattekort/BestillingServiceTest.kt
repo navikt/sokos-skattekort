@@ -345,7 +345,7 @@ class BestillingServiceTest :
             assertSoftly {
                 skattekort shouldNotBeNull {
                     size shouldBe 2
-                    first() shouldNotBeNull {
+                    last() shouldNotBeNull {
                         identifikator shouldBe "54407"
                         kilde shouldBe SkattekortKilde.SKATTEETATEN.value
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
@@ -360,10 +360,10 @@ class BestillingServiceTest :
                                 )
                         }
                     }
-                    last() shouldNotBeNull {
+                    first() shouldNotBeNull {
                         identifikator shouldBe null
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
-                        generertFra shouldBe first().id
+                        generertFra shouldBe last().id
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly
@@ -512,7 +512,7 @@ class BestillingServiceTest :
 
                 skattekort shouldNotBeNull {
                     size shouldBe 2
-                    first() shouldNotBeNull {
+                    last() shouldNotBeNull {
                         identifikator shouldBe "10001"
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         withClue("Should not alter forskuddstrekk") {
@@ -536,10 +536,10 @@ class BestillingServiceTest :
                             )
                         }
                     }
-                    last() shouldNotBeNull {
+                    first() shouldNotBeNull {
                         identifikator shouldBe null
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
-                        generertFra shouldBe first().id
+                        generertFra shouldBe last().id
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly
@@ -830,17 +830,17 @@ class BestillingServiceTest :
 
                 skattekort shouldNotBeNull {
                     size shouldBe 2
-                    first() shouldNotBeNull {
+                    last() shouldNotBeNull {
                         resultatForSkattekort shouldBe IkkeSkattekort
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
                         tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
                         kilde shouldBe SkattekortKilde.SKATTEETATEN.value
                     }
-                    last() shouldNotBeNull {
+                    first() shouldNotBeNull {
                         resultatForSkattekort shouldBe IkkeSkattekort
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
-                        generertFra shouldBe first().id
+                        generertFra shouldBe last().id
                         identifikator shouldBe null
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly
@@ -905,7 +905,7 @@ class BestillingServiceTest :
                 skattekort shouldNotBeNull {
                     size shouldBe 2
                     withClue("The original Skattekort from Skattekort") {
-                        first() shouldNotBeNull {
+                        last() shouldNotBeNull {
                             id shouldBe SkattekortId(1L)
                             generertFra shouldBe null
                             resultatForSkattekort shouldBe SkattekortopplysningerOK
@@ -976,16 +976,16 @@ class BestillingServiceTest :
 
                 skattekort shouldNotBeNull {
                     size shouldBe 2
-                    first() shouldNotBeNull {
+                    last() shouldNotBeNull {
                         kilde shouldBe SkattekortKilde.SKATTEETATEN.value
                         resultatForSkattekort shouldBe IkkeTrekkplikt
                         utstedtDato shouldBe null
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
                     }
-                    last() shouldNotBeNull {
+                    first() shouldNotBeNull {
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
-                        generertFra shouldBe first().id
+                        generertFra shouldBe last().id
                         resultatForSkattekort shouldBe IkkeTrekkplikt
                         utstedtDato shouldBe null
                         identifikator shouldBe null

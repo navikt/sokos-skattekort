@@ -79,6 +79,39 @@ class SyntetiseringTest :
                 }
             }
         }
+        test("Lag default-trekk for svalbard med oppdaterte satser for 2026") {
+            val sk =
+                Skattekort(
+                    resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+                    personId = PersonId(1),
+                    utstedtDato = null,
+                    identifikator = null,
+                    inntektsaar = 2026,
+                    kilde = "BOGUS",
+                    tilleggsopplysningList = listOf(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD),
+                )
+            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            assertSoftly {
+                resultat shouldNotBeNull {
+                    first.forskuddstrekkList shouldContainExactly
+                        listOf<Forskuddstrekk>(
+                            Prosentkort(
+                                trekkode = Trekkode.LOENN_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.60),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.60),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.PENSJON_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(13.10),
+                            ),
+                        )
+                }
+            }
+        }
+
         test("Ikke rør skattekort for kildeskatt pensjon") {
             val sk =
                 Skattekort(

@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.module.skattekort
 
 enum class Status {
     UKJENT,
+    UGYLDIG_FNR,
     IKKE_FNR,
     IKKE_BESTILT,
     BESTILT,

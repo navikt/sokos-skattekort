@@ -53,8 +53,8 @@ class PersonServiceTest :
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
                 auditList.size shouldBe 2
-                auditList.first().tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
-                auditList.first().informasjon shouldBe "TEST"
+                auditList[1].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
+                auditList[1].informasjon shouldBe "TEST"
             }
         }
 

@@ -21,7 +21,7 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingId
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
-import no.nav.sokos.skattekort.security.NavIdent
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 @OptIn(ExperimentalTime::class)
@@ -74,7 +74,7 @@ class ForespoerselServiceTest :
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 2
                     abonnementList.first().inntektsaar shouldBe 2025
-                    abonnementList.get(1).inntektsaar shouldBe 2026
+                    abonnementList[1].inntektsaar shouldBe 2026
 
                     val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
                     bestillingList.size shouldBe 2
@@ -89,7 +89,7 @@ class ForespoerselServiceTest :
                 val message = "MANUELL;2026;12345678901"
                 val brukerId = "Z123456"
 
-                forespoerselService.taImotForespoersel(message, NavIdent(brukerId))
+                forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
 
                 DbListener.dataSource.transaction { tx ->
                     val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
@@ -131,8 +131,8 @@ class ForespoerselServiceTest :
                     utsendingList.size shouldBe 0
 
                     val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                    auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
-                    auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[0].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[1].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
                 }
             }
         }
@@ -156,8 +156,8 @@ class ForespoerselServiceTest :
                     utsendingList.size shouldBe 0
 
                     val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                    auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
-                    auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[0].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[1].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
                 }
             }
         }
@@ -178,7 +178,7 @@ class ForespoerselServiceTest :
                             size shouldBe 1
                             shouldContainAllIgnoringFields(
                                 listOf(
-                                    Utsending(UtsendingId(1), AbonnementId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                                    Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
                                 ),
                                 Utsending::opprettet,
                             )

@@ -23,18 +23,20 @@ tilby samme funksjonalitet.
 
 ### Bygge prosjekt
 
-1. Bygg prosjektet ved å kjøre `./gradlew clean build shadowJar`
+1. Bygg prosjektet ved å kjøre `./gradlew clean build`
 
 ### Lokal utvikling
 
-2. Start appen lokalt ved å kjøre main metoden i ***Application.kt***
-3. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
+1. Kjør `nais auth login`
+2. nais postgres grant sokos-skattekort
+3. nais postgres proxy sokos-skattekort
+4. Start appen lokalt ved å kjøre main metoden i ***Application.kt***
+5. For å kjøre tester i IntelliJ IDEA trenger du [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
 
 ### Patching av biblioteker
 
 Vi har ikke testdekning på IBM MQ-bibliotekene (gruppe "com.ibm.mq" i build.gradle.kts) fordi vi kjører activemq i stedet for ibm mq i test-modus.
 Vi må teste oppgradering av dette/disse biblitekene manuelt.
-
 
 ## Deployment
 
@@ -55,31 +57,7 @@ Applikasjonen kjører onprem.
 
 Applikasjonen bruker feature toggles. API for å sette og inspisere disse ligger på https://okonomi-unleash-web.iap.nav.cloud.nais.io/projects/default?query=sokos-skattekort
 
-### Logging
-
-https://logs.adeo.no.
-
-Feilmeldinger og infomeldinger som ikke innheholder sensitive data logges til data view `Applikasjonslogger`.  
-Sensetive meldinger logges til data view `Securelogs` [sikker-utvikling/logging](https://sikkerhet.nav.no/docs/sikker-utvikling/logging)).
-
-- Filter for Produksjon
-    * application:sokos-skattekort AND envclass:p
-
-- Filter for Dev
-    * application:sokos-skattekort AND envclass:q
-
-### Kubectl
-
-TBD
-
-### Alarmer
-
-Vi bruker [nais-alerts](https://doc.nais.io/observability/alerts) for å sette opp alarmer.
-Disse finner man konfigurert i [.nais/alerts-dev.yaml](.nais/alerts-dev.yaml) filen og [.nais/alerts-prod.yaml](.nais/alerts-prod.yaml)
-
-### Grafana
-
----
+[Driftshåndbok](dokumentasjon/drift/main.md)
 
 ## Henvendelser og tilgang
 

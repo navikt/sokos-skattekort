@@ -3,14 +3,12 @@ package no.nav.sokos.skattekort.module.utsending
 import javax.sql.DataSource
 
 import io.ktor.server.plugins.di.annotations.Named
-import io.prometheus.metrics.core.metrics.Counter
-import io.prometheus.metrics.core.metrics.Gauge
 import jakarta.jms.Queue
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
-import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.Metrics.counter
+import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.AuditRepository
@@ -33,54 +31,56 @@ class UtsendingService(
     private val logger = KotlinLogging.logger {}
 
     companion object {
-        val utsendingOppdragzCounter: Counter =
-            Counter
-                .builder()
-                .name("${METRICS_NAMESPACE}_utsendinger_oppdragz_total")
-                .help("Utsendinger til oppdrag z")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
-        val utsendingDarePocCounter: Counter =
-            Counter
-                .builder()
-                .name("${METRICS_NAMESPACE}_utsendinger_dare_poc_total")
-                .help("Utsendinger til dare_poc")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
-        val feiledeUtsendingerOppdragzCounter: Counter =
-            Counter
-                .builder()
-                .name("${METRICS_NAMESPACE}_utsendinger_oppdragz_feil_total")
-                .help("Feilede forsøk på utsendinger til oppdrag z")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
-        val utsendingerIKoe: Gauge =
-            Gauge
-                .builder()
-                .name("${METRICS_NAMESPACE}_utsendinger_i_koe")
-                .help("Utsendinger i koe, enda ikke håndtert")
-                .labelNames("status")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
+        val utsendingOppdragzCounter =
+            counter(
+                name = "utsendinger_oppdragz_total",
+                helpText = "Utsendinger til oppdrag z",
+            )
+
+        val utsendingDarePocCounter =
+            counter(
+                name = "utsendinger_dare_poc_total",
+                helpText = "Utsendinger til DARE POC",
+            )
+
+        val feiledeUtsendingerOppdragzCounter =
+            counter(
+                name = "utsendinger_oppdragz_feil_total",
+                helpText = "Feilede forsøk på utsendinger til oppdrag z",
+            )
+
+        val utsendingerIKoe =
+            gauge(
+                name = "utsendinger_i_koe",
+                helpText = "Utsendinger i kø, enda ikke håndtert",
+                labelNames = "status",
+            )
     }
 
     fun handleUtsending() {
-        runCatching {
-            val utsendinger: List<Utsending> = dataSource.transaction { tx -> UtsendingRepository.getAllUtsendinger(tx) }
-            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
-            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
+        if (featureToggles.isUtsendingEnabled()) {
+            runCatching {
+                val utsendinger: List<Utsending> = dataSource.transaction { tx -> UtsendingRepository.getAllUtsendinger(tx) }
+                utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
+                utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
 
-            utsendinger
-                .forEach { utsending ->
-                    dataSource.transaction { tx ->
-                        when (utsending.forsystem) {
-                            Forsystem.OPPDRAGSSYSTEMET, Forsystem.DARE_POC -> sendSkattekortTilMQ(tx, utsending)
-                            Forsystem.MANUELL -> UtsendingRepository.delete(tx, utsending.id!!)
+                utsendinger
+                    .forEach { utsending ->
+                        dataSource.transaction { tx ->
+                            when (utsending.forsystem) {
+                                Forsystem.OPPDRAGSSYSTEMET, Forsystem.DARE_POC -> sendSkattekortTilMQ(tx, utsending)
+                                Forsystem.MANUELL -> UtsendingRepository.delete(tx, utsending.id!!)
+                            }
                         }
                     }
-                }
-        }.onFailure { exception ->
-            logger.error(exception) { "Feil med utsending til MQ" }
+            }.onFailure { exception ->
+                logger.error(exception) { "Feil med utsending til MQ" }
+            }
+        } else {
+            logger.debug("Utsending er disablet")
+        }
+        dataSource.transaction { tx ->
+            UtsendingRepository.slettGamleBevis(tx)
         }
     }
 
@@ -94,6 +94,11 @@ class UtsendingService(
             val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, utsending.inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, utsending.fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, utsending.inntektsaar.toString()).format()
+
+            if (featureToggles.isBevisForSendingEnabled()) {
+                UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, utsending.fnr, copybook)
+            }
+
             when (utsending.forsystem) {
                 Forsystem.OPPDRAGSSYSTEMET -> jmsProducerService.send(copybook, leveransekoeOppdragZSkattekort, utsendingOppdragzCounter)
                 Forsystem.DARE_POC -> jmsProducerService.send(copybook, leveransekoeDarePocSkattekort, utsendingDarePocCounter)

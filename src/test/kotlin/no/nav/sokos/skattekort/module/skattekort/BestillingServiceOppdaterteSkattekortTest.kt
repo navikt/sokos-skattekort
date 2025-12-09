@@ -10,13 +10,13 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.TestUtil.tx
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 class BestillingServiceOppdaterteSkattekortTest :
     FunSpec(
@@ -30,7 +30,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                     DbListener.dataSource,
                     skatteetatenClient,
                     FakeUnleashIntegration(),
-                    PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, false, "", "", ""),
+                    PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, "", "", ""),
                 )
             }
 
@@ -153,6 +153,62 @@ class BestillingServiceOppdaterteSkattekortTest :
                                 forskuddstrekkList shouldNotBeNull {
                                     size shouldBe 2
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            test("Henting av oppdaterte skattekort uten oppdateringer skal fungere") {
+                withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                        aHentSkattekortResponse(response = ResponseStatus.INGEN_ENDRINGER)
+                    databaseHas(
+                        aPerson(1L, "01010100001"),
+                        aPerson(2L, "02020200002"),
+                        aPerson(3L, "03030300003"),
+                        aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
+                    )
+
+                    bestillingService.hentOppdaterteSkattekort()
+
+                    val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                    assertSoftly {
+                        batches shouldNotBeNull {
+                            size shouldBe 1
+                            first() shouldNotBeNull {
+                                status shouldBe BestillingBatchStatus.Ferdig.value
+                                type shouldBe "OPPDATERING"
+                                bestillingsreferanse shouldBe "REF0001"
+                            }
+                        }
+                    }
+                }
+            }
+
+            test("Henting av oppdaterte skattekort med ugyldig inntektsår skal feile") {
+                withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                        aHentSkattekortResponse(response = ResponseStatus.UGYLDIG_INNTEKTSAAR)
+                    databaseHas(
+                        aPerson(1L, "01010100001"),
+                        aPerson(2L, "02020200002"),
+                        aPerson(3L, "03030300003"),
+                        aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
+                    )
+
+                    bestillingService.hentOppdaterteSkattekort()
+
+                    val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+                    assertSoftly {
+                        batches shouldNotBeNull {
+                            size shouldBe 1
+                            first() shouldNotBeNull {
+                                status shouldBe BestillingBatchStatus.Feilet.value
+                                type shouldBe "OPPDATERING"
+                                bestillingsreferanse shouldBe "REF0001"
                             }
                         }
                     }

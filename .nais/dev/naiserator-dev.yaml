@@ -31,7 +31,6 @@ spec:
       memory: 512Mi
   ingresses:
     - https://sokos-skattekort.intern.dev.nav.no
-    - https://sokos-skattekort.dev-fss-pub.nais.io
   prometheus:
     enabled: true
     path: /internal/metrics
@@ -51,34 +50,53 @@ spec:
       rules:
         - application: azure-token-generator
           namespace: nais
-          cluster: dev-gcp
         - application: sokos-up-skattekort-ssr
-          namespace: okonomi
-          cluster: dev-gcp
+        - application: sokos-utbetalingsportalen
+        - application: saas-proxy
+          namespace: teamcrm
     outbound:
       rules:
         - application: logging
           namespace: nais-system
       external:
+        - host: mqls01.preprod.local
+          ports:
+            - port: 1413
         - host: okonomi-unleash-api.nav.cloud.nais.io
+        - host: pdl-api.dev-fss-pub.nais.io
+        - host: api-test.sits.no
   maskinporten:
     enabled: true
     scopes:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
-        - name: "altinn:authentication/systemregister.write"∫
   kafka:
     pool: nav-dev
-  webproxy: true
-  vault:
-    enabled: true
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_18
+        highAvailability: true
+        diskAutoresize: true
+        pointInTimeRecovery: true
+        autoBackupHour: 3
+        tier: db-custom-1-3840
+        databases:
+          - name: sokos-skattekort
+            envVarPrefix: DB
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "on"
+          - name: "pgaudit.log"
+            value: "write,ddl,role"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+          - name: "cloudsql.logical_decoding"
+            value: "on"
   envFrom:
     - secret: sokos-skattekort-mq-credentials
     - secret: sokos-skattekort-unleash-api-token
 
   env:
-    - name: JDK_JAVA_OPTIONS
-      value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
     - name: APPLICATION_ENV
       value: DEV
 

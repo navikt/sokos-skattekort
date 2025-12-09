@@ -29,11 +29,12 @@ object SkattekortRepository {
                 Query(
                     statement =
                         """
-                        INSERT INTO skattekort (person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
-                        VALUES (:personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
+                        INSERT INTO skattekort (generert_fra, person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
+                        VALUES (:generertFra, :personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
                         """.trimIndent(),
                     paramMap =
                         mapOf(
+                            "generertFra" to skattekort.generertFra?.value,
                             "personId" to skattekort.personId.value,
                             "utstedtDato" to skattekort.utstedtDato?.toJavaLocalDate(),
                             "identifikator" to skattekort.identifikator,
@@ -51,7 +52,7 @@ object SkattekortRepository {
                 """.trimIndent(),
                 skattekort.forskuddstrekkList.map { forskuddstrekk ->
                     when (forskuddstrekk) {
-                        is Frikort ->
+                        is Frikort -> {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
@@ -61,8 +62,9 @@ object SkattekortRepository {
                                 "prosentsats" to null,
                                 "antall_mnd_for_trekk" to null,
                             )
+                        }
 
-                        is Prosentkort ->
+                        is Prosentkort -> {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
@@ -72,8 +74,9 @@ object SkattekortRepository {
                                 "prosentsats" to forskuddstrekk.prosentSats,
                                 "antall_mnd_for_trekk" to null,
                             )
+                        }
 
-                        is Tabellkort ->
+                        is Tabellkort -> {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
@@ -83,6 +86,7 @@ object SkattekortRepository {
                                 "prosentsats" to forskuddstrekk.prosentSats,
                                 "antall_mnd_for_trekk" to forskuddstrekk.antallMndForTrekk,
                             )
+                        }
                     }
                 },
             )
@@ -115,7 +119,7 @@ object SkattekortRepository {
                 """
                 SELECT * FROM skattekort 
                 WHERE person_id = :personId AND inntektsaar = :inntektsaar
-                ORDER BY opprettet DESC
+                ORDER BY opprettet, id DESC
                 """.trimIndent(),
                 mapOf(
                     "personId" to personId.value,
@@ -190,10 +194,7 @@ object SkattekortRepository {
     fun getSecondsSinceLatestSkattekortOpprettet(tx: TransactionalSession): Double? =
         tx.single(
             queryOf(
-                """
-                SELECT EXTRACT(EPOCH FROM NOW() - MAX(opprettet)) AS sekunder_siden_siste_skattekort
-                    FROM skattekort
-                """.trimIndent(),
+                """SELECT EXTRACT(EPOCH FROM NOW() - MAX(opprettet)) AS sekunder_siden_siste_skattekort FROM skattekort""",
             ),
             extractor = { row -> row.doubleOrNull("sekunder_siden_siste_skattekort") },
         )
@@ -215,7 +216,7 @@ object SkattekortRepository {
                 },
             ).toMap()
 
-    fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode, Int> =
+    fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<String, Int> =
         tx
             .list(
                 queryOf(
@@ -227,28 +228,25 @@ object SkattekortRepository {
                     """.trimIndent(),
                 ),
                 extractor = { row ->
-                    val trekkode =
-                        no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
-                            .fromValue(row.string("trekk_kode"))
+                    val trekkode = row.string("trekk_kode")
                     val count = row.int("antall")
                     trekkode to count
                 },
             ).toMap()
 
-    fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning, Int> =
+    fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<Tilleggsopplysning, Int> =
         tx
             .list(
                 queryOf(
                     """
                     SELECT opplysning, COUNT(skattekort_id) AS antall 
                     FROM skattekort_tilleggsopplysning
-                    GROUP BY opplysning, skattekort_id
+                    GROUP BY opplysning
                     """.trimIndent(),
                 ),
                 extractor = { row ->
                     val opplysning =
-                        no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning
-                            .fromDomainModel(Tilleggsopplysning.fromValue(row.string("opplysning")))
+                        Tilleggsopplysning.fromValue(row.string("opplysning"))
                     val count = row.int("antall")
                     opplysning to count
                 },

@@ -4,6 +4,9 @@ import java.math.BigDecimal.valueOf
 import java.math.RoundingMode
 import java.time.LocalDateTime
 
+import kotlin.time.ExperimentalTime
+import kotlin.time.toJavaInstant
+
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -12,16 +15,17 @@ import io.kotest.extensions.time.withConstantNow
 import io.kotest.inspectors.forAll
 import io.kotest.inspectors.forExactly
 import io.kotest.inspectors.forOne
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.date.shouldBeAfter
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.TestUtil.tx
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig.Environment
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -33,15 +37,23 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_BIARBEIDSGIVER
+import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV
+import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
+import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.utils.TestUtils.tx
 
+@OptIn(ExperimentalTime::class)
 class BestillingServiceTest :
     FunSpec({
         extensions(DbListener)
@@ -53,7 +65,7 @@ class BestillingServiceTest :
                 DbListener.dataSource,
                 skatteetatenClient,
                 FakeUnleashIntegration(),
-                PropertiesConfig.ApplicationProperties("", Environment.TEST, false, false, "", "", ""),
+                PropertiesConfig.ApplicationProperties("", Environment.TEST, false, "", "", ""),
             )
         }
 
@@ -262,9 +274,62 @@ class BestillingServiceTest :
             }
         }
 
+        test("henter skattekort, ingen endring-respons") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    response = ResponseStatus.INGEN_ENDRINGER,
+                )
+
+            databaseHas(
+                aPerson(1L, "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, "01010100001", 2025, 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+            assertSoftly {
+                updatedBatches shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        status shouldBe BestillingBatchStatus.Ferdig.value
+                    }
+                }
+            }
+        }
+
+        test("henter skattekort, ugyldig inntektsaar returneres") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    response = ResponseStatus.UGYLDIG_INNTEKTSAAR,
+                )
+
+            databaseHas(
+                aPerson(1L, "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, "01010100001", 2025, 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+
+            assertSoftly {
+                updatedBatches shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        status shouldBe BestillingBatchStatus.Feilet.value
+                    }
+                }
+            }
+        }
+
         test("henter skattekort reell response") {
-            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns
-                aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
+            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
 
             databaseHas(
                 aPerson(1L, "12345678901"),
@@ -275,17 +340,128 @@ class BestillingServiceTest :
 
             bestillingService.hentSkattekort()
 
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
 
             assertSoftly {
                 skattekort shouldNotBeNull {
+                    size shouldBe 2
+                    last() shouldNotBeNull {
+                        identifikator shouldBe "54407"
+                        kilde shouldBe SkattekortKilde.SKATTEETATEN.value
+                        resultatForSkattekort shouldBe SkattekortopplysningerOK
+                        withClue("Should return forskuddstrekk from response") {
+                            forskuddstrekkList shouldContainExactly
+                                listOf(
+                                    aForskuddstrekk("Tabellkort", LOENN_FRA_HOVEDARBEIDSGIVER, tabellNummer = "8140", prosentSats = 43.0, antMndForTrekk = 10.5),
+                                    aForskuddstrekk("Prosentkort", LOENN_FRA_BIARBEIDSGIVER, prosentSats = 43.0, antMndForTrekk = null),
+                                    aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, prosentSats = 43.0, antMndForTrekk = null),
+                                    aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, prosentSats = 43.0, antMndForTrekk = null),
+                                    aForskuddstrekk("Prosentkort", UFOEREYTELSER_FRA_ANDRE, prosentSats = 43.0, antMndForTrekk = null),
+                                )
+                        }
+                    }
+                    first() shouldNotBeNull {
+                        identifikator shouldBe null
+                        kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe last().id
+                        resultatForSkattekort shouldBe SkattekortopplysningerOK
+                        withClue("Should generate forskuddstrekk for svalbard") {
+                            forskuddstrekkList shouldContainExactly
+                                listOf(
+                                    aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
+                                    aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
+                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
+                                )
+                        }
+                    }
+                }
+            }
+        }
+
+        test("skattekort reell response med samme identifikator og ny informasjon") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK_pre.json") andThen
+                aHentSkattekortResponseFromFile(
+                    "src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json",
+                )
+
+            databaseHas(
+                aPerson(1L, "12345678901"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
+                aBestillingsBatch(2, "BR1338", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, "12345678901", 2025, 1L),
+                aBestilling(1L, "23456789012", 2025, 2L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatchesFirstRun: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val skattekortFirstRun: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val bestillingsAfterFirstRun: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+            val utsendingerAfterFirstRun: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
+
+            assertSoftly {
+                updatedBatchesFirstRun shouldNotBeNull {
+                    size shouldBe 2
+                    forOne {
+                        it.id!!.id shouldBe 1L
+                        it.status shouldBe BestillingBatchStatus.Ferdig.value
+                    }
+                    forOne {
+                        it.id!!.id shouldBe 2L
+                        it.status shouldBe BestillingBatchStatus.Ny.value
+                    }
+                }
+
+                skattekortFirstRun shouldNotBeNull {
                     size shouldBe 1
                     first() shouldNotBeNull {
                         identifikator shouldBe "54407"
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 2
+                            size shouldBe 5
                         }
+                    }
+                }
+
+                bestillingsAfterFirstRun shouldNotBeNull {
+                    size shouldBe 1
+                }
+
+                utsendingerAfterFirstRun.size shouldBe 1
+            }
+
+            bestillingService.hentSkattekort()
+
+            val skattekortAfterSecondRun: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+
+            skattekortAfterSecondRun shouldNotBeNull {
+                size shouldBe 3
+                forOne { it shouldBe skattekortFirstRun.first() }
+                forOne {
+                    it.id shouldBe SkattekortId(2L)
+                    it.identifikator shouldBe "54407"
+                    it.opprettet.toJavaInstant() shouldBeAfter skattekortFirstRun.first().opprettet.toJavaInstant()
+                    it.resultatForSkattekort shouldBe SkattekortopplysningerOK
+                    it.forskuddstrekkList shouldNotBeNull {
+                        size shouldBe 5
+                    }
+                    it.tilleggsopplysningList shouldNotBeNull {
+                        size shouldBe 4
+                    }
+                }
+                forOne {
+                    it.identifikator shouldBe null
+                    it.kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                    it.generertFra shouldBe SkattekortId(2L)
+                    it.resultatForSkattekort shouldBe SkattekortopplysningerOK
+                    withClue("Should generate forskuddstrekk for svalbard") {
+                        it.forskuddstrekkList shouldContainExactly
+                            listOf(
+                                aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
+                                aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
+                                aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
+                            )
                     }
                 }
             }
@@ -335,8 +511,8 @@ class BestillingServiceTest :
             assertSoftly {
 
                 skattekort shouldNotBeNull {
-                    size shouldBe 1
-                    first() shouldNotBeNull {
+                    size shouldBe 2
+                    last() shouldNotBeNull {
                         identifikator shouldBe "10001"
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         withClue("Should not alter forskuddstrekk") {
@@ -351,6 +527,27 @@ class BestillingServiceTest :
                                     ),
                                 )
                             }
+                        }
+                        tilleggsopplysningList shouldNotBeNull {
+                            shouldContainExactly(
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
+                                Tilleggsopplysning.fromValue("kildeskattPaaPensjon"),
+                                Tilleggsopplysning.fromValue("oppholdITiltakssone"),
+                            )
+                        }
+                    }
+                    first() shouldNotBeNull {
+                        identifikator shouldBe null
+                        kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe last().id
+                        resultatForSkattekort shouldBe SkattekortopplysningerOK
+                        withClue("Should generate forskuddstrekk for svalbard") {
+                            forskuddstrekkList shouldContainExactly
+                                listOf(
+                                    aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
+                                    aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
+                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
+                                )
                         }
                         tilleggsopplysningList shouldNotBeNull {
                             shouldContainExactly(
@@ -530,6 +727,64 @@ class BestillingServiceTest :
             }
         }
 
+        test("UgyldigOrganisasjonsnummer") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                HentSkattekortResponse(
+                    status = "FORESPOERSEL_OK",
+                    arbeidsgiver =
+                        listOf(
+                            no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiver(
+                                arbeidsgiveridentifikator =
+                                    no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiveridentifikator(
+                                        organisasjonsnummer = "666",
+                                    ),
+                                arbeidstaker =
+                                    listOf(
+                                        anArbeidstaker(
+                                            resultat = ResultatForSkattekort.UgyldigOrganisasjonsnummer,
+                                            fnr = "01010100001",
+                                            inntektsaar = "2025",
+                                        ),
+                                    ),
+                            ),
+                        ),
+                )
+
+            databaseHas(
+                aPerson(1L, "01010100001"),
+                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+            )
+
+            shouldThrow<UgyldigOrganisasjonsnummerException> {
+                bestillingService.hentSkattekort()
+            }
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+            val skattekort: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025, adminRole = false)
+                }
+            val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
+
+            updatedBatches shouldNotBeNull {
+                size shouldBe 1
+                forOne { it.status shouldBe BestillingBatchStatus.Feilet.value }
+            }
+
+            bestillingsAfter shouldNotBeNull {
+                size shouldBe 1
+                forOne { it.bestillingsbatchId shouldBe null }
+            }
+
+            skattekort shouldBe emptyList()
+
+            person1 shouldNotBeNull {
+                flagget shouldBe false
+            }
+        }
+
         test("ikkeSkattekort med oppholdPaaSvalbard") {
             coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                 aHentSkattekortResponse(
@@ -574,20 +829,174 @@ class BestillingServiceTest :
                 }
 
                 skattekort shouldNotBeNull {
-                    size shouldBe 1
+                    size shouldBe 2
+                    last() shouldNotBeNull {
+                        resultatForSkattekort shouldBe IkkeSkattekort
+                        identifikator shouldBe null
+                        forskuddstrekkList shouldBe emptyList()
+                        tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
+                        kilde shouldBe SkattekortKilde.SKATTEETATEN.value
+                    }
                     first() shouldNotBeNull {
                         resultatForSkattekort shouldBe IkkeSkattekort
+                        kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe last().id
                         identifikator shouldBe null
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly
                                 listOf(
                                     aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
                                     aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                    aForskuddstrekk("Prosentkort", Trekkode.PENSJON_FRA_NAV, 13.00),
+                                    aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
                                 )
                         }
                         tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
+                    }
+                }
+            }
+        }
+        test("skattekortOpplysningerOk med oppholdPaaSvalbard") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    anArbeidstaker(
+                        resultat = SkattekortopplysningerOK,
+                        fnr = "01010100001",
+                        inntektsaar = "2025",
+                        tilleggsopplysninger =
+                            listOf(
+                                Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
+                            ),
+                        skattekort =
+                            aSkattekort(
+                                utstedtDato = "2025-11-01",
+                                identifikator = 10001,
+                                forskuddstrekk =
+                                    listOf(
+                                        aSkdForskuddstrekk(LOENN_FRA_HOVEDARBEIDSGIVER, tabellNummer = "1337", trekkprosent = 43.21),
+                                        aSkdForskuddstrekk(LOENN_FRA_NAV, 66.60),
+                                        aSkdForskuddstrekk(PENSJON_FRA_NAV, 6.66),
+                                        aSkdForskuddstrekk(UFOERETRYGD_FRA_NAV, 12.34),
+                                    ),
+                            ),
+                    ),
+                )
+            databaseHas(
+                aPerson(personId = 1L, fnr = "01010100001"),
+                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val skattekort: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true)
+                }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+
+            assertSoftly {
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+
+                bestillingsAfter shouldNotBeNull {
+                    size shouldBe 0
+                }
+
+                skattekort shouldNotBeNull {
+                    size shouldBe 2
+                    withClue("The original Skattekort from Skattekort") {
+                        last() shouldNotBeNull {
+                            id shouldBe SkattekortId(1L)
+                            generertFra shouldBe null
+                            resultatForSkattekort shouldBe SkattekortopplysningerOK
+                            kilde shouldBe SkattekortKilde.SKATTEETATEN.value
+                            identifikator shouldBe "10001"
+                            utstedtDato shouldBe kotlinx.datetime.LocalDate.parse("2025-11-01")
+                            withClue("Should contain the received forskuddstrekk unchanged") {
+                                forskuddstrekkList shouldContainAll
+                                    listOf(
+                                        aForskuddstrekk("Tabellkort", LOENN_FRA_HOVEDARBEIDSGIVER, tabellNummer = "1337", prosentSats = 43.21, antMndForTrekk = 12.0),
+                                        aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 66.60),
+                                        aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 6.66),
+                                        aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 12.34),
+                                    )
+                            }
+                            tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
+                        }
+                    }
+                    withClue("A second Skattekort should be generated") {
+                        forOne {
+                            it.resultatForSkattekort shouldBe SkattekortopplysningerOK
+                            it.kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                            it.generertFra shouldBe SkattekortId(1L)
+                            it.identifikator shouldBe null
+                            withClue("Should generate forskuddstrekk for svalbard") {
+                                it.forskuddstrekkList shouldContainExactly
+                                    listOf(
+                                        aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
+                                        aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
+                                        aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
+                                    )
+                            }
+                            it.tilleggsopplysningList shouldContainExactly listOf(Tilleggsopplysning.fromValue("oppholdPaaSvalbard"))
+                        }
+                    }
+                }
+            }
+        }
+
+        test("ikkeTrekkplikt") {
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    anArbeidstaker(
+                        resultat = IkkeTrekkplikt,
+                        fnr = "01010100001",
+                        inntektsaar = "2025",
+                    ),
+                )
+            databaseHas(
+                aPerson(personId = 1L, fnr = "01010100001"),
+                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val skattekort: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false)
+                }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+
+            assertSoftly {
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+
+                bestillingsAfter shouldBe emptyList()
+
+                skattekort shouldNotBeNull {
+                    size shouldBe 2
+                    last() shouldNotBeNull {
+                        kilde shouldBe SkattekortKilde.SKATTEETATEN.value
+                        resultatForSkattekort shouldBe IkkeTrekkplikt
+                        utstedtDato shouldBe null
+                        identifikator shouldBe null
+                        forskuddstrekkList shouldBe emptyList()
+                    }
+                    first() shouldNotBeNull {
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
+                        generertFra shouldBe last().id
+                        resultatForSkattekort shouldBe IkkeTrekkplikt
+                        utstedtDato shouldBe null
+                        identifikator shouldBe null
+                        withClue("Should generate frikort") {
+                            forskuddstrekkList shouldContainExactly
+                                listOf(
+                                    aForskuddstrekk("Frikort", LOENN_FRA_NAV, frikortbeløp = null),
+                                    aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),
+                                    aForskuddstrekk("Frikort", UFOERETRYGD_FRA_NAV, frikortbeløp = null),
+                                )
+                        }
                     }
                 }
             }
@@ -659,8 +1068,7 @@ class BestillingServiceTest :
         }
 
         test("plukker ikke opp batch med status FEILET men tar den andre istedenfor") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
-                aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
 
             databaseHas(
                 aPerson(fnr = "01010100001", personId = 1L),

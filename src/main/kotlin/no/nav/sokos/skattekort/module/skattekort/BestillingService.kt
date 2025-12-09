@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.module.skattekort
 
-import java.math.BigDecimal
 import java.time.LocalDateTime.now
 import javax.sql.DataSource
 
@@ -10,13 +9,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.toKotlinLocalDateTime
 
-import io.prometheus.metrics.core.metrics.Counter
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
-import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.AuditRepository
@@ -33,9 +30,6 @@ import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillSkattekortR
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
-// TODO: Metrikk: bestillinger per system
-// TODO: Metrikk for varsling: tid siden siste mottatte bestilling
-// TODO: Metrikk: Eldste bestilling i databasen som ikke er fullført.
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
@@ -61,8 +55,7 @@ class BestillingService(
                 if (bestillings.isEmpty()) {
                     logger.info("Ingen bestillinger å sende")
                 } else {
-                    val request =
-                        bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
+                    val request = bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
 
                     runBlocking {
                         try {
@@ -120,6 +113,21 @@ class BestillingService(
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet")
                                 }
 
+                                ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
+                                    // her har det skjedd noe alvorlig feil.
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                                    logger.error(
+                                        "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
+                                    )
+                                }
+
+                                ResponseStatus.INGEN_ENDRINGER.name -> {
+                                    // ingenting å se her
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                                    BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                                }
+
                                 else -> {
                                     logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
@@ -137,6 +145,23 @@ class BestillingService(
                             BestillingRepository.deleteProcessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
+                    } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
+                        dataSource.transaction { errorTx ->
+                            logger.error(ugyldigOrgnummerEx) { "Henting av skattekort for batch $batchId feilet: ${ugyldigOrgnummerEx.message}" }
+                            BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)
+                            BestillingRepository.updateBestillingsWithBatchId(
+                                errorTx,
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { it.id!!.id },
+                                null,
+                            )
+                            AuditRepository.insertBatch(
+                                errorTx,
+                                AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                "Batchhenting av skattekort feilet pga. ugyldig organisasjonsnummer",
+                            )
+                        }
+                        throw ugyldigOrgnummerEx
                     } catch (ex: Exception) {
                         dataSource.transaction { errorTx ->
                             logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
@@ -169,7 +194,13 @@ class BestillingService(
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
             PersonRepository.flaggPerson(tx, person.id!!)
         }
-        SkattekortRepository.insert(tx, skattekort)
+        val id = SkattekortId(SkattekortRepository.insert(tx, skattekort))
+
+        Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, aarsak) ->
+            SkattekortRepository.insert(tx, syntetisertSkattekort)
+            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, person.id!!, aarsak)
+        }
+
         opprettUtsendingerForAbonnementer(tx, person, inntektsaar)
     }
 
@@ -179,11 +210,10 @@ class BestillingService(
         person: Person,
         inntektsaar: Int,
     ) {
-        AbonnementRepository.finnAktiveAbonnement(tx, person.id!!).forEach { (aboid, system) ->
+        AbonnementRepository.finnAktiveSystemer(tx, person.id!!, inntektsaar).forEach { system ->
             UtsendingRepository.insert(
                 tx,
                 Utsending(
-                    abonnementId = aboid,
                     inntektsaar = inntektsaar,
                     fnr = person.foedselsnummer.fnr,
                     forsystem = system,
@@ -211,19 +241,33 @@ class BestillingService(
                 )
 
             ResultatForSkattekort.IkkeSkattekort -> {
-                val forskuddstrekkList = genererForskuddstrekk(arbeidstaker.tilleggsopplysning)
-                val kilde = if (forskuddstrekkList.isEmpty()) SkattekortKilde.MANGLER else SkattekortKilde.SYNTETISERT
-
                 Skattekort(
                     personId = person.id!!,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = kilde.value,
+                    kilde = SkattekortKilde.SKATTEETATEN.value,
                     resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
-                    forskuddstrekkList = forskuddstrekkList,
+                    forskuddstrekkList = emptyList(),
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
+            }
+
+            ResultatForSkattekort.IkkeTrekkplikt -> {
+                Skattekort(
+                    personId = person.id!!,
+                    utstedtDato = null,
+                    identifikator = null,
+                    inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                    kilde = SkattekortKilde.SKATTEETATEN.value,
+                    resultatForSkattekort = ResultatForSkattekort.IkkeTrekkplikt,
+                    forskuddstrekkList = emptyList(),
+                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+                )
+            }
+
+            ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
+                throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
             }
 
             else ->
@@ -238,42 +282,8 @@ class BestillingService(
                 )
         }
 
-    private fun genererForskuddstrekk(tilleggsopplysning: List<String>?): List<Forskuddstrekk> {
-        if (tilleggsopplysning.isNullOrEmpty()) {
-            return emptyList()
-        }
-
-        return when {
-            tilleggsopplysning.contains("oppholdPaaSvalbard") ->
-                listOf<Forskuddstrekk>(
-                    Prosentkort(
-                        trekkode = Trekkode.LOENN_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(15.70),
-                    ),
-                    Prosentkort(
-                        trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(15.70),
-                    ),
-                    Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(13.00),
-                    ),
-                )
-
-            tilleggsopplysning.contains("kildeskattpensjonist") ->
-                listOf<Forskuddstrekk>(
-                    Prosentkort(
-                        trekkode = Trekkode.PENSJON_FRA_NAV,
-                        prosentSats = BigDecimal.valueOf(15.00),
-                    ),
-                )
-
-            else -> emptyList()
-        }
-    }
-
     fun hentOppdaterteSkattekort() {
-        if (featureToggles.isBestillingerEnabled()) {
+        if (featureToggles.isOppdateringEnabled()) {
             dataSource.transaction { tx ->
                 val oppdateringsbatch = BestillingBatchRepository.getUnprocessedOppdateringsBatch(tx)
                 if (oppdateringsbatch != null) {
@@ -307,6 +317,21 @@ class BestillingService(
                                 handleNyttSkattekort(tx, arbeidstaker)
                             }
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                        }
+
+                        ResponseStatus.UGYLDIG_INNTEKTSAAR.name -> {
+                            // her har det skjedd noe alvorlig feil.
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                            logger.error(
+                                "Bestillingsbatch $batchId feilet med UGYLDIG_INNTEKTSAAR. Dette skulle ikke ha skjedd, og batchen må opprettes på nytt. Bestillingene har blitt tatt vare på for å muliggjøre manuell håndtering",
+                            )
+                        }
+
+                        ResponseStatus.INGEN_ENDRINGER.name -> {
+                            // ingenting å se her
+                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                            BestillingRepository.deleteProcessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
 
@@ -376,11 +401,9 @@ class BestillingService(
 
     companion object {
         val oppdateringerMottattCounter =
-            Counter
-                .builder()
-                .name("${METRICS_NAMESPACE}_oppdaterte_skattekort")
-                .help("Mottatte oppdateringer av skattekort")
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
+            counter(
+                name = "oppdaterte_skattekort",
+                helpText = "Mottatte oppdateringer av skattekort",
+            )
     }
 }

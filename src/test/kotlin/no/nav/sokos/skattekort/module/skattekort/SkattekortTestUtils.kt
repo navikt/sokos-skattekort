@@ -7,24 +7,27 @@ import java.nio.file.Paths
 
 import kotlinx.serialization.json.Json
 
-import no.nav.sokos.skattekort.TestUtil.runThisSql
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekktabell
+import no.nav.sokos.skattekort.utils.TestUtils.runThisSql
 
 fun aForskuddstrekk(
     type: String,
     trekkode: Trekkode,
-    prosentSats: Double,
+    prosentSats: Double? = null,
     antMndForTrekk: Double? = null,
     tabellNummer: String? = null,
+    frikortbeløp: Int? = null,
 ): Forskuddstrekk =
     when (type) {
         Prosentkort::class.simpleName ->
             Prosentkort(
                 trekkode,
-                BigDecimal(prosentSats).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
                 antMndForTrekk?.let { belop -> BigDecimal(belop).setScale(1, RoundingMode.HALF_UP) },
             )
 
@@ -32,12 +35,35 @@ fun aForskuddstrekk(
             Tabellkort(
                 trekkode,
                 tabellNummer!!,
-                BigDecimal(prosentSats).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
                 BigDecimal(antMndForTrekk ?: 12.0).setScale(1, RoundingMode.HALF_UP),
+            )
+
+        Frikort::class.simpleName ->
+            Frikort(
+                trekkode,
+                frikortbeløp,
             )
 
         else -> error("Ukjent forskuddstrekk-type: $type")
     }
+
+fun aSkdForskuddstrekk(
+    trekkode: Trekkode,
+    trekkprosent: Double? = null,
+    tabellNummer: String? = null,
+    frikortbeloep: Int? = null,
+): no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk =
+    no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk(
+        trekkode = trekkode.value,
+        trekktabell = tabellNummer?.let { Trekktabell(it, BigDecimal(trekkprosent!!).setScale(2, RoundingMode.HALF_UP), BigDecimal(12).setScale(1, RoundingMode.HALF_UP)) },
+        trekkprosent = trekkprosent?.let { Trekkprosent(BigDecimal(it).setScale(2, RoundingMode.HALF_UP), null) },
+        frikort =
+            frikortbeloep?.let {
+                no.nav.sokos.skattekort.skatteetaten.hentskattekort
+                    .Frikort(BigDecimal(frikortbeloep).setScale(2, RoundingMode.HALF_UP))
+            },
+    )
 
 fun aSkattekort(
     utstedtDato: String,
@@ -65,9 +91,12 @@ fun anArbeidstaker(
         inntektsaar = inntektsaar,
     )
 
-fun aHentSkattekortResponse(vararg arbeidstakere: Arbeidstaker): HentSkattekortResponse =
+fun aHentSkattekortResponse(
+    vararg arbeidstakere: Arbeidstaker,
+    response: ResponseStatus = ResponseStatus.FORESPOERSEL_OK,
+): HentSkattekortResponse =
     HentSkattekortResponse(
-        status = "FORESPOERSEL_OK",
+        status = response.name,
         arbeidsgiver =
             listOf(
                 no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiver(

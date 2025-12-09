@@ -7,16 +7,21 @@ import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.HoconApplicationConfig
 
+/**
+ * Konfigurasjonssettinger er dokumentert i dokumentasjon/drift/konfigurasjon.md
+ */
 object PropertiesConfig {
     private var envConfig: HoconApplicationConfig = HoconApplicationConfig(ConfigFactory.empty())
 
     init {
-        System.setProperty("APPLICATION_ENV", "TEST")
-        initEnvConfig()
+        initEnvConfig(
+            HoconApplicationConfig(
+                ConfigFactory.parseMap(mapOf("APPLICATION_ENV" to "TEST")),
+            ),
+        )
     }
 
     fun initEnvConfig(applicationConfig: ApplicationConfig? = null) {
-        println("Environment is ${applicationConfig?.toMap()}")
         val environment = System.getenv("APPLICATION_ENV") ?: System.getProperty("APPLICATION_ENV") ?: applicationConfig?.propertyOrNull("APPLICATION_ENV")?.getString()
         val fileConfig =
             when {
@@ -31,8 +36,8 @@ object PropertiesConfig {
         // Precedence (highest -> lowest):
         // 1. system environment
         // 2. system properties
-        // 3. fileConfig (resource/local + defaults)
-        // 4. applicationConfig (if provided)
+        // 3. applicationConfig (if provided)
+        // 4. fileConfig (resource/local + defaults)
         val base =
             ConfigFactory
                 .systemEnvironment()
@@ -55,25 +60,23 @@ object PropertiesConfig {
             naisAppName = getOrEmpty("NAIS_APP_NAME"),
             gyldigeFnr = getOrEmpty("GYLDIGE_FNR"),
             environment = Environment.valueOf(getOrEmpty("ENVIRONMENT")),
-            useAuthentication = getOrEmpty("USE_AUTHENTICATION").toBoolean(),
             mqListenerEnabled = getOrEmpty("MQ_LISTENER_ENABLED").toBoolean(),
             podName = getOrEmpty("NAIS_POD_NAME"),
             bestillingOrgnr = get("BESTILLING_ORGNR"),
         )
 
-    fun getPostgresProperties(): PostgresProperties =
-        PostgresProperties(
-            name = getOrEmpty("POSTGRES_NAME"),
-            host = getOrEmpty("POSTGRES_HOST"),
-            port = getOrEmpty("POSTGRES_PORT"),
-            username = getOrEmpty("POSTGRES_USER_USERNAME"),
-            password = getOrEmpty("POSTGRES_USER_PASSWORD"),
-            adminUsername = getOrEmpty("POSTGRES_ADMIN_USERNAME"),
-            adminPassword = getOrEmpty("POSTGRES_ADMIN_PASSWORD"),
-            adminRole = "${get("POSTGRES_NAME")}-admin",
-            userRole = "${getOrEmpty("POSTGRES_NAME")}-user",
-            vaultMountPath = getOrEmpty("VAULT_MOUNTPATH"),
-        )
+    fun getPostgresProperties(): PostgresProperties {
+        val postgresProperties =
+            PostgresProperties(
+                jdbcUrl = getOrEmpty("DB_JDBC_URL"),
+                name = get("DB_DATABASE"),
+                host = getOrEmpty("DB_HOST"),
+                port = getOrEmpty("DB_PORT"),
+                username = get("DB_USERNAME"),
+                password = get("DB_PASSWORD"),
+            )
+        return postgresProperties
+    }
 
     fun getMQProperties(): MQProperties =
         MQProperties(
@@ -84,7 +87,7 @@ object PropertiesConfig {
             serviceUsername = getOrEmpty("MQ_SERVICE_USERNAME"),
             servicePassword = getOrEmpty("MQ_SERVICE_PASSWORD"),
             userAuth = true,
-            fraForSystemQueue = get("MQ_FRA_FORSYSTEM_ALT_QUEUE_NAME"),
+            fraForSystemQueue = get("MQ_FRA_FORSYSTEM_QUEUE_NAME"),
             leveransekoeOppdragZSkattekort = get("MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT"),
             leveransekoeDarePocSkattekort = get("MQ_LEVERANSEKOE_DARE_POC_SKATTEKORT"),
         )
@@ -113,7 +116,6 @@ object PropertiesConfig {
             schemaRegistry = getOrEmpty("KAFKA_SCHEMA_REGISTRY"),
             schemaRegistryUser = getOrEmpty("KAFKA_SCHEMA_REGISTRY_USER"),
             schemaRegistryPassword = getOrEmpty("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
-            useSSLSecurity = getOrEmpty("KAFKA_USE_SSL_SECURITY").toBoolean(),
             truststorePath = getOrEmpty("KAFKA_TRUSTSTORE_PATH"),
             credstorePassword = getOrEmpty("KAFKA_CREDSTORE_PASSWORD"),
             keystorePath = getOrEmpty("KAFKA_KEYSTORE_PATH"),
@@ -137,12 +139,12 @@ object PropertiesConfig {
         val wellKnownUrl: String = getOrEmpty("AZURE_APP_WELL_KNOWN_URL"),
         val tenantId: String = getOrEmpty("AZURE_APP_TENANT_ID"),
         val clientSecret: String = getOrEmpty("AZURE_APP_CLIENT_SECRET"),
+        val providerName: String = get("AZURE_APP_AUTH_PROVIDER_NAME"),
     )
 
     data class ApplicationProperties(
         val naisAppName: String,
         val environment: Environment,
-        val useAuthentication: Boolean,
         val mqListenerEnabled: Boolean,
         val gyldigeFnr: String,
         val podName: String,
@@ -150,16 +152,12 @@ object PropertiesConfig {
     )
 
     data class PostgresProperties(
+        val jdbcUrl: String,
         val name: String,
         val host: String,
         val port: String,
         val username: String,
         val password: String,
-        val adminUsername: String,
-        val adminPassword: String,
-        val adminRole: String,
-        val userRole: String,
-        val vaultMountPath: String,
     )
 
     data class MQProperties(
@@ -205,7 +203,6 @@ object PropertiesConfig {
         val schemaRegistry: String,
         val schemaRegistryUser: String,
         val schemaRegistryPassword: String,
-        val useSSLSecurity: Boolean,
         val truststorePath: String,
         val credstorePassword: String,
         val keystorePath: String,

@@ -9,8 +9,8 @@ spec:
   image: "{{{ image }}}"
   port: 8080
   replicas:
-    min: 1
-    max: 2
+    min: 2
+    max: 3
     cpuThresholdPercentage: 75
   liveness:
     path: /internal/isAlive
@@ -41,24 +41,58 @@ spec:
   azure:
     application:
       enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - NAVident
   accessPolicy:
+    inbound:
+      rules:
+        - application: sokos-utbetalingsportalen
+        - application: saas-proxy
+          namespace: teamcrm
     outbound:
       rules:
         - application: logging
           namespace: nais-system
-  webproxy: true
-  vault:
-    enabled: true
+      external:
+        - host: mpls02.adeo.no
+          ports:
+            - port: 1414
+        - host: okonomi-unleash-api.nav.cloud.nais.io
+        - host: pdl-api.prod-fss-pub.nais.io
+        - host: api.skatteetaten.no
   maskinporten:
     enabled: true
     scopes:
       consumes:
         - name: "skatteetaten:skattekorttilarbeidsgiver"
+  kafka:
+    pool: nav-prod
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_18
+        highAvailability: true
+        diskAutoresize: true
+        pointInTimeRecovery: true
+        autoBackupHour: 3
+        tier: db-custom-4-3840
+        databases:
+          - name: sokos-skattekort
+            envVarPrefix: DB
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "on"
+          - name: "pgaudit.log"
+            value: "write,ddl,role"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+          - name: "cloudsql.logical_decoding"
+            value: "on"
+  envFrom:
+    - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-unleash-api-token
 
   env:
-    - name: USE_AUTHENTICATION
-      value: "true"
-    - name: JDK_JAVA_OPTIONS
-      value: -XX:MaxRAMPercentage=75 $(JAVA_PROXY_OPTIONS)
     - name: APPLICATION_ENV
       value: PROD

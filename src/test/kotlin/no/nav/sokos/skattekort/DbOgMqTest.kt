@@ -4,8 +4,6 @@ import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-import no.nav.sokos.skattekort.TestUtil.eventuallyConfiguration
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
@@ -13,6 +11,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 
 class DbOgMqTest :
     FunSpec({
@@ -30,7 +29,6 @@ class DbOgMqTest :
         }
 
         test("Tester både kø og database") {
-            PropertiesConfig.initEnvConfig()
             forespoerselListener.start()
             JmsTestUtil.sendMessage("OS;2025;11111111111")
 

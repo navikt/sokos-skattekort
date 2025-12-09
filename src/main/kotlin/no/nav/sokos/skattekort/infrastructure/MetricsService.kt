@@ -2,14 +2,11 @@ package no.nav.sokos.skattekort.infrastructure
 
 import javax.sql.DataSource
 
-import io.prometheus.metrics.core.metrics.Gauge
-
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Tilleggsopplysning
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Trekkode
-import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
+import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
@@ -35,9 +32,9 @@ class MetricsService(
 //            Skattekort tabell på trekkodene Lønn fra Nav
 //            Skattekort tabell på trekkodene pensjon fra Nav
 //            Skattekort tabell på trekkodene uføretrygd fra Nav
-            val numberOfTabelltrekkByTrekkode: Map<Trekkode, Int> = SkattekortRepository.numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx)
+            val numberOfTabelltrekkByTrekkode: Map<String, Int> = SkattekortRepository.numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx)
             numberOfTabelltrekkByTrekkode.map { (trekkode, count) ->
-                numberOfTabelltrekkByTrekkodeMetric.labelValues(trekkode.value).set(count.toDouble())
+                numberOfTabelltrekkByTrekkodeMetric.labelValues(trekkode).set(count.toDouble())
             }
 //            Skattekort med tilleggsopplysning kildeskattpensjonist
 //            Skattekort med tilleggsopplysning opphold på Svalbard
@@ -98,29 +95,5 @@ class MetricsService(
                 helpText = "Frikort fordelt på om det er begrensning på beløp",
                 labelNames = "beloepsgrense",
             )
-
-        fun gauge(
-            name: String,
-            helpText: String,
-        ): Gauge =
-            Gauge
-                .builder()
-                .name("${METRICS_NAMESPACE}_$name")
-                .help(helpText)
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
-
-        fun gauge(
-            name: String,
-            helpText: String,
-            labelNames: String,
-        ): Gauge =
-            Gauge
-                .builder()
-                .labelNames(labelNames)
-                .name("${METRICS_NAMESPACE}_$name")
-                .help(helpText)
-                .withoutExemplars()
-                .register(prometheusMeterRegistry.prometheusRegistry)
     }
 }

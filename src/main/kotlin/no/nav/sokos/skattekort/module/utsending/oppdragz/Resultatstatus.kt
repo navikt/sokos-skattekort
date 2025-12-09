@@ -4,8 +4,6 @@ enum class Resultatstatus(
     val value: String,
 ) {
     IKKE_SKATTEKORT("ikkeSkattekort"),
-
-    // VURDER_ARBEIDSTILLATELSE("vurderArbeidstillatelse"), Ikke lenger i API
     IKKE_TREKKPLIKT("ikkeTrekkplikt"),
     SKATTEKORTOPPLYSNINGER_OK("skattekortopplysningerOK"),
     UGYLDIG_ORGANISASJONSNUMMER("ugyldigOrganisasjonsnummer"),

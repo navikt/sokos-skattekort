@@ -228,7 +228,7 @@ class SkattekortpersonApiE2ETest :
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
-                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""{"message": "Fant ikke person med fnr 99999999999"}""")
+                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""[]""")
             }
         }
 
@@ -246,7 +246,7 @@ class SkattekortpersonApiE2ETest :
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
-                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""{"message": "Fant ikke skattekort for person med fnr 12345678903"}""")
+                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""[]""")
             }
         }
     })

@@ -10,7 +10,7 @@
         "forskuddstrekk": [
           {
             "type": "Frikort",
-            "trekkode": "LOENN_FRA_NAV",
+            "trekkode": "loennFraNAV",
             "frikortbeloep": 65000
           }
         ]

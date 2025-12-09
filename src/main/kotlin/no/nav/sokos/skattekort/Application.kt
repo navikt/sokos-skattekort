@@ -49,6 +49,8 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val applicationState = ApplicationState()
     applicationLifecycleConfig(applicationState)
 
+    commonConfig()
+
     PropertiesConfig.initEnvConfig(applicationConfig)
     val applicationProperties = PropertiesConfig.getApplicationProperties()
     logger.info { "Application started with environment: ${applicationProperties.environment}" }
@@ -94,7 +96,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(MetricsService::class)
     }
 
-    commonConfig()
     securityConfig()
     routingConfig(applicationState)
 

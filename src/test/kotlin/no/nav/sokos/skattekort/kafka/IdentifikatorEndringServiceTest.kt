@@ -63,7 +63,7 @@ class IdentifikatorEndringServiceTest :
                 val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
 
                 auditList.size shouldBe 2
-                auditMatcher(auditList.first(), person)
+                auditMatcher(auditList[1], person)
             }
         }
 
@@ -90,7 +90,7 @@ class IdentifikatorEndringServiceTest :
                 val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
 
                 auditList.size shouldBe 2
-                auditMatcher(auditList.first(), person)
+                auditMatcher(auditList[1], person)
             }
         }
 

@@ -52,7 +52,7 @@ object SkattekortRepository {
                 """.trimIndent(),
                 skattekort.forskuddstrekkList.map { forskuddstrekk ->
                     when (forskuddstrekk) {
-                        is Frikort ->
+                        is Frikort -> {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
@@ -62,8 +62,9 @@ object SkattekortRepository {
                                 "prosentsats" to null,
                                 "antall_mnd_for_trekk" to null,
                             )
+                        }
 
-                        is Prosentkort ->
+                        is Prosentkort -> {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
@@ -73,8 +74,9 @@ object SkattekortRepository {
                                 "prosentsats" to forskuddstrekk.prosentSats,
                                 "antall_mnd_for_trekk" to null,
                             )
+                        }
 
-                        is Tabellkort ->
+                        is Tabellkort -> {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
@@ -84,6 +86,7 @@ object SkattekortRepository {
                                 "prosentsats" to forskuddstrekk.prosentSats,
                                 "antall_mnd_for_trekk" to forskuddstrekk.antallMndForTrekk,
                             )
+                        }
                     }
                 },
             )
@@ -116,7 +119,7 @@ object SkattekortRepository {
                 """
                 SELECT * FROM skattekort 
                 WHERE person_id = :personId AND inntektsaar = :inntektsaar
-                ORDER BY opprettet DESC
+                ORDER BY opprettet, id DESC
                 """.trimIndent(),
                 mapOf(
                     "personId" to personId.value,

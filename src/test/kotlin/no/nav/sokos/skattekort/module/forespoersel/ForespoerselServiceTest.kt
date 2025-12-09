@@ -131,8 +131,8 @@ class ForespoerselServiceTest :
                     utsendingList.size shouldBe 0
 
                     val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                    auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
-                    auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[0].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[1].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
                 }
             }
         }
@@ -156,8 +156,8 @@ class ForespoerselServiceTest :
                     utsendingList.size shouldBe 0
 
                     val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                    auditList[0].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
-                    auditList[1].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[0].tag shouldBe AuditTag.OPPRETTET_PERSON
+                    auditList[1].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
                 }
             }
         }

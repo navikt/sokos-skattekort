@@ -57,7 +57,7 @@ object AuditRepository {
                 SELECT id, person_id, bruker_id, opprettet, tag, informasjon
                 FROM person_audit
                 WHERE person_id = :personId
-                ORDER BY opprettet DESC
+                ORDER BY opprettet, id DESC
                 """.trimIndent(),
                 mapOf("personId" to personId.value),
             ),

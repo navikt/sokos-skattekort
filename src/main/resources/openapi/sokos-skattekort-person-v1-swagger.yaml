@@ -32,11 +32,13 @@ paths:
 
       responses:
         200:
-          description: OK - Returnerer data med arbeidstakere hvis funnet, eller melding hvis person ikke finnes
+          description: OK - Hvis skattekort ikke finnes, returneres tom liste
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SkattekortPersonResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Arbeidstaker'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -68,18 +70,6 @@ components:
           type: integer
           format: int16
           nullable: false
-
-    SkattekortPersonResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          nullable: true
-          items:
-            $ref: '#/components/schemas/Arbeidstaker'
-        message:
-          type: string
-          nullable: true
 
     Arbeidstaker:
       type: object

@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
@@ -23,6 +24,7 @@ class DbOgMqTest :
                 ForespoerselService(
                     dataSource = DbListener.dataSource,
                     personService = PersonService(DbListener.dataSource),
+                    featureToggles = FakeUnleashIntegration(),
                 ),
                 MQListener.bestillingsQueue,
             )

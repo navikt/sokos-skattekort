@@ -12,8 +12,10 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
+import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
@@ -34,7 +36,7 @@ class ForespoerselServiceTest :
         }
 
         val forespoerselService: ForespoerselService by lazy {
-            ForespoerselService(DbListener.dataSource, personService)
+            ForespoerselService(DbListener.dataSource, personService, FakeUnleashIntegration())
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
@@ -183,6 +185,32 @@ class ForespoerselServiceTest :
                                 Utsending::opprettet,
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        test("Skal ta i mot forespørsler fra databasetabell") {
+            DbListener.loadDataSet("database/forespoersler/forespoersel_fra_tabell.sql")
+            forespoerselService.cronForespoerselInput()
+            DbListener.dataSource.transaction { tx ->
+                val bestillinger = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+
+                assertSoftly {
+                    bestillinger shouldNotBeNull {
+                        size shouldBe 1
+                        shouldContainAllIgnoringFields(
+                            listOf(
+                                Bestilling(
+                                    personId = PersonId(1),
+                                    fnr = Personidentifikator("19876543210"),
+                                    inntektsaar = 2025,
+                                ),
+                            ),
+                            Bestilling::id,
+                            Bestilling::bestillingsbatchId,
+                            Bestilling::oppdatert,
+                        )
                     }
                 }
             }

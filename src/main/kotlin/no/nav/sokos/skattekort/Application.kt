@@ -107,6 +107,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val utsendingService: UtsendingService by dependencies
         val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceReadCommit)
         val metricsService: MetricsService by dependencies
+        val forespoerselService: ForespoerselService by dependencies
 
         JobTaskConfig
             .scheduler(
@@ -114,6 +115,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 utsendingService,
                 scheduledTaskService,
                 metricsService,
+                forespoerselService,
                 DatabaseConfig.dataSourceReadCommit,
             ).start()
     }

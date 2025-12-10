@@ -13,6 +13,7 @@ import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.MetricsService
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
@@ -24,6 +25,7 @@ private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
 private const val JOB_TASK_HENT_SKATTEKORT_BATCH = "hentSkattekort"
 private const val JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH = "hentOppdaterteSkattekort"
 private const val JOB_TASK_FETCH_METRICS = "fetchMetrics"
+private const val JOB_TASK_FORESPOERSEL_INPUT = "forespoerselInput"
 
 object JobTaskConfig {
     fun scheduler(
@@ -31,6 +33,7 @@ object JobTaskConfig {
         utsendingService: UtsendingService,
         scheduledTaskService: ScheduledTaskService,
         metricsService: MetricsService,
+        forespoerselService: ForespoerselService,
         dataSource: DataSource,
     ): Scheduler =
         Scheduler
@@ -44,6 +47,7 @@ object JobTaskConfig {
                 recurringHentSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringFetchMetricsTask(metricsService, scheduledTaskService),
+                recurringFetchForespoerselInputTask(forespoerselService, scheduledTaskService),
             ).build()
 
     fun recurringSendBestillingBatchTask(
@@ -145,8 +149,30 @@ object JobTaskConfig {
                 withTracerId {
                     showLog(showLogLocalTime, instance, context)
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
+                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_FETCH_METRICS)
                     metricsService.fetchMetrics()
+                }
+            }
+    }
+
+    fun recurringFetchForespoerselInputTask(
+        forespoerselService: ForespoerselService,
+        scheduledTaskService: ScheduledTaskService,
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+    ): RecurringTask<String> {
+        val showLogLocalTime = LocalDateTime.now()
+
+        return Tasks
+            .recurring(
+                JOB_TASK_FORESPOERSEL_INPUT,
+                cron(schedulerProperties.cronForespoerselInput),
+                String::class.java,
+            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
+                withTracerId {
+                    showLog(showLogLocalTime, instance, context)
+                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_FORESPOERSEL_INPUT)
+                    forespoerselService.cronForespoerselInput()
                 }
             }
     }

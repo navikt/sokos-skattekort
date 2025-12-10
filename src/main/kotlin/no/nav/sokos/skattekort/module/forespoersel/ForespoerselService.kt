@@ -14,6 +14,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
@@ -35,6 +36,7 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselService(
     private val dataSource: DataSource,
     private val personService: PersonService,
+    private val featureToggles: UnleashIntegration,
 ) {
     fun taImotForespoersel(
         message: String,
@@ -43,7 +45,9 @@ class ForespoerselService(
         dataSource.transaction { tx ->
             val forespoerselInput: ForespoerselInput =
                 when {
-                    message.startsWith("<") -> return@transaction // drop Arena meldinger
+                    message.startsWith("<") -> return@transaction
+
+                    // drop Arena meldinger
                     else -> parseCopybookMessage(message)
                 }.let {
                     val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
@@ -222,7 +226,26 @@ class ForespoerselService(
         )
     }
 
-    private data class ForespoerselInput(
+    fun cronForespoerselInput() {
+        if (featureToggles.isForespoerselInputEnabled()) {
+            val forespoerselInput: List<ForespoerselInput> =
+                dataSource.transaction { tx ->
+                    ForespoerselRepository.getAllForespoerselInput(tx)
+                }
+            forespoerselInput.forEach { forespoerselInput ->
+                try {
+                    dataSource.transaction { tx ->
+                        val message = "${forespoerselInput.forsystem};${forespoerselInput.inntektsaar};${forespoerselInput.fnrList.joinToString(",")}"
+                        handleForespoersel(tx, message, forespoerselInput, null)
+                    }
+                } catch (e: Exception) {
+                    logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)
+                }
+            }
+        }
+    }
+
+    data class ForespoerselInput(
         val forsystem: Forsystem,
         val inntektsaar: Int,
         val fnrList: List<String>,

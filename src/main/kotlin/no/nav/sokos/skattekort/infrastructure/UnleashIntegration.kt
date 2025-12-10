@@ -24,6 +24,8 @@ open class UnleashIntegration(
 
     fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled", true)
 
+    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled", true)
+
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||
             appProperties.environment == PropertiesConfig.Environment.LOCAL

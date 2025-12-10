@@ -30,7 +30,9 @@ object PropertiesConfig {
                     ConfigFactory.parseResources("application-local.conf").withFallback(defaultConfig)
                 }
 
-                else -> ConfigFactory.parseResources("application-${environment.lowercase()}.conf")
+                else -> {
+                    ConfigFactory.parseResources("application-${environment.lowercase()}.conf")
+                }
             }
 
         // Precedence (highest -> lowest):
@@ -178,6 +180,7 @@ object PropertiesConfig {
         val cronHenting: String = get("HENT_SKATTEKORT_BATCH_CRON_EXPRESSION"),
         val cronHentOppdaterte: String = get("HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION"),
         val cronFetchMetrics: String = get("FETCH_METRICS_CRON_EXPRESSION"),
+        val cronForespoerselInput: String = get("FORESPOERSEL_INPUT_CRON_EXPRESSION"),
     )
 
     data class MaskinportenProperties(

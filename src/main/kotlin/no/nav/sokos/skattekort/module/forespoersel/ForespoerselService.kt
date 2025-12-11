@@ -43,13 +43,13 @@ class ForespoerselService(
         saksbehandler: Saksbehandler? = null,
     ) {
         dataSource.transaction { tx ->
-            val forespoerselInput: ForespoerselInput =
+            val forespoerselInput: List<ForespoerselInput> =
                 when {
                     message.startsWith("<") -> return@transaction
 
                     // drop Arena meldinger
                     else -> parseCopybookMessage(message)
-                }.let {
+                }.map {
                     val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
                     val ugyldigeFnr = it.fnrList.filterNot(kategoriMapper.erGyldig)
                     if (ugyldigeFnr.isNotEmpty()) {
@@ -60,10 +60,12 @@ class ForespoerselService(
 
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 
-            handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
-            if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
-                val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
-                handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
+            forespoerselInput.forEach { forespoersel ->
+                handleForespoersel(tx, message, forespoersel, saksbehandler?.ident)
+                if (skalLagesForNesteAarOgsaa(forespoersel)) {
+                    val forespoerselForNesteAar = forespoersel.copy(inntektsaar = forespoersel.inntektsaar + 1)
+                    handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
+                }
             }
         }
     }
@@ -212,19 +214,7 @@ class ForespoerselService(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun parseCopybookMessage(message: String): ForespoerselInput {
-        val parts = message.split(FORESPOERSEL_DELIMITER)
-        require(parts.size == 3) { "Invalid message format: $message" }
-        val forsystem = Forsystem.fromValue(parts[0])
-        val inntektsaar = Integer.parseInt(parts[1])
-        val fnrString = parts[2]
-
-        return ForespoerselInput(
-            forsystem = forsystem,
-            inntektsaar = inntektsaar,
-            fnrList = listOf(fnrString),
-        )
-    }
+    private fun parseCopybookMessage(message: String): List<ForespoerselInput> = message.lines().map { row -> ForespoerselInput.fromString(row) }.filterNotNull()
 
     fun cronForespoerselInput() {
         if (featureToggles.isForespoerselInputEnabled()) {
@@ -249,5 +239,24 @@ class ForespoerselService(
         val forsystem: Forsystem,
         val inntektsaar: Int,
         val fnrList: List<String>,
-    )
+    ) {
+        companion object {
+            fun fromString(message: String): ForespoerselInput? {
+                if (message.trim().isEmpty()) {
+                    return null
+                }
+                val parts = message.split(FORESPOERSEL_DELIMITER)
+                require(parts.size == 3) { "Invalid message format: $message" }
+                val forsystem = Forsystem.fromValue(parts[0])
+                val inntektsaar = Integer.parseInt(parts[1])
+                val fnrString = parts[2]
+
+                return ForespoerselInput(
+                    forsystem = forsystem,
+                    inntektsaar = inntektsaar,
+                    fnrList = listOf(fnrString),
+                )
+            }
+        }
+    }
 }

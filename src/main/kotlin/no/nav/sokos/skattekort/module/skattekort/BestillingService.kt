@@ -41,45 +41,49 @@ class BestillingService(
     fun opprettBestillingsbatch() {
         if (featureToggles.isBestillingerEnabled()) {
             dataSource.transaction { tx ->
-                val now = now().toKotlinLocalDateTime()
-                val bestillings: List<Bestilling> =
-                    BestillingRepository.getBestillingsKandidaterForBatch(
-                        tx,
-                        maxYear =
-                            if (now.day >= 15 && now.month == Month.DECEMBER) {
-                                now.year + 1
-                            } else {
-                                now.year
-                            },
-                    )
-                if (bestillings.isEmpty()) {
-                    logger.info("Ingen bestillinger å sende")
+                if (BestillingBatchRepository.getUnprocessedBestillingsBatches(tx).size > 10) {
+                    logger.warn("Oppretter ikke ny bestillingsbatch fordi for mange ubehandlede allerede ligger i kø")
                 } else {
-                    val request = bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
+                    val now = now().toKotlinLocalDateTime()
+                    val bestillings: List<Bestilling> =
+                        BestillingRepository.getBestillingsKandidaterForBatch(
+                            tx,
+                            maxYear =
+                                if (now.day >= 15 && now.month == Month.DECEMBER) {
+                                    now.year + 1
+                                } else {
+                                    now.year
+                                },
+                        )
+                    if (bestillings.isEmpty()) {
+                        logger.info("Ingen bestillinger å sende")
+                    } else {
+                        val request = bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
 
-                    runBlocking {
-                        try {
-                            val response = skatteetatenClient.bestillSkattekort(request)
-                            logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                            val bestillingsbatchId =
-                                BestillingBatchRepository.insertBestillingsBatch(
+                        runBlocking {
+                            try {
+                                val response = skatteetatenClient.bestillSkattekort(request)
+                                logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
+                                val bestillingsbatchId =
+                                    BestillingBatchRepository.insertBestillingsBatch(
+                                        tx,
+                                        bestillingsreferanse = response.bestillingsreferanse,
+                                        request = request,
+                                    )
+                                logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
+                                AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillings.map { it.personId }, "Bestilling sendt")
+                                BestillingRepository.updateBestillingsWithBatchId(
                                     tx,
-                                    bestillingsreferanse = response.bestillingsreferanse,
-                                    request = request,
+                                    bestillings.map { it.id!!.id },
+                                    bestillingsbatchId,
                                 )
-                            logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
-                            AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillings.map { it.personId }, "Bestilling sendt")
-                            BestillingRepository.updateBestillingsWithBatchId(
-                                tx,
-                                bestillings.map { it.id!!.id },
-                                bestillingsbatchId,
-                            )
-                        } catch (ex: Exception) {
-                            dataSource.transaction { errorTx ->
-                                AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Bestilling feilet")
+                            } catch (ex: Exception) {
+                                dataSource.transaction { errorTx ->
+                                    AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Bestilling feilet")
+                                }
+                                logger.error(ex) { "Bestillingsbatch feilet: ${ex.message}" }
+                                throw ex
                             }
-                            logger.error(ex) { "Bestillingsbatch feilet: ${ex.message}" }
-                            throw ex
                         }
                     }
                 }

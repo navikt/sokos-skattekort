@@ -32,7 +32,7 @@ object BestillingRepository {
                 WHERE b.inntektsaar <= :maxYear
                 AND b.inntektsaar = (SELECT MIN(b2.inntektsaar) FROM bestillinger b2 WHERE b2.bestillingsbatch_id IS NULL)
                 AND b.bestillingsbatch_id IS NULL
-                LIMIT 500
+                LIMIT 1000
                 """.trimIndent(),
                 mapOf("maxYear" to maxYear),
             ),

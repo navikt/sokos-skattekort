@@ -63,6 +63,48 @@ class ForespoerselServiceTest :
             }
         }
 
+        test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                val osMessage =
+                    """OS;2025;12345678901
+                    |OS;2025;23456789012
+                    |
+                    """.trimMargin()
+
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    assertSoftly {
+                        forespoerselList shouldNotBeNull {
+                            size shouldBe 2
+                            shouldContainAllIgnoringFields(
+                                listOf(
+                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET),
+                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET),
+                                ),
+                                Forespoersel::id,
+                                Forespoersel::opprettet,
+                                Forespoersel::dataMottatt,
+                            )
+                        }
+                        abonnementList shouldNotBeNull {
+                            size shouldBe 2
+                        }
+                        bestillingList shouldNotBeNull {
+                            size shouldBe 2
+                        }
+                        utsendingList shouldNotBeNull {
+                            size shouldBe 0
+                        }
+                    }
+                }
+            }
+        }
+
         test("mot slutten av året skal vi også bestille for neste år") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
                 val osMessage = "OS;2025;12345678901"

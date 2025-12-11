@@ -67,6 +67,14 @@ object ForespoerselRepository {
             mapToForespoerselInput,
         )
 
+    fun deleteAllForespoerselInput(tx: TransactionalSession) {
+        tx.update(
+            queryOf(
+                """DELETE FROM forespoersel_input""",
+            ),
+        )
+    }
+
     private val mapToForespoerselInput: (Row) -> ForespoerselService.ForespoerselInput = { row ->
         ForespoerselService.ForespoerselInput(
             forsystem = Forsystem.fromValue(row.string("forsystem")),

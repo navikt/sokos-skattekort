@@ -63,15 +63,14 @@ object BestillingBatchRepository {
             ),
         ) ?: error("Failed to insert bestillingsbatch")
 
-    fun getUnprocessedBestillingsBatch(tx: TransactionalSession): BestillingBatch? =
-        tx.single(
+    fun getUnprocessedBestillingsBatches(tx: TransactionalSession): List<BestillingBatch> =
+        tx.list(
             queryOf(
                 """
                     |SELECT * 
                     |FROM bestillingsbatcher
                     |WHERE status = 'NY' AND type = '$BESTILLING'
                     |ORDER BY oppdatert ASC
-                    |LIMIT 1
                 """.trimMargin(),
             ),
             extractor = mapToBestillingBatch,

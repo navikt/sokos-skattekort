@@ -94,8 +94,12 @@ class BestillingService(
         /* denne er med vilje ikke underlagt feature switch-styring for å unngå at en sendt bestilling
         ikke timer ut mens feature-toggelen er slått av
          */
-        dataSource.transaction { tx ->
-            BestillingBatchRepository.getUnprocessedBestillingsBatches(tx).forEach { bestillingsbatch ->
+        val batcher =
+            dataSource.transaction { tx ->
+                BestillingBatchRepository.getUnprocessedBestillingsBatches(tx)
+            }
+        batcher.forEach { bestillingsbatch ->
+            dataSource.transaction { tx ->
                 val batchId = bestillingsbatch.id!!.id
                 logger.info("Henter skattekort for ${bestillingsbatch.bestillingsreferanse}")
                 runBlocking {

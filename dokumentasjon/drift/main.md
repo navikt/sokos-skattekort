@@ -35,3 +35,4 @@ Vi bruker [Grafana alerts](https://grafana.nav.cloud.nais.io/alerting/list?searc
 - [Rutine for redeploy](redeploy.md)
 - [Teknisk sjekkliste for go-live - hører hjemme annetsteds senere](golive.md)
 - [Konfigurasjon](konfigurasjon.md)
+- [Import av bestillings-filer](bestillingsfiler.md)

@@ -187,7 +187,6 @@ class BestillingService(
                 }
             }
         }
-        opprettBestillingsbatch()
     }
 
     private fun handleNyttSkattekort(

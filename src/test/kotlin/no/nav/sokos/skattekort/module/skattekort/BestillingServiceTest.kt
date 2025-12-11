@@ -5,7 +5,6 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 
 import kotlin.time.ExperimentalTime
-import kotlin.time.toJavaInstant
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -19,7 +18,6 @@ import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotContain
-import io.kotest.matchers.date.shouldBeAfter
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -409,13 +407,13 @@ class BestillingServiceTest :
                     }
                     forOne {
                         it.id!!.id shouldBe 2L
-                        it.status shouldBe BestillingBatchStatus.Ny.value
+                        it.status shouldBe BestillingBatchStatus.Ferdig.value
                     }
                 }
 
                 skattekortFirstRun shouldNotBeNull {
-                    size shouldBe 1
-                    first() shouldNotBeNull {
+                    size shouldBe 3
+                    last() shouldNotBeNull {
                         identifikator shouldBe "54407"
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList shouldNotBeNull {
@@ -425,45 +423,10 @@ class BestillingServiceTest :
                 }
 
                 bestillingsAfterFirstRun shouldNotBeNull {
-                    size shouldBe 1
+                    size shouldBe 0
                 }
 
-                utsendingerAfterFirstRun.size shouldBe 1
-            }
-
-            bestillingService.hentSkattekort()
-
-            val skattekortAfterSecondRun: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
-
-            skattekortAfterSecondRun shouldNotBeNull {
-                size shouldBe 3
-                forOne { it shouldBe skattekortFirstRun.first() }
-                forOne {
-                    it.id shouldBe SkattekortId(2L)
-                    it.identifikator shouldBe "54407"
-                    it.opprettet.toJavaInstant() shouldBeAfter skattekortFirstRun.first().opprettet.toJavaInstant()
-                    it.resultatForSkattekort shouldBe SkattekortopplysningerOK
-                    it.forskuddstrekkList shouldNotBeNull {
-                        size shouldBe 5
-                    }
-                    it.tilleggsopplysningList shouldNotBeNull {
-                        size shouldBe 4
-                    }
-                }
-                forOne {
-                    it.identifikator shouldBe null
-                    it.kilde shouldBe SkattekortKilde.SYNTETISERT.value
-                    it.generertFra shouldBe SkattekortId(2L)
-                    it.resultatForSkattekort shouldBe SkattekortopplysningerOK
-                    withClue("Should generate forskuddstrekk for svalbard") {
-                        it.forskuddstrekkList shouldContainExactly
-                            listOf(
-                                aForskuddstrekk("Prosentkort", LOENN_FRA_NAV, 15.70),
-                                aForskuddstrekk("Prosentkort", UFOERETRYGD_FRA_NAV, 15.70),
-                                aForskuddstrekk("Prosentkort", PENSJON_FRA_NAV, 13.10),
-                            )
-                    }
-                }
+                utsendingerAfterFirstRun.size shouldBe 2
             }
         }
 
@@ -567,7 +530,7 @@ class BestillingServiceTest :
             }
         }
 
-        test("henter skattekort for batch to ganger") {
+        test("hent skattekort håndterer alle batcher") {
 
             coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                 aHentSkattekortResponse(
@@ -602,7 +565,7 @@ class BestillingServiceTest :
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
             val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
-            assertSoftly("Etter første kjøring skal en batch få status Ferdig") {
+            assertSoftly("Etter første kjøring skal alle batchene være Ferdig") {
                 updatedBatches shouldNotBeNull {
                     size shouldBe 2
                     forOne {
@@ -611,58 +574,9 @@ class BestillingServiceTest :
                     }
                     forOne {
                         it.id!!.id shouldBe 2L
-                        it.status shouldBe BestillingBatchStatus.Ny.value
+                        it.status shouldBe BestillingBatchStatus.Ferdig.value
                     }
                 }
-
-                withClue("1 av 4 bestillinger skal være slettet") {
-                    bestillingsAfter shouldNotBeNull {
-                        size shouldBe 3
-                        forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2L }
-                        withClue("1 bestillinger ikke tilknyttet batch") {
-                            forOne {
-                                it.id!!.id shouldBe 4L
-                                it.bestillingsbatchId shouldBe null
-                            }
-                        }
-                    }
-                }
-
-                skattekort shouldNotBeNull {
-                    size shouldBe 1
-                    withClue("Et skattekort skal være opprettet") {
-                        forOne {
-                            it.identifikator shouldBe "10001"
-                            it.resultatForSkattekort shouldBe SkattekortopplysningerOK
-                            it.forskuddstrekkList shouldNotBeNull {
-                                size shouldBe 2
-                            }
-                        }
-                    }
-                }
-
-                utsendingerAfter.size shouldBe 1
-            }
-
-            bestillingService.hentSkattekort()
-
-            val updatedBatchesSecondRun: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val bestillingsAfterSecondRun: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-            val skattekortAfterSecondRun: List<Skattekort> =
-                tx {
-                    listOf(
-                        SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false),
-                        SkattekortRepository.findAllByPersonId(it, PersonId(2), 2025, adminRole = false),
-                        SkattekortRepository.findAllByPersonId(it, PersonId(3), 2025, adminRole = false),
-                    ).flatMap { it }
-                }
-            val utsendingerAfterSecondRun: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
-
-            assertSoftly("Og etter andre kjøring") {
-                updatedBatchesSecondRun.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 2
-                bestillingsAfterSecondRun.size shouldBe 1
-                skattekortAfterSecondRun.size shouldBe 3
-                utsendingerAfterSecondRun.size shouldBe 3
             }
         }
 
@@ -698,18 +612,15 @@ class BestillingServiceTest :
 
             assertSoftly {
                 updatedBatches shouldNotBeNull {
-                    forOne { it.status shouldBe BestillingBatchStatus.Ny.value }
-                    forOne { it.status shouldBe BestillingBatchStatus.Ferdig.value }
+                    forAll { it.status shouldBe BestillingBatchStatus.Ferdig.value }
                 }
 
                 bestillingsAfter shouldNotBeNull {
-                    size shouldBe 1
-                    forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
-                    forOne { it.bestillingsbatchId!!.id shouldBe 2L }
+                    size shouldBe 0
                 }
 
                 skattekort shouldNotBeNull {
-                    size shouldBe 1
+                    size shouldBe 2
                     first() shouldNotBeNull {
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
@@ -819,18 +730,15 @@ class BestillingServiceTest :
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
 
             assertSoftly {
-                updatedBatches.count { it.status == BestillingBatchStatus.Ny.value } shouldBe 1
-                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 2
 
                 bestillingsAfter shouldNotBeNull {
-                    size shouldBe 2
-                    forExactly(0) { it.bestillingsbatchId!!.id shouldBe 1L }
-                    forExactly(2) { it.bestillingsbatchId!!.id shouldBe 2 }
+                    size shouldBe 0
                 }
 
                 skattekort shouldNotBeNull {
-                    size shouldBe 2
-                    last() shouldNotBeNull {
+                    size shouldBe 4
+                    get(1) shouldNotBeNull {
                         resultatForSkattekort shouldBe IkkeSkattekort
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
@@ -840,7 +748,7 @@ class BestillingServiceTest :
                     first() shouldNotBeNull {
                         resultatForSkattekort shouldBe IkkeSkattekort
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
-                        generertFra shouldBe last().id
+                        generertFra shouldBe get(1).id
                         identifikator shouldBe null
                         withClue("Should generate forskuddstrekk for svalbard") {
                             forskuddstrekkList shouldContainExactly

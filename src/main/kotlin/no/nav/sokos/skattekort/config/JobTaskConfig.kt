@@ -22,7 +22,6 @@ import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 private val logger = KotlinLogging.logger { }
 private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
 private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
-private const val JOB_TASK_HENT_SKATTEKORT_BATCH = "hentSkattekort"
 private const val JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH = "hentOppdaterteSkattekort"
 private const val JOB_TASK_FETCH_METRICS = "fetchMetrics"
 private const val JOB_TASK_FORESPOERSEL_INPUT = "forespoerselInput"
@@ -42,15 +41,14 @@ object JobTaskConfig {
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
-                recurringSendBestillingBatchTask(bestillingService, scheduledTaskService),
+                recurringBestillingManagementBatchTask(bestillingService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
-                recurringHentSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringFetchMetricsTask(metricsService, scheduledTaskService),
                 recurringFetchForespoerselInputTask(forespoerselService, scheduledTaskService),
             ).build()
 
-    fun recurringSendBestillingBatchTask(
+    fun recurringBestillingManagementBatchTask(
         bestillingService: BestillingService,
         scheduledTaskService: ScheduledTaskService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
@@ -66,6 +64,7 @@ object JobTaskConfig {
                     showLog(showLogLocalTime, instance, context)
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                     scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
+                    bestillingService.hentSkattekort()
                     bestillingService.opprettBestillingsbatch()
                 }
             }
@@ -88,27 +87,6 @@ object JobTaskConfig {
                     val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                     scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_UTSENDING_BATCH)
                     utsendingService.handleUtsending()
-                }
-            }
-    }
-
-    fun recurringHentSkattekortBatchTask(
-        bestillingService: BestillingService,
-        scheduledTaskService: ScheduledTaskService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
-    ): RecurringTask<String> {
-        val showLogLocalTime = LocalDateTime.now()
-        return Tasks
-            .recurring(
-                JOB_TASK_HENT_SKATTEKORT_BATCH,
-                cron(schedulerProperties.cronHenting),
-                String::class.java,
-            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                withTracerId {
-                    showLog(showLogLocalTime, instance, context)
-                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_SKATTEKORT_BATCH)
-                    bestillingService.hentSkattekort()
                 }
             }
     }

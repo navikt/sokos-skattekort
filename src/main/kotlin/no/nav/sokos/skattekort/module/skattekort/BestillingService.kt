@@ -95,7 +95,7 @@ class BestillingService(
         ikke timer ut mens feature-toggelen er slått av
          */
         dataSource.transaction { tx ->
-            BestillingBatchRepository.getUnprocessedBestillingsBatch(tx)?.let { bestillingsbatch ->
+            BestillingBatchRepository.getUnprocessedBestillingsBatches(tx).forEach { bestillingsbatch ->
                 val batchId = bestillingsbatch.id!!.id
                 logger.info("Henter skattekort for ${bestillingsbatch.bestillingsreferanse}")
                 runBlocking {
@@ -228,7 +228,7 @@ class BestillingService(
         person: Person,
     ): Skattekort =
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
-            ResultatForSkattekort.SkattekortopplysningerOK ->
+            ResultatForSkattekort.SkattekortopplysningerOK -> {
                 Skattekort(
                     personId = person.id!!,
                     utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
@@ -239,6 +239,7 @@ class BestillingService(
                     forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
+            }
 
             ResultatForSkattekort.IkkeSkattekort -> {
                 Skattekort(
@@ -270,7 +271,7 @@ class BestillingService(
                 throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
             }
 
-            else ->
+            else -> {
                 Skattekort(
                     personId = person.id!!,
                     utstedtDato = null,
@@ -280,6 +281,7 @@ class BestillingService(
                     resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
                     tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                 )
+            }
         }
 
     fun hentOppdaterteSkattekort() {

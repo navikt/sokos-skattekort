@@ -220,7 +220,9 @@ class ForespoerselService(
         if (featureToggles.isForespoerselInputEnabled()) {
             val forespoerselInput: List<ForespoerselInput> =
                 dataSource.transaction { tx ->
-                    ForespoerselRepository.getAllForespoerselInput(tx)
+                    val returverdi = ForespoerselRepository.getAllForespoerselInput(tx)
+                    ForespoerselRepository.deleteAllForespoerselInput(tx)
+                    returverdi
                 }
             forespoerselInput.forEach { forespoerselInput ->
                 try {

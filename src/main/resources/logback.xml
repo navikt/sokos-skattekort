@@ -73,6 +73,9 @@
         </else>
     </if>
 
+    <logger name="no.nav.sokos.skattekort.kafka.KafkaConsumerService" level="WARN"/>
+    <logger name="no.nav.sokos.skattekort.config.JobTaskConfig" level="WARN"/>
+    <logger name="org.apache.kafka.clients.consumer.internals" level="WARN"/>
     <logger name="no.nav.sokos.skattekort" level="INFO"/>
 
 </configuration>

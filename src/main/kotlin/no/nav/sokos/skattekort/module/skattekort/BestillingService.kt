@@ -129,14 +129,12 @@ class BestillingService(
                                     }
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
                                     val personer: List<PersonId> = BestillingRepository.hentResterendeBestillinger(tx, batchId)
-                                    personer.forEach { person ->
-                                        AuditRepository.insert(
-                                            tx = tx,
-                                            tag = AuditTag.BESTILLING_ETTERLATT,
-                                            personId = person,
-                                            informasjon = "Bestilling var etterlatt etter mottak av data",
-                                        )
-                                    }
+                                    AuditRepository.insertBatch(
+                                        tx = tx,
+                                        tag = AuditTag.BESTILLING_ETTERLATT,
+                                        personIds = personer,
+                                        informasjon = "Bestilling var etterlatt etter mottak av data",
+                                    )
                                     BestillingRepository.retryUnprocessedBestillings(tx, batchId)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet med mottatte brukere")
                                 }

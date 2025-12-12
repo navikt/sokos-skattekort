@@ -441,6 +441,7 @@ class BestillingService(
             } catch (e: BatchUpdateException) {
                 logger.error(marker = TEAM_LOGS_MARKER, e) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${e.message}" }
                 logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til secure log")
+                throw e
             } catch (ex: Exception) {
                 logger.error(ex) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${ex.message}" }
                 throw ex

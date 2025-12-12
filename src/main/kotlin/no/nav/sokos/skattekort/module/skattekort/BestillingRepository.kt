@@ -165,6 +165,25 @@ object BestillingRepository {
             extractor = { row -> row.double("earliest_oppdatert") },
         ) ?: error("Should always return something")
 
+    fun hentResterendeBestillinger(
+        tx: TransactionalSession,
+        batchId: Long,
+    ): List<PersonId> =
+        tx.list(
+            queryOf(
+                """
+                SELECT person_id FROM bestillinger
+                WHERE bestillingsbatch_id = :bestillingsbatchId
+                """.trimIndent(),
+                mapOf(
+                    "bestillingsbatchId" to batchId,
+                ),
+            ),
+            extractor = { row ->
+                PersonId(row.long("person_id"))
+            },
+        )
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(

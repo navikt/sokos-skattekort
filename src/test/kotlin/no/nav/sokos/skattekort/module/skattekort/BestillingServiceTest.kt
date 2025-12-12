@@ -423,7 +423,13 @@ class BestillingServiceTest :
                 }
 
                 bestillingsAfterFirstRun shouldNotBeNull {
-                    size shouldBe 0
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        id shouldBe BestillingId(2L)
+                        fnr.value shouldBe "23456789012"
+                        inntektsaar shouldBe 2025
+                        bestillingsbatchId shouldBe null
+                    }
                 }
 
                 utsendingerAfterFirstRun.size shouldBe 2
@@ -559,6 +565,7 @@ class BestillingServiceTest :
             )
 
             bestillingService.hentSkattekort()
+            bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
@@ -588,6 +595,13 @@ class BestillingServiceTest :
                         fnr = "01010100001",
                         inntektsaar = "2025",
                     ),
+                ) andThen
+                aHentSkattekortResponse(
+                    anArbeidstaker(
+                        resultat = ResultatForSkattekort.IkkeSkattekort,
+                        fnr = "02020200002",
+                        inntektsaar = "2025",
+                    ),
                 )
 
             databaseHas(
@@ -603,9 +617,13 @@ class BestillingServiceTest :
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-            val skattekort: List<Skattekort> =
+            val skattekortPerson1: List<Skattekort> =
                 tx {
                     SkattekortRepository.findAllByPersonId(it, PersonId(1L), 2025, adminRole = false)
+                }
+            val skattekortPerson2: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(2L), 2025, adminRole = false)
                 }
             val person1: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
             val person2: Person = tx { PersonRepository.findPersonById(it, PersonId(2L)) }
@@ -619,13 +637,23 @@ class BestillingServiceTest :
                     size shouldBe 0
                 }
 
-                skattekort shouldNotBeNull {
-                    size shouldBe 2
+                skattekortPerson1 shouldNotBeNull {
+                    size shouldBe 1
                     first() shouldNotBeNull {
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
                         tilleggsopplysningList shouldBe emptyList()
                         resultatForSkattekort shouldBe ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+                    }
+                }
+
+                skattekortPerson2 shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        identifikator shouldBe null
+                        forskuddstrekkList shouldBe emptyList()
+                        tilleggsopplysningList shouldBe emptyList()
+                        resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort
                     }
                 }
 
@@ -733,7 +761,9 @@ class BestillingServiceTest :
                 updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 2
 
                 bestillingsAfter shouldNotBeNull {
-                    size shouldBe 0
+                    withClue("Vi bestilte 3 men fikk bare tilbake ett skattekort") {
+                        size shouldBe 2
+                    }
                 }
 
                 skattekort shouldNotBeNull {

@@ -73,14 +73,34 @@ object BestillingRepository {
         )
     }
 
-    fun deleteProcessedBestillings(
+    fun deleteProcessedBestilling(
+        tx: TransactionalSession,
+        batch: Long,
+        fnr: String,
+    ) {
+        tx.run(
+            queryOf(
+                """
+                DELETE FROM bestillinger
+                WHERE bestillingsbatch_id = :bestillingsbatchId
+                AND fnr = :fnr
+                """.trimIndent(),
+                mapOf(
+                    "bestillingsbatchId" to batch,
+                    "fnr" to fnr,
+                ),
+            ).asUpdate,
+        )
+    }
+
+    fun retryUnprocessedBestillings(
         tx: TransactionalSession,
         batch: Long,
     ) {
         tx.run(
             queryOf(
                 """
-                DELETE FROM bestillinger
+                UPDATE bestillinger SET bestillingsbatch_id = null 
                 WHERE bestillingsbatch_id = :bestillingsbatchId
                 """.trimIndent(),
                 mapOf("bestillingsbatchId" to batch),

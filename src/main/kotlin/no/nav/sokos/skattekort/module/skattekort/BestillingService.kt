@@ -197,7 +197,7 @@ class BestillingService(
                                 errorTx,
                                 AuditTag.HENTING_AV_SKATTEKORT_FEILET,
                                 BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                                "Batchhenting av skattekort feilet, batchid $batchId",
+                                "Batchhenting av skattekort feilet med BatchUpdateException, batchid $batchId",
                             )
                         }
                         throw e
@@ -209,7 +209,7 @@ class BestillingService(
                                 errorTx,
                                 AuditTag.HENTING_AV_SKATTEKORT_FEILET,
                                 BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                                "Batchhenting av skattekort feilet, batchid $batchId",
+                                "Batchhenting av skattekort feilet med ${ex.javaClass.simpleName}, batchid $batchId",
                             )
                         }
                         throw ex

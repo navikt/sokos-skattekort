@@ -59,7 +59,7 @@ spec:
         - application: logging
           namespace: nais-system
       external:
-        - host: mqls01.preprod.local
+        - host: mqls02.preprod.local
           ports:
             - port: 1413
         - host: okonomi-unleash-api.nav.cloud.nais.io

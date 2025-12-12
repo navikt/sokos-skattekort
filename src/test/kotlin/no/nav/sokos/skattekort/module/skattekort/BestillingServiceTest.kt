@@ -226,7 +226,7 @@ class BestillingServiceTest :
         }
 
         test("henter skattekort enkleste scenario") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     aSkattekortFor("01010100001", 10001),
                 )
@@ -273,7 +273,7 @@ class BestillingServiceTest :
         }
 
         test("henter skattekort, ingen endring-respons") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     response = ResponseStatus.INGEN_ENDRINGER,
                 )
@@ -300,7 +300,7 @@ class BestillingServiceTest :
         }
 
         test("henter skattekort, ugyldig inntektsaar returneres") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     response = ResponseStatus.UGYLDIG_INNTEKTSAAR,
                 )
@@ -327,7 +327,7 @@ class BestillingServiceTest :
         }
 
         test("henter skattekort reell response") {
-            coEvery { skatteetatenClient.hentSkattekort("BR1337") } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
+            coEvery { skatteetatenClient.hentSkattekort(any(), "BR1337") } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
 
             databaseHas(
                 aPerson(1L, "12345678901"),
@@ -377,7 +377,8 @@ class BestillingServiceTest :
         }
 
         test("skattekort reell response med samme identifikator og ny informasjon") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK_pre.json") andThen
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK_pre.json") andThen
                 aHentSkattekortResponseFromFile(
                     "src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json",
                 )
@@ -431,7 +432,7 @@ class BestillingServiceTest :
         }
 
         test("henter skattekort med alle tilleggsopplysninger") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     anArbeidstaker(
                         resultat = SkattekortopplysningerOK,
@@ -532,7 +533,7 @@ class BestillingServiceTest :
 
         test("hent skattekort håndterer alle batcher") {
 
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     aSkattekortFor("01010100001", 10001),
                 ) andThen
@@ -561,9 +562,6 @@ class BestillingServiceTest :
             bestillingService.hentSkattekort()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
-            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-            val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
 
             assertSoftly("Etter første kjøring skal alle batchene være Ferdig") {
                 updatedBatches shouldNotBeNull {
@@ -581,7 +579,7 @@ class BestillingServiceTest :
         }
 
         test("ugyldigFoedselsEllerDnummer") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     anArbeidstaker(
                         resultat = ResultatForSkattekort.UgyldigFoedselsEllerDnummer,
@@ -639,7 +637,7 @@ class BestillingServiceTest :
         }
 
         test("UgyldigOrganisasjonsnummer") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 HentSkattekortResponse(
                     status = "FORESPOERSEL_OK",
                     arbeidsgiver =
@@ -697,7 +695,7 @@ class BestillingServiceTest :
         }
 
         test("ikkeSkattekort med oppholdPaaSvalbard") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     anArbeidstaker(
                         resultat = IkkeSkattekort,
@@ -764,7 +762,7 @@ class BestillingServiceTest :
             }
         }
         test("skattekortOpplysningerOk med oppholdPaaSvalbard") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     anArbeidstaker(
                         resultat = SkattekortopplysningerOK,
@@ -854,7 +852,7 @@ class BestillingServiceTest :
         }
 
         test("ikkeTrekkplikt") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     anArbeidstaker(
                         resultat = IkkeTrekkplikt,
@@ -928,7 +926,7 @@ class BestillingServiceTest :
         }
 
         test("plukker opp batch med status NY, får 404 fra skatt") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } throws RuntimeException("Feil ved henting av skattekort: 404")
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } throws RuntimeException("Feil ved henting av skattekort: 404")
             databaseHas(
                 aPerson(fnr = "01010100001", personId = 1L),
                 aPerson(fnr = "02020200002", personId = 2L),
@@ -976,7 +974,7 @@ class BestillingServiceTest :
         }
 
         test("plukker ikke opp batch med status FEILET men tar den andre istedenfor") {
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
 
             databaseHas(
                 aPerson(fnr = "01010100001", personId = 1L),

@@ -18,6 +18,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.mockk
 
+import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
@@ -49,7 +50,7 @@ class SkatteetatenClientTest :
         test("should handle ugyldig inntektsaar") {
             val skatteetatenClient = setupClient(readFile("/skatteetaten/hentSkattekort/ugyldig_inntektsaar.json"))
 
-            val response = skatteetatenClient.hentSkattekort("BR1234")
+            val response = skatteetatenClient.hentSkattekort(null, "BR1234")
 
             response shouldNotBeNull {
                 status shouldBe ResponseStatus.UGYLDIG_INNTEKTSAAR.name
@@ -60,7 +61,7 @@ class SkatteetatenClientTest :
         test("should handle skattekortopplysningerOK") {
             val skatteetatenClient = setupClient(readFile("/skatteetaten/hentSkattekort/skattekortopplysningerOK.json"))
 
-            val response = skatteetatenClient.hentSkattekort("BR1234")
+            val response = skatteetatenClient.hentSkattekort(null, "BR1234")
 
             response shouldNotBeNull {
                 status shouldBe ResponseStatus.FORESPOERSEL_OK.name
@@ -122,6 +123,6 @@ fun setupClient(jsonFile: String): SkatteetatenClient {
         mockk<MaskinportenTokenClient> {
             coEvery { getAccessToken() } returns "token"
         }
-    val skatteetatenClient = SkatteetatenClient(mockTokenClient, clientWithMockReply)
+    val skatteetatenClient = SkatteetatenClient(mockTokenClient, clientWithMockReply, FakeUnleashIntegration())
     return skatteetatenClient
 }

@@ -21,6 +21,7 @@ import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
+import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.utsending.Utsending
@@ -127,6 +128,13 @@ class BestillingService(
                                         BestillingRepository.deleteProcessedBestilling(tx, batchId, arbeidstaker.arbeidstakeridentifikator)
                                     }
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                                    val personer: List<PersonId> = BestillingRepository.hentResterendeBestillinger(tx, batchId)
+                                    AuditRepository.insertBatch(
+                                        tx = tx,
+                                        tag = AuditTag.BESTILLING_ETTERLATT,
+                                        personIds = personer,
+                                        informasjon = "Bestilling var etterlatt etter mottak av data",
+                                    )
                                     BestillingRepository.retryUnprocessedBestillings(tx, batchId)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet med mottatte brukere")
                                 }

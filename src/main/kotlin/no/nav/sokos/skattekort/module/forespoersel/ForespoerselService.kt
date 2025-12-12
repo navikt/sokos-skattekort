@@ -59,7 +59,7 @@ class ForespoerselService(
                     it.copy(fnrList = it.fnrList.minus(ugyldigeFnr))
                 }
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
+            logger.debug(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
 
             forespoerselInput.forEach { forespoersel ->
                 handleForespoersel(tx, message, forespoersel, saksbehandler?.ident)
@@ -188,7 +188,7 @@ class ForespoerselService(
                 // Skattekort finnes
                 val utsending = UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)
                 if (utsending != null) {
-                    logger.info {
+                    logger.debug {
                         "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
                     }
                 } else {
@@ -196,7 +196,7 @@ class ForespoerselService(
                 }
             }
         }
-        logger.info { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }
+        logger.debug { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }
     }
 
     private fun forSentAaBestille(inntektsaar: Int): Boolean {

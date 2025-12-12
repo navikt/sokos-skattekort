@@ -124,9 +124,10 @@ class BestillingService(
                                 ResponseStatus.FORESPOERSEL_OK.name -> {
                                     response.arbeidsgiver!!.first().arbeidstaker.forEach { arbeidstaker ->
                                         handleNyttSkattekort(tx, arbeidstaker, bestillingsbatch.bestillingsreferanse)
+                                        BestillingRepository.deleteProcessedBestilling(tx, batchId, arbeidstaker.arbeidstakeridentifikator)
                                     }
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                                    BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                                    BestillingRepository.retryUnprocessedBestillings(tx, batchId)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet med mottatte brukere")
                                 }
 
@@ -141,7 +142,7 @@ class BestillingService(
                                 ResponseStatus.INGEN_ENDRINGER.name -> {
                                     // ingenting å se her
                                     BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                                    BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                                    BestillingRepository.retryUnprocessedBestillings(tx, batchId)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet uten endringer")
                                 }
 
@@ -159,7 +160,7 @@ class BestillingService(
                         } else {
                             // Ingen skattekort returnert
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                            BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                            BestillingRepository.retryUnprocessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet uten returnerte skattekort")
                         }
                     } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
@@ -364,7 +365,7 @@ class BestillingService(
                         ResponseStatus.INGEN_ENDRINGER.name -> {
                             // ingenting å se her
                             BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                            BestillingRepository.deleteProcessedBestillings(tx, batchId)
+                            BestillingRepository.retryUnprocessedBestillings(tx, batchId)
                             logger.info("Bestillingsbatch $batchId ferdig behandlet")
                         }
 

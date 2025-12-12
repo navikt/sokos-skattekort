@@ -9,8 +9,8 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.config.PropertiesConfig
 
 open class UnleashIntegration(
-    private val unleashProps: PropertiesConfig.UnleashProperties,
-    private val appProperties: PropertiesConfig.ApplicationProperties,
+    unleashProps: PropertiesConfig.UnleashProperties,
+    appProperties: PropertiesConfig.ApplicationProperties,
 ) {
     private lateinit var unleashClient: Unleash
     private val logger = KotlinLogging.logger {}
@@ -26,11 +26,13 @@ open class UnleashIntegration(
 
     fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled", true)
 
+    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.lagre-mottatte-bestillinger.enabled", false)
+
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST ||
             appProperties.environment == PropertiesConfig.Environment.LOCAL
         ) {
-            unleashClient = FakeUnleash()
+            unleashClient = FakeUnleash().also { it.disable("sokos-skattekort.lagre-mottatte-bestillinger.enabled") }
         } else {
             val config =
                 UnleashConfig

@@ -120,7 +120,7 @@ class BestillingServiceOppdaterteSkattekortTest :
 
             test("Når vi gjør et kall med batcher i databasen skal det hentes skattekort") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                    coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(
                             aSkattekortFor("01010100001", 10001),
                         )
@@ -161,7 +161,7 @@ class BestillingServiceOppdaterteSkattekortTest :
 
             test("Henting av oppdaterte skattekort uten oppdateringer skal fungere") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                    coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.INGEN_ENDRINGER)
                     databaseHas(
                         aPerson(1L, "01010100001"),
@@ -189,7 +189,7 @@ class BestillingServiceOppdaterteSkattekortTest :
 
             test("Henting av oppdaterte skattekort med ugyldig inntektsår skal feile") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                    coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.UGYLDIG_INNTEKTSAAR)
                     databaseHas(
                         aPerson(1L, "01010100001"),

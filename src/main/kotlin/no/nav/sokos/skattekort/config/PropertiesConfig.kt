@@ -91,6 +91,7 @@ object PropertiesConfig {
             userAuth = true,
             fraForSystemQueue = get("MQ_FRA_FORSYSTEM_QUEUE_NAME"),
             leveransekoeOppdragZSkattekort = get("MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT"),
+            leveransekoeOppdragZSkattekortStor = get("MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT_STOR"),
         )
 
     fun getMaskinportenProperties(): MaskinportenProperties =
@@ -171,6 +172,7 @@ object PropertiesConfig {
         val userAuth: Boolean = true,
         val fraForSystemQueue: String,
         val leveransekoeOppdragZSkattekort: String,
+        val leveransekoeOppdragZSkattekortStor: String,
     )
 
     data class SchedulerProperties(

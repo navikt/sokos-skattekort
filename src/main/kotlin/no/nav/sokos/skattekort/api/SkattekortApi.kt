@@ -40,7 +40,7 @@ fun Route.skattekortApi(forespoerselService: ForespoerselService) {
             logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Ber om status på forespørsel: $request" }
 
             call.respond(
-                StatusResponse(forespoerselService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)),
+                StatusResponse(forespoerselService.statusForespoeresel(request.personIdent, request.aar, request.forsystem)),
             )
         }
     }

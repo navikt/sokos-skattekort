@@ -42,7 +42,8 @@ object MQListener : BeforeSpecListener, AfterTestListener {
 
     val bestillingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
     val utsendingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
-    val allQueues: List<Queue> = listOf(bestillingsQueue, utsendingsQueue)
+    val utsendingStorQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+    val allQueues: List<Queue> = listOf(bestillingsQueue, utsendingsQueue, utsendingStorQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }
     val producer: JMSProducer by lazy { jmsContext.createProducer() }

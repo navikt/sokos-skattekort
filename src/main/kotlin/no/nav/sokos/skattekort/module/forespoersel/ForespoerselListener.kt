@@ -10,24 +10,25 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
-    connectionFactory: ConnectionFactory,
+    private val connectionFactory: ConnectionFactory,
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
 ) {
-    private val jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
-    private val listener = jmsContext.createConsumer(forespoerselQueue)
+    private lateinit var jmsContext: JMSContext
 
-    // TODO: Legg til Opentelemetry trace
-    // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
-    init {
+    fun start() {
+        // TODO: Legg til Opentelemetry trace
+        // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
+
+        jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+        val listener = jmsContext.createConsumer(forespoerselQueue)
+
         listener.setMessageListener { message: Message ->
             val jmsMessage = message.getBody(String::class.java)
             forespoerselService.taImotForespoersel(jmsMessage)
             message.acknowledge()
         }
-    }
 
-    fun start() {
         jmsContext.start()
         logger.info { "Forespoersel started, listening on queue: ${forespoerselQueue.queueName}" }
     }

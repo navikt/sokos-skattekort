@@ -45,5 +45,8 @@ object Validator {
 
     fun isValidInntektsaar(aar: Int): Boolean = aar in 2025..<2100
 
-    fun isValidForsystem(forsystem: String): Boolean = !forsystem.isEmpty() && Forsystem.entries.any { it.value == forsystem }
+    fun isValidForsystem(forsystem: String): Boolean {
+        val gyldigForSystem = Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }
+        return !forsystem.isEmpty() && gyldigForSystem.any { it.value == forsystem }
+    }
 }

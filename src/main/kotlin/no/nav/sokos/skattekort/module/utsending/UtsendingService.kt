@@ -32,7 +32,8 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 class UtsendingService(
     private val dataSource: DataSource,
     private val jmsConnectionFactory: ConnectionFactory,
-    @Named("leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
+    @Named(value = "leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
+    @Named(value = "leveransekoeOppdragZSkattekortStor") private val leveransekoeOppdragZSkattekortStor: Queue,
     private val featureToggles: UnleashIntegration,
 ) {
     private val logger = KotlinLogging.logger {}
@@ -54,9 +55,14 @@ class UtsendingService(
                 .forEach { utsending ->
                     dataSource.transaction { tx ->
                         when (utsending.forsystem) {
-                            Forsystem.OPPDRAGSSYSTEMET -> {
+                            Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> {
                                 try {
-                                    sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar)
+                                    val destination =
+                                        when (utsending.forsystem) {
+                                            Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
+                                            else -> leveransekoeOppdragZSkattekortStor
+                                        }
+                                    sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar, destination)
                                     UtsendingRepository.delete(tx, utsending.id!!)
                                     utsendingOppdragzCounter.inc()
                                 } catch (e: BatchUpdateException) {
@@ -99,6 +105,7 @@ class UtsendingService(
         tx: TransactionalSession,
         fnr: Personidentifikator,
         inntektsaar: Int,
+        destination: Queue,
     ) {
         var jmsConnection: Connection? = null
         var jmsSession: Session? = null
@@ -109,7 +116,7 @@ class UtsendingService(
             personId = person?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
             jmsConnection = jmsConnectionFactory.createConnection()
             jmsSession = jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE)
-            jmsProducer = jmsSession.createProducer(leveransekoeOppdragZSkattekort)
+            jmsProducer = jmsSession.createProducer(destination)
             val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
@@ -121,12 +128,12 @@ class UtsendingService(
             if (!copybook.trim().isEmpty()) {
                 val message = jmsSession.createTextMessage(copybook)
                 jmsProducer.send(message)
-                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt")
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt til ${destination.queueName}")
             } else {
                 AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
             }
         } catch (e: Exception) {
-            logger.error(e) { "Feil under sending til oppdragz" }
+            logger.error(e) { "Feil under sending til oppdragz ($destination.queueName)" }
             personId?.let { id ->
                 dataSource.transaction { errorsession ->
                     AuditRepository.insert(errorsession, AuditTag.UTSENDING_FEILET, id, "Oppdragz: Utsending feilet: $e")

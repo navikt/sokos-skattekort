@@ -78,6 +78,11 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
+        provide<Queue>(name = "leveransekoeOppdragZSkattekortStor") {
+            val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+            queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
+            queue
+        }
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }

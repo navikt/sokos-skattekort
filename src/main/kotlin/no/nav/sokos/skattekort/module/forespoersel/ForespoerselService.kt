@@ -232,16 +232,22 @@ class ForespoerselService(
                     returverdi
                 }
             forespoerselInput.forEach { forespoerselInput ->
-                try {
-                    dataSource.transaction { tx ->
-                        val message = "${forespoerselInput.forsystem};${forespoerselInput.inntektsaar};${forespoerselInput.fnr}"
-                        handleForespoersel(tx, message, forespoerselInput, null)
+                var i = 0
+                retry@while (i < 5) {
+                    try {
+                        dataSource.transaction { tx ->
+                            val message = "${forespoerselInput.forsystem};${forespoerselInput.inntektsaar};${forespoerselInput.fnr}"
+                            handleForespoersel(tx, message, forespoerselInput, null)
+                        }
+                        break@retry
+                    } catch (e: BatchUpdateException) {
+                        logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
+                        logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til secure log")
+                        i++
+                    } catch (e: Exception) {
+                        logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)
+                        i++
                     }
-                } catch (e: BatchUpdateException) {
-                    logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
-                    logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til secure log")
-                } catch (e: Exception) {
-                    logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)
                 }
             }
         }

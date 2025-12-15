@@ -127,15 +127,15 @@ class BestillingService(
                                         handleNyttSkattekort(tx, arbeidstaker, bestillingsbatch.bestillingsreferanse)
                                         BestillingRepository.deleteProcessedBestilling(tx, batchId, arbeidstaker.arbeidstakeridentifikator)
                                     }
-                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
                                     val personer: List<PersonId> = BestillingRepository.hentResterendeBestillinger(tx, batchId)
                                     AuditRepository.insertBatch(
                                         tx = tx,
                                         tag = AuditTag.BESTILLING_ETTERLATT,
                                         personIds = personer,
-                                        informasjon = "Bestilling var etterlatt etter mottak av data",
+                                        informasjon = "Bestilling var etterlatt etter mottak av data i batch $batchId",
                                     )
                                     BestillingRepository.retryUnprocessedBestillings(tx, batchId)
+                                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
                                     logger.info("Bestillingsbatch $batchId ferdig behandlet med mottatte brukere")
                                 }
 

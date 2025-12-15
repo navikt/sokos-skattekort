@@ -4,7 +4,6 @@ import java.sql.BatchUpdateException
 import javax.sql.DataSource
 
 import io.ktor.server.plugins.di.annotations.Named
-import jakarta.jms.Connection
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
 import jakarta.jms.MessageProducer
@@ -40,59 +39,67 @@ class UtsendingService(
 
     fun handleUtsending() {
         if (featureToggles.isUtsendingEnabled()) {
-            val utsendinger: List<Utsending> =
-                try {
-                    dataSource.transaction { tx ->
-                        UtsendingRepository.getAllUtsendinger(tx)
-                    }
-                } catch (e: Exception) {
-                    logger.error("Feil under henting av utsendinger", e)
-                    throw e
-                }
-            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
-            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
-            utsendinger
-                .forEach { utsending ->
-                    dataSource.transaction { tx ->
-                        when (utsending.forsystem) {
-                            Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> {
+            (jmsConnectionFactory.createConnection() ?: error("Kunne ikke koble til JMS")).use { jmsConnection ->
+                jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE).use { jmsSession ->
+                    jmsSession.createProducer(leveransekoeOppdragZSkattekort).use { jmsProducer ->
+                        jmsSession.createProducer(leveransekoeOppdragZSkattekortStor).use { jmsProducerStor ->
+
+                            val utsendinger: List<Utsending> =
                                 try {
-                                    val destination =
-                                        when (utsending.forsystem) {
-                                            Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
-                                            else -> leveransekoeOppdragZSkattekortStor
-                                        }
-                                    sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar, destination)
-                                    UtsendingRepository.delete(tx, utsending.id!!)
-                                    utsendingOppdragzCounter.inc()
-                                } catch (e: BatchUpdateException) {
-                                    logger.error(marker = TEAM_LOGS_MARKER, e) { "Feil under sending til oppdragz: ${e.message}" }
-                                    logger.error("Feil under sending til oppdragz, detaljer er logget til secure log")
-                                    dataSource.transaction { errorTx ->
-                                        PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
-                                            AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
-                                        }
-                                        UtsendingRepository.increaseFailCount(errorTx, utsending.id, "SQL-feil, feil er logget til secure log")
-                                        feiledeUtsendingerOppdragzCounter.inc()
+                                    dataSource.transaction { tx ->
+                                        UtsendingRepository.getAllUtsendinger(tx)
                                     }
                                 } catch (e: Exception) {
-                                    logger.error("Feil under sending til oppdragz", e)
-                                    dataSource.transaction { errorTx ->
-                                        PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
-                                            AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
+                                    logger.error("Feil under henting av utsendinger", e)
+                                    throw e
+                                }
+                            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
+                            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
+                            utsendinger.forEach { utsending ->
+                                dataSource.transaction { tx ->
+                                    when (utsending.forsystem) {
+                                        Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> {
+                                            try {
+                                                val (producer, queueName) =
+                                                    when (utsending.forsystem) {
+                                                        Forsystem.OPPDRAGSSYSTEMET -> jmsProducer to leveransekoeOppdragZSkattekort.queueName
+                                                        else -> jmsProducerStor to leveransekoeOppdragZSkattekortStor.queueName
+                                                    }
+                                                sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar, queueName, jmsSession, producer)
+                                                UtsendingRepository.delete(tx, utsending.id!!)
+                                                utsendingOppdragzCounter.inc()
+                                            } catch (e: BatchUpdateException) {
+                                                logger.error(marker = TEAM_LOGS_MARKER, e) { "Feil under sending til oppdragz: ${e.message}" }
+                                                logger.error("Feil under sending til oppdragz, detaljer er logget til secure log")
+                                                dataSource.transaction { errorTx ->
+                                                    PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
+                                                        AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
+                                                    }
+                                                    UtsendingRepository.increaseFailCount(errorTx, utsending.id, "SQL-feil, feil er logget til secure log")
+                                                    feiledeUtsendingerOppdragzCounter.inc()
+                                                }
+                                            } catch (e: Exception) {
+                                                logger.error("Feil under sending til oppdragz", e)
+                                                dataSource.transaction { errorTx ->
+                                                    PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
+                                                        AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
+                                                    }
+                                                    UtsendingRepository.increaseFailCount(errorTx, utsending.id, e.message ?: "Ukjent feil")
+                                                    feiledeUtsendingerOppdragzCounter.inc()
+                                                }
+                                            }
                                         }
-                                        UtsendingRepository.increaseFailCount(errorTx, utsending.id, e.message ?: "Ukjent feil")
-                                        feiledeUtsendingerOppdragzCounter.inc()
+
+                                        Forsystem.MANUELL -> {
+                                            UtsendingRepository.delete(tx, utsending.id!!)
+                                        }
                                     }
                                 }
-                            }
-
-                            Forsystem.MANUELL -> {
-                                UtsendingRepository.delete(tx, utsending.id!!)
                             }
                         }
                     }
                 }
+            }
         } else {
             logger.debug("Utsending er disablet")
         }
@@ -105,18 +112,14 @@ class UtsendingService(
         tx: TransactionalSession,
         fnr: Personidentifikator,
         inntektsaar: Int,
-        destination: Queue,
+        destination: String,
+        jmsSession: Session,
+        jmsProducer: MessageProducer,
     ) {
-        var jmsConnection: Connection? = null
-        var jmsSession: Session? = null
-        var jmsProducer: MessageProducer? = null
         var personId: PersonId? = null
         try {
             val person = PersonRepository.findPersonByFnr(tx, fnr)
             personId = person?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
-            jmsConnection = jmsConnectionFactory.createConnection()
-            jmsSession = jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE)
-            jmsProducer = jmsSession.createProducer(destination)
             val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
             val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
@@ -128,22 +131,18 @@ class UtsendingService(
             if (!copybook.trim().isEmpty()) {
                 val message = jmsSession.createTextMessage(copybook)
                 jmsProducer.send(message)
-                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt til ${destination.queueName}")
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt til $destination")
             } else {
                 AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
             }
         } catch (e: Exception) {
-            logger.error(e) { "Feil under sending til oppdragz ($destination.queueName)" }
+            logger.error(e) { "Feil under sending til oppdragz, kø $destination" }
             personId?.let { id ->
                 dataSource.transaction { errorsession ->
                     AuditRepository.insert(errorsession, AuditTag.UTSENDING_FEILET, id, "Oppdragz: Utsending feilet: $e")
                 }
             }
             throw e
-        } finally {
-            jmsProducer?.close()
-            jmsSession?.close()
-            jmsConnection?.close()
         }
     }
 

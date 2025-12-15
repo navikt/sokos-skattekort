@@ -83,8 +83,8 @@ class ForespoerselServiceTest :
                             size shouldBe 2
                             shouldContainAllIgnoringFields(
                                 listOf(
-                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET),
-                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET),
+                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
+                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
                                 ),
                                 Forespoersel::id,
                                 Forespoersel::opprettet,

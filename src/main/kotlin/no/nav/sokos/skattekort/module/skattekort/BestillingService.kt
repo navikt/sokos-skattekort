@@ -12,6 +12,7 @@ import kotlinx.datetime.toKotlinLocalDateTime
 
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
+import org.postgresql.util.PSQLException
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -201,6 +202,20 @@ class BestillingService(
                             )
                         }
                         throw e
+                    } catch (ex: PSQLException) {
+                        if (!(ex.message?.contains("could not serialize access due to read/write dependencies") ?: false)) { // En annen transaksjon forsøkte å aksessere samme rader, forsøk igjen senere
+                            dataSource.transaction { errorTx ->
+                                logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
+                                BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)
+                                AuditRepository.insertBatch(
+                                    errorTx,
+                                    AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                    BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
+                                    "Batchhenting av skattekort feilet med ${ex.javaClass.simpleName}, batchid $batchId",
+                                )
+                            }
+                        }
+                        throw ex
                     } catch (ex: Exception) {
                         dataSource.transaction { errorTx ->
                             logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }

@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.module.forespoersel
 import java.sql.BatchUpdateException
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.Year
 import javax.sql.DataSource
 
 import kotlin.time.ExperimentalTime
@@ -43,31 +42,31 @@ class ForespoerselService(
         message: String,
         saksbehandler: Saksbehandler? = null,
     ) {
-        dataSource.transaction { tx ->
-            val forespoerselInput: List<ForespoerselInput> =
-                when {
-                    message.startsWith("<") -> return@transaction
-
-                    // drop Arena meldinger
-                    else -> parseCopybookMessage(message)
-                }.map {
-                    val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
-                    val ugyldigeFnr = it.fnrList.filterNot(kategoriMapper.erGyldig)
-                    if (ugyldigeFnr.isNotEmpty()) {
-                        logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldige fnr fra kall: ${ugyldigeFnr.joinToString(", ")}" }
-                    }
-                    it.copy(fnrList = it.fnrList.minus(ugyldigeFnr))
+        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        val forespoerselInputList: List<ForespoerselInput> =
+            when {
+                // drop Arena meldinger
+                message.startsWith("<") -> return
+                else -> parseCopybookMessage(message)
+            }.filter { input ->
+                val erGyldig = foedselsnummerkategori.erGyldig(input.fnr)
+                if (!erGyldig) {
+                    logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: ${input.fnr}" }
                 }
+                erGyldig
+            }
 
-            logger.debug(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInput" }
+        logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInputList" }
 
-            forespoerselInput.forEach { forespoersel ->
-                handleForespoersel(tx, message, forespoersel, saksbehandler?.ident)
-                if (skalLagesForNesteAarOgsaa(forespoersel)) {
-                    val forespoerselForNesteAar = forespoersel.copy(inntektsaar = forespoersel.inntektsaar + 1)
+        dataSource.transaction { tx ->
+            forespoerselInputList.forEach { forespoerselInput ->
+                handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
+                if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
+                    val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
                     handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
                 }
             }
+            logger.info { "Antall ${forespoerselInputList.size} forespoerseler er mottatt" }
         }
     }
 
@@ -75,7 +74,6 @@ class ForespoerselService(
         fnr: String,
         aar: Int,
         forsystem: String,
-        saksbehandler: Saksbehandler? = null,
     ): Status {
         val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
         if (!kategoriMapper.erGyldig(fnr)) {
@@ -149,73 +147,81 @@ class ForespoerselService(
                 forsystem = forespoerselInput.forsystem,
                 dataMottatt = message,
             )
-        var bestillingCount = 0
-        forespoerselInput.fnrList.forEach { fnr ->
-            val person =
-                personService.findOrCreatePersonByFnr(
-                    tx = tx,
-                    fnr = Personidentifikator(fnr),
-                    informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
-                    brukerId = brukerId,
-                )
 
-            AbonnementRepository.insert(
+        val person =
+            personService.findOrCreatePersonByFnr(
                 tx = tx,
-                forespoerselId = forespoerselId,
-                inntektsaar = forespoerselInput.inntektsaar,
-                personId = person.id!!.value,
-            ) ?: throw IllegalStateException("Kunne ikke lage abonnement")
+                fnr = Personidentifikator(forespoerselInput.fnr),
+                informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
+                brukerId = brukerId,
+            )
 
-            val skattekort =
-                SkattekortRepository
-                    .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar, adminRole = false)
-            if (skattekort.isEmpty()) {
-                val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
-                if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {
-                    BestillingRepository.insert(
-                        tx = tx,
-                        bestilling =
-                            Bestilling(
-                                personId = person.id,
-                                fnr = Personidentifikator(fnr),
-                                inntektsaar = forespoerselInput.inntektsaar,
-                            ),
-                    )
-                    bestillingCount++
+        AbonnementRepository.insert(
+            tx = tx,
+            forespoerselId = forespoerselId,
+            inntektsaar = forespoerselInput.inntektsaar,
+            personId = person.id!!.value,
+        ) ?: throw IllegalStateException("Kunne ikke lage abonnement")
+
+        val skattekort =
+            SkattekortRepository
+                .findAllByPersonId(tx, person.id, forespoerselInput.inntektsaar, adminRole = false)
+        if (skattekort.isEmpty()) {
+            val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
+            if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
+            if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, person.id, forespoerselInput.inntektsaar) == null) {
+                BestillingRepository.insert(
+                    tx = tx,
+                    bestilling =
+                        Bestilling(
+                            personId = person.id,
+                            fnr = Personidentifikator(forespoerselInput.fnr),
+                            inntektsaar = forespoerselInput.inntektsaar,
+                        ),
+                )
+            }
+        } else {
+            // Skattekort finnes
+            val utsending = UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(forespoerselInput.fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)
+            if (utsending != null) {
+                logger.info {
+                    "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
                 }
             } else {
-                // Skattekort finnes
-                val utsending = UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)
-                if (utsending != null) {
-                    logger.debug {
-                        "Utsending eksisterer allerede for personId: ${person.id}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
-                    }
-                } else {
-                    UtsendingRepository.insert(tx, Utsending(null, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
-                }
+                UtsendingRepository.insert(tx, Utsending(null, Personidentifikator(forespoerselInput.fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
             }
         }
-        logger.debug { "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er)" }
     }
 
     private fun forSentAaBestille(inntektsaar: Int): Boolean {
         // Skatteetatens regel er at man kan bestille skattekort for året før frem til 01.07.
-        val currentYear =
-            Year
-                .now()
-                .value
-        val currentMonth =
-            LocalDate
-                .now()
-                .monthValue
-        val forSentAaBestilleForFjoraaret = currentMonth >= 7 && inntektsaar == currentYear - 1
-        val endaTidligere = inntektsaar < currentYear - 1
-        return forSentAaBestilleForFjoraaret || endaTidligere
+        val currentDate = LocalDate.now()
+        val currentYear = currentDate.year
+        val cutoffDate = LocalDate.of(currentYear, 7, 1)
+        return currentDate.isAfter(cutoffDate) && inntektsaar == currentYear - 1
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun parseCopybookMessage(message: String): List<ForespoerselInput> = message.lines().map { row -> ForespoerselInput.fromString(row) }.filterNotNull()
+    private fun parseCopybookMessage(message: String): List<ForespoerselInput> {
+        val messageList = message.lines().filter { it.isNotBlank() }
+        return messageList.map { line ->
+            val parts = line.split(FORESPOERSEL_DELIMITER)
+            require(parts.size == 3) { "Invalid message format: $message" }
+            val forsystem =
+                when (val system = Forsystem.fromValue(parts[0])) {
+                    Forsystem.OPPDRAGSSYSTEMET -> if (messageList.size == 1) system else Forsystem.OPPDRAGSSYSTEMET_STOR
+                    else -> system
+                }
+            val inntektsaar = Integer.parseInt(parts[1])
+            val fnrString = parts[2]
+
+            ForespoerselInput(
+                forsystem = forsystem,
+                inntektsaar = inntektsaar,
+                fnr = fnrString,
+            )
+        }
+    }
 
     fun cronForespoerselInput() {
         if (featureToggles.isForespoerselInputEnabled()) {
@@ -228,7 +234,7 @@ class ForespoerselService(
             forespoerselInput.forEach { forespoerselInput ->
                 try {
                     dataSource.transaction { tx ->
-                        val message = "${forespoerselInput.forsystem};${forespoerselInput.inntektsaar};${forespoerselInput.fnrList.joinToString(",")}"
+                        val message = "${forespoerselInput.forsystem};${forespoerselInput.inntektsaar};${forespoerselInput.fnr}"
                         handleForespoersel(tx, message, forespoerselInput, null)
                     }
                 } catch (e: BatchUpdateException) {
@@ -244,25 +250,6 @@ class ForespoerselService(
     data class ForespoerselInput(
         val forsystem: Forsystem,
         val inntektsaar: Int,
-        val fnrList: List<String>,
-    ) {
-        companion object {
-            fun fromString(message: String): ForespoerselInput? {
-                if (message.trim().isEmpty()) {
-                    return null
-                }
-                val parts = message.split(FORESPOERSEL_DELIMITER)
-                require(parts.size == 3) { "Invalid message format: $message" }
-                val forsystem = Forsystem.fromValue(parts[0])
-                val inntektsaar = Integer.parseInt(parts[1])
-                val fnrString = parts[2]
-
-                return ForespoerselInput(
-                    forsystem = forsystem,
-                    inntektsaar = inntektsaar,
-                    fnrList = listOf(fnrString),
-                )
-            }
-        }
-    }
+        val fnr: String,
+    )
 }

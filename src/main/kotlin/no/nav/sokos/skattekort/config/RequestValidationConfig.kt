@@ -17,7 +17,9 @@ fun RequestValidationConfig.requestValidationSkattekortConfig() {
         when {
             !isValidPersonIdent(request.personIdent) -> ValidationResult.Invalid("personIdent er ugyldig. Tillatt format er 11 siffer")
             !isValidAar(request.aar) -> ValidationResult.Invalid("Gyldig årstall er mellom ${Year.now().minusYears(1)} og inneværende år")
-            !isValidForsystem(request.forsystem) -> ValidationResult.Invalid("forsystem er ugyldig. Gyldige verdier er: ${Forsystem.entries.joinToString { it.value }}")
+            !isValidForsystem(request.forsystem) ->
+                ValidationResult.Invalid("forsystem er ugyldig. Gyldige verdier er: ${Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }.joinToString { it.value }}")
+
             else -> ValidationResult.Valid
         }
     }
@@ -43,5 +45,8 @@ object Validator {
 
     fun isValidInntektsaar(aar: Int): Boolean = aar in 2025..<2100
 
-    fun isValidForsystem(forsystem: String): Boolean = !forsystem.isEmpty() && Forsystem.entries.any { it.value == forsystem }
+    fun isValidForsystem(forsystem: String): Boolean {
+        val gyldigForSystem = Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }
+        return !forsystem.isEmpty() && gyldigForSystem.any { it.value == forsystem }
+    }
 }

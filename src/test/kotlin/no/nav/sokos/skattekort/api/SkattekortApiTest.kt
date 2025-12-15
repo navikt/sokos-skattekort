@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.api
 
+import java.time.LocalDateTime
 import java.time.Year
 
 import kotlin.time.ExperimentalTime
@@ -7,6 +8,7 @@ import kotlinx.serialization.json.Json
 
 import com.atlassian.oai.validator.OpenApiInteractionValidator
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -40,21 +42,24 @@ class SkattekortApiTest :
         val inntektsaar = Year.now().value
 
         test("bestille skattekort skal returnere 201 Created") {
-            TestUtils.withFullTestApplication {
-                val request = ForespoerselRequest(personIdent = "12345678901", aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
-                val response =
-                    client.post("$BASE_PATH/bestille") {
-                        header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
-                        setBody(request)
+            // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                TestUtils.withFullTestApplication {
+                    val request = ForespoerselRequest(personIdent = "12345678901", aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
+                    val response =
+                        client.post("$BASE_PATH/bestille") {
+                            header(HttpHeaders.ContentType, ContentType.Application.Json)
+                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            setBody(request)
+                        }
+                    val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
+
+                    validationReport.hasErrors() shouldBe false
+                    response.status shouldBe HttpStatusCode.Created
+
+                    DbListener.dataSource.transaction { tx ->
+                        ForespoerselRepository.getAllForespoersel(tx).size shouldBe 1
                     }
-                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
-
-                validationReport.hasErrors() shouldBe false
-                response.status shouldBe HttpStatusCode.Created
-
-                DbListener.dataSource.transaction { tx ->
-                    ForespoerselRepository.getAllForespoersel(tx).size shouldBe 1
                 }
             }
         }

@@ -85,11 +85,11 @@ spec:
             envVarPrefix: DB
         flags:
           - name: "cloudsql.enable_pgaudit"
-            value: "on"
+            value: "off"
           - name: "pgaudit.log"
             value: "write,ddl,role"
           - name: "pgaudit.log_parameter"
-            value: "on"
+            value: "off"
           - name: "cloudsql.logical_decoding"
             value: "on"
   envFrom:

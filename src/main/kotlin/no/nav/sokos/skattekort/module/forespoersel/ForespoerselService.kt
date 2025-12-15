@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.module.forespoersel
 
+import java.sql.BatchUpdateException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.sql.DataSource
@@ -236,6 +237,9 @@ class ForespoerselService(
                         val message = "${forespoerselInput.forsystem};${forespoerselInput.inntektsaar};${forespoerselInput.fnr}"
                         handleForespoersel(tx, message, forespoerselInput, null)
                     }
+                } catch (e: BatchUpdateException) {
+                    logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
+                    logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til secure log")
                 } catch (e: Exception) {
                     logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)
                 }

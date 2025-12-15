@@ -1,7 +1,10 @@
 package no.nav.sokos.skattekort
 
+import java.time.LocalDateTime
+
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -31,14 +34,17 @@ class DbOgMqTest :
         }
 
         test("Tester både kø og database") {
-            forespoerselListener.start()
-            JmsTestUtil.sendMessage("OS;2025;11111111111")
+            // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                forespoerselListener.start()
+                JmsTestUtil.sendMessage("OS;2025;11111111111")
 
-            eventually(eventuallyConfiguration) {
-                DbListener.dataSource.transaction { session ->
-                    val result = BestillingRepository.getBestillingsKandidaterForBatch(session)
-                    result.size shouldBe 1
-                    result.first().inntektsaar shouldBe 2025
+                eventually(eventuallyConfiguration) {
+                    DbListener.dataSource.transaction { session ->
+                        val result = BestillingRepository.getBestillingsKandidaterForBatch(session)
+                        result.size shouldBe 1
+                        result.first().inntektsaar shouldBe 2025
+                    }
                 }
             }
         }

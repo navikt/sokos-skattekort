@@ -73,14 +73,34 @@ object BestillingRepository {
         )
     }
 
-    fun deleteProcessedBestillings(
+    fun deleteProcessedBestilling(
+        tx: TransactionalSession,
+        batch: Long,
+        fnr: String,
+    ) {
+        tx.run(
+            queryOf(
+                """
+                DELETE FROM bestillinger
+                WHERE bestillingsbatch_id = :bestillingsbatchId
+                AND fnr = :fnr
+                """.trimIndent(),
+                mapOf(
+                    "bestillingsbatchId" to batch,
+                    "fnr" to fnr,
+                ),
+            ).asUpdate,
+        )
+    }
+
+    fun retryUnprocessedBestillings(
         tx: TransactionalSession,
         batch: Long,
     ) {
         tx.run(
             queryOf(
                 """
-                DELETE FROM bestillinger
+                UPDATE bestillinger SET bestillingsbatch_id = null 
                 WHERE bestillingsbatch_id = :bestillingsbatchId
                 """.trimIndent(),
                 mapOf("bestillingsbatchId" to batch),
@@ -144,6 +164,25 @@ object BestillingRepository {
             ),
             extractor = { row -> row.double("earliest_oppdatert") },
         ) ?: error("Should always return something")
+
+    fun hentResterendeBestillinger(
+        tx: TransactionalSession,
+        batchId: Long,
+    ): List<PersonId> =
+        tx.list(
+            queryOf(
+                """
+                SELECT person_id FROM bestillinger
+                WHERE bestillingsbatch_id = :bestillingsbatchId
+                """.trimIndent(),
+                mapOf(
+                    "bestillingsbatchId" to batchId,
+                ),
+            ),
+            extractor = { row ->
+                PersonId(row.long("person_id"))
+            },
+        )
 
     @OptIn(ExperimentalTime::class)
     private val mapToBestilling: (Row) -> Bestilling = { row ->

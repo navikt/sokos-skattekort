@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.config
 
+import java.sql.BatchUpdateException
+
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -8,28 +10,49 @@ import kotlinx.serialization.Serializable
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.log
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
+import mu.KotlinLogging
 
 class UnauthorizedException(
     override val message: String,
 ) : RuntimeException(message)
 
+private val logger = KotlinLogging.logger { }
+
 fun StatusPagesConfig.statusPageConfig() {
     exception<Throwable> { call, cause ->
         val (responseStatus, apiError) =
             when (cause) {
-                is RequestValidationException -> createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
-                is IllegalArgumentException -> createApiError(HttpStatusCode.BadRequest, cause.message, call)
-                is UnauthorizedException -> createApiError(HttpStatusCode.Unauthorized, cause.message, call)
-                else -> createApiError(HttpStatusCode.InternalServerError, cause.message ?: "En teknisk feil har oppstått. Ta kontakt med utviklerne", call)
+                is RequestValidationException -> {
+                    logger.error("Feilet håndtering av ${call.request.httpMethod} - ${call.request.path()} - Status=${HttpStatusCode.BadRequest} - Message=${cause.message}", cause)
+                    createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
+                }
+
+                is IllegalArgumentException -> {
+                    logger.error("Feilet håndtering av ${call.request.httpMethod} - ${call.request.path()} - Status=${HttpStatusCode.BadRequest} - Message=${cause.message}", cause)
+                    createApiError(HttpStatusCode.BadRequest, cause.message, call)
+                }
+
+                is UnauthorizedException -> {
+                    logger.error("Feilet håndtering av ${call.request.httpMethod} - ${call.request.path()} - Status=${HttpStatusCode.Unauthorized} - Message=${cause.message}", cause)
+                    createApiError(HttpStatusCode.Unauthorized, cause.message, call)
+                }
+
+                is BatchUpdateException -> {
+                    logger.error(marker = TEAM_LOGS_MARKER, cause) { "BatchUpdateException fanget, message er ${cause.message}" }
+                    createApiError(HttpStatusCode.InternalServerError, "En teknisk feil har oppstått. Ta kontakt med utviklerne, detaljer er logget til secure log", call)
+                }
+
+                else -> {
+                    logger.error("Feilet håndtering av ${call.request.httpMethod} - ${call.request.path()} - Status=${HttpStatusCode.InternalServerError} - Message=${cause.message}", cause)
+                    createApiError(HttpStatusCode.InternalServerError, cause.message ?: "En teknisk feil har oppstått. Ta kontakt med utviklerne", call)
+                }
             }
 
-        call.application.log.error("Feilet håndtering av ${call.request.httpMethod} - ${call.request.path()} - Status=$responseStatus - Message=${cause.message}", cause)
         call.respond(responseStatus, apiError)
     }
 }

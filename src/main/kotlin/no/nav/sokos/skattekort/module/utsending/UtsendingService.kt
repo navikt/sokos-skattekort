@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.module.utsending
 
+import java.sql.BatchUpdateException
 import javax.sql.DataSource
 
 import io.ktor.server.plugins.di.annotations.Named
@@ -12,6 +13,7 @@ import jakarta.jms.Session
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
@@ -63,11 +65,21 @@ class UtsendingService(
                                     sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar, destination)
                                     UtsendingRepository.delete(tx, utsending.id!!)
                                     utsendingOppdragzCounter.inc()
+                                } catch (e: BatchUpdateException) {
+                                    logger.error(marker = TEAM_LOGS_MARKER, e) { "Feil under sending til oppdragz: ${e.message}" }
+                                    logger.error("Feil under sending til oppdragz, detaljer er logget til secure log")
+                                    dataSource.transaction { errorTx ->
+                                        PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
+                                            AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
+                                        }
+                                        UtsendingRepository.increaseFailCount(errorTx, utsending.id, "SQL-feil, feil er logget til secure log")
+                                        feiledeUtsendingerOppdragzCounter.inc()
+                                    }
                                 } catch (e: Exception) {
                                     logger.error("Feil under sending til oppdragz", e)
                                     dataSource.transaction { errorTx ->
                                         PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
-                                            AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet: ${e.message}")
+                                            AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
                                         }
                                         UtsendingRepository.increaseFailCount(errorTx, utsending.id, e.message ?: "Ukjent feil")
                                         feiledeUtsendingerOppdragzCounter.inc()

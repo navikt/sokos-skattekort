@@ -25,6 +25,7 @@ class UtsendingCronJobTest :
                     DbListener.dataSource,
                     MQListener.connectionFactory,
                     MQListener.utsendingsQueue,
+                    MQListener.utsendingStorQueue,
                     FakeUnleashIntegration(),
                 )
             val auditService = AuditService(DbListener.dataSource)

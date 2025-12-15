@@ -101,6 +101,9 @@ object TestUtils {
                 provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
                 }
+                provide<Queue>(name = "leveransekoeOppdragZSkattekortStor") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+                }
             }
         }
         module(testEnvironmentConfig(authServer))

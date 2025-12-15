@@ -1,14 +1,20 @@
 package no.nav.sokos.skattekort.util
 
+import java.sql.BatchUpdateException
+
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.instrumentation.api.incubator.log.LoggingContextConstants
+import mu.KotlinLogging
 import org.slf4j.MDC
+
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 
 object TraceUtils {
     private val openTelemetry = GlobalOpenTelemetry.get()
+    private val logger = KotlinLogging.logger {}
 
     fun <T> withTracerId(
         tracer: Tracer = openTelemetry.getTracer(this::class.java.canonicalName),
@@ -27,6 +33,11 @@ object TraceUtils {
                 val result = block()
                 span.setStatus(StatusCode.OK)
                 result
+            } catch (e: BatchUpdateException) {
+                logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception caught in traceutils: ${e.message}" }
+                span.setStatus(StatusCode.ERROR, "BatchUpdateException, details in secure log")
+                span.recordException(e)
+                throw e
             } catch (e: Exception) {
                 span.setStatus(StatusCode.ERROR, e.message ?: "Unknown error")
                 span.recordException(e)

@@ -126,6 +126,26 @@ object BestillingBatchRepository {
         )
     }
 
+    fun insertMottatteData(
+        tx: TransactionalSession,
+        bestillingsreferanse: String,
+        content: String,
+    ) {
+        tx.run(
+            queryOf(
+                """
+                    |UPDATE bestillingsbatcher
+                    |SET data_mottatt = :content, oppdatert = NOW()
+                    |WHERE bestillingsreferanse = :ref
+                """.trimMargin(),
+                mapOf(
+                    "ref" to bestillingsreferanse,
+                    "content" to content,
+                ),
+            ).asExecute,
+        )
+    }
+
     @OptIn(ExperimentalTime::class)
     private val mapToBestillingBatch: (Row) -> BestillingBatch = { row ->
         BestillingBatch(

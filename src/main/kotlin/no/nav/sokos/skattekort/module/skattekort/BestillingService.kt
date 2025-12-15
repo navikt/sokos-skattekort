@@ -203,7 +203,8 @@ class BestillingService(
                         }
                         throw e
                     } catch (ex: PSQLException) {
-                        if (!(ex.message?.contains("could not serialize access due to read/write dependencies") ?: false)) { // En annen transaksjon forsøkte å aksessere samme rader, forsøk igjen senere
+                        // En annen transaksjon forsøkte å aksessere samme rader, forsøk igjen senere
+                        if (!(ex.message?.contains("could not serialize access due to read/write dependencies") ?: false)) {
                             dataSource.transaction { errorTx ->
                                 logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
                                 BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)

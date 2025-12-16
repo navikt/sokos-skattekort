@@ -92,7 +92,13 @@ class UtsendingService(
         utsending: Utsending,
     ) {
         var personId: PersonId? = null
-        var queue: Queue? = null
+        val queue =
+            when (utsending.forsystem) {
+                Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
+                Forsystem.OPPDRAGSSYSTEMET_STOR -> leveransekoeOppdragZSkattekortStor
+                else -> throw IllegalStateException("Utsending til oppdragz er kun støttet for OPPDRAGSSYSTEMET")
+            }
+
         runCatching {
             personId = PersonRepository.findPersonByFnr(tx, utsending.fnr)?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
             val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, utsending.inntektsaar, adminRole = false)
@@ -104,19 +110,13 @@ class UtsendingService(
             }
 
             if (!copybook.trim().isEmpty()) {
-                queue =
-                    when (utsending.forsystem) {
-                        Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
-                        Forsystem.OPPDRAGSSYSTEMET_STOR -> leveransekoeOppdragZSkattekortStor
-                        else -> throw IllegalStateException("Utsending til oppdragz er kun støttet for OPPDRAGSSYSTEMET")
-                    }
                 jmsProducerService.send(copybook, leveransekoeOppdragZSkattekort, utsendingOppdragzCounter)
                 AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "${utsending.forsystem}: Skattekort sendt til ${queue.queueName}")
             } else {
                 AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
             }
         }.onFailure { exception ->
-            logger.error(exception) { "Feil under sending til oppdragz ($queue.queueName)" }
+            logger.error(exception) { "Feil under sending til oppdragz (${queue.queueName})" }
             throw exception
         }
     }

@@ -92,7 +92,7 @@ class UtsendingService(
         utsending: Utsending,
     ) {
         var personId: PersonId? = null
-        val queue =
+        val senderQueue =
             when (utsending.forsystem) {
                 Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
                 Forsystem.OPPDRAGSSYSTEMET_STOR -> leveransekoeOppdragZSkattekortStor
@@ -110,13 +110,13 @@ class UtsendingService(
             }
 
             if (!copybook.trim().isEmpty()) {
-                jmsProducerService.send(copybook, leveransekoeOppdragZSkattekort, utsendingOppdragzCounter)
-                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "${utsending.forsystem}: Skattekort sendt til ${queue.queueName}")
+                jmsProducerService.send(copybook, senderQueue, utsendingOppdragzCounter)
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "${utsending.forsystem}: Skattekort sendt til ${senderQueue.queueName}")
             } else {
                 AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
             }
         }.onFailure { exception ->
-            logger.error(exception) { "Feil under sending til oppdragz (${queue.queueName})" }
+            logger.error(exception) { "Feil under sending til oppdragz (${senderQueue.queueName})" }
             throw exception
         }
     }

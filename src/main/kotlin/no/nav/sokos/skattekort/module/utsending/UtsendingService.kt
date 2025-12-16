@@ -32,27 +32,6 @@ class UtsendingService(
     @Named(value = "leveransekoeOppdragZSkattekortStor") private val leveransekoeOppdragZSkattekortStor: Queue,
     private val featureToggles: UnleashIntegration,
 ) {
-    companion object {
-        val utsendingOppdragzCounter =
-            counter(
-                name = "utsendinger_oppdragz_total",
-                helpText = "Utsendinger til oppdrag z",
-            )
-
-        val feiledeUtsendingerOppdragzCounter =
-            counter(
-                name = "utsendinger_oppdragz_feil_total",
-                helpText = "Feilede forsøk på utsendinger til oppdrag z",
-            )
-
-        val utsendingerIKoe =
-            gauge(
-                name = "utsendinger_i_koe",
-                helpText = "Utsendinger i kø, enda ikke håndtert",
-                labelNames = "status",
-            )
-    }
-
     fun handleUtsending() {
         if (featureToggles.isUtsendingEnabled()) {
             runCatching {
@@ -113,6 +92,7 @@ class UtsendingService(
         utsending: Utsending,
     ) {
         var personId: PersonId? = null
+        var queue: Queue? = null
         runCatching {
             personId = PersonRepository.findPersonByFnr(tx, utsending.fnr)?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
             val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, utsending.inntektsaar, adminRole = false)
@@ -123,15 +103,20 @@ class UtsendingService(
                 UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, utsending.fnr, copybook)
             }
 
-            when (utsending.forsystem) {
-                Forsystem.OPPDRAGSSYSTEMET -> jmsProducerService.send(copybook, leveransekoeOppdragZSkattekort, utsendingOppdragzCounter)
-                Forsystem.OPPDRAGSSYSTEMET_STOR -> jmsProducerService.send(copybook, leveransekoeOppdragZSkattekortStor, utsendingOppdragzCounter)
-                else -> throw IllegalStateException("Utsending til oppdragz er kun støttet for OPPDRAGSSYSTEMET")
+            if (!copybook.trim().isEmpty()) {
+                queue =
+                    when (utsending.forsystem) {
+                        Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
+                        Forsystem.OPPDRAGSSYSTEMET_STOR -> leveransekoeOppdragZSkattekortStor
+                        else -> throw IllegalStateException("Utsending til oppdragz er kun støttet for OPPDRAGSSYSTEMET")
+                    }
+                jmsProducerService.send(copybook, leveransekoeOppdragZSkattekort, utsendingOppdragzCounter)
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "${utsending.forsystem}: Skattekort sendt til ${queue.queueName}")
+            } else {
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
             }
-            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "${utsending.forsystem}: Skattekort sendt")
-            UtsendingRepository.delete(tx, utsending.id!!)
         }.onFailure { exception ->
-            logger.error(exception) { "Feil under sending til oppdragz" }
+            logger.error(exception) { "Feil under sending til oppdragz ($queue.queueName)" }
             throw exception
         }
     }
@@ -140,4 +125,25 @@ class UtsendingService(
         dataSource.transaction { tx ->
             UtsendingRepository.getAllUtsendinger(tx)
         }
+
+    companion object {
+        val utsendingOppdragzCounter =
+            counter(
+                name = "utsendinger_oppdragz_total",
+                helpText = "Utsendinger til oppdrag z",
+            )
+
+        val feiledeUtsendingerOppdragzCounter =
+            counter(
+                name = "utsendinger_oppdragz_feil_total",
+                helpText = "Feilede forsøk på utsendinger til oppdrag z",
+            )
+
+        val utsendingerIKoe =
+            gauge(
+                name = "utsendinger_i_koe",
+                helpText = "Utsendinger i kø, enda ikke håndtert",
+                labelNames = "status",
+            )
+    }
 }

@@ -146,9 +146,17 @@ dependencies {
     testImplementation("org.wiremock:wiremock:$wiremockVersion")
 }
 
-// Vulnerability fix because of id("org.jlleitschuh.gradle.ktlint") uses ch.qos.logback:logback-classic:1.3.5
-configurations.ktlint {
-    resolutionStrategy.force("ch.qos.logback:logback-classic:$logbackVersion")
+// Transitive dependencvy lz4-java is fixed only in fork at.yawk, therefore this reference
+// Remove when fixed in next release of org.apache.kafka:kafka-clients
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.lz4" && requested.name == "lz4-java") {
+                useTarget("at.yawk.lz4:lz4-java:1.10.1")
+                because("Prefer the patched fork for vulnerability fix")
+            }
+        }
+    }
 }
 
 application {

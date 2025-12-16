@@ -32,7 +32,6 @@ import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
-import no.nav.sokos.skattekort.mq.JmsProducerService
 import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
@@ -68,7 +67,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
         provide(AuditLogger::class)
-        provide(JmsProducerService::class)
 
         provide { MQConfig.connectionFactory }
         provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }

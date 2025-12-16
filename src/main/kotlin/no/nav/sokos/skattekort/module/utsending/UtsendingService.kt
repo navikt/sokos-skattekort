@@ -4,12 +4,7 @@ import java.sql.BatchUpdateException
 import javax.sql.DataSource
 
 import io.ktor.server.plugins.di.annotations.Named
-import jakarta.jms.Connection
-import jakarta.jms.ConnectionFactory
-import jakarta.jms.JMSContext
-import jakarta.jms.MessageProducer
 import jakarta.jms.Queue
-import jakarta.jms.Session
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
@@ -22,47 +17,34 @@ import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.module.utsending.oppdragz.SkattekortFixedRecordFormatter
 import no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekortmelding
+import no.nav.sokos.skattekort.mq.JmsProducerService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+
+private val logger = KotlinLogging.logger {}
 
 class UtsendingService(
     private val dataSource: DataSource,
-    private val jmsConnectionFactory: ConnectionFactory,
+    private val jmsProducerService: JmsProducerService,
     @Named(value = "leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
     @Named(value = "leveransekoeOppdragZSkattekortStor") private val leveransekoeOppdragZSkattekortStor: Queue,
     private val featureToggles: UnleashIntegration,
 ) {
-    private val logger = KotlinLogging.logger {}
-
     fun handleUtsending() {
         if (featureToggles.isUtsendingEnabled()) {
-            val utsendinger: List<Utsending> =
-                try {
-                    dataSource.transaction { tx ->
-                        UtsendingRepository.getAllUtsendinger(tx)
-                    }
-                } catch (e: Exception) {
-                    logger.error("Feil under henting av utsendinger", e)
-                    throw e
-                }
-            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
-            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
-            utsendinger
-                .forEach { utsending ->
+            runCatching {
+                val utsendinger = getAllUtsendinger()
+                utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
+                utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
+
+                utsendinger.forEach { utsending ->
                     dataSource.transaction { tx ->
                         when (utsending.forsystem) {
                             Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> {
                                 try {
-                                    val destination =
-                                        when (utsending.forsystem) {
-                                            Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
-                                            else -> leveransekoeOppdragZSkattekortStor
-                                        }
-                                    sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar, destination)
+                                    sendSkattekortTilMQ(tx, utsending)
                                     UtsendingRepository.delete(tx, utsending.id!!)
                                     utsendingOppdragzCounter.inc()
                                 } catch (e: BatchUpdateException) {
@@ -93,6 +75,10 @@ class UtsendingService(
                         }
                     }
                 }
+            }.onFailure { exception ->
+                logger.error(exception) { "Feil med utsending til MQ" }
+                throw exception
+            }
         } else {
             logger.debug("Utsending er disablet")
         }
@@ -101,49 +87,37 @@ class UtsendingService(
         }
     }
 
-    private fun sendTilOppdragz(
+    private fun sendSkattekortTilMQ(
         tx: TransactionalSession,
-        fnr: Personidentifikator,
-        inntektsaar: Int,
-        destination: Queue,
+        utsending: Utsending,
     ) {
-        var jmsConnection: Connection? = null
-        var jmsSession: Session? = null
-        var jmsProducer: MessageProducer? = null
         var personId: PersonId? = null
-        try {
-            val person = PersonRepository.findPersonByFnr(tx, fnr)
-            personId = person?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
-            jmsConnection = jmsConnectionFactory.createConnection()
-            jmsSession = jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE)
-            jmsProducer = jmsSession.createProducer(destination)
-            val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
-            val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
-            val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
+        val senderQueue =
+            when (utsending.forsystem) {
+                Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
+                Forsystem.OPPDRAGSSYSTEMET_STOR -> leveransekoeOppdragZSkattekortStor
+                else -> throw IllegalStateException("Utsending til oppdragz er kun støttet for OPPDRAGSSYSTEMET")
+            }
+
+        runCatching {
+            personId = PersonRepository.findPersonByFnr(tx, utsending.fnr)?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
+            val skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, utsending.inntektsaar, adminRole = false)
+            val skattekortmelding = Skattekortmelding(skattekort, utsending.fnr.value)
+            val copybook = SkattekortFixedRecordFormatter(skattekortmelding, utsending.inntektsaar.toString()).format()
 
             if (featureToggles.isBevisForSendingEnabled()) {
-                UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, fnr, copybook)
+                UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, utsending.fnr, copybook)
             }
 
             if (!copybook.trim().isEmpty()) {
-                val message = jmsSession.createTextMessage(copybook)
-                jmsProducer.send(message)
-                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt til ${destination.queueName}")
+                jmsProducerService.send(copybook, senderQueue, utsendingOppdragzCounter)
+                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "${utsending.forsystem}: Skattekort sendt til ${senderQueue.queueName}")
             } else {
                 AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
             }
-        } catch (e: Exception) {
-            logger.error(e) { "Feil under sending til oppdragz ($destination.queueName)" }
-            personId?.let { id ->
-                dataSource.transaction { errorsession ->
-                    AuditRepository.insert(errorsession, AuditTag.UTSENDING_FEILET, id, "Oppdragz: Utsending feilet: $e")
-                }
-            }
-            throw e
-        } finally {
-            jmsProducer?.close()
-            jmsSession?.close()
-            jmsConnection?.close()
+        }.onFailure { exception ->
+            logger.error(exception) { "Feil under sending til oppdragz (${senderQueue.queueName})" }
+            throw exception
         }
     }
 

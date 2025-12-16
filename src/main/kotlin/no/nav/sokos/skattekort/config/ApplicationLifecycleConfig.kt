@@ -4,6 +4,7 @@ import kotlin.properties.Delegates
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopPreparing
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.ServerReady
 import io.ktor.server.application.log
@@ -23,6 +24,11 @@ fun Application.applicationLifecycleConfig(applicationState: ApplicationState) {
         applicationState.alive = false
         applicationState.ready = false
         it.log.info("Application is stopped")
+    }
+
+    monitor.subscribe(ApplicationStopPreparing) {
+        applicationState.ready = false
+        it.log.info("Application is stopping")
     }
 }
 

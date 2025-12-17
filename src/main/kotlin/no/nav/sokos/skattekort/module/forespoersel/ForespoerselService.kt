@@ -30,7 +30,7 @@ import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
-private const val FORESPOERSEL_DELIMITER = ";"
+private const val DELIMITER = ";"
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselService(
@@ -42,31 +42,38 @@ class ForespoerselService(
         message: String,
         saksbehandler: Saksbehandler? = null,
     ) {
-        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
-        val forespoerselInputList: List<ForespoerselInput> =
-            when {
-                // drop Arena meldinger
-                message.startsWith("<") -> return
-                else -> parseCopybookMessage(message)
-            }.filter { input ->
-                val erGyldig = foedselsnummerkategori.erGyldig(input.fnr)
-                if (!erGyldig) {
-                    logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: ${input.fnr}" }
+        runCatching {
+            logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $message" }
+
+            val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+            val forespoerselInputList: List<ForespoerselInput> =
+                when {
+                    // drop Arena meldinger
+                    message.startsWith("<") -> return
+                    else -> parseCopybookMessage(message)
+                }.filter { input ->
+                    val erGyldig = foedselsnummerkategori.erGyldig(input.fnr)
+                    if (!erGyldig) {
+                        logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: ${input.fnr}" }
+                    }
+                    erGyldig
                 }
-                erGyldig
+
+            dataSource.transaction { tx ->
+                forespoerselInputList.forEach { forespoerselInput ->
+                    handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
+                    if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
+                        val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
+                        handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
+                    }
+                }
             }
 
-        logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $forespoerselInputList" }
-
-        dataSource.transaction { tx ->
-            forespoerselInputList.forEach { forespoerselInput ->
-                handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
-                if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
-                    val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
-                    handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
-                }
-            }
             logger.info { "Antall ${forespoerselInputList.size} forespoerseler er mottatt" }
+        }.onFailure { exception ->
+            logger.error { "Feil ved mottak av forespørsel på skattekort, sjekk feilmeldingen i team logs." }
+            logger.error(marker = TEAM_LOGS_MARKER, exception) { "Feil ved mottak av forespørsel på skattekort: $message" }
+            throw exception
         }
     }
 
@@ -203,22 +210,19 @@ class ForespoerselService(
 
     @OptIn(ExperimentalTime::class)
     private fun parseCopybookMessage(message: String): List<ForespoerselInput> {
-        val messageList = message.lines().filter { it.isNotBlank() }
-        return messageList.map { line ->
-            val parts = line.split(FORESPOERSEL_DELIMITER)
-            require(parts.size == 3) { "Invalid message format: $message" }
-            val forsystem =
-                when (val system = Forsystem.fromValue(parts[0])) {
-                    Forsystem.OPPDRAGSSYSTEMET -> if (messageList.size == 1) system else Forsystem.OPPDRAGSSYSTEMET_STOR
-                    else -> system
-                }
-            val inntektsaar = Integer.parseInt(parts[1])
-            val fnrString = parts[2]
+        val parts = message.split(DELIMITER).filter { it.isNotBlank() }
+        val forsystem =
+            when {
+                Forsystem.fromValue(parts[0]) == Forsystem.OPPDRAGSSYSTEMET && parts.size > 3 -> Forsystem.OPPDRAGSSYSTEMET_STOR
+                else -> Forsystem.fromValue(parts[0])
+            }
+        val inntektsaar = Integer.parseInt(parts[1])
 
+        return parts.drop(2).filter { it.isNotBlank() }.map { fnr ->
             ForespoerselInput(
                 forsystem = forsystem,
                 inntektsaar = inntektsaar,
-                fnr = fnrString,
+                fnr = fnr,
             )
         }
     }
@@ -233,7 +237,7 @@ class ForespoerselService(
                 }
             forespoerselInput.forEach { forespoerselInput ->
                 var i = 0
-                retry@while (i < 5) {
+                retry@ while (i < 5) {
                     try {
                         dataSource.transaction { tx ->
                             val message = "${forespoerselInput.forsystem};${forespoerselInput.inntektsaar};${forespoerselInput.fnr}"

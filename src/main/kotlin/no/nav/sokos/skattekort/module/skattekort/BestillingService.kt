@@ -96,7 +96,6 @@ class BestillingService(
                                         AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Oppretting av bestilling feilet")
                                     }
                                     logger.error(ex) { "Oppretting av bestillingsbatch feilet: ${ex.message}" }
-                                    throw ex
                                 }
                                 throw ex
                             } catch (ex: Exception) {

@@ -88,6 +88,17 @@ class BestillingService(
                                     AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Oppretting av bestilling feilet")
                                 }
                                 throw e
+                            } catch (ex: PSQLException) {
+                                if ((ex.message?.contains("could not serialize access due to read/write dependencies") ?: false)) {
+                                    // En annen transaksjon forsøkte å aksessere samme rader, forsøk igjen senere
+                                } else {
+                                    dataSource.transaction { errorTx ->
+                                        AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Oppretting av bestilling feilet")
+                                    }
+                                    logger.error(ex) { "Oppretting av bestillingsbatch feilet: ${ex.message}" }
+                                    throw ex
+                                }
+                                throw ex
                             } catch (ex: Exception) {
                                 dataSource.transaction { errorTx ->
                                     AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Oppretting av bestilling feilet")

@@ -65,12 +65,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val osMessage =
-                    """OS;2025;12345678901
-                    |OS;2025;23456789012
-                    |
-                    """.trimMargin()
-
+                val osMessage = "OS;2025;12345678901;23456789012;"
                 forespoerselService.taImotForespoersel(osMessage)
 
                 DbListener.dataSource.transaction { tx ->
@@ -129,30 +124,28 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            withConstantNow(LocalDateTime.parse("2026-04-12T00:00:00")) {
-                val message = "MANUELL;2026;12345678901"
-                val brukerId = "Z123456"
+            val message = "MANUELL;2026;12345678901"
+            val brukerId = "Z123456"
 
-                forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
+            forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
 
-                DbListener.dataSource.transaction { tx ->
-                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                    forespoerselList.size shouldBe 1
-                    val forespoersel = forespoerselList.first()
-                    forespoersel.forsystem shouldBe Forsystem.MANUELL
+            DbListener.dataSource.transaction { tx ->
+                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                forespoerselList.size shouldBe 1
+                val forespoersel = forespoerselList.first()
+                forespoersel.forsystem shouldBe Forsystem.MANUELL
 
-                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                    abonnementList.size shouldBe 1
-                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
-                    bestillingList.size shouldBe 1
-                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                    utsendingList.size shouldBe 0
+                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                abonnementList.size shouldBe 1
+                val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                bestillingList.size shouldBe 1
+                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                utsendingList.size shouldBe 0
 
-                    verifyData(abonnementList, bestillingList, forespoersel)
+                verifyData(abonnementList, bestillingList, forespoersel)
 
-                    val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                    auditList.first().brukerId shouldBe brukerId
-                }
+                val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
+                auditList.first().brukerId shouldBe brukerId
             }
         }
 
@@ -183,7 +176,6 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme forsystem, person og årstall som en tidligere forespoersel, skal det kun audit logges dersom en utsending ikke er utført") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-
                 val message = "OS;2025;12345678901"
 
                 forespoerselService.taImotForespoersel(message)
@@ -207,26 +199,24 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
-            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+            DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val message = "OS;2025;12345678901"
+            val message = "OS;2025;12345678901"
 
-                forespoerselService.taImotForespoersel(message)
+            forespoerselService.taImotForespoersel(message)
 
-                DbListener.dataSource.transaction { tx ->
-                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+            DbListener.dataSource.transaction { tx ->
+                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
 
-                    assertSoftly {
-                        utsendingList shouldNotBeNull {
-                            size shouldBe 1
-                            shouldContainAllIgnoringFields(
-                                listOf(
-                                    Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
-                                ),
-                                Utsending::opprettet,
-                            )
-                        }
+                assertSoftly {
+                    utsendingList shouldNotBeNull {
+                        size shouldBe 1
+                        shouldContainAllIgnoringFields(
+                            listOf(
+                                Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                            ),
+                            Utsending::opprettet,
+                        )
                     }
                 }
             }

@@ -76,7 +76,7 @@ spec:
         diskAutoresize: true
         pointInTimeRecovery: true
         autoBackupHour: 3
-        tier: db-custom-4-3840
+        tier: db-custom-4-10240
         databases:
           - name: sokos-skattekort
             envVarPrefix: DB

@@ -12,7 +12,7 @@ open class UnleashIntegration(
     unleashProps: PropertiesConfig.UnleashProperties,
     appProperties: PropertiesConfig.ApplicationProperties,
 ) {
-    private lateinit var unleashClient: Unleash
+    private var unleashClient: Unleash
     private val logger = KotlinLogging.logger {}
 
     // Kill switcher:

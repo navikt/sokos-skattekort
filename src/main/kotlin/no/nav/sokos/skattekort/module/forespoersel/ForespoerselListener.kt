@@ -13,6 +13,7 @@ class ForespoerselListener(
     private val connectionFactory: ConnectionFactory,
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
+    @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
 ) {
     private lateinit var jmsContext: JMSContext
 
@@ -24,9 +25,16 @@ class ForespoerselListener(
         val listener = jmsContext.createConsumer(forespoerselQueue)
 
         listener.setMessageListener { message: Message ->
-            val jmsMessage = message.getBody(String::class.java)
-            forespoerselService.taImotForespoersel(jmsMessage)
-            message.acknowledge()
+            runCatching {
+                val jmsMessage = message.getBody(String::class.java)
+                forespoerselService.taImotForespoersel(jmsMessage)
+                message.acknowledge()
+            }.onFailure {
+                val boqProducer = jmsContext.createProducer()
+                boqProducer.send(forespoerselBoqQueue, message)
+                message.acknowledge()
+                logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
+            }
         }
 
         jmsContext.start()

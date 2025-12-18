@@ -41,6 +41,8 @@ object MQListener : BeforeSpecListener, AfterTestListener {
     }
 
     val bestillingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+    val bestillingBoqQueue: Queue = ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+
     val utsendingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
     val utsendingStorQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
     val allQueues: List<Queue> = listOf(bestillingsQueue, utsendingsQueue, utsendingStorQueue)

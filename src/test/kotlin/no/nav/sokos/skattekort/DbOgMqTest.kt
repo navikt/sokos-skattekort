@@ -30,6 +30,7 @@ class DbOgMqTest :
                     featureToggles = FakeUnleashIntegration(),
                 ),
                 MQListener.bestillingsQueue,
+                MQListener.bestillingBoqQueue,
             )
         }
 

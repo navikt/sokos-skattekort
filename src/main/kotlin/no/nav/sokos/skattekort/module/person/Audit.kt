@@ -24,7 +24,7 @@ data class Audit
         @OptIn(ExperimentalTime::class)
         constructor(row: Row) : this(
             id = AuditId(row.long("id")),
-            personId = PersonId(row.long("person_id").toLong()),
+            personId = PersonId(row.long("person_id")),
             brukerId = row.string("bruker_id"),
             opprettet = row.instant("opprettet").toKotlinInstant(),
             tag = AuditTag.fromValue(row.string("tag")),

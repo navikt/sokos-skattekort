@@ -98,6 +98,9 @@ object TestUtils {
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
                 }
+                provide<Queue>(name = "forespoerselBoqQueue") {
+                    ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+                }
                 provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
                 }

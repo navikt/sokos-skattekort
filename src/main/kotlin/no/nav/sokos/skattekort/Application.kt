@@ -73,6 +73,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
+        provide<Queue>(name = "forespoerselBoqQueue") {
+            MQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+        }
         provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
             val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ

@@ -59,7 +59,7 @@ object DatabaseConfig {
         val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
         return HikariConfig().apply {
             poolName = poolname
-            maximumPoolSize = 10
+            maximumPoolSize = 30
             minimumIdle = 1
             isAutoCommit = false
             this.transactionIsolation = transactionIsolation

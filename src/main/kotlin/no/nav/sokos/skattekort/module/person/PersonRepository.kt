@@ -137,12 +137,12 @@ object PersonRepository {
 
     private val mapToPerson: (Row) -> Person = { row ->
         Person(
-            id = PersonId(row.long("person_id").toLong()),
+            id = PersonId(row.long("person_id")),
             flagget = row.boolean("flagget"),
             foedselsnummer =
                 Foedselsnummer(
-                    id = FoedselsnummerId(row.long("foedselsnummer_id").toLong()),
-                    personId = PersonId(row.long("person_id").toLong()),
+                    id = FoedselsnummerId(row.long("foedselsnummer_id")),
+                    personId = PersonId(row.long("person_id")),
                     fnr = Personidentifikator(row.string("fnr")),
                     gjelderFom = row.localDate("gjelder_fom").toKotlinLocalDate(),
                 ),

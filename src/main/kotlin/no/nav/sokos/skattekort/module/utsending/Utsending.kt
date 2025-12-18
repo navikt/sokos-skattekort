@@ -24,7 +24,7 @@ data class Utsending
     ) {
         @OptIn(ExperimentalTime::class)
         constructor(row: Row) : this(
-            id = row.long("id")?.let { UtsendingId(it) },
+            id = row.longOrNull("id")?.let { UtsendingId(it) },
             fnr = Personidentifikator(row.string("fnr")),
             inntektsaar = row.int("inntektsaar"),
             forsystem = Forsystem.fromValue(row.string("forsystem")),

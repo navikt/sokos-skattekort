@@ -92,6 +92,8 @@ spec:
             value: "off"
           - name: "cloudsql.logical_decoding"
             value: "on"
+          - name: "max_pred_locks_per_transaction"
+            value: "640"
   envFrom:
     - secret: sokos-skattekort-mq-credentials
     - secret: sokos-skattekort-unleash-api-token

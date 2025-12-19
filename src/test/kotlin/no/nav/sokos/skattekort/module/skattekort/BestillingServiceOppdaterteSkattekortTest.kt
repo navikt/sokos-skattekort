@@ -14,6 +14,7 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.utils.TestUtils.tx
@@ -24,13 +25,15 @@ class BestillingServiceOppdaterteSkattekortTest :
             extensions(DbListener)
 
             val skatteetatenClient = mockk<SkatteetatenClient>()
+            val personService = PersonService(DbListener.dataSource)
 
             val bestillingService: BestillingService by lazy {
                 BestillingService(
-                    DbListener.dataSource,
-                    skatteetatenClient,
-                    FakeUnleashIntegration(),
-                    PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, "", "", ""),
+                    dataSource = DbListener.dataSource,
+                    skatteetatenClient = skatteetatenClient,
+                    personService = personService,
+                    featureToggles = FakeUnleashIntegration(),
+                    applicationProperties = PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, "", "", ""),
                 )
             }
 

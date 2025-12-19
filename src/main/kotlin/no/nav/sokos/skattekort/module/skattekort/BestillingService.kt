@@ -19,11 +19,13 @@ import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
+import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
+import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
@@ -37,6 +39,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
+    private val personService: PersonService,
     private val featureToggles: UnleashIntegration,
     private val applicationProperties: PropertiesConfig.ApplicationProperties,
 ) {
@@ -251,21 +254,41 @@ class BestillingService(
         arbeidstaker: Arbeidstaker,
         batchId: String,
     ) {
-        val person =
-            PersonRepository.findPersonByFnr(
-                tx = tx,
+        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        val (person, opprettet) =
+            personService.findOrCreatePersonByFnr(
                 fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
-            ) ?: error("Person med fnr ${arbeidstaker.arbeidstakeridentifikator} ikke funnet ved behandling av skattekortbestilling")
+                informasjon = "Skattekort mottatt for tidligere ukjent person",
+                tx = tx,
+            )
+        val personId = person.id ?: error("Person-id er ikke satt")
+        if (opprettet) {
+            PersonRepository.flaggPerson(tx, personId)
+            AuditRepository.insert(
+                tx = tx,
+                tag = AuditTag.UVENTET_PERSON,
+                personId = personId,
+                informasjon = "Ikke forventet skattekort mottatt fra skatteetaten; mulig tegn på manuell bestilling på Navs organisasjonsnummer",
+            )
+        }
+        if (!foedselsnummerkategori.erGyldig(arbeidstaker.arbeidstakeridentifikator)) {
+            AuditRepository.insert(
+                tx = tx,
+                tag = AuditTag.INVALID_SKATTEKORT,
+                personId = personId,
+                informasjon = "Personnummer mottatt fra skatteetaten er ugyldig",
+            )
+        }
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
         val skattekort = toSkattekort(arbeidstaker, person)
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
-            PersonRepository.flaggPerson(tx, person.id!!)
+            PersonRepository.flaggPerson(tx, personId)
         }
         val id = SkattekortId(SkattekortRepository.insert(tx, skattekort, batchId))
 
         Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, aarsak) ->
             SkattekortRepository.insert(tx, syntetisertSkattekort, "syntetisk")
-            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, person.id!!, aarsak)
+            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, personId, aarsak)
         }
 
         opprettUtsendingerForAbonnementer(tx, person, inntektsaar)

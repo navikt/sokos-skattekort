@@ -38,7 +38,7 @@ class PersonServiceTest :
             val fnr = "10101000010"
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.dataSource.transaction { tx ->
-                val person =
+                val (person, _) =
                     personService.findOrCreatePersonByFnr(
                         fnr = Personidentifikator(fnr),
                         informasjon = "TEST",
@@ -62,7 +62,7 @@ class PersonServiceTest :
             val fnr = "15467834260"
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.dataSource.transaction { tx ->
-                val person =
+                val (person, _) =
                     personService.findOrCreatePersonByFnr(
                         fnr = Personidentifikator(fnr),
                         informasjon = "TEST",

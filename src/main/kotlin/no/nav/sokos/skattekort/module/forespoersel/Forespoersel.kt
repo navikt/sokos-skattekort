@@ -12,6 +12,7 @@ data class Forespoersel
         val dataMottatt: String,
         val forsystem: Forsystem,
         val opprettet: Instant = Clock.System.now(),
+        val batch: Boolean = false,
     )
 
 @Serializable

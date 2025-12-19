@@ -1,10 +1,10 @@
-package no.nav.sokos.skattekort.module.utsending.oppdragz
+package no.nav.sokos.skattekort.module.utsending
 
 import kotlin.test.assertTrue
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.toDataSource
-import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -14,7 +14,6 @@ import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditService
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.utsending.UtsendingService
 
 class UtsendingCronJobTest :
     FunSpec(
@@ -40,7 +39,7 @@ class UtsendingCronJobTest :
                 assertTrue(messages.size == 1)
                 assertTrue(messages.first().contains("12345678903"))
                 val utsendinger = uut.getAllUtsendinger()
-                assertEquals(0, utsendinger.size)
+                TestCase.assertEquals(0, utsendinger.size)
             }
 
             test("Vi skal håndtere feil i utsendelse til oppdragz") {
@@ -57,8 +56,8 @@ class UtsendingCronJobTest :
                 val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                 assertTrue(messages.size == 0)
                 val utsendinger = uut.getAllUtsendinger()
-                assertEquals("Skal ha en utsending", 1, utsendinger.size)
-                assertEquals("Skal ha failcount på en", 1, utsendinger[0].failCount)
+                TestCase.assertEquals("Skal ha en utsending", 1, utsendinger.size)
+                TestCase.assertEquals("Skal ha failcount på en", 1, utsendinger[0].failCount)
             }
         },
     )

@@ -15,6 +15,7 @@ import io.kotest.inspectors.forAll
 import io.kotest.inspectors.forExactly
 import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotContain
@@ -28,12 +29,14 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig.Environment
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
+import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
@@ -44,6 +47,7 @@ import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
 import no.nav.sokos.skattekort.module.utsending.Utsending
+import no.nav.sokos.skattekort.module.utsending.UtsendingId
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
@@ -1033,6 +1037,64 @@ class BestillingServiceTest :
                 }
                 person1 shouldNotBeNull {
                     flagget shouldBe false
+                }
+            }
+        }
+
+        test("henter skattekort og opprett utsending til OS_STOR") {
+            val fnr = "01010100001"
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                aHentSkattekortResponse(
+                    aSkattekortFor(fnr, 10001),
+                )
+
+            databaseHas(
+                aPerson(1L, fnr),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025, isBulkRequest = true),
+                aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, fnr, 2025, 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+            val utsendingerAfter: List<Utsending> = tx(UtsendingRepository::getAllUtsendinger)
+
+            assertSoftly {
+                updatedBatches shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        status shouldBe BestillingBatchStatus.Ferdig.value
+                    }
+                }
+
+                skattekort shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        identifikator shouldBe "10001"
+                        resultatForSkattekort shouldBe SkattekortopplysningerOK
+                        forskuddstrekkList shouldNotBeNull {
+                            size shouldBe 2
+                        }
+                    }
+                }
+
+                bestillingsAfter shouldNotBeNull {
+                    size shouldBe 0
+                }
+
+                assertSoftly {
+                    utsendingerAfter shouldNotBeNull {
+                        size shouldBe 1
+                        shouldContainAllIgnoringFields(
+                            listOf(
+                                Utsending(UtsendingId(1), Personidentifikator(fnr), 2025, Forsystem.OPPDRAGSSYSTEMET_STOR),
+                            ),
+                            Utsending::opprettet,
+                        )
+                    }
                 }
             }
         }

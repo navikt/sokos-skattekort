@@ -277,13 +277,13 @@ class BestillingService(
         person: Person,
         inntektsaar: Int,
     ) {
-        AbonnementRepository.finnAktiveSystemer(tx, person.id!!, inntektsaar).forEach { system ->
+        AbonnementRepository.finnAktiveSystemer(tx, person.id!!, inntektsaar).forEach { forsystem ->
             UtsendingRepository.insert(
                 tx,
                 Utsending(
                     inntektsaar = inntektsaar,
                     fnr = person.foedselsnummer.fnr,
-                    forsystem = system,
+                    forsystem = forsystem,
                 ),
             )
         }

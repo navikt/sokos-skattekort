@@ -50,6 +50,7 @@ class ForespoerselServiceTest :
                     forespoerselList.size shouldBe 1
                     val forespoersel = forespoerselList.first()
                     forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                    forespoersel.batch shouldBe false
 
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 1
@@ -65,6 +66,8 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
                 val osMessage = "OS;2025;12345678901;23456789012;"
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -75,11 +78,10 @@ class ForespoerselServiceTest :
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     assertSoftly {
                         forespoerselList shouldNotBeNull {
-                            size shouldBe 2
+                            size shouldBe 1
                             shouldContainAllIgnoringFields(
                                 listOf(
-                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
-                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
+                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET, batch = true),
                                 ),
                                 Forespoersel::id,
                                 Forespoersel::opprettet,
@@ -90,10 +92,19 @@ class ForespoerselServiceTest :
                             size shouldBe 2
                         }
                         bestillingList shouldNotBeNull {
-                            size shouldBe 2
+                            size shouldBe 1
                         }
-                        utsendingList shouldNotBeNull {
-                            size shouldBe 0
+
+                        assertSoftly {
+                            utsendingList shouldNotBeNull {
+                                size shouldBe 1
+                                shouldContainAllIgnoringFields(
+                                    listOf(
+                                        Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET_STOR),
+                                    ),
+                                    Utsending::opprettet,
+                                )
+                            }
                         }
                     }
                 }

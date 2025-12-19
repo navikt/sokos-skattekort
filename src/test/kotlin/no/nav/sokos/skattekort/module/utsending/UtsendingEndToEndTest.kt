@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.utsending.oppdragz
+package no.nav.sokos.skattekort.module.utsending
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
@@ -12,17 +12,15 @@ import kotliquery.queryOf
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
-import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
-import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
-import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
+import no.nav.sokos.skattekort.utils.TestUtils
 
 class UtsendingEndToEndTest :
     FunSpec({
         extensions(DbListener, MQListener)
 
         test("vi kan plukke opp en utsending fra databasen og sende en JMS-melding med riktig format") {
-            withFullTestApplication {
+            TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz.sql")
 
@@ -31,7 +29,7 @@ class UtsendingEndToEndTest :
                 uut.handleUtsending()
                 val expectedCopybook =
                     "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
-                eventually(eventuallyConfiguration) {
+                eventually(TestUtils.eventuallyConfiguration) {
                     val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                     messages.size shouldBe 1
                     messages[0] shouldBe
@@ -60,7 +58,7 @@ class UtsendingEndToEndTest :
         }
 
         test("utsending fra databasen og sende til utsendingStor JMS kø") {
-            withFullTestApplication {
+            TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz_stor.sql")
 
@@ -69,7 +67,7 @@ class UtsendingEndToEndTest :
                 utsendingService.handleUtsending()
                 val expectedCopybook =
                     "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
-                eventually(eventuallyConfiguration) {
+                eventually(TestUtils.eventuallyConfiguration) {
                     val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingStorQueue)
                     messages.size shouldBe 1
                     messages[0] shouldBe expectedCopybook

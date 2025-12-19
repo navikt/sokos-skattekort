@@ -150,9 +150,10 @@ fun anAbonnement(
     personId: Long,
     inntektsaar: Int,
     forsystem: Forsystem = Forsystem.OPPDRAGSSYSTEMET,
+    isBulkRequest: Boolean = false,
 ) = """
-    INSERT INTO forespoersler(id, data_mottatt, forsystem)
-                    VALUES ($forespoerselId, '', '${forsystem.value}');
+    INSERT INTO forespoersler(id, data_mottatt, forsystem, batch)
+                    VALUES ($forespoerselId, '', '${forsystem.value}', $isBulkRequest);
     
     INSERT INTO abonnementer(forespoersel_id, person_id, inntektsaar)
                     VALUES ($forespoerselId, $personId, $inntektsaar);

@@ -62,15 +62,13 @@ object AbonnementRepository {
     ): List<Forsystem> =
         tx.list(
             queryOf(
-                """SELECT distinct f.forsystem as forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id WHERE a.person_id = :personId and a.inntektsaar = :inntektsaar""",
+                """SELECT distinct f.forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id WHERE a.person_id = :personId and a.inntektsaar = :inntektsaar""",
                 mapOf(
                     "personId" to personId.value,
                     "inntektsaar" to inntektsaar,
                 ),
             ),
-            { row ->
-                Forsystem.fromValue(row.string("forsystem"))
-            },
+            { row -> Forsystem.fromValue(row.string("forsystem")) },
         )
 
     @OptIn(ExperimentalTime::class)

@@ -76,7 +76,7 @@ fun bestillOppdateringRequest(
         inntektsaar = inntektsaar.toString(),
         bestillingstype = "HENT_KUN_ENDRING",
         varslingstype = "INGEN_VARSEL",
-        endringFraDato = endringFraDato,
+        endringFraDato = LocalDate.parse("2025-12-14"),
         kontaktinformasjon =
             Kontaktinformasjon(
                 epostadresse = KONTAKT_EMAIL,

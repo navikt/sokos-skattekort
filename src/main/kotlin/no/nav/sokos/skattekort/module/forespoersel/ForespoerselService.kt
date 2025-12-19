@@ -50,6 +50,7 @@ class ForespoerselService(
                 when {
                     // drop Arena meldinger
                     message.startsWith("<") -> return
+
                     else -> parseCopybookMessage(message)
                 }.filter { input ->
                     val erGyldig = foedselsnummerkategori.erGyldig(input.fnr)
@@ -155,7 +156,7 @@ class ForespoerselService(
                 dataMottatt = message,
             )
 
-        val person =
+        val (person, _) =
             personService.findOrCreatePersonByFnr(
                 tx = tx,
                 fnr = Personidentifikator(forespoerselInput.fnr),

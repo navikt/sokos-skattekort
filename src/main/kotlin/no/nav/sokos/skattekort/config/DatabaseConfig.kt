@@ -54,7 +54,7 @@ object DatabaseConfig {
 
     private fun initHikariConfig(
         poolname: String = "postgres-pool",
-        transactionIsolation: String = "TRANSACTION_SERIALIZABLE",
+        transactionIsolation: String = "TRANSACTION_READ_COMMITTED",
     ): HikariConfig {
         val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
         return HikariConfig().apply {

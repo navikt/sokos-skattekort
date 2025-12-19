@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.skatteetaten.bestillskattekort
 
-import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.module.person.Personidentifikator
@@ -12,7 +11,6 @@ data class BestillSkattekortRequest(
     val bestillingstype: String,
     val kontaktinformasjon: Kontaktinformasjon,
     val varslingstype: String? = null,
-    val endringFraDato: LocalDate? = null,
     val forespoerselOmSkattekortTilArbeidsgiver: ForespoerselOmSkattekortTilArbeidsgiver? = null,
 )
 
@@ -68,15 +66,11 @@ fun bestillSkattekortRequest(
             ),
     )
 
-fun bestillOppdateringRequest(
-    inntektsaar: Int,
-    endringFraDato: LocalDate? = null,
-): BestillSkattekortRequest =
+fun bestillOppdateringRequest(inntektsaar: Int): BestillSkattekortRequest =
     BestillSkattekortRequest(
         inntektsaar = inntektsaar.toString(),
         bestillingstype = "HENT_KUN_ENDRING",
         varslingstype = "INGEN_VARSEL",
-        endringFraDato = endringFraDato,
         kontaktinformasjon =
             Kontaktinformasjon(
                 epostadresse = KONTAKT_EMAIL,

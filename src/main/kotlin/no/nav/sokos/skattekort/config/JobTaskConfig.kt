@@ -2,20 +2,11 @@ package no.nav.sokos.skattekort.config
 
 import java.time.Duration
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 import javax.sql.DataSource
-
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.time.toJavaInstant
-import kotlin.time.toKotlinDuration
-import kotlinx.datetime.LocalDate
 
 import com.github.kagkarlsson.scheduler.Scheduler
 import com.github.kagkarlsson.scheduler.task.ExecutionContext
-import com.github.kagkarlsson.scheduler.task.TaskDescriptor
 import com.github.kagkarlsson.scheduler.task.TaskInstance
-import com.github.kagkarlsson.scheduler.task.helper.OneTimeTask
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask
 import com.github.kagkarlsson.scheduler.task.helper.Tasks
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
@@ -34,12 +25,10 @@ private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
 private const val JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH = "hentOppdaterteSkattekort"
 private const val JOB_TASK_FETCH_METRICS = "fetchMetrics"
 private const val JOB_TASK_FORESPOERSEL_INPUT = "forespoerselInput"
-private const val JOB_TASK_OPPDATERINGER_SIDEN = "oppdateringer"
 
 object JobTaskConfig {
     private var handleJobs: Boolean = true
 
-    @OptIn(ExperimentalTime::class)
     fun scheduler(
         bestillingService: BestillingService,
         utsendingService: UtsendingService,
@@ -47,10 +36,9 @@ object JobTaskConfig {
         metricsService: MetricsService,
         forespoerselService: ForespoerselService,
         dataSource: DataSource,
-    ): Scheduler {
-        val oneTime = oneTimeHentOppdateringer(bestillingService, scheduledTaskService)
-        return Scheduler
-            .create(dataSource, oneTime)
+    ): Scheduler =
+        Scheduler
+            .create(dataSource)
             .enableImmediateExecution()
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
@@ -61,18 +49,6 @@ object JobTaskConfig {
                 recurringFetchMetricsTask(metricsService, scheduledTaskService),
                 recurringFetchForespoerselInputTask(forespoerselService, scheduledTaskService),
             ).build()
-            .also { scheduler ->
-                val descriptor = TaskDescriptor.of(JOB_TASK_OPPDATERINGER_SIDEN, Void::class.java)
-                scheduler.schedule(
-                    descriptor.instance("9999").scheduledTo(
-                        Clock.System
-                            .now()
-                            .plus(Duration.of(30, ChronoUnit.SECONDS).toKotlinDuration())
-                            .toJavaInstant(),
-                    ),
-                )
-            }
-    }
 
     fun recurringBestillingManagementBatchTask(
         bestillingService: BestillingService,
@@ -149,32 +125,6 @@ object JobTaskConfig {
                             val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                             scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
                             bestillingService.hentOppdaterteSkattekort()
-                        } catch (e: Exception) {
-                            // Spis exception for å ta kontroll over logging
-                        }
-                    }
-                }
-            }
-    }
-
-    fun oneTimeHentOppdateringer(
-        bestillingService: BestillingService,
-        scheduledTaskService: ScheduledTaskService,
-    ): OneTimeTask<Void> {
-        val showLogLocalTime = LocalDateTime.now()
-
-        return Tasks
-            .oneTime(
-                JOB_TASK_OPPDATERINGER_SIDEN,
-            ).execute { instance: TaskInstance<Void>, context: ExecutionContext ->
-                if (handleJobs) {
-                    withTracerId {
-                        try {
-                            showLog(showLogLocalTime, instance, context)
-                            val ident: String = PropertiesConfig.getApplicationProperties().naisAppName
-
-                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_OPPDATERINGER_SIDEN)
-                            bestillingService.hentOppdaterteSkattekort(LocalDate.parse("2025-12-14"))
                         } catch (e: Exception) {
                             // Spis exception for å ta kontroll over logging
                         }

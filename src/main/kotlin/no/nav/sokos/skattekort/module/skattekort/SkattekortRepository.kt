@@ -120,7 +120,7 @@ object SkattekortRepository {
                 """
                 SELECT * FROM skattekort 
                 WHERE person_id = :personId AND inntektsaar = :inntektsaar
-                ORDER BY opprettet, id DESC
+                ORDER BY opprettet DESC, id DESC
                 """.trimIndent(),
                 mapOf(
                     "personId" to personId.value,

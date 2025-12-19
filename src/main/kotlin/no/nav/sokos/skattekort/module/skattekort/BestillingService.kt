@@ -270,14 +270,14 @@ class BestillingService(
                 personId = personId,
                 informasjon = "Ikke forventet skattekort mottatt fra skatteetaten; mulig tegn på manuell bestilling på Navs organisasjonsnummer",
             )
-        }
-        if (!foedselsnummerkategori.erGyldig(arbeidstaker.arbeidstakeridentifikator)) {
-            AuditRepository.insert(
-                tx = tx,
-                tag = AuditTag.INVALID_SKATTEKORT,
-                personId = personId,
-                informasjon = "Personnummer mottatt fra skatteetaten er ugyldig",
-            )
+            if (!foedselsnummerkategori.erGyldig(arbeidstaker.arbeidstakeridentifikator)) {
+                AuditRepository.insert(
+                    tx = tx,
+                    tag = AuditTag.INVALID_FNR,
+                    personId = personId,
+                    informasjon = "Personnummer mottatt fra skatteetaten er ugyldig",
+                )
+            }
         }
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
         val skattekort = toSkattekort(arbeidstaker, person)

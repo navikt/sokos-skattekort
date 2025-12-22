@@ -22,7 +22,6 @@ import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
@@ -255,13 +254,12 @@ class BestillingService(
         batchId: String,
     ) {
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
-        val (person, opprettet) =
-            personService.findOrCreatePersonByFnr(
+        val (personId, opprettet) =
+            personService.findPersonIdOrCreatePersonByFnr(
                 fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
                 informasjon = "Skattekort mottatt for tidligere ukjent person",
                 tx = tx,
             )
-        val personId = person.id ?: error("Person-id er ikke satt")
         if (opprettet) {
             PersonRepository.flaggPerson(tx, personId)
             AuditRepository.insert(
@@ -280,7 +278,7 @@ class BestillingService(
             }
         }
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
-        val skattekort = toSkattekort(arbeidstaker, person)
+        val skattekort = toSkattekort(arbeidstaker, personId)
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
             PersonRepository.flaggPerson(tx, personId)
         }
@@ -291,21 +289,22 @@ class BestillingService(
             AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, personId, aarsak)
         }
 
-        opprettUtsendingerForAbonnementer(tx, person, inntektsaar)
+        opprettUtsendingerForAbonnementer(tx, personId, Personidentifikator(arbeidstaker.arbeidstakeridentifikator), inntektsaar)
     }
 
     @OptIn(ExperimentalTime::class)
     private fun opprettUtsendingerForAbonnementer(
         tx: TransactionalSession,
-        person: Person,
+        personId: PersonId,
+        personidentifikator: Personidentifikator,
         inntektsaar: Int,
     ) {
-        AbonnementRepository.finnAktiveSystemer(tx, person.id!!, inntektsaar).forEach { system ->
+        AbonnementRepository.finnAktiveSystemer(tx, personId, inntektsaar).forEach { system ->
             UtsendingRepository.insert(
                 tx,
                 Utsending(
                     inntektsaar = inntektsaar,
-                    fnr = person.foedselsnummer.fnr,
+                    fnr = personidentifikator,
                     forsystem = system,
                 ),
             )
@@ -315,12 +314,12 @@ class BestillingService(
     @OptIn(ExperimentalTime::class)
     private fun toSkattekort(
         arbeidstaker: Arbeidstaker,
-        person: Person,
+        personId: PersonId,
     ): Skattekort =
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
             ResultatForSkattekort.SkattekortopplysningerOK -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
                     identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
@@ -333,7 +332,7 @@ class BestillingService(
 
             ResultatForSkattekort.IkkeSkattekort -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
@@ -346,7 +345,7 @@ class BestillingService(
 
             ResultatForSkattekort.IkkeTrekkplikt -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
@@ -363,7 +362,7 @@ class BestillingService(
 
             else -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),

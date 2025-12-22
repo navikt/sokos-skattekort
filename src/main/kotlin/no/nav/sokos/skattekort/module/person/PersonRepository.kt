@@ -5,6 +5,7 @@ import java.time.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
 
 import kotliquery.Row
+import kotliquery.Session
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
@@ -43,11 +44,26 @@ object PersonRepository {
         )
     }
 
+    fun findPersonIdByFnr(
+        session: Session,
+        fnr: Personidentifikator,
+    ): PersonId? =
+        session.single(
+            queryOf(
+                """
+                    |SELECT distinct p.id 
+                    |FROM personer p INNER JOIN foedselsnumre f ON p.id = f.person_id 
+                    |WHERE f.fnr = :fnr;
+                """.trimMargin(),
+                mapOf("fnr" to fnr.value),
+            ),
+        ) { row -> PersonId(row.long("id")) }
+
     fun findPersonById(
-        tx: TransactionalSession,
+        session: Session,
         personId: PersonId,
     ): Person =
-        tx.single(
+        session.single(
             queryOf(
                 """
                     |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
@@ -67,10 +83,10 @@ object PersonRepository {
         )!!
 
     fun findPersonByFnr(
-        tx: TransactionalSession,
+        session: Session,
         fnr: Personidentifikator,
     ): Person? =
-        tx.single(
+        session.single(
             queryOf(
                 """
                     |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
@@ -89,6 +105,20 @@ object PersonRepository {
         informasjon: String,
         brukerId: String? = null,
     ): Long? {
+        val existingPersonId =
+            tx.single(
+                queryOf(
+                    """
+            |SELECT person_id FROM foedselsnumre WHERE fnr = :fnr
+                    """.trimMargin(),
+                    mapOf("fnr" to fnr.value),
+                ),
+            ) { row -> row.long("person_id") }
+
+        if (existingPersonId != null) {
+            return existingPersonId
+        }
+
         val personId =
             tx.updateAndReturnGeneratedKey(
                 queryOf(

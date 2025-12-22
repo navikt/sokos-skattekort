@@ -38,20 +38,20 @@ class PersonServiceTest :
             val fnr = "10101000010"
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.dataSource.transaction { tx ->
-                val (person, _) =
-                    personService.findOrCreatePersonByFnr(
-                        fnr = Personidentifikator(fnr),
-                        informasjon = "TEST",
-                        brukerId = AUDIT_SYSTEM,
-                        tx = tx,
-                    )
-                person shouldNotBe null
-                person.foedselsnummer.fnr.value shouldBe fnr
+                val personId =
+                    personService
+                        .findPersonIdOrCreatePersonByFnr(
+                            fnr = Personidentifikator(fnr),
+                            informasjon = "TEST",
+                            brukerId = AUDIT_SYSTEM,
+                            tx = tx,
+                        ).first
+                personId shouldNotBe null
 
                 val personList = personService.getPersonList(tx = tx)
                 personList.size shouldBe 10
 
-                val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
+                val auditList = AuditRepository.getAuditByPersonId(tx, personId)
                 auditList.size shouldBe 2
                 auditList[1].tag shouldBe AuditTag.MOTTATT_FORESPOERSEL
                 auditList[1].informasjon shouldBe "TEST"
@@ -62,20 +62,20 @@ class PersonServiceTest :
             val fnr = "15467834260"
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.dataSource.transaction { tx ->
-                val (person, _) =
-                    personService.findOrCreatePersonByFnr(
-                        fnr = Personidentifikator(fnr),
-                        informasjon = "TEST",
-                        brukerId = AUDIT_SYSTEM,
-                        tx = tx,
-                    )
-                person shouldNotBe null
-                person.foedselsnummer.fnr.value shouldBe fnr
+                val personId =
+                    personService
+                        .findPersonIdOrCreatePersonByFnr(
+                            fnr = Personidentifikator(fnr),
+                            informasjon = "TEST",
+                            brukerId = AUDIT_SYSTEM,
+                            tx = tx,
+                        ).first
+                personId shouldNotBe null
 
                 val personList = personService.getPersonList(tx = tx)
                 personList.size shouldBe 11
 
-                val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
+                val auditList = AuditRepository.getAuditByPersonId(tx, personId)
                 auditList.size shouldBe 1
                 auditList.first().tag shouldBe AuditTag.OPPRETTET_PERSON
                 auditList.first().informasjon shouldBe "TEST"

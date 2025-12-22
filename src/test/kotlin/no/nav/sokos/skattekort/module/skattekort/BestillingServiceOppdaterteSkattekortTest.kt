@@ -219,7 +219,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                                         informasjon = "",
                                     ),
                                     Audit(
-                                        personId = person.id!!,
+                                        personId = person.id,
                                         brukerId = "",
                                         tag = AuditTag.UVENTET_PERSON,
                                         informasjon = "",

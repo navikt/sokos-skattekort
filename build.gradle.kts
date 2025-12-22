@@ -29,7 +29,7 @@ repositories {
 
 val ktorVersion = "3.3.3"
 val nimbusVersion = "10.6"
-val logbackVersion = "1.5.21"
+val logbackVersion = "1.5.22"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.1"
 val dbSchedulerVersion = "16.6.0"
@@ -48,7 +48,7 @@ val flywayVersion = "11.19.0"
 val postgresVersion = "42.7.8"
 val activemqVersion = "2.44.0"
 val ibmmqVersion = "9.4.4.0"
-val opentelemetryVersion = "2.22.0-alpha"
+val opentelemetryVersion = "2.23.0-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
 val kafkaClientsVersion = "8.1.1-ce"
 val avroVersion = "1.12.1"
@@ -56,7 +56,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "11.1.1"
+val unleashedVersion = "11.2.0"
 
 dependencies {
 

@@ -5,7 +5,6 @@ import java.time.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
 
 import kotliquery.Row
-import kotliquery.Session
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
@@ -45,10 +44,10 @@ object PersonRepository {
     }
 
     fun findPersonIdByFnr(
-        session: Session,
+        tx: TransactionalSession,
         fnr: Personidentifikator,
     ): PersonId? =
-        session.single(
+        tx.single(
             queryOf(
                 """
                     |SELECT distinct p.id 
@@ -60,10 +59,10 @@ object PersonRepository {
         ) { row -> PersonId(row.long("id")) }
 
     fun findPersonById(
-        session: Session,
+        tx: TransactionalSession,
         personId: PersonId,
     ): Person =
-        session.single(
+        tx.single(
             queryOf(
                 """
                     |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
@@ -83,10 +82,10 @@ object PersonRepository {
         )!!
 
     fun findPersonByFnr(
-        session: Session,
+        tx: TransactionalSession,
         fnr: Personidentifikator,
     ): Person? =
-        session.single(
+        tx.single(
             queryOf(
                 """
                     |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr

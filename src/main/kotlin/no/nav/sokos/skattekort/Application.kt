@@ -31,6 +31,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
+import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
@@ -90,7 +91,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
         provide(UnleashIntegration::class)
-
+        provide(StatusService::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)

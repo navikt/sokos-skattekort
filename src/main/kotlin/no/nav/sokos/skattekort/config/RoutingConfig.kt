@@ -10,6 +10,7 @@ import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
+import no.nav.sokos.skattekort.module.status.StatusService
 
 fun Application.routingConfig(
     applicationState: ApplicationState,
@@ -21,8 +22,9 @@ fun Application.routingConfig(
         authenticate(azureAdProperties.providerName) {
             val forespoerselService: ForespoerselService by dependencies
             val skattekortPersonService: SkattekortPersonService by dependencies
+            val statusService: StatusService by dependencies
 
-            skattekortApi(forespoerselService)
+            skattekortApi(forespoerselService, statusService)
             skattekortPersonApi(skattekortPersonService)
         }
     }

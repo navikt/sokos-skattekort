@@ -8,6 +8,8 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.util.SQLUtils.advisoryKeysFromString
+
 object PersonRepository {
     fun getAllPersonById(
         tx: TransactionalSession,
@@ -103,8 +105,16 @@ object PersonRepository {
         gjelderFom: LocalDate,
         informasjon: String,
         brukerId: String? = null,
-    ): Long? =
-        tx.single(
+    ): Long? {
+        val (k1, k2) = advisoryKeysFromString(fnr.value)
+        tx.execute(
+            queryOf(
+                "SELECT pg_advisory_xact_lock(:k1, :k2)",
+                mapOf("k1" to k1, "k2" to k2),
+            ),
+        )
+
+        return tx.single(
             queryOf(
                 """
             |WITH existing_foedselsnummer AS (
@@ -147,6 +157,7 @@ object PersonRepository {
                 ),
             ),
         ) { row -> row.long("person_id") }
+    }
 
     fun flaggPerson(
         tx: TransactionalSession,

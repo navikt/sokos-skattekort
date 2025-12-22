@@ -23,7 +23,6 @@ object DatabaseConfig {
         HikariDataSource(
             initHikariConfig(
                 poolname = "postgres-read-commited-pool",
-                transactionIsolation = "TRANSACTION_READ_COMMITTED",
             ),
         )
     }
@@ -33,6 +32,7 @@ object DatabaseConfig {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     (dataSource as HikariDataSource).close()
+                    (dataSourceReadCommit as HikariDataSource).close()
                 },
             )
         }
@@ -52,17 +52,13 @@ object DatabaseConfig {
         logger.info { "Migration finished" }
     }
 
-    private fun initHikariConfig(
-        poolname: String = "postgres-pool",
-        transactionIsolation: String = "TRANSACTION_READ_COMMITTED",
-    ): HikariConfig {
+    private fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
         val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
         return HikariConfig().apply {
             poolName = poolname
-            maximumPoolSize = 30
+            maximumPoolSize = 15
             minimumIdle = 1
             isAutoCommit = false
-            this.transactionIsolation = transactionIsolation
             connectionTimeout = Duration.ofSeconds(10).toMillis()
             initializationFailTimeout = Duration.ofMinutes(5).toMillis()
 

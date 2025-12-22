@@ -79,7 +79,7 @@ object ForespoerselRepository {
         ForespoerselService.ForespoerselInput(
             forsystem = Forsystem.fromValue(row.string("forsystem")),
             inntektsaar = row.int("inntektsaar"),
-            fnr = row.string("fnr"),
+            fnrList = listOf(row.string("fnr")),
         )
     }
 

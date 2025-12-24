@@ -43,7 +43,7 @@ val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.7"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
-val testcontainersVersion = "1.21.3"
+val testcontainersVersion = "1.21.4"
 val flywayVersion = "11.19.0"
 val postgresVersion = "42.7.8"
 val activemqVersion = "2.44.0"
@@ -153,7 +153,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.10.1")
+                useTarget("at.yawk.lz4:lz4-java:1.10.2")
                 because("Prefer the patched fork for vulnerability fix")
             }
         }

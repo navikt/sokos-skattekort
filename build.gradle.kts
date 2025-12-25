@@ -43,11 +43,11 @@ val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.7"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
-val testcontainersVersion = "1.21.3"
+val testcontainersVersion = "1.21.4"
 val flywayVersion = "11.19.0"
 val postgresVersion = "42.7.8"
 val activemqVersion = "2.44.0"
-val ibmmqVersion = "9.4.4.0"
+val ibmmqVersion = "9.4.4.1"
 val opentelemetryVersion = "2.23.0-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
 val kafkaClientsVersion = "8.1.1-ce"
@@ -56,7 +56,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "11.2.0"
+val unleashedVersion = "11.2.1"
 
 dependencies {
 
@@ -153,7 +153,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.10.1")
+                useTarget("at.yawk.lz4:lz4-java:1.10.2")
                 because("Prefer the patched fork for vulnerability fix")
             }
         }

@@ -120,7 +120,7 @@ sealed interface Forskuddstrekk {
                 ForskuddstrekkType.FRIKORT ->
                     Frikort(
                         trekkode = Trekkode.from(forskuddstrekk.trekkode),
-                        frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt() ?: 0,
+                        frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt(),
                     )
 
                 ForskuddstrekkType.PROSENTKORT ->

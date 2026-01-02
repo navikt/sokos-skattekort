@@ -1,0 +1,42 @@
+{
+  "status": "FORESPOERSEL_OK",
+  "arbeidsgiver": [
+    {
+      "arbeidsgiveridentifikator": {
+        "organisasjonsnummer": "312978083"
+      },
+      "arbeidstaker": [
+        {
+          "arbeidstakeridentifikator": "12345678901",
+          "resultatForSkattekort": "skattekortopplysningerOK",
+          "skattekort": {
+            "utstedtDato": "2025-10-20",
+            "skattekortidentifikator": 54407,
+            "forskuddstrekk": [
+              {
+                "trekkode": "ufoeretrygdFraNAV",
+                "frikort": {}
+              },
+              {
+                "trekkode": "ufoereytelserFraAndre",
+                "frikort": {}
+              },
+              {
+                "trekkode": "pensjonFraNAV",
+                "frikort": {}
+              },
+              {
+                "trekkode": "pensjon",
+                "frikort": {}
+              }
+            ]
+          },
+          "tilleggsopplysning": [
+            "kildeskattPaaPensjon"
+          ],
+          "inntektsaar": "2025"
+        }
+      ]
+    }
+  ]
+}

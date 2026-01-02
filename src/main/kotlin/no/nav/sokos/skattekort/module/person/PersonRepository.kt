@@ -8,6 +8,8 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.util.SQLUtils.advisoryKeysFromString
+
 object PersonRepository {
     fun getAllPersonById(
         tx: TransactionalSession,
@@ -104,50 +106,57 @@ object PersonRepository {
         informasjon: String,
         brukerId: String? = null,
     ): Long? {
-        val existingPersonId =
-            tx.single(
-                queryOf(
-                    """
-            |SELECT person_id FROM foedselsnumre WHERE fnr = :fnr
-                    """.trimMargin(),
-                    mapOf("fnr" to fnr.value),
-                ),
-            ) { row -> row.long("person_id") }
-
-        if (existingPersonId != null) {
-            return existingPersonId
-        }
-
-        val personId =
-            tx.updateAndReturnGeneratedKey(
-                queryOf(
-                    """
-                    |INSERT INTO personer (flagget) VALUES (:flagget)
-                    """.trimMargin(),
-                    mapOf("flagget" to false),
-                ),
-            )
-
+        val (k1, k2) = advisoryKeysFromString(fnr.value)
         tx.execute(
             queryOf(
+                "SELECT pg_advisory_xact_lock(:k1, :k2)",
+                mapOf("k1" to k1, "k2" to k2),
+            ),
+        )
+
+        return tx.single(
+            queryOf(
                 """
-                    |INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
-                    |    VALUES (:personId, :gjelderFom, :fnr);
-                    |    
-                    |INSERT INTO person_audit(person_id, bruker_id, opprettet, tag, informasjon)
-                    |    VALUES (:personId, :brukerId, now(), :tag, :informasjon);
+            |WITH existing_foedselsnummer AS (
+            |   SELECT person_id FROM foedselsnumre WHERE fnr = :fnr
+            |),
+            |inserted_person AS (
+            |   INSERT INTO personer (flagget)
+            |   SELECT :flagget
+            |   WHERE NOT EXISTS (SELECT 1 FROM existing_foedselsnummer)
+            |   RETURNING id AS person_id
+            |),
+            |resolved_person AS (
+            |   SELECT COALESCE(
+            |     (SELECT person_id FROM inserted_person),
+            |     (SELECT person_id FROM existing_foedselsnummer)
+            |   ) AS person_id
+            |),
+            |upserted_foedselsnummer AS (
+            |   INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
+            |   SELECT person_id, :gjelderFom, :fnr
+            |   FROM resolved_person
+            |   ON CONFLICT (fnr) DO NOTHING
+            |   RETURNING person_id
+            |),
+            |audit_insert AS (
+            |   INSERT INTO person_audit(person_id, bruker_id, opprettet, tag, informasjon)
+            |   SELECT person_id, :brukerId, now(), :tag, :informasjon
+            |   FROM inserted_person
+            |   RETURNING person_id
+            |)
+            |SELECT person_id FROM resolved_person;
                 """.trimMargin(),
                 mapOf(
-                    "personId" to personId,
-                    "gjelderFom" to gjelderFom,
                     "fnr" to fnr.value,
+                    "flagget" to false,
+                    "gjelderFom" to gjelderFom,
                     "brukerId" to (brukerId ?: AUDIT_SYSTEM),
                     "tag" to AuditTag.OPPRETTET_PERSON.name,
                     "informasjon" to informasjon,
                 ),
             ),
-        )
-        return personId
+        ) { row -> row.long("person_id") }
     }
 
     fun flaggPerson(

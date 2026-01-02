@@ -43,21 +43,6 @@ object PersonRepository {
         )
     }
 
-    fun findPersonIdByFnr(
-        tx: TransactionalSession,
-        fnr: Personidentifikator,
-    ): PersonId? =
-        tx.single(
-            queryOf(
-                """
-                    |SELECT distinct p.id 
-                    |FROM personer p INNER JOIN foedselsnumre f ON p.id = f.person_id 
-                    |WHERE f.fnr = :fnr;
-                """.trimMargin(),
-                mapOf("fnr" to fnr.value),
-            ),
-        ) { row -> PersonId(row.long("id")) }
-
     fun findPersonById(
         tx: TransactionalSession,
         personId: PersonId,
@@ -104,20 +89,6 @@ object PersonRepository {
         informasjon: String,
         brukerId: String? = null,
     ): Long? {
-        val existingPersonId =
-            tx.single(
-                queryOf(
-                    """
-            |SELECT person_id FROM foedselsnumre WHERE fnr = :fnr
-                    """.trimMargin(),
-                    mapOf("fnr" to fnr.value),
-                ),
-            ) { row -> row.long("person_id") }
-
-        if (existingPersonId != null) {
-            return existingPersonId
-        }
-
         val personId =
             tx.updateAndReturnGeneratedKey(
                 queryOf(

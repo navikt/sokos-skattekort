@@ -75,7 +75,7 @@ class ForespoerselServiceTest :
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     assertSoftly {
                         forespoerselList shouldNotBeNull {
-                            size shouldBe 1
+                            size shouldBe 2
                             shouldContainAllIgnoringFields(
                                 listOf(
                                     Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),

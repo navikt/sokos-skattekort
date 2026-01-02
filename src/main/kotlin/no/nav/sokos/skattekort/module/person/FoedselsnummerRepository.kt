@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.module.person
 
 import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toKotlinLocalDate
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -24,9 +25,31 @@ object FoedselsnummerRepository {
             ),
         )
 
-    fun findPersonIdByFnrList(
+    fun getAllFodseslsnummerByPersonId(
         tx: TransactionalSession,
-        fnrList: List<String>,
+        id: PersonId,
+    ): List<Foedselsnummer> =
+        tx.list(
+            queryOf(
+                """SELECT * from foedselsnumre 
+                    WHERE person_id=:personIdent
+                    ORDER BY gjelder_fom DESC
+                """.trimMargin(),
+                mapOf("personIdent" to id.value),
+            ),
+            { row ->
+                Foedselsnummer(
+                    id = FoedselsnummerId(row.long("id")),
+                    personId = PersonId(row.long("person_id")),
+                    gjelderFom = row.localDate("gjelder_fom").toKotlinLocalDate(),
+                    fnr = Personidentifikator(row.string("fnr")),
+                )
+            },
+        )
+
+    fun findPersonIdByPersonidentifikator(
+        tx: TransactionalSession,
+        personidentifikatorList: List<String>,
     ): PersonId? =
         tx.single(
             queryOf(
@@ -34,7 +57,7 @@ object FoedselsnummerRepository {
                 SELECT person_id FROM foedselsnumre
                 WHERE fnr = ANY(?)
                 """.trimIndent(),
-                fnrList.toTypedArray(),
+                personidentifikatorList.toTypedArray(),
             ),
             extractor = { row -> PersonId(row.long("person_id")) },
         )

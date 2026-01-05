@@ -179,8 +179,7 @@ class BestillingService(
                                 }
                             }
                         } else {
-                            // Svaret er ikke klart ennå
-                            logger.info("Bestillingsbatch $batchId ferdig behandlet uten returnerte skattekort, forsøker igjen senere")
+                            logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
                         }
                     } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
                         dataSource.transaction { errorTx ->

@@ -179,10 +179,8 @@ class BestillingService(
                                 }
                             }
                         } else {
-                            // Ingen skattekort returnert
-                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                            BestillingRepository.retryUnprocessedBestillings(tx, batchId)
-                            logger.info("Bestillingsbatch $batchId ferdig behandlet uten returnerte skattekort")
+                            // Svaret er ikke klart ennå
+                            logger.info("Bestillingsbatch $batchId ferdig behandlet uten returnerte skattekort, forsøker igjen senere")
                         }
                     } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
                         dataSource.transaction { errorTx ->

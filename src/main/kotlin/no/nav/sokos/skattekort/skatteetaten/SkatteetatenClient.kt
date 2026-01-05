@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.skatteetaten
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
@@ -14,14 +15,18 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotliquery.TransactionalSession
+import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.skattekort.BestillingBatchRepository
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortRequest
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
+
+private val logger = KotlinLogging.logger {}
 
 class SkatteetatenClient(
     private val maskinportenTokenClient: MaskinportenTokenClient,
@@ -57,7 +62,10 @@ class SkatteetatenClient(
             client.get(url) {
                 bearerAuth(maskinportenTokenClient.getAccessToken())
                 accept(ContentType.Application.Json)
+                expectSuccess = false
             }
+
+        logger.info(marker = TEAM_LOGS_MARKER) { "Response fra Skatteteaten: $response" }
 
         if (response.status == HttpStatusCode.NoContent) {
             return null

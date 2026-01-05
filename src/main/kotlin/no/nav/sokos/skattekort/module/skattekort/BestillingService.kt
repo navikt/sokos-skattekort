@@ -438,9 +438,7 @@ class BestillingService(
                         }
                     }
                 } else {
-                    // Ingen oppdateringer
-                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                    logger.info("Bestillingsbatch $batchId behandles igjen senere når svaret er klart")
                 }
             } catch (e: BatchUpdateException) {
                 logger.error(marker = TEAM_LOGS_MARKER, e) { "Henting av skattekort for batch $batchId feilet: ${e.message}" }

@@ -56,7 +56,6 @@ spec:
           namespace: teamcrm
         - application: saas-proxy
           namespace: platforce
-          cluster: dev-gcp
     outbound:
       rules:
         - application: logging

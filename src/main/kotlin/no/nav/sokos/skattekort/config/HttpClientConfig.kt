@@ -18,8 +18,9 @@ private val logger = KotlinLogging.logger {}
 fun createHttpClient(): HttpClient =
     HttpClient(Apache5) {
         expectSuccess = true
-
         engine {
+            socketTimeout = 30_000
+            connectTimeout = 30_000
             customizeClient {
                 setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
                 setKeepAliveStrategy { _, _ -> TimeValue.ofSeconds(300) }

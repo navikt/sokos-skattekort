@@ -51,6 +51,8 @@ spec:
         - application: sokos-utbetalingsportalen
         - application: saas-proxy
           namespace: teamcrm
+        - application: saas-proxy
+          namespace: platforce
     outbound:
       rules:
         - application: logging

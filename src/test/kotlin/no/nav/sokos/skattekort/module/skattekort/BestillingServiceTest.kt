@@ -5,6 +5,7 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 
 import kotlin.time.ExperimentalTime
+import kotlinx.serialization.json.Json
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -50,6 +51,7 @@ import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 @OptIn(ExperimentalTime::class)
@@ -437,6 +439,39 @@ class BestillingServiceTest :
                 }
 
                 utsendingerAfterFirstRun.size shouldBe 2
+            }
+        }
+
+        test("henter skattekort med tomt frikort") {
+            val response: HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), readFile("/skatteetaten/hentSkattekort/skattekortopplysningerOK_med_tomt_frikort.json"))
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns response
+
+            databaseHas(
+                aPerson(1L, "12345678901"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, "12345678901", 2025, 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+
+            assertSoftly {
+                skattekort shouldNotBeNull {
+                    size shouldBe 1
+                    last() shouldNotBeNull {
+                        identifikator shouldBe "54407"
+                        resultatForSkattekort shouldBe SkattekortopplysningerOK
+                        forskuddstrekkList shouldContainExactly
+                            listOf(
+                                aForskuddstrekk("Frikort", UFOERETRYGD_FRA_NAV, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", Trekkode.UFOEREYTELSER_FRA_ANDRE, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", Trekkode.PENSJON, frikortbeløp = null),
+                            )
+                    }
+                }
             }
         }
 

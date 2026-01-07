@@ -60,10 +60,6 @@ class SkatteetatenClient(
             }
 
         if (response.status == HttpStatusCode.NoContent) {
-            if (featureToggles.isLagreMottatteBestillingerEnabled()) {
-                if (tx == null) error("Kan ikke lagre mottatte data i tekstformat uten tilgang til en transaksjon")
-                BestillingBatchRepository.insertMottatteData(tx, bestillingsreferanse, "")
-            }
             return null
         }
 

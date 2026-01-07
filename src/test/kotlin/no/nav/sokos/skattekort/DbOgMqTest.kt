@@ -31,7 +31,6 @@ class DbOgMqTest :
                 ),
                 MQListener.bestillingsQueue,
                 MQListener.bestillingBoqQueue,
-                FakeUnleashIntegration(),
             )
         }
 

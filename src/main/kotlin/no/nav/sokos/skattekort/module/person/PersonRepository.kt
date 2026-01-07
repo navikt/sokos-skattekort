@@ -106,7 +106,12 @@ object PersonRepository {
         informasjon: String,
         brukerId: String? = null,
     ): Long? {
-        val (k1, k2) = advisoryKeysFromString(fnr.value)
+        /**
+         * pg_advisory_xact_lock acquires a transaction-scoped advisory lock in PostgreSQL.
+         * It blocks until the lock is acquired; if another transaction holds the same lock, this call waits.
+         * The lock is released automatically at the end of the current transaction (commit or rollback).
+         */
+            val (k1, k2) = advisoryKeysFromString(fnr.value)
         tx.execute(
             queryOf(
                 "SELECT pg_advisory_xact_lock(:k1, :k2)",

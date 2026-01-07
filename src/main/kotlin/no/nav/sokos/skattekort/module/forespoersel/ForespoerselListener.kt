@@ -7,8 +7,6 @@ import jakarta.jms.Message
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
@@ -16,28 +14,26 @@ class ForespoerselListener(
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
     @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
-    private val featureToggles: UnleashIntegration,
 ) {
     private lateinit var jmsContext: JMSContext
 
     fun start() {
         // TODO: Legg til Opentelemetry trace
+        // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
 
         jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
         val listener = jmsContext.createConsumer(forespoerselQueue)
 
         listener.setMessageListener { message: Message ->
-            if (featureToggles.isForespoerselInputEnabled()) {
-                runCatching {
-                    val jmsMessage = message.getBody(String::class.java)
-                    forespoerselService.taImotForespoersel(jmsMessage)
-                    message.acknowledge()
-                }.onFailure {
-                    val boqProducer = jmsContext.createProducer()
-                    boqProducer.send(forespoerselBoqQueue, message)
-                    message.acknowledge()
-                    logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
-                }
+            runCatching {
+                val jmsMessage = message.getBody(String::class.java)
+                forespoerselService.taImotForespoersel(jmsMessage)
+                message.acknowledge()
+            }.onFailure {
+                val boqProducer = jmsContext.createProducer()
+                boqProducer.send(forespoerselBoqQueue, message)
+                message.acknowledge()
+                logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
             }
         }
 

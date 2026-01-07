@@ -179,10 +179,7 @@ class BestillingService(
                                 }
                             }
                         } else {
-                            // Ingen skattekort returnert
-                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                            BestillingRepository.retryUnprocessedBestillings(tx, batchId)
-                            logger.info("Bestillingsbatch $batchId ferdig behandlet uten returnerte skattekort")
+                            logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
                         }
                     } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
                         dataSource.transaction { errorTx ->
@@ -438,9 +435,7 @@ class BestillingService(
                         }
                     }
                 } else {
-                    // Ingen oppdateringer
-                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                    logger.info("Bestillingsbatch $batchId behandles igjen senere når svaret er klart")
                 }
             } catch (e: BatchUpdateException) {
                 logger.error(marker = TEAM_LOGS_MARKER, e) { "Henting av skattekort for batch $batchId feilet: ${e.message}" }

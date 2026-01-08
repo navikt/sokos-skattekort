@@ -61,7 +61,7 @@ class SkatteetatenClient(
                 accept(ContentType.Application.Json)
                 expectSuccess = false
             }
-        hentBestillingReturkode.labelValues(response.status.description)
+        hentBestillingReturkode.labelValues(response.status.description).inc()
 
         if (response.status == HttpStatusCode.NoContent) {
             hentBestillingFeilet.labelValues(bestillingsreferanse).inc()

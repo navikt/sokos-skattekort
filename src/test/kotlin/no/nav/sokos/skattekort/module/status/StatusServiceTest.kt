@@ -24,6 +24,13 @@ class StatusServiceTest :
                 )
             }
 
+            test("Ugyldig fnr. Skal ha status UGYLDIG_FNR") {
+                databaseHas()
+
+                val status = statusService.statusForespoeresel(fnr = "abc", aar = 2025, forsystem = "TEST")
+                assertEquals(Status.UGYLDIG_FNR, status)
+            }
+
             test("Gyldig fnr men person finnes ikke. Skal ha status IKKE_FORESPURT") {
                 databaseHas()
 

@@ -61,9 +61,16 @@ class StatusService(
             }
 
         if (skattekort.isNotEmpty()) {
+            val validForsystem =
+                try {
+                    Forsystem.fromValue(forsystem)
+                } catch (_: NoSuchElementException) {
+                    return Status.UGYLDIG_FORSYSTEM
+                }
+
             val utsending =
                 dataSource.transaction { tx ->
-                    UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), aar, Forsystem.fromValue(forsystem))
+                    UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), aar, validForsystem)
                 }
             return if (utsending != null) {
                 Status.VENTER_PAA_UTSENDING

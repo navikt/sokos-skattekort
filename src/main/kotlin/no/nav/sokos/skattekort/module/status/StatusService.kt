@@ -33,7 +33,7 @@ class StatusService(
             dataSource.transaction { tx ->
                 PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr))
             }
-        if (person == null) return Status.IKKE_FNR
+        if (person == null) return Status.IKKE_FORESPURT
 
         val bestilling: Bestilling? =
             dataSource.transaction { tx ->
@@ -71,6 +71,6 @@ class StatusService(
                 Status.SENDT_FORSYSTEM
             }
         }
-        return Status.UKJENT
+        return Status.IKKE_FORESPURT
     }
 }

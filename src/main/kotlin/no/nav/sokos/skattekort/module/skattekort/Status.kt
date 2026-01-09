@@ -1,9 +1,8 @@
 package no.nav.sokos.skattekort.module.skattekort
 
 enum class Status {
-    UKJENT,
+    IKKE_FORESPURT,
     UGYLDIG_FNR,
-    IKKE_FNR,
     IKKE_BESTILT,
     BESTILT,
     FEILET_I_BESTILLING,

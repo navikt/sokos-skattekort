@@ -61,17 +61,10 @@ class StatusServiceTest :
                 assertEquals(Status.BESTILT, status)
             }
 
-            test("Person og skattekort finnes. Skal ha status UGYLDIG_FORSYSTEM hvis det ikke er i Forsystem-enum") {
+            test("Person og skattekort finnes. Skal ha status UGYLDIG_FORSYSTEM fordi forsystem ikke er i Forsystem-enum") {
                 databaseHas(
                     aPerson(1L, "01010100001"),
-                    aDbSkattekort(
-                        id = 10015752,
-                        personId = 1L,
-                        utstedtDato = "2024-12-05",
-                        identifikator = "1085419887",
-                        inntektsaar = 2025,
-                        opprettet = "2025-12-19 15:52:47.833756",
-                    ),
+                    aSkattekort(1L, 2025),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
@@ -81,14 +74,7 @@ class StatusServiceTest :
             test("Person, skattekort og utsending finnes. Skal ha status VENTER_PAA_UTSENDING") {
                 databaseHas(
                     aPerson(1L, "01010100001"),
-                    aDbSkattekort(
-                        id = 10015752,
-                        personId = 1L,
-                        utstedtDato = "2024-12-05",
-                        identifikator = "1085419887",
-                        inntektsaar = 2025,
-                        opprettet = "2025-12-19 15:52:47.833756",
-                    ),
+                    aSkattekort(1L, 2025),
                     anUtsending("01010100001", 2025, forsystem = "OS"),
                 )
 
@@ -96,17 +82,19 @@ class StatusServiceTest :
                 assertEquals(Status.VENTER_PAA_UTSENDING, status)
             }
 
+            test("Person og skattekort for året før finnes. Skal ha status IKKE_FORESPURT") {
+                databaseHas(
+                    aPerson(1L, "01010100001"),
+                    aSkattekort(1L, 2025),
+                )
+
+                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2026, forsystem = "OS")
+                assertEquals(Status.IKKE_FORESPURT, status)
+            }
             test("Person og skattekort finnes. Skal ha status SENDT_FORSYSTEM") {
                 databaseHas(
                     aPerson(1L, "01010100001"),
-                    aDbSkattekort(
-                        id = 10015752,
-                        personId = 1L,
-                        utstedtDato = "2024-12-05",
-                        identifikator = "1085419887",
-                        inntektsaar = 2025,
-                        opprettet = "2025-12-19 15:52:47.833756",
-                    ),
+                    aSkattekort(1L, 2025),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
@@ -115,14 +103,7 @@ class StatusServiceTest :
             test("Person, skattekort og utsending for et annet forsystem finnes. Skal ha status SENDT_FORSYSTEM") {
                 databaseHas(
                     aPerson(1L, "01010100001"),
-                    aDbSkattekort(
-                        id = 10015752,
-                        personId = 1L,
-                        utstedtDato = "2024-12-05",
-                        identifikator = "1085419887",
-                        inntektsaar = 2025,
-                        opprettet = "2025-12-19 15:52:47.833756",
-                    ),
+                    aSkattekort(1L, 2025),
                     anUtsending("01010100001", 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR"),
                 )
 
@@ -131,3 +112,15 @@ class StatusServiceTest :
             }
         },
     )
+
+fun aSkattekort(
+    personId: Long,
+    inntektsaar: Int,
+) = aDbSkattekort(
+    id = 10015752,
+    personId = personId,
+    utstedtDato = "2024-12-05",
+    identifikator = "1085419887",
+    inntektsaar = inntektsaar,
+    opprettet = "2025-12-19 15:52:47.833756",
+)

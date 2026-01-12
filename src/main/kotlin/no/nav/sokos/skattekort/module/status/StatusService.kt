@@ -33,7 +33,7 @@ class StatusService(
             dataSource.transaction { tx ->
                 PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr))
             }
-        if (person == null) return Status.IKKE_FNR
+        if (person == null) return Status.IKKE_FORESPURT
 
         val bestilling: Bestilling? =
             dataSource.transaction { tx ->
@@ -61,9 +61,16 @@ class StatusService(
             }
 
         if (skattekort.isNotEmpty()) {
+            val validForsystem =
+                try {
+                    Forsystem.fromValue(forsystem)
+                } catch (_: NoSuchElementException) {
+                    return Status.UGYLDIG_FORSYSTEM
+                }
+
             val utsending =
                 dataSource.transaction { tx ->
-                    UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), aar, Forsystem.fromValue(forsystem))
+                    UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), aar, validForsystem)
                 }
             return if (utsending != null) {
                 Status.VENTER_PAA_UTSENDING
@@ -71,6 +78,6 @@ class StatusService(
                 Status.SENDT_FORSYSTEM
             }
         }
-        return Status.UKJENT
+        return Status.IKKE_FORESPURT
     }
 }

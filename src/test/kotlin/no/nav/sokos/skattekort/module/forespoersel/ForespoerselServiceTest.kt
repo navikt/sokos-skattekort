@@ -12,7 +12,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
@@ -36,7 +36,7 @@ class ForespoerselServiceTest :
         }
 
         val forespoerselService: ForespoerselService by lazy {
-            ForespoerselService(DbListener.dataSource, personService, FakeUnleashIntegration())
+            ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {

@@ -25,10 +25,8 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.config.PropertiesConfig.Environment
 import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -67,8 +65,7 @@ class BestillingServiceTest :
                 dataSource = DbListener.dataSource,
                 skatteetatenClient = skatteetatenClient,
                 personService = personService,
-                featureToggles = FakeUnleashIntegration(),
-                applicationProperties = PropertiesConfig.ApplicationProperties("", Environment.TEST, false, "", "", ""),
+                featureToggles = UnleashIntegration(),
             )
         }
 

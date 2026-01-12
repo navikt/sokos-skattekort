@@ -18,7 +18,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
@@ -123,6 +123,6 @@ fun setupClient(jsonFile: String): SkatteetatenClient {
         mockk<MaskinportenTokenClient> {
             coEvery { getAccessToken() } returns "token"
         }
-    val skatteetatenClient = SkatteetatenClient(mockTokenClient, clientWithMockReply, FakeUnleashIntegration())
+    val skatteetatenClient = SkatteetatenClient(mockTokenClient, clientWithMockReply, UnleashIntegration())
     return skatteetatenClient
 }

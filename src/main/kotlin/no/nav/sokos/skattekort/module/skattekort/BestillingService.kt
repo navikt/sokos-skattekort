@@ -40,9 +40,9 @@ class BestillingService(
     private val skatteetatenClient: SkatteetatenClient,
     private val personService: PersonService,
     private val featureToggles: UnleashIntegration,
-    private val applicationProperties: PropertiesConfig.ApplicationProperties,
 ) {
     private val logger = KotlinLogging.logger {}
+    private val applicationProperties = PropertiesConfig.getApplicationProperties()
 
     fun opprettBestillingsbatch() {
         if (featureToggles.isBestillingerEnabled()) {

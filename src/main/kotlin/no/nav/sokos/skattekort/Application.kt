@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort
 
+import kotlinx.coroutines.runBlocking
+
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -90,7 +92,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
-        provide(UnleashIntegration::class)
         provide(StatusService::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
@@ -103,6 +104,15 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(PdlClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
+        provide<UnleashIntegration> {
+            UnleashIntegration { enabled ->
+                val forespoerselListener: ForespoerselListener =
+                    runBlocking {
+                        this@module.dependencies.resolve()
+                    }
+                forespoerselListener.onOppdateringChanged(enabled)
+            }
+        }
     }
 
     securityConfig()

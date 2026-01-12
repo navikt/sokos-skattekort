@@ -184,3 +184,12 @@ fun toBestillSkattekortResponse(json: String) =
             .serializer(),
         json,
     )
+
+fun anUtsending(
+    fnr: String,
+    inntektsaar: Int,
+    forsystem: String,
+) = """
+    INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
+    VALUES ('$fnr', $inntektsaar, '$forsystem');
+    """.trimIndent()

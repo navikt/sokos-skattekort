@@ -82,13 +82,13 @@ class SkatteetatenClient(
     companion object {
         val hentBestillingFeilet =
             counter(
-                name = "hent_bestilling_feilet_per_bestillingsreferanse",
+                name = "hent_bestilling_feilet_total",
                 helpText = "Kunne ikke hente svar på bestilling",
                 labelNames = "bestillingsreferanse",
             )
         val hentBestillingReturkode =
             counter(
-                name = "hent_bestilling_per_returkode",
+                name = "hent_bestilling_total",
                 helpText = "Returkode på henting av bestilling",
                 labelNames = "returkode",
             )

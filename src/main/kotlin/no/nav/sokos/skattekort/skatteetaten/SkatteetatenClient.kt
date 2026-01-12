@@ -17,7 +17,7 @@ import io.ktor.http.isSuccess
 import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
+import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.skattekort.BestillingBatchRepository
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
@@ -81,13 +81,13 @@ class SkatteetatenClient(
 
     companion object {
         val hentBestillingFeilet =
-            gauge(
+            counter(
                 name = "hent_bestilling_feilet",
                 helpText = "Kunne ikke hente svar på bestilling",
                 labelNames = "bestillingsreferanse",
             )
         val hentBestillingReturkode =
-            gauge(
+            counter(
                 name = "hent_bestilling_returkode",
                 helpText = "Returkode på henting av bestilling",
                 labelNames = "returkode",

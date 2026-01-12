@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.module.forespoersel
 
 import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
+import jakarta.jms.JMSConsumer
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
@@ -15,29 +16,57 @@ class ForespoerselListener(
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
     @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
 ) {
-    private lateinit var jmsContext: JMSContext
+    private var jmsContext: JMSContext? = null
+    private var jmsConsumer: JMSConsumer? = null
 
+    @Volatile
+    private var isRunning = false
+
+    @Synchronized
     fun start() {
         // TODO: Legg til Opentelemetry trace
-        // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
 
         jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
-        val listener = jmsContext.createConsumer(forespoerselQueue)
+        jmsConsumer = jmsContext!!.createConsumer(forespoerselQueue)
 
-        listener.setMessageListener { message: Message ->
+        jmsConsumer!!.setMessageListener { message: Message ->
             runCatching {
                 val jmsMessage = message.getBody(String::class.java)
                 forespoerselService.taImotForespoersel(jmsMessage)
                 message.acknowledge()
             }.onFailure {
-                val boqProducer = jmsContext.createProducer()
+                val boqProducer = jmsContext!!.createProducer()
                 boqProducer.send(forespoerselBoqQueue, message)
                 message.acknowledge()
                 logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
             }
         }
 
-        jmsContext.start()
+        jmsContext!!.start()
+        isRunning = true
         logger.info { "Forespoersel started, listening on queue: ${forespoerselQueue.queueName}" }
+    }
+
+    @Synchronized
+    fun stop() {
+        isRunning = false
+        try {
+            jmsContext?.stop() // Stop message delivery first
+            jmsConsumer?.messageListener = null
+            jmsConsumer?.close()
+            jmsContext?.close() // This closes the underlying connection
+            jmsConsumer = null
+            jmsContext = null
+        } catch (e: Exception) {
+            logger.error(e) { "Error stopping ForespoerselListener" }
+        }
+        logger.info { "ForespoerselListener stopped on queue:  ${forespoerselQueue.queueName}" }
+    }
+
+    fun onOppdateringChanged(enabled: Boolean) {
+        when {
+            enabled && !isRunning -> start()
+            !enabled && isRunning -> stop()
+        }
     }
 }

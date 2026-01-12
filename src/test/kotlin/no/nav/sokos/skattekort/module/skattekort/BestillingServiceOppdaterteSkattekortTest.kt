@@ -11,9 +11,8 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -39,8 +38,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                     dataSource = DbListener.dataSource,
                     skatteetatenClient = skatteetatenClient,
                     personService = personService,
-                    featureToggles = FakeUnleashIntegration(),
-                    applicationProperties = PropertiesConfig.ApplicationProperties("", PropertiesConfig.Environment.TEST, false, "", "", ""),
+                    featureToggles = UnleashIntegration(),
                 )
             }
 
@@ -189,7 +187,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
                     val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, person.id!!, 2025, adminRole = false) }
                     val auditLog: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, person.id!!) }
-                    println("Alog" + auditLog)
+
                     assertSoftly {
                         batches shouldNotBeNull {
                             size shouldBe 1

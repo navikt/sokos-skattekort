@@ -23,15 +23,15 @@ class PersonService(
             PersonRepository.getAllPersonById(session, count, startId)
         }
 
-    fun findOrCreatePersonByFnr(
+    fun findPersonIdOrCreatePersonByFnr(
         fnr: Personidentifikator,
         informasjon: String,
         brukerId: String? = null,
         tx: TransactionalSession,
-    ): Person =
-        PersonRepository.findPersonByFnr(tx, fnr)?.let { person ->
-            AuditRepository.insert(tx, AuditTag.MOTTATT_FORESPOERSEL, person.id!!, informasjon, brukerId)
-            person
+    ): Pair<PersonId, Boolean> =
+        PersonRepository.findPersonIdByFnr(tx, fnr)?.let { personId ->
+            AuditRepository.insert(tx, AuditTag.MOTTATT_FORESPOERSEL, personId, informasjon, brukerId)
+            personId to false
         } ?: run {
             val personId =
                 PersonRepository.insert(tx, fnr, LocalDate.now(), informasjon, brukerId)
@@ -40,13 +40,8 @@ class PersonService(
                         throw PersonException("Kan ikke opprettet person med fnr: xxxx")
                     }
             logger.info(marker = TEAM_LOGS_MARKER) { "Opprett person fnr: $fnr" }
-            PersonRepository.findPersonById(tx, PersonId(personId))
+            PersonId(personId) to true
         }
-
-    fun findPersonIdByPersonidentifikator(
-        tx: TransactionalSession,
-        personidentifikatorList: List<String>,
-    ): PersonId? = FoedselsnummerRepository.findPersonIdByPersonidentifikator(tx, personidentifikatorList)
 
     fun updateFoedselsnummer(
         tx: TransactionalSession,

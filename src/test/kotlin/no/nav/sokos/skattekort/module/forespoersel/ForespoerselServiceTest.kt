@@ -12,7 +12,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
@@ -36,7 +36,7 @@ class ForespoerselServiceTest :
         }
 
         val forespoerselService: ForespoerselService by lazy {
-            ForespoerselService(DbListener.dataSource, personService, FakeUnleashIntegration())
+            ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
@@ -255,6 +255,57 @@ class ForespoerselServiceTest :
                             Bestilling::oppdatert,
                         )
                     }
+                }
+            }
+        }
+
+        test("skal ikke kaste en PSQLException: ERROR: duplicate key value violates unique constraint") {
+            withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                val message = "OS;2025;12345678901"
+                val startLatch = java.util.concurrent.CountDownLatch(1)
+                val completeLatch = java.util.concurrent.CountDownLatch(2)
+                val exceptions = java.util.concurrent.ConcurrentHashMap<String, Exception>()
+
+                val thread1 =
+                    Thread {
+                        try {
+                            startLatch.await()
+                            forespoerselService.taImotForespoersel(message)
+                        } catch (e: Exception) {
+                            exceptions["thread1"] = e
+                        } finally {
+                            completeLatch.countDown()
+                        }
+                    }
+
+                val thread2 =
+                    Thread {
+                        try {
+                            startLatch.await()
+                            forespoerselService.taImotForespoersel(message)
+                        } catch (e: Exception) {
+                            exceptions["thread2"] = e
+                        } finally {
+                            completeLatch.countDown()
+                        }
+                    }
+
+                thread1.start()
+                thread2.start()
+
+                // Signal both threads to start simultaneously
+                startLatch.countDown()
+
+                // Wait for completion
+                completeLatch.await()
+
+                DbListener.dataSource.transaction { tx ->
+                    val personList = personService.getPersonList(count = 100, tx = tx)
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+
+                    exceptions.isEmpty() shouldBe true
+                    personList.size shouldBe 1
+                    forespoerselList.size shouldBe 4
                 }
             }
         }

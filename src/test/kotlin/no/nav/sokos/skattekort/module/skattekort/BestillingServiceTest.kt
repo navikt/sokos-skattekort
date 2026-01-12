@@ -5,6 +5,7 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 
 import kotlin.time.ExperimentalTime
+import kotlinx.serialization.json.Json
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -15,7 +16,6 @@ import io.kotest.inspectors.forAll
 import io.kotest.inspectors.forExactly
 import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldContainAll
-import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotContain
@@ -25,18 +25,15 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.config.PropertiesConfig.Environment
 import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.FakeUnleashIntegration
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
@@ -47,12 +44,12 @@ import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
 import no.nav.sokos.skattekort.module.utsending.Utsending
-import no.nav.sokos.skattekort.module.utsending.UtsendingId
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 @OptIn(ExperimentalTime::class)
@@ -61,13 +58,14 @@ class BestillingServiceTest :
         extensions(DbListener)
 
         val skatteetatenClient = mockk<SkatteetatenClient>()
+        val personService = PersonService(DbListener.dataSource)
 
         val bestillingService: BestillingService by lazy {
             BestillingService(
-                DbListener.dataSource,
-                skatteetatenClient,
-                FakeUnleashIntegration(),
-                PropertiesConfig.ApplicationProperties("", Environment.TEST, false, "", "", ""),
+                dataSource = DbListener.dataSource,
+                skatteetatenClient = skatteetatenClient,
+                personService = personService,
+                featureToggles = UnleashIntegration(),
             )
         }
 
@@ -438,6 +436,39 @@ class BestillingServiceTest :
                 }
 
                 utsendingerAfterFirstRun.size shouldBe 2
+            }
+        }
+
+        test("henter skattekort med tomt frikort") {
+            val response: HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), readFile("/skatteetaten/hentSkattekort/skattekortopplysningerOK_med_tomt_frikort.json"))
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns response
+
+            databaseHas(
+                aPerson(1L, "12345678901"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
+                aBestilling(1L, "12345678901", 2025, 1L),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+
+            assertSoftly {
+                skattekort shouldNotBeNull {
+                    size shouldBe 1
+                    last() shouldNotBeNull {
+                        identifikator shouldBe "54407"
+                        resultatForSkattekort shouldBe SkattekortopplysningerOK
+                        forskuddstrekkList shouldContainExactly
+                            listOf(
+                                aForskuddstrekk("Frikort", UFOERETRYGD_FRA_NAV, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", Trekkode.UFOEREYTELSER_FRA_ANDRE, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", Trekkode.PENSJON, frikortbeløp = null),
+                            )
+                    }
+                }
             }
         }
 

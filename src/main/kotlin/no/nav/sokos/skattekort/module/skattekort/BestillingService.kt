@@ -19,11 +19,12 @@ import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
+import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
+import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
@@ -37,10 +38,11 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
+    private val personService: PersonService,
     private val featureToggles: UnleashIntegration,
-    private val applicationProperties: PropertiesConfig.ApplicationProperties,
 ) {
     private val logger = KotlinLogging.logger {}
+    private val applicationProperties = PropertiesConfig.getApplicationProperties()
 
     fun opprettBestillingsbatch() {
         if (featureToggles.isBestillingerEnabled()) {
@@ -177,10 +179,7 @@ class BestillingService(
                                 }
                             }
                         } else {
-                            // Ingen skattekort returnert
-                            BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                            BestillingRepository.retryUnprocessedBestillings(tx, batchId)
-                            logger.info("Bestillingsbatch $batchId ferdig behandlet uten returnerte skattekort")
+                            logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
                         }
                     } catch (ugyldigOrgnummerEx: UgyldigOrganisasjonsnummerException) {
                         dataSource.transaction { errorTx ->
@@ -251,39 +250,59 @@ class BestillingService(
         arbeidstaker: Arbeidstaker,
         batchId: String,
     ) {
-        val person =
-            PersonRepository.findPersonByFnr(
-                tx = tx,
+        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        val (personId, opprettet) =
+            personService.findPersonIdOrCreatePersonByFnr(
                 fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
-            ) ?: error("Person med fnr ${arbeidstaker.arbeidstakeridentifikator} ikke funnet ved behandling av skattekortbestilling")
+                informasjon = "Skattekort mottatt for tidligere ukjent person",
+                tx = tx,
+            )
+        if (opprettet) {
+            PersonRepository.flaggPerson(tx, personId)
+            AuditRepository.insert(
+                tx = tx,
+                tag = AuditTag.UVENTET_PERSON,
+                personId = personId,
+                informasjon = "Ikke forventet skattekort mottatt fra skatteetaten; mulig tegn på manuell bestilling på Navs organisasjonsnummer",
+            )
+            if (!foedselsnummerkategori.erGyldig(arbeidstaker.arbeidstakeridentifikator)) {
+                AuditRepository.insert(
+                    tx = tx,
+                    tag = AuditTag.INVALID_FNR,
+                    personId = personId,
+                    informasjon = "Personnummer mottatt fra skatteetaten er ugyldig",
+                )
+            }
+        }
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
-        val skattekort = toSkattekort(arbeidstaker, person)
+        val skattekort = toSkattekort(arbeidstaker, personId)
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {
-            PersonRepository.flaggPerson(tx, person.id!!)
+            PersonRepository.flaggPerson(tx, personId)
         }
         val id = SkattekortId(SkattekortRepository.insert(tx, skattekort, batchId))
 
         Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, aarsak) ->
             SkattekortRepository.insert(tx, syntetisertSkattekort, "syntetisk")
-            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, person.id!!, aarsak)
+            AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, personId, aarsak)
         }
 
-        opprettUtsendingerForAbonnementer(tx, person, inntektsaar)
+        opprettUtsendingerForAbonnementer(tx, personId, Personidentifikator(arbeidstaker.arbeidstakeridentifikator), inntektsaar)
     }
 
     @OptIn(ExperimentalTime::class)
     private fun opprettUtsendingerForAbonnementer(
         tx: TransactionalSession,
-        person: Person,
+        personId: PersonId,
+        personidentifikator: Personidentifikator,
         inntektsaar: Int,
     ) {
-        AbonnementRepository.finnAktiveSystemer(tx, person.id!!, inntektsaar).forEach { forsystem ->
+        AbonnementRepository.finnAktiveSystemer(tx, personId, inntektsaar).forEach { system ->
             UtsendingRepository.insert(
                 tx,
                 Utsending(
                     inntektsaar = inntektsaar,
-                    fnr = person.foedselsnummer.fnr,
-                    forsystem = forsystem,
+                    fnr = personidentifikator,
+                    forsystem = system,
                 ),
             )
         }
@@ -292,12 +311,12 @@ class BestillingService(
     @OptIn(ExperimentalTime::class)
     private fun toSkattekort(
         arbeidstaker: Arbeidstaker,
-        person: Person,
+        personId: PersonId,
     ): Skattekort =
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
             ResultatForSkattekort.SkattekortopplysningerOK -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
                     identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
@@ -310,7 +329,7 @@ class BestillingService(
 
             ResultatForSkattekort.IkkeSkattekort -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
@@ -323,7 +342,7 @@ class BestillingService(
 
             ResultatForSkattekort.IkkeTrekkplikt -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
@@ -340,7 +359,7 @@ class BestillingService(
 
             else -> {
                 Skattekort(
-                    personId = person.id!!,
+                    personId = personId,
                     utstedtDato = null,
                     identifikator = null,
                     inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
@@ -416,9 +435,7 @@ class BestillingService(
                         }
                     }
                 } else {
-                    // Ingen oppdateringer
-                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                    logger.info("Bestillingsbatch $batchId ferdig behandlet")
+                    logger.info("Bestillingsbatch $batchId behandles igjen senere når svaret er klart")
                 }
             } catch (e: BatchUpdateException) {
                 logger.error(marker = TEAM_LOGS_MARKER, e) { "Henting av skattekort for batch $batchId feilet: ${e.message}" }

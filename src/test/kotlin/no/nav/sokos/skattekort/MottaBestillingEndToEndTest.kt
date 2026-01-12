@@ -11,7 +11,7 @@ import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
-import no.nav.sokos.skattekort.infrastructure.MQListener.bestillingsQueue
+import no.nav.sokos.skattekort.infrastructure.MQListener.forespoerselQueue
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
@@ -31,7 +31,7 @@ class MottaBestillingEndToEndTest :
                     DbListener.loadDataSet("basicendtoendtest/basicdata.sql")
 
                     val fnr = "15467834260"
-                    JmsTestUtil.sendMessage("OS;2027;$fnr")
+                    JmsTestUtil.sendMessage(msg = "OS;2027;$fnr", queue = forespoerselQueue)
 
                     eventually(eventuallyConfiguration) {
                         DbListener.dataSource.transaction { tx ->
@@ -62,7 +62,7 @@ class MottaBestillingEndToEndTest :
                             }
                         }
                     }
-                    JmsTestUtil.assertQueueIsEmpty(bestillingsQueue)
+                    JmsTestUtil.assertQueueIsEmpty(forespoerselQueue)
                 }
             }
         }

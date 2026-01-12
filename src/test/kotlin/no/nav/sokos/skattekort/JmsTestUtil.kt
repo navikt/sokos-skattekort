@@ -1,31 +1,29 @@
 package no.nav.sokos.skattekort
 
+import jakarta.jms.JMSContext.AUTO_ACKNOWLEDGE
 import jakarta.jms.JMSContext.SESSION_TRANSACTED
 import jakarta.jms.Message
 import jakarta.jms.Queue
-import jakarta.jms.Session
 
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.infrastructure.MQListener.allQueues
-import no.nav.sokos.skattekort.infrastructure.MQListener.bestillingsQueue
-import no.nav.sokos.skattekort.infrastructure.MQListener.producer
 
 object JmsTestUtil {
     fun sendMessage(
         msg: String,
-        queue: Queue = bestillingsQueue, // Vi bør fjerne defaulten her dersom vi ender opp med flere køer
+        queue: Queue,
     ) {
         MQListener.jmsContext.createContext(SESSION_TRANSACTED).use { context ->
             val message = context.createTextMessage(msg)
+            val producer = context.createProducer()
             producer.send(queue, message)
+            context.commit()
         }
     }
 
     fun getMessages(queue: Queue): List<String> =
-        MQListener.connectionFactory.createConnection().use { connection ->
-            connection.start()
-            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-            val consumer = session.createConsumer(queue)
+        MQListener.jmsContext.createContext(AUTO_ACKNOWLEDGE).use { context ->
+            val consumer = context.createConsumer(queue)
             val messages = mutableListOf<String>()
             var msg: Message? = consumer.receive(100)
             while (msg != null) {
@@ -33,29 +31,24 @@ object JmsTestUtil {
                 msg = consumer.receive(100)
             }
             consumer.close()
-            session.close()
             messages
         }
 
     fun assertQueueIsEmpty(queue: Queue) {
-        MQListener.connectionFactory.createConnection().use { connection ->
-            connection.start()
-            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-            val browser = session.createBrowser(queue)
+        MQListener.jmsContext.createContext(AUTO_ACKNOWLEDGE).use { context ->
+            val browser = context.createBrowser(queue)
             if (browser.enumeration.hasMoreElements()) {
                 throw AssertionError("Fant flere meldinger i active mq")
             }
-            connection.close()
+            browser.close()
         }
     }
 
     fun assertAllQueuesAreEmpty() {
-        MQListener.connectionFactory.createConnection().use { connection ->
-            connection.start()
-            val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+        MQListener.jmsContext.createContext(AUTO_ACKNOWLEDGE).use { context ->
             val results: List<String> =
                 allQueues.mapNotNull { queue: Queue ->
-                    val browser = session.createBrowser(queue)
+                    val browser = context.createBrowser(queue)
                     if (browser.enumeration.hasMoreElements()) {
                         "Fant melding i kø " + queue.queueName
                     } else {
@@ -65,7 +58,6 @@ object JmsTestUtil {
             if (!results.isEmpty()) {
                 throw AssertionError("Fant meldinger i active mq: " + results.joinToString(", "))
             }
-            connection.close()
         }
     }
 }

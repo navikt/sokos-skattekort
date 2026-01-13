@@ -25,8 +25,8 @@ Vi bruker [Grafana alerts](https://grafana.nav.cloud.nais.io/alerting/list?searc
 
 ### Grafana
 
-[Grafana prod](https://grafana.nav.cloud.nais.io/d/8c975fff-46f6-4eb3-8dac-df4a47425f3a/sokos-skattekort?var-interval=2m&orgId=1&from=now-12h&to=now&timezone=browser&var-datasource=000000021&var-app=sokos-skattekort&var-namespace=okonomi&var-memory_pool_heap=$__all&refresh=30s)
-[Grafana test](https://grafana.nav.cloud.nais.io/d/8c975fff-46f6-4eb3-8dac-df4a47425f3a/sokos-skattekort?var-interval=2m&orgId=1&from=now-12h&to=now&timezone=browser&var-datasource=000000020&var-app=sokos-skattekort&var-namespace=okonomi&var-memory_pool_heap=$__all&refresh=30s)
+[Grafana prod](https://grafana.nav.cloud.nais.io/d/8c975fff-46f6-4eb3-8dac-df4a47425f3a/sokos-skattekort?var-datasource=000000021)
+[Grafana test](https://grafana.nav.cloud.nais.io/d/8c975fff-46f6-4eb3-8dac-df4a47425f3a/sokos-skattekort?var-datasource=000000020)
 
 ### Foreslått rutine for drift ved ekstra overvåkning av applikasjonen, f.eks. ved årsskifte
 

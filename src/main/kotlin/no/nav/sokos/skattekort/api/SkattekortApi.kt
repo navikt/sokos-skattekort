@@ -35,9 +35,6 @@ fun Route.skattekortApi(
             forespoerselService.taImotForespoersel(message, saksbehandler)
             call.respond(HttpStatusCode.Created)
         }
-    }
-
-    route(BASE_PATH) {
         post("status") {
             val request = call.receive<ForespoerselRequest>()
             val saksbehandler = getSaksbehandler(call)

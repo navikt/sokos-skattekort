@@ -4,7 +4,7 @@ Noen ganger er det nødvendig å håndtere bestillinger av skattekort på bakgru
 
 1. Vurder om det er behov for mer minne eller CPU i kubernetes eller databaseinstallasjonene.
 2. Finn fil. Det er ok å lagre filer med personnummer på arbeidsstasjoner midlertidig for å utføre prosesser som dette.
-3Lag SQL. Ved go-live fikk vi en fil som inneholdt personnummer som de første 11 tegnene per linje. Dette skriptet vil lage SQL som fungerer:
+3. Lag SQL. Ved go-live fikk vi en fil som inneholdt personnummer som de første 11 tegnene per linje. Dette skriptet vil lage SQL som fungerer:
    ```shell
       cat K231MFSP_Offnr_Sort.txt | cut -c 1-11 | perl -nle "chomp; my \$fnr = \$_; print q/INSERT INTO forespoersel_input (forsystem, inntektsaar, fnr) VALUES ('OS', 2025, '/.\$fnr.q/');/;" - > input.sql
    ```

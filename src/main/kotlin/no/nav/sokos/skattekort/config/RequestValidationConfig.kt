@@ -29,7 +29,10 @@ fun RequestValidationConfig.requestValidationSkattekortRequest() {
     validate<SkattekortPersonRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
-            !Validator.isValidInntektsaar(request.inntektsaar.toInt()) -> ValidationResult.Invalid("inntektsaar ser ikke ut som et gyldig årstall, var ${request.inntektsaar}")
+            request.inntektsaar != null &&
+                !Validator.isValidInntektsaar(
+                    request.inntektsaar.toInt(),
+                ) -> ValidationResult.Invalid("inntektsaar ser ikke ut som et gyldig årstall, var ${request.inntektsaar}")
             else -> ValidationResult.Valid
         }
     }

@@ -8,13 +8,14 @@ info:
     name: PO Utbetaling
     email: okonomi@nav.no
     url: https://nav-it.slack.com/archives/CKZADNFBP
-
+  servers:
+    - url: /api/v1/person
 tags:
   - name: skattekort
     description: Skattekort informasjon
 
 paths:
-  /api/v1/hent-skattekort:
+  /hent-skattekort:
     post:
       tags:
         - skattekort
@@ -56,10 +57,67 @@ paths:
 
       security:
         - Bearer: [ ]
-
+  
+  /opprett:
+    post:
+      summary: Opprett fiktivt skattekort
+      description: Oppretter fiktivt skattekort for person og inntektsår
+      operationId: opprettSkattekort
+      responses:
+        201:
+          description: OK - Skattekort er lagret
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Arbeidstaker'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        501:
+          description: Fordi den er ikke laget ennå
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        description: fnr og inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpprettSkattekortRequest'
+        required: true
+      security:
+        - Bearer: [ ]
 components:
   schemas:
-
+    OpprettSkattekortRequest:
+      type: object
+      properties:
+        fnr:
+          type: string
+          description: Fødselsnummer
+        inntektsar:
+          type: string
+          description: Inntektsår
+        skattekort:
+          $ref: '#/components/schemas/Skattekort'
+      required:
+        - fnr
+        - inntektsar
+        - skattekort
     SkattekortPersonRequest:
       type: object
       properties:
@@ -69,7 +127,7 @@ components:
         inntektsaar:
           type: integer
           format: int16
-          nullable: false
+          nullable: true
 
     Arbeidstaker:
       type: object

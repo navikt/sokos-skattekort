@@ -2,16 +2,13 @@ package no.nav.sokos.skattekort.module.forespoersel
 
 import kotlinx.datetime.LocalDate
 
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger { }
-
 enum class Foedselsnummerkategori(
     val value: String,
     val erGyldig: (String) -> Boolean,
 ) {
     GYLDIGE("GYLDIGE", ::gyldigFnrEllerDnrRegel),
     TENOR("TENOR", ::tenorRegel),
+    DOLLY("DOLLY", ::dollyRegel),
     ALLE("ALLE", ::lengdeOgTallRegel),
 }
 
@@ -22,6 +19,13 @@ fun gyldigFnrEllerDnrRegel(fnr: String): Boolean =
                 isDateParseable(fnr) ||
                     isDateParseable(fnr, dayOffset = 40)
             )
+    )
+
+fun dollyRegel(fnr: String): Boolean =
+    (
+        lengdeOgTallRegel(fnr) &&
+            isDateParseable(fnr, monthOffset = 40) ||
+            isDateParseable(fnr, dayOffset = 40, monthOffset = 40)
     )
 
 fun tenorRegel(fnr: String): Boolean =

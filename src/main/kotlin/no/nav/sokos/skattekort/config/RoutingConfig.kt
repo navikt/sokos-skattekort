@@ -6,7 +6,6 @@ import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.routing
 
 import no.nav.sokos.skattekort.api.skattekortApi
-import no.nav.sokos.skattekort.api.skattekortDollyApi
 import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
@@ -28,9 +27,6 @@ fun Application.routingConfig(
 
             skattekortApi(forespoerselService, statusService)
             skattekortPersonApi(skattekortPersonService)
-            if (applicationProperties.environment != PropertiesConfig.Environment.PROD) {
-                skattekortDollyApi()
-            }
         }
     }
 }

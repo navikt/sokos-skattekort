@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.security.AuthToken.getSaksbehandlerOrNull
 
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
-    route("/api/v1") {
+    route("/api/v1/person") {
         post("hent-skattekort") {
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = getSaksbehandlerOrNull(call)

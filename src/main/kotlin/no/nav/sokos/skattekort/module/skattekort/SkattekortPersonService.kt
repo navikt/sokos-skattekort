@@ -45,14 +45,15 @@ class SkattekortPersonService(
                 } else {
                     Util.lovligeInntektsaarAaHenteSkattekortFor()
                 }
-            allYears.flatMap { inntektsaar ->
-                SkattekortRepository.findAllByPersonId(
-                    tx,
-                    person.id!!,
-                    inntektsaar.toInt(),
-                    adminRole = false,
-                )
-            }
+            allYears
+                .flatMap { year ->
+                    SkattekortRepository.findAllByPersonId(
+                        tx,
+                        person.id!!,
+                        year.toInt(),
+                        adminRole = false,
+                    )
+                }.toList()
         }
     }
 }

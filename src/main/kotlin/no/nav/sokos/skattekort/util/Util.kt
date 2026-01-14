@@ -15,7 +15,7 @@ object Util {
 
     fun lovligeInntektsaarAaHenteSkattekortFor(): List<Short> {
         val now = now().toKotlinLocalDateTime()
-        val min = now.year
+        val min = now.year - 1
         return (min..maxInntektsaar(now)).map { it.toShort() }.toList()
     }
 

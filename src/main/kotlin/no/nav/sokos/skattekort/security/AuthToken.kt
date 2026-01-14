@@ -19,6 +19,20 @@ object AuthToken {
         return Saksbehandler(navIdent)
     }
 
+    fun getSaksbehandlerOrNull(call: ApplicationCall): Saksbehandler? {
+        val oboToken =
+            call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
+                ?: return null
+
+        val navIdent =
+            try {
+                getNAVIdentFromToken(oboToken)
+            } catch (unauthorizedException: UnauthorizedException) {
+                return null
+            }
+        return Saksbehandler(navIdent)
+    }
+
     private fun getNAVIdentFromToken(token: String): String {
         val decodedJWT = JWT.decode(token)
         return decodedJWT.claims[JWT_CLAIM_NAVIDENT]?.asString()

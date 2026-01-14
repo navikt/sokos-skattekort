@@ -4,15 +4,17 @@ import javax.sql.DataSource
 
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Arbeidstaker
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.audit.AuditLogg
 import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.config.UnauthorizedException
+import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori.DOLLY
+import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori.TENOR
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.util.Util
 
 private val logger = KotlinLogging.logger {}
 
@@ -21,34 +23,36 @@ class SkattekortPersonService(
     private val auditLogger: AuditLogger,
 ) {
     fun hentSkattekortPerson(
-        skattekortPersonRequest: SkattekortPersonRequest,
-        saksbehandler: Saksbehandler,
-    ): List<Arbeidstaker> =
-        dataSource.transaction { tx ->
-            logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $skattekortPersonRequest" }
-            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = skattekortPersonRequest.fnr))
+        fnr: String,
+        inntektsaar: Short? = null,
+        saksbehandler: Saksbehandler? = null,
+    ): List<Skattekort> {
+        logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
+        if (saksbehandler != null) {
+            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
+        } else if (!DOLLY.erGyldig(fnr) && !TENOR.erGyldig(fnr)) {
+            throw UnauthorizedException("Oppslag på skattekort for reelle fnr må gjøres på vegne av en saksbehandler")
+        }
+        return dataSource.transaction { tx ->
+            val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
 
-            val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(skattekortPersonRequest.fnr)) ?: return@transaction emptyList()
-
-            val skattekort: List<Skattekort> =
-                SkattekortRepository
-                    .findAllByPersonId(
-                        tx,
-                        person.id!!,
-                        skattekortPersonRequest.inntektsaar.toInt(),
-                        adminRole = false,
-                    )
-
-            return@transaction when {
-                skattekort.isEmpty() -> emptyList()
-                else ->
-                    skattekort.map { skattekortItem ->
-                        Arbeidstaker(
-                            skattekortPersonRequest.inntektsaar.toLong(),
-                            skattekortPersonRequest.fnr,
-                            skattekortItem,
-                        )
+            val allYears =
+                if (inntektsaar != null) {
+                    require(!Util.lovligeInntektsaarAaHenteSkattekortFor().contains(inntektsaar)) {
+                        "Ugyldig inntektsår"
                     }
+                    listOf(inntektsaar)
+                } else {
+                    Util.lovligeInntektsaarAaHenteSkattekortFor()
+                }
+            allYears.flatMap { inntektsaar ->
+                SkattekortRepository.findAllByPersonId(
+                    tx,
+                    person.id!!,
+                    inntektsaar.toInt(),
+                    adminRole = false,
+                )
             }
         }
+    }
 }

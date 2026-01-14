@@ -4,6 +4,7 @@ import javax.sql.DataSource
 
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Arbeidstaker
 import no.nav.sokos.skattekort.audit.AuditLogg
 import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -26,7 +27,7 @@ class SkattekortPersonService(
         fnr: String,
         inntektsaar: Short? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<Skattekort> {
+    ): List<Arbeidstaker> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
         if (saksbehandler != null) {
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
@@ -38,7 +39,7 @@ class SkattekortPersonService(
 
             val allYears =
                 if (inntektsaar != null) {
-                    require(!Util.lovligeInntektsaarAaHenteSkattekortFor().contains(inntektsaar)) {
+                    require(Util.lovligeInntektsaarAaHenteSkattekortFor().contains(inntektsaar)) {
                         "Ugyldig inntektsår"
                     }
                     listOf(inntektsaar)
@@ -47,12 +48,19 @@ class SkattekortPersonService(
                 }
             allYears
                 .flatMap { year ->
-                    SkattekortRepository.findAllByPersonId(
-                        tx,
-                        person.id!!,
-                        year.toInt(),
-                        adminRole = false,
-                    )
+                    SkattekortRepository
+                        .findAllByPersonId(
+                            tx,
+                            person.id!!,
+                            year.toInt(),
+                            adminRole = false,
+                        ).map { skattekortItem ->
+                            Arbeidstaker(
+                                year.toLong(),
+                                fnr,
+                                skattekortItem,
+                            )
+                        }
                 }.toList()
         }
     }

@@ -8,8 +8,8 @@ info:
     name: PO Utbetaling
     email: okonomi@nav.no
     url: https://nav-it.slack.com/archives/CKZADNFBP
-  servers:
-    - url: /api/v1/person
+servers:
+  - url: /api/v1/person
 tags:
   - name: skattekort
     description: Skattekort informasjon

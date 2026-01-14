@@ -29,10 +29,10 @@ repositories {
 
 val ktorVersion = "3.3.3"
 val nimbusVersion = "10.6"
-val logbackVersion = "1.5.23"
+val logbackVersion = "1.5.24"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.1"
-val dbSchedulerVersion = "16.6.0"
+val dbSchedulerVersion = "16.7.0"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val kotestVersion = "6.0.7"

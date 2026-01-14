@@ -50,7 +50,6 @@ class ForespoerselServiceTest :
                     forespoerselList.size shouldBe 1
                     val forespoersel = forespoerselList.first()
                     forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
-                    forespoersel.batch shouldBe false
 
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 1
@@ -81,7 +80,7 @@ class ForespoerselServiceTest :
                             size shouldBe 1
                             shouldContainAllIgnoringFields(
                                 listOf(
-                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET, batch = true),
+                                    Forespoersel(dataMottatt = osMessage, forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
                                 ),
                                 Forespoersel::id,
                                 Forespoersel::opprettet,
@@ -248,6 +247,7 @@ class ForespoerselServiceTest :
                                     personId = PersonId(1),
                                     fnr = Personidentifikator("19876543210"),
                                     inntektsaar = 2025,
+                                    forespoerselId = ForespoerselId(1),
                                 ),
                             ),
                             Bestilling::id,

@@ -57,7 +57,7 @@ object ForespoerselRepository {
             mapToForespoersel,
         )
 
-    fun getAllForespoerselInput(tx: TransactionalSession): List<ForespoerselService.ForespoerselInput> =
+    fun getAllForespoerselInput(tx: TransactionalSession): List<ForespoerselInput> =
         tx.list(
             queryOf(
                 """
@@ -75,8 +75,8 @@ object ForespoerselRepository {
         )
     }
 
-    private val mapToForespoerselInput: (Row) -> ForespoerselService.ForespoerselInput = { row ->
-        ForespoerselService.ForespoerselInput(
+    private val mapToForespoerselInput: (Row) -> ForespoerselInput = { row ->
+        ForespoerselInput(
             forsystem = Forsystem.fromValue(row.string("forsystem")),
             inntektsaar = row.int("inntektsaar"),
             fnrList = listOf(row.string("fnr")),

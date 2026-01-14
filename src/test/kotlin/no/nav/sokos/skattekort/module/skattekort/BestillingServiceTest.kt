@@ -16,6 +16,7 @@ import io.kotest.inspectors.forAll
 import io.kotest.inspectors.forExactly
 import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotContain
@@ -27,6 +28,7 @@ import io.mockk.mockk
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -34,6 +36,7 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
@@ -44,6 +47,7 @@ import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
 import no.nav.sokos.skattekort.module.utsending.Utsending
+import no.nav.sokos.skattekort.module.utsending.UtsendingId
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
@@ -85,9 +89,12 @@ class BestillingServiceTest :
                     aPerson(1L, "01010100001"),
                     aPerson(2L, "02020200002"),
                     aPerson(3L, "03030300003"),
-                    aBestilling(1L, "01010100001", 2026, null),
-                    aBestilling(2L, "02020200002", 2026, null),
-                    aBestilling(3L, "03030300003", 2026, null),
+                    anAbonnement(1L, personId = 1L, inntektsaar = 2026),
+                    anAbonnement(1L, personId = 2L, inntektsaar = 2026),
+                    anAbonnement(1L, personId = 3L, inntektsaar = 2026),
+                    aBestilling(1L, "01010100001", 2026, null, 1L),
+                    aBestilling(2L, "02020200002", 2026, null, 1L),
+                    aBestilling(3L, "03030300003", 2026, null, 1L),
                 )
 
                 bestillingService.opprettBestillingsbatch()
@@ -139,9 +146,12 @@ class BestillingServiceTest :
                 aPerson(1L, "01010100001"),
                 aPerson(2L, "02020200002"),
                 aPerson(3L, "03030300003"),
-                aBestilling(1L, "01010100001", 2025, null),
-                aBestilling(2L, "02020200002", 2026, null),
-                aBestilling(3L, "03030300003", 2026, null),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                anAbonnement(1L, personId = 2L, inntektsaar = 2026),
+                anAbonnement(1L, personId = 3L, inntektsaar = 2026),
+                aBestilling(1L, "01010100001", 2025, null, 1L),
+                aBestilling(2L, "02020200002", 2026, null, 1L),
+                aBestilling(3L, "03030300003", 2026, null, 1L),
             )
 
             withConstantNow(LocalDateTime.parse("2025-12-14T00:00:00")) {
@@ -237,7 +247,7 @@ class BestillingServiceTest :
                 aPerson(1L, "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "01010100001", 2025, 1L),
+                aBestilling(1L, "01010100001", 2025, 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -284,7 +294,7 @@ class BestillingServiceTest :
                 aPerson(1L, "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "01010100001", 2025, 1L),
+                aBestilling(1L, "01010100001", 2025, 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -311,7 +321,7 @@ class BestillingServiceTest :
                 aPerson(1L, "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "01010100001", 2025, 1L),
+                aBestilling(1L, "01010100001", 2025, 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -335,7 +345,7 @@ class BestillingServiceTest :
                 aPerson(1L, "12345678901"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "12345678901", 2025, 1L),
+                aBestilling(1L, "12345678901", 2025, 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -390,8 +400,8 @@ class BestillingServiceTest :
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
                 aBestillingsBatch(2, "BR1338", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "12345678901", 2025, 1L),
-                aBestilling(1L, "23456789012", 2025, 2L),
+                aBestilling(1L, "12345678901", 2025, 1L, 1L),
+                aBestilling(1L, "23456789012", 2025, 2L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -447,7 +457,7 @@ class BestillingServiceTest :
                 aPerson(1L, "12345678901"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "12345678901", 2025, 1L),
+                aBestilling(1L, "12345678901", 2025, 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -504,7 +514,7 @@ class BestillingServiceTest :
                 aPerson(1L, "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "01010100001", 2025, 1L),
+                aBestilling(1L, "01010100001", 2025, 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -594,10 +604,10 @@ class BestillingServiceTest :
                 anAbonnement(4L, personId = 4L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
                 aBestillingsBatch(2, "ref2", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "01010100001", 2025, 1L),
-                aBestilling(2L, "02020200002", 2025, 2L),
-                aBestilling(3L, "02020200003", 2025, 2L), // NB: også batch 2
-                aBestilling(4L, "04040400004", 2025, null),
+                aBestilling(1L, "01010100001", 2025, 1L, 1L),
+                aBestilling(2L, "02020200002", 2025, 2L, 2L),
+                aBestilling(3L, "02020200003", 2025, 2L, 3L), // NB: også batch 2
+                aBestilling(4L, "04040400004", 2025, null, 4L),
             )
 
             bestillingService.hentSkattekort()
@@ -639,11 +649,13 @@ class BestillingServiceTest :
 
             databaseHas(
                 aPerson(1L, "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
-                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L, 1L),
                 aPerson(2L, "02020200002"),
+                anAbonnement(2L, personId = 2L, inntektsaar = 2025),
                 aBestillingsBatch(id = 2L, ref = "ref2", status = "NY"),
-                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L),
+                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L, 2L),
             )
 
             bestillingService.hentSkattekort()
@@ -724,8 +736,9 @@ class BestillingServiceTest :
 
             databaseHas(
                 aPerson(1L, "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
-                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L, 1L),
             )
 
             shouldThrow<UgyldigOrganisasjonsnummerException> {
@@ -774,11 +787,14 @@ class BestillingServiceTest :
                 aPerson(personId = 1L, fnr = "01010100001"),
                 aPerson(personId = 2L, fnr = "02020200002"),
                 aPerson(personId = 3L, fnr = "03030300003"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                anAbonnement(1L, personId = 2L, inntektsaar = 2025),
+                anAbonnement(1L, personId = 3L, inntektsaar = 2025),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestillingsBatch(id = 2L, ref = "ref2", status = "NY"),
-                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
-                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L),
-                aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 2L),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L, 1L),
+                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L, 1L),
+                aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 2L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -853,8 +869,9 @@ class BestillingServiceTest :
                 )
             databaseHas(
                 aPerson(personId = 1L, fnr = "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
-                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -927,8 +944,9 @@ class BestillingServiceTest :
                 )
             databaseHas(
                 aPerson(personId = 1L, fnr = "01010100001"),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
-                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -996,10 +1014,13 @@ class BestillingServiceTest :
                 aPerson(fnr = "01010100001", personId = 1L),
                 aPerson(fnr = "02020200002", personId = 2L),
                 aPerson(fnr = "03030300003", personId = 3L),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                anAbonnement(1L, personId = 2L, inntektsaar = 2025),
+                anAbonnement(1L, personId = 3L, inntektsaar = 2025),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
-                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
-                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 1L),
-                aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 1L),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L, 1L),
+                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 1L, 1L),
+                aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 1L, 1L),
             )
 
             shouldThrow<RuntimeException> {
@@ -1044,10 +1065,12 @@ class BestillingServiceTest :
             databaseHas(
                 aPerson(fnr = "01010100001", personId = 1L),
                 aPerson(fnr = "02020200002", personId = 2L),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+                anAbonnement(1L, personId = 2L, inntektsaar = 2025),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "FEILET"),
                 aBestillingsBatch(id = 2L, ref = "ref2", status = "NY"),
-                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
-                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L, 1L),
+                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -1081,9 +1104,9 @@ class BestillingServiceTest :
 
             databaseHas(
                 aPerson(1L, fnr),
-                anAbonnement(1L, personId = 1L, inntektsaar = 2025, isBulkRequest = true),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, fnr, 2025, 1L),
+                aBestilling(1L, fnr, 2025, 1L, 1L),
             )
 
             bestillingService.hentSkattekort()

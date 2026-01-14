@@ -127,6 +127,7 @@ class ForespoerselService(
                                 personId = personId,
                                 fnr = Personidentifikator(fnr),
                                 inntektsaar = forespoerselInput.inntektsaar,
+                                forespoerselId = ForespoerselId(forespoerselId),
                             ),
                     )
                     bestillingCount++
@@ -204,10 +205,4 @@ class ForespoerselService(
             }
         }
     }
-
-    data class ForespoerselInput(
-        val forsystem: Forsystem,
-        val inntektsaar: Int,
-        val fnrList: List<String>,
-    )
 }

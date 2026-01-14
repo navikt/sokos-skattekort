@@ -10,6 +10,7 @@ import no.nav.sokos.skattekort.module.skattekort.aBestilling
 import no.nav.sokos.skattekort.module.skattekort.aBestillingsBatch
 import no.nav.sokos.skattekort.module.skattekort.aDbSkattekort
 import no.nav.sokos.skattekort.module.skattekort.aPerson
+import no.nav.sokos.skattekort.module.skattekort.anAbonnement
 import no.nav.sokos.skattekort.module.skattekort.anUtsending
 import no.nav.sokos.skattekort.module.skattekort.databaseHas
 
@@ -50,7 +51,8 @@ class StatusServiceTest :
             test("Person og en bestilling uten batch finnes. Skal ha status IKKE_BESTILT") {
                 databaseHas(
                     aPerson(1L, "01010100001"),
-                    aBestilling(1L, "01010100001", 2025, null),
+                    anAbonnement(1L, 1L, 2025),
+                    aBestilling(1L, "01010100001", 2025, null, 1L),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
@@ -60,8 +62,9 @@ class StatusServiceTest :
             test("Person, bestilling og batch finnes. Skal ha status BESTILT") {
                 databaseHas(
                     aPerson(1L, "01010100001"),
+                    anAbonnement(1L, 1L, 2025),
                     aBestillingsBatch(1L, ref = "1234", status = "NY", type = "BESTILLING"),
-                    aBestilling(1L, "01010100001", 2025, 1L),
+                    aBestilling(1L, "01010100001", 2025, 1L, 1L),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")

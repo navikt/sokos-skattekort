@@ -7,6 +7,7 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselId
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 
@@ -46,13 +47,14 @@ object BestillingRepository {
         tx.updateAndReturnGeneratedKey(
             queryOf(
                 """
-                    |INSERT INTO bestillinger (person_id, inntektsaar, fnr) 
-                    |VALUES (:personId, :inntektsaar, :fnr)
+                    |INSERT INTO bestillinger (person_id, inntektsaar, fnr, forespoersel_id) 
+                    |VALUES (:personId, :inntektsaar, :fnr, :forespoerselId)
                 """.trimMargin(),
                 mapOf(
                     "personId" to bestilling.personId.value,
                     "inntektsaar" to bestilling.inntektsaar,
                     "fnr" to bestilling.fnr.value,
+                    "forespoerselId" to bestilling.forespoerselId.value,
                 ),
             ),
         )
@@ -193,6 +195,7 @@ object BestillingRepository {
             inntektsaar = row.int("inntektsaar"),
             bestillingsbatchId = row.longOrNull("bestillingsbatch_id")?.let { BestillingsbatchId(it) },
             oppdatert = row.instant("oppdatert").toKotlinInstant(),
+            forespoerselId = ForespoerselId(row.long("forespoersel_id")),
         )
     }
 }

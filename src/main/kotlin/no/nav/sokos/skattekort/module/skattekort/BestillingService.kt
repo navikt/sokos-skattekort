@@ -128,7 +128,7 @@ class BestillingService(
         batcher.forEach { bestillingsbatch ->
             dataSource.transaction { tx ->
                 val batchId = bestillingsbatch.id!!.id
-                logger.info("Henter skattekort for ${bestillingsbatch.bestillingsreferanse}")
+                logger.info { "Henter skattekort for ${bestillingsbatch.bestillingsreferanse}" }
                 runBlocking {
                     try {
                         val response = skatteetatenClient.hentSkattekort(tx, bestillingsbatch.bestillingsreferanse)
@@ -391,7 +391,7 @@ class BestillingService(
         oppdateringsbatch: BestillingBatch,
     ): Any {
         val batchId = oppdateringsbatch.id!!.id
-        logger.info("Henter skattekort for ${oppdateringsbatch.bestillingsreferanse}")
+        logger.info { "Henter oppdatert skattekort for ${oppdateringsbatch.bestillingsreferanse}" }
         return runBlocking {
             try {
                 val response = skatteetatenClient.hentSkattekort(tx, oppdateringsbatch.bestillingsreferanse)

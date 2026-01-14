@@ -27,9 +27,6 @@ class MottaBestillingEndToEndTest :
         test("vi kan håndtere en forespørsel fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 withFullTestApplication {
-                    // Last inn SQL testdata
-                    DbListener.loadDataSet("basicendtoendtest/basicdata.sql")
-
                     val fnr = "15467834260"
                     JmsTestUtil.sendMessage(msg = "OS;2027;$fnr", queue = forespoerselQueue)
 
@@ -50,7 +47,6 @@ class MottaBestillingEndToEndTest :
                                 abonnementList
                                     .first()
                                     .person.foedselsnummer.fnr.value shouldBe fnr
-                                abonnementList.first().inntektsaar shouldBe 2027
                                 abonnementList.first().forespoersel.forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
                                 abonnementList.first().inntektsaar shouldBe 2027
                             }

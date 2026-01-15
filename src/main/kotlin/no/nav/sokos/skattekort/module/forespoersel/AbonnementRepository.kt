@@ -55,14 +55,17 @@ object AbonnementRepository {
             mapToAbonnement,
         )
 
-    fun finnAktiveSystemer(
+    fun findForsystemByPersonIdAndInntektsaar(
         tx: TransactionalSession,
         personId: PersonId,
         inntektsaar: Int,
     ): List<Forsystem> =
         tx.list(
             queryOf(
-                """SELECT distinct f.forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id WHERE a.person_id = :personId and a.inntektsaar = :inntektsaar""",
+                """
+                    |SELECT distinct f.forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id 
+                    |WHERE f.forsystem != '${Forsystem.OPPDRAGSSYSTEMET_STOR.value}' AND a.person_id = :personId and a.inntektsaar = :inntektsaar
+                """.trimMargin(),
                 mapOf(
                     "personId" to personId.value,
                     "inntektsaar" to inntektsaar,

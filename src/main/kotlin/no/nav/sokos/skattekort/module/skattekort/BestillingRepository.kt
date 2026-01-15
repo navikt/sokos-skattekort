@@ -8,6 +8,7 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselId
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 
@@ -167,7 +168,7 @@ object BestillingRepository {
             extractor = { row -> row.double("earliest_oppdatert") },
         ) ?: error("Should always return something")
 
-    fun hentResterendeBestillinger(
+    fun getAllPersonIdByBestillingBatchId(
         tx: TransactionalSession,
         batchId: Long,
     ): List<PersonId> =
@@ -177,12 +178,31 @@ object BestillingRepository {
                 SELECT person_id FROM bestillinger
                 WHERE bestillingsbatch_id = :bestillingsbatchId
                 """.trimIndent(),
+                mapOf("bestillingsbatchId" to batchId),
+            ),
+            extractor = { row ->
+                PersonId(row.long("person_id"))
+            },
+        )
+
+    fun findForsystemByPersonIdAndBestillingBatchId(
+        tx: TransactionalSession,
+        personId: PersonId,
+        batchId: Long,
+    ): Forsystem? =
+        tx.single(
+            queryOf(
+                """
+                SELECT f.forsystem FROM bestillinger b JOIN forespoersler f ON f.id = b.forespoersel_id 
+                WHERE b.person_id = :personId AND b.bestillingsbatch_id = :bestillingsbatchId
+                """.trimIndent(),
                 mapOf(
+                    "personId" to personId.value,
                     "bestillingsbatchId" to batchId,
                 ),
             ),
             extractor = { row ->
-                PersonId(row.long("person_id"))
+                Forsystem.fromValue(row.string("forsystem"))
             },
         )
 

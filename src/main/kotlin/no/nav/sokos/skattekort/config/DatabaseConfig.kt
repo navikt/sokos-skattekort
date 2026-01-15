@@ -62,11 +62,6 @@ object DatabaseConfig {
             connectionTimeout = Duration.ofSeconds(10).toMillis()
             initializationFailTimeout = Duration.ofMinutes(5).toMillis()
 
-            maxLifetime = Duration.ofMinutes(30).toMillis()
-            keepaliveTime = Duration.ofMinutes(5).toMillis()
-            leakDetectionThreshold = Duration.ofSeconds(60).toMillis()
-            validationTimeout = Duration.ofSeconds(5).toMillis()
-
             when {
                 !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {
                     jdbcUrl = postgresProperties.jdbcUrl

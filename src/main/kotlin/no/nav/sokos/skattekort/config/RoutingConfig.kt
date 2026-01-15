@@ -5,6 +5,7 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.routing
 
+import no.nav.sokos.skattekort.api.deprecatedSkattekortPersonApi
 import no.nav.sokos.skattekort.api.skattekortApi
 import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
@@ -15,7 +16,6 @@ import no.nav.sokos.skattekort.module.status.StatusService
 fun Application.routingConfig(
     applicationState: ApplicationState,
     azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties(),
-    applicationProperties: PropertiesConfig.ApplicationProperties = PropertiesConfig.getApplicationProperties(),
 ) {
     routing {
         internalNaisRoutes(applicationState)
@@ -27,6 +27,7 @@ fun Application.routingConfig(
 
             skattekortApi(forespoerselService, statusService)
             skattekortPersonApi(skattekortPersonService)
+            deprecatedSkattekortPersonApi(skattekortPersonService)
         }
     }
 }

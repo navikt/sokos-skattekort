@@ -12,6 +12,7 @@ import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT
+import no.nav.sokos.skattekort.module.skattekort.ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor
 
 object SkattekortRepository {
     fun insert(
@@ -112,19 +113,21 @@ object SkattekortRepository {
     fun findAllByPersonId(
         tx: TransactionalSession,
         personId: PersonId,
-        inntektsaar: Int,
+        inntektsaar: Int?,
         adminRole: Boolean,
-    ): List<Skattekort> =
-        tx.list(
+    ): List<Skattekort> {
+        val hentFor = if (inntektsaar != null) listOf(inntektsaar) else alleLovligeInntektsaarAaHenteSkattekortFor()
+
+        return tx.list(
             queryOf(
                 """
                 SELECT * FROM skattekort 
-                WHERE person_id = :personId AND inntektsaar = :inntektsaar
+                WHERE person_id = :personId AND inntektsaar IN (:inntektsaar)
                 ORDER BY opprettet DESC, id DESC
                 """.trimIndent(),
                 mapOf(
                     "personId" to personId.value,
-                    "inntektsaar" to inntektsaar,
+                    "inntektsaar" to hentFor,
                 ),
             ),
             extractor = { row ->
@@ -132,6 +135,7 @@ object SkattekortRepository {
                 Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id, adminRole = adminRole), findAllTilleggsopplysningBySkattekortId(tx, id, adminRole))
             },
         )
+    }
 
     fun findAllForskuddstrekkBySkattekortId(
         tx: TransactionalSession,

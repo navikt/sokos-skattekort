@@ -10,33 +10,18 @@ const val JWT_CLAIM_NAVIDENT = "NAVident"
 const val JWT_CLAIM_GROUPS = "groups"
 
 object AuthToken {
-    fun getSaksbehandler(call: ApplicationCall): Saksbehandler {
+    fun authorizeAndGetMandatorySaksbehandler(call: ApplicationCall): Saksbehandler {
         val oboToken =
             call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
                 ?: throw UnauthorizedException("Could not get token from request header")
 
-        val navIdent = getNAVIdentFromToken(oboToken)
+        val navIdent = getNAVIdentFromToken(oboToken) ?: throw UnauthorizedException("Missing NAVident in private claims")
         return Saksbehandler(navIdent)
     }
 
-    fun getSaksbehandlerOrNull(call: ApplicationCall): Saksbehandler? {
-        val oboToken =
-            call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
-                ?: return null
-
-        val navIdent =
-            try {
-                getNAVIdentFromToken(oboToken)
-            } catch (unauthorizedException: UnauthorizedException) {
-                return null
-            }
-        return Saksbehandler(navIdent)
-    }
-
-    private fun getNAVIdentFromToken(token: String): String {
+    fun getNAVIdentFromToken(token: String): String? {
         val decodedJWT = JWT.decode(token)
         return decodedJWT.claims[JWT_CLAIM_NAVIDENT]?.asString()
-            ?: throw UnauthorizedException("Missing NAVident in private claims")
     }
 }
 

@@ -14,7 +14,7 @@ import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.status.StatusService
-import no.nav.sokos.skattekort.security.AuthToken.getSaksbehandler
+import no.nav.sokos.skattekort.security.AuthToken.authorizeAndGetMandatorySaksbehandler
 
 private val logger = KotlinLogging.logger { }
 
@@ -27,9 +27,13 @@ fun Route.skattekortApi(
     route(BASE_PATH) {
         post("bestille") {
             val request = call.receive<ForespoerselRequest>()
-            val saksbehandler = getSaksbehandler(call)
+            val saksbehandler = authorizeAndGetMandatorySaksbehandler(call)
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Mottatt forespørsel: $request" }
+            logger.info(marker = TEAM_LOGS_MARKER) {
+                "skattekortApi - Mottatt forespørsel: $request ${
+                    if (saksbehandler != null) "på vegne av ${saksbehandler.ident}" else ""
+                }}"
+            }
 
             val message = "${request.forsystem};${request.aar};${request.personIdent}"
             forespoerselService.taImotForespoersel(message, saksbehandler)
@@ -37,10 +41,13 @@ fun Route.skattekortApi(
         }
         post("status") {
             val request = call.receive<ForespoerselRequest>()
-            val saksbehandler = getSaksbehandler(call)
+            val saksbehandler = authorizeAndGetMandatorySaksbehandler(call)
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Ber om status på forespørsel: $request" }
-
+            logger.info(marker = TEAM_LOGS_MARKER) {
+                "skattekortApi - Mottatt forespørsel: $request ${
+                    if (saksbehandler != null) "på vegne av ${saksbehandler.ident}" else ""
+                }}"
+            }
             call.respond(
                 StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem)),
             )

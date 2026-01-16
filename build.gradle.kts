@@ -28,7 +28,7 @@ repositories {
 }
 
 val ktorVersion = "3.3.3"
-val nimbusVersion = "10.6"
+val nimbusVersion = "10.7"
 val logbackVersion = "1.5.24"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.1"
@@ -44,7 +44,7 @@ val mockkVersion = "1.14.7"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "11.20.0"
+val flywayVersion = "11.20.1"
 val postgresVersion = "42.7.8"
 val activemqVersion = "2.44.0"
 val ibmmqVersion = "9.4.4.1"

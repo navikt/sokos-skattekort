@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort.api
 
 import java.time.Year
 
+import kotlinx.serialization.Serializable
+
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
@@ -17,6 +19,7 @@ import no.nav.sokos.skattekort.api.SkattekortPersonAPI.authorizeAndGetOptionalSa
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+import no.nav.sokos.skattekort.module.skattekort.SkattekortDTO
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidAar
@@ -39,7 +42,12 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
                 val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
                 val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
                 call.respond(
-                    skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler).isNotEmpty(),
+                    skattekortPersonService
+                        .hentSkattekortPerson(
+                            skattekortPersonRequest.fnr,
+                            skattekortPersonRequest.inntektsaar,
+                            saksbehandler,
+                        ).isNotEmpty(),
                 )
             } else {
                 call.respond(HttpStatusCode.NotAcceptable)
@@ -47,7 +55,15 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
         }
 
         post("opprett") {
-            call.respond(HttpStatusCode.NotImplemented)
+            val request = call.receive<OpprettSkattekortRequest>()
+            val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
+            val id =
+                skattekortPersonService.opprettSkattekort(
+                    request.fnr,
+                    request.skattekort,
+                    saksbehandler,
+                )
+            call.respond(HttpStatusCode.Accepted)
         }
     }
 }
@@ -99,3 +115,9 @@ object SkattekortPersonAPI {
         return navIdent?.let { Saksbehandler(it) }
     }
 }
+
+@Serializable
+data class OpprettSkattekortRequest(
+    val fnr: String,
+    val skattekort: SkattekortDTO,
+)

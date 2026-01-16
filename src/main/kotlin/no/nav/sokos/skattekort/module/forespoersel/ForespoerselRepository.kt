@@ -12,16 +12,18 @@ object ForespoerselRepository {
         tx: TransactionalSession,
         forsystem: Forsystem,
         dataMottatt: String,
+        batch: Boolean = false,
     ): Long =
         tx.updateAndReturnGeneratedKey(
             queryOf(
                 """
-                INSERT INTO forespoersler (forsystem, data_mottatt)
-                VALUES (:forsystem, :data_mottatt)
+                INSERT INTO forespoersler (forsystem, data_mottatt, batch)
+                VALUES (:forsystem, :data_mottatt, :batch)
                 """.trimIndent(),
                 mapOf(
                     "forsystem" to forsystem.value,
                     "data_mottatt" to dataMottatt,
+                    "batch" to batch,
                 ),
             ),
         ) ?: throw IllegalStateException("Failed to insert forespoersel")
@@ -90,6 +92,7 @@ object ForespoerselRepository {
             forsystem = Forsystem.fromValue(row.string("forsystem")),
             dataMottatt = row.string("data_mottatt"),
             opprettet = row.instant("opprettet").toKotlinInstant(),
+            batch = row.boolean("batch"),
         )
     }
 }

@@ -20,6 +20,7 @@ import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
@@ -321,7 +322,12 @@ class BestillingService(
         personidentifikator: Personidentifikator,
         inntektsaar: Int,
     ) {
-        BestillingRepository.findForsystemByPersonIdAndBestillingBatchId(tx, personId, bestillingBatchId)?.let { forsystem ->
+        BestillingRepository.findForespoerselByPersonIdAndBestillingBatchId(tx, personId, bestillingBatchId)?.let { forespoersel ->
+            val forsystem =
+                when {
+                    forespoersel.batch -> Forsystem.OPPDRAGSSYSTEMET_STOR
+                    else -> forespoersel.forsystem
+                }
             UtsendingRepository.insert(
                 tx,
                 Utsending(

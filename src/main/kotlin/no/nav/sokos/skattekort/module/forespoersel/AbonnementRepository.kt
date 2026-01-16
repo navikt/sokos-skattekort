@@ -39,7 +39,7 @@ object AbonnementRepository {
         tx.list(
             queryOf(
                 """
-                |SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.inntektsaar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
+                |SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, f.batch, fs.inntektsaar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
                 |FROM abonnementer fs
                 |LEFT JOIN forespoersler f ON f.id = fs.forespoersel_id
                 |LEFT JOIN personer p ON p.id = fs.person_id
@@ -64,7 +64,7 @@ object AbonnementRepository {
             queryOf(
                 """
                     |SELECT distinct f.forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id 
-                    |WHERE f.forsystem != '${Forsystem.OPPDRAGSSYSTEMET_STOR.value}' AND a.person_id = :personId and a.inntektsaar = :inntektsaar
+                    |WHERE a.person_id = :personId and a.inntektsaar = :inntektsaar
                 """.trimMargin(),
                 mapOf(
                     "personId" to personId.value,
@@ -84,6 +84,7 @@ object AbonnementRepository {
                     dataMottatt = "",
                     forsystem = Forsystem.fromValue(row.string("forsystem")),
                     opprettet = row.instant("opprettet").toKotlinInstant(),
+                    batch = row.boolean("batch"),
                 ),
             inntektsaar = row.int("inntektsaar"),
             person =

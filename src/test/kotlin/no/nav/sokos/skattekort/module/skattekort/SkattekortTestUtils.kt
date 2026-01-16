@@ -156,9 +156,10 @@ fun anAbonnement(
     personId: Long,
     inntektsaar: Int,
     forsystem: Forsystem = Forsystem.OPPDRAGSSYSTEMET,
+    batch: Boolean = false,
 ) = """
-    INSERT INTO forespoersler(id, data_mottatt, forsystem)
-                    VALUES ($forespoerselId, '', '${forsystem.value}')
+    INSERT INTO forespoersler(id, data_mottatt, forsystem, batch)
+                    VALUES ($forespoerselId, '', '${forsystem.value}', $batch)
                     ON CONFLICT DO NOTHING;
     
     INSERT INTO abonnementer(forespoersel_id, person_id, inntektsaar)

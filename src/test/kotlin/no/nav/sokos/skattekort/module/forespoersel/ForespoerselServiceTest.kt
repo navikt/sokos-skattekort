@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.module.forespoersel
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 import kotlin.time.ExperimentalTime
@@ -64,7 +65,7 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
-            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+            withConstantNow(LocalDate.parse("2024-04-12").atStartOfDay()) {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
                 val osMessage = "OS;2025;12345678901;23456789012;"
@@ -80,7 +81,7 @@ class ForespoerselServiceTest :
                             size shouldBe 1
                             shouldContainAllIgnoringFields(
                                 listOf(
-                                    Forespoersel(dataMottatt = osMessage, forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
+                                    Forespoersel(dataMottatt = osMessage, forsystem = Forsystem.OPPDRAGSSYSTEMET, batch = true),
                                 ),
                                 Forespoersel::id,
                                 Forespoersel::opprettet,

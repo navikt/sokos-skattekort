@@ -90,6 +90,7 @@ class ForespoerselService(
                 tx = tx,
                 forsystem = forespoerselInput.forsystem,
                 dataMottatt = message,
+                batch = forespoerselInput.isBatchProcess(),
             )
 
         var bestillingCount = 0
@@ -140,7 +141,12 @@ class ForespoerselService(
                         "Utsending eksisterer allerede for personId: ${personId.value}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
                     }
                 } else {
-                    UtsendingRepository.insert(tx, Utsending(null, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
+                    val forsystem =
+                        when (forespoerselInput.isBatchProcess()) {
+                            true -> Forsystem.OPPDRAGSSYSTEMET_STOR
+                            else -> forespoerselInput.forsystem
+                        }
+                    UtsendingRepository.insert(tx, Utsending(null, Personidentifikator(fnr), forespoerselInput.inntektsaar, forsystem))
                     utsendingCount++
                 }
             }
@@ -162,11 +168,7 @@ class ForespoerselService(
     @OptIn(ExperimentalTime::class)
     private fun parseCopybookMessage(message: String): ForespoerselInput {
         val parts = message.split(DELIMITER).filter { it.isNotBlank() }
-        val forsystem =
-            when {
-                Forsystem.OPPDRAGSSYSTEMET == Forsystem.fromValue(parts[0]) && parts.size > 3 -> Forsystem.OPPDRAGSSYSTEMET_STOR
-                else -> Forsystem.fromValue(parts[0])
-            }
+        val forsystem = Forsystem.fromValue(parts[0])
         val inntektsaar = Integer.parseInt(parts[1])
 
         return ForespoerselInput(

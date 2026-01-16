@@ -7,6 +7,7 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.module.forespoersel.Forespoersel
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselId
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.PersonId
@@ -185,15 +186,15 @@ object BestillingRepository {
             },
         )
 
-    fun findForsystemByPersonIdAndBestillingBatchId(
+    fun findForespoerselByPersonIdAndBestillingBatchId(
         tx: TransactionalSession,
         personId: PersonId,
         batchId: Long,
-    ): Forsystem? =
+    ): Forespoersel? =
         tx.single(
             queryOf(
                 """
-                SELECT f.forsystem FROM bestillinger b JOIN forespoersler f ON f.id = b.forespoersel_id 
+                SELECT f.* FROM bestillinger b JOIN forespoersler f ON f.id = b.forespoersel_id 
                 WHERE b.person_id = :personId AND b.bestillingsbatch_id = :bestillingsbatchId
                 """.trimIndent(),
                 mapOf(
@@ -202,7 +203,13 @@ object BestillingRepository {
                 ),
             ),
             extractor = { row ->
-                Forsystem.fromValue(row.string("forsystem"))
+                Forespoersel(
+                    id = ForespoerselId(row.long("id")),
+                    dataMottatt = row.string("data_mottatt"),
+                    forsystem = Forsystem.fromValue(row.string("forsystem")),
+                    opprettet = row.instant("opprettet").toKotlinInstant(),
+                    batch = row.boolean("batch"),
+                )
             },
         )
 

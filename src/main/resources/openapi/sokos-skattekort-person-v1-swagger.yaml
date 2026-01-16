@@ -39,7 +39,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Arbeidstaker'
+                  $ref: '#/components/schemas/SkattekortDTO'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -71,7 +71,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Arbeidstaker'
+                  $ref: '#/components/schemas/SkattekortDTO'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -103,21 +103,6 @@ paths:
         - Bearer: [ ]
 components:
   schemas:
-    OpprettSkattekortRequest:
-      type: object
-      properties:
-        fnr:
-          type: string
-          description: Fødselsnummer
-        inntektsar:
-          type: string
-          description: Inntektsår
-        skattekort:
-          $ref: '#/components/schemas/Skattekort'
-      required:
-        - fnr
-        - inntektsar
-        - skattekort
     SkattekortPersonRequest:
       type: object
       properties:
@@ -129,23 +114,51 @@ components:
           format: int16
           nullable: true
 
-    Arbeidstaker:
+    OpprettSkattekortRequest:
       type: object
       properties:
+        fnr:
+          type: string
+          nullable: false
+        skattekort:
+          $ref: '#/components/schemas/SkattekortDTO'
+    SkattekortDTO:
+      type: object
+      properties:
+        utstedtDato:
+          type: string
+          format: date
+          nullable: true
+        identifikator:
+          type: string
+          nullable: true
         inntektsaar:
           type: integer
-          format: int64
-        arbeidstakeridentifikator:
+        kilde:
           type: string
-        resultatPaaForespoersel:
-          $ref: '#/components/schemas/Resultatstatus'
-        skattekort:
-          $ref: '#/components/schemas/Skattekort'
-        tilleggsopplysning:
-          $ref: '#/components/schemas/Tilleggsopplysning'
-
-    Resultatstatus:
+          description: Hvor kommer skattekortet fra?
+          enum:
+            - skatteetaten
+            - syntetisert
+            - dolly
+        resultatForSkattekort:
+          type: string
+        forskuddstrekkList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForskuddstrekkDTO'
+        tilleggsopplysningList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tilleggsopplysning'
+      required:
+        - inntektsaar
+        - forskuddstrekkList
+        - tilleggsopplysningList
+    
+    ResultatForSkattekort:
       type: string
+      description: Result for skattekort
       enum:
         - ikkeSkattekort
         - ikkeTrekkplikt
@@ -153,23 +166,6 @@ components:
         - ugyldigOrganisasjonsnummer
         - ugyldigFoedselsEllerDnummer
         - utgaattDnummerSkattekortForFoedselsnummerErLevert
-
-    Skattekort:
-      type: object
-      nullable: true
-      properties:
-        utstedtDato:
-          type: string
-          format: date
-          nullable: true
-        skattekortidentifikator:
-          type: integer
-          format: int64
-          nullable: true
-        forskuddstrekk:
-          type: array
-          items:
-            $ref: '#/components/schemas/Forskuddstrekk'
 
     Tilleggsopplysning:
       type: string
@@ -180,68 +176,30 @@ components:
           - oppholdITiltakssone
           - kildeskattPaaLoenn
 
-    Forskuddstrekk:
+    ForskuddstrekkDTO:
       type: object
-      anyOf:
-        - $ref: '#/components/schemas/Frikort'
-        - $ref: '#/components/schemas/Trekktabell'
-        - $ref: '#/components/schemas/Trekkprosent'
-      discriminator:
-        propertyName: type
-        mapping:
-          Frikort: '#/components/schemas/Frikort'
-          Trekktabell: '#/components/schemas/Trekktabell'
-          Trekkprosent: '#/components/schemas/Trekkprosent'
-
-    Frikort:
-      type: object
-      required:
-        - type
       properties:
         trekkode:
-          type: string
-        frikortbeloep:
-          type: number
-          format: double
+          $ref: '#/components/schemas/Trekkode'
+        frikortBeloep:
+          type: integer
           nullable: true
-        type:
+        tabellNummer:
           type: string
-
-    Trekktabell:
-      type: object
-      required:
-        - type
-      properties:
-        trekkode:
-          type: string
-        tabellnummer:
-          type: string
-        prosentsats:
+        prosentSats:
           type: number
           format: double
-        antallMaanederForTrekk:
+        antallMndForTrekk:
           type: number
           format: double
-        type:
-          type: string
-
-    Trekkprosent:
-      type: object
-      required:
-        - type
-      properties:
-        trekkode:
-          type: string
-        prosentsats:
-          type: number
-          format: double
-        antallMaanederForTrekk:
-          type: number
-          format: double
-          nullable: true
-        type:
-          type: string
-
+    Trekkode:
+      type: string
+      description: Trekkode for forskuddstrekk
+      enum:
+        - loennFraNAV
+        - pensjonFraNAV
+        - ufoeretrygdFraNAV
+    
     ApiError:
       type: object
       required:

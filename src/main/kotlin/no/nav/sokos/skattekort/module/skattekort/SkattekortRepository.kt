@@ -18,13 +18,13 @@ object SkattekortRepository {
     fun insert(
         tx: TransactionalSession,
         skattekort: Skattekort,
-        batchId: String,
+        batchId: String? = null,
     ): Long {
         AuditRepository.insert(
             tx,
             AuditTag.SKATTEKORTINFORMASJON_MOTTATT,
             skattekort.personId,
-            "Lagret skattekortresultat ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar} fra bestillingsbatch $batchId",
+            "Lagret skattekort ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar} ${if (batchId != null) "fra bestillingsbatch $batchId" else "som er opprettet manuelt"}",
         )
         val id =
             tx.updateAndReturnGeneratedKey(
@@ -117,18 +117,17 @@ object SkattekortRepository {
         adminRole: Boolean,
     ): List<Skattekort> {
         val hentFor = if (inntektsaar != null) listOf(inntektsaar) else alleLovligeInntektsaarAaHenteSkattekortFor()
+        val inParams = hentFor.mapIndexed { idx, _ -> ":inntektsaar$idx" }.joinToString(", ")
+        val paramMap = hentFor.mapIndexed { idx, value -> "inntektsaar$idx" to value }.toMap() + ("personId" to personId.value)
 
         return tx.list(
             queryOf(
                 """
                 SELECT * FROM skattekort 
-                WHERE person_id = :personId AND inntektsaar IN (:inntektsaar)
+                WHERE person_id = :personId AND inntektsaar IN ($inParams)
                 ORDER BY opprettet DESC, id DESC
                 """.trimIndent(),
-                mapOf(
-                    "personId" to personId.value,
-                    "inntektsaar" to hentFor,
-                ),
+                paramMap,
             ),
             extractor = { row ->
                 val id = SkattekortId(row.long("id"))

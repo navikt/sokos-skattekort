@@ -69,6 +69,46 @@ data class Skattekort
             forskuddstrekkList = forskuddstrekkList,
             tilleggsopplysningList = tilleggsopplysningList,
         )
+
+        constructor(skattekortDTO: SkattekortDTO, personId: PersonId) : this(
+            personId = personId,
+            utstedtDato = skattekortDTO.utstedtDato?.let { LocalDate.parse(it) },
+            identifikator = skattekortDTO.identifikator,
+            inntektsaar = skattekortDTO.inntektsaar,
+            kilde = skattekortDTO.kilde,
+            resultatForSkattekort = ResultatForSkattekort.fromValue(skattekortDTO.resultatForSkattekort),
+            forskuddstrekkList =
+                skattekortDTO.forskuddstrekkList.map {
+                    when {
+                        it.frikortBeloep != null ->
+                            Frikort(
+                                trekkode = Trekkode.from(it.trekkode),
+                                frikortBeloep = it.frikortBeloep,
+                            )
+
+                        it.tabellNummer != null && it.prosentSats != null && it.antallMndForTrekk != null ->
+                            Tabellkort(
+                                trekkode = Trekkode.from(it.trekkode),
+                                tabellNummer = it.tabellNummer,
+                                prosentSats = BigDecimal.valueOf(it.prosentSats),
+                                antallMndForTrekk = BigDecimal.valueOf(it.antallMndForTrekk),
+                            )
+
+                        it.prosentSats != null ->
+                            Prosentkort(
+                                trekkode = Trekkode.from(it.trekkode),
+                                prosentSats = BigDecimal.valueOf(it.prosentSats),
+                                antallMndForTrekk =
+                                    it.antallMndForTrekk?.let { antallMnd ->
+                                        BigDecimal.valueOf(antallMnd)
+                                    },
+                            )
+
+                        else -> error("Ugyldig Forskuddstrekk: $it")
+                    }
+                },
+            tilleggsopplysningList = skattekortDTO.tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it) },
+        )
     }
 
 @Serializable
@@ -236,3 +276,60 @@ enum class Trekkode(
         fun from(kode: String): Trekkode = entries.find { it.value == kode } ?: error("Ukjent trekkode: $kode")
     }
 }
+
+// TODO Kutter ut noen tekniske ting som kilde, som avgjør i service,
+// og resultatForSkattekort, som alltid er skattekortopplysningerOK ved lagring.
+// Trekkode kan vi begrense til de vi har tjenestemessig behov for å ta imot
+@Serializable
+data class SkattekortDTO(
+    val utstedtDato: String?,
+    val identifikator: String?,
+    val inntektsaar: Int,
+    val kilde: String,
+    val resultatForSkattekort: String,
+    val forskuddstrekkList: List<ForskuddstrekkDTO>,
+    val tilleggsopplysningList: List<String>,
+) {
+    constructor(skattekort: Skattekort) : this(
+        utstedtDato = skattekort.utstedtDato?.toString(),
+        identifikator = skattekort.identifikator,
+        inntektsaar = skattekort.inntektsaar,
+        kilde = skattekort.kilde,
+        resultatForSkattekort = skattekort.resultatForSkattekort.value,
+        forskuddstrekkList =
+            skattekort.forskuddstrekkList.map {
+                when (it) {
+                    is Frikort ->
+                        ForskuddstrekkDTO(
+                            trekkode = it.trekkode.value,
+                            frikortBeloep = it.frikortBeloep,
+                        )
+
+                    is Prosentkort ->
+                        ForskuddstrekkDTO(
+                            trekkode = it.trekkode.value,
+                            prosentSats = it.prosentSats.toDouble(),
+                            antallMndForTrekk = it.antallMndForTrekk?.toDouble(),
+                        )
+
+                    is Tabellkort ->
+                        ForskuddstrekkDTO(
+                            trekkode = it.trekkode.value,
+                            tabellNummer = it.tabellNummer,
+                            prosentSats = it.prosentSats.toDouble(),
+                            antallMndForTrekk = it.antallMndForTrekk.toDouble(),
+                        )
+                }
+            },
+        tilleggsopplysningList = skattekort.tilleggsopplysningList.map { it.value },
+    )
+}
+
+@Serializable
+data class ForskuddstrekkDTO(
+    val trekkode: String,
+    val frikortBeloep: Int? = null,
+    val tabellNummer: String? = null,
+    val prosentSats: Double? = null,
+    val antallMndForTrekk: Double? = null,
+)

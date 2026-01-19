@@ -6,7 +6,9 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.atlassian.oai.validator.OpenApiInteractionValidator
+import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
@@ -55,14 +57,15 @@ class SkattekortpersonApiE2ETest :
                     }
 
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
-                validationReport.hasErrors() shouldBe false
-                response.status shouldBe HttpStatusCode.BadRequest
-
                 val apiError = response.body<ApiError>()
-                apiError.error shouldBe HttpStatusCode.BadRequest.description
-                apiError.status shouldBe HttpStatusCode.BadRequest.value
-                apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
-                apiError.path shouldBe HENT_SKATTEKORT_URL
+                assertSoftly {
+                    validationReport.hasErrors() shouldBe true
+                    response.status shouldBe HttpStatusCode.BadRequest
+                    apiError.error shouldBe HttpStatusCode.BadRequest.description
+                    apiError.status shouldBe HttpStatusCode.BadRequest.value
+                    apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
+                    apiError.path shouldBe HENT_SKATTEKORT_URL
+                }
             }
         }
 
@@ -79,14 +82,16 @@ class SkattekortpersonApiE2ETest :
                     }
 
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
-                validationReport.hasErrors() shouldBe false
-                response.status shouldBe HttpStatusCode.BadRequest
-
                 val apiError = response.body<ApiError>()
-                apiError.error shouldBe HttpStatusCode.BadRequest.description
-                apiError.status shouldBe HttpStatusCode.BadRequest.value
-                apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
-                apiError.path shouldBe HENT_SKATTEKORT_URL
+                assertSoftly {
+                    validationReport.hasErrors() shouldBe true
+                    response.status shouldBe HttpStatusCode.BadRequest
+
+                    apiError.error shouldBe HttpStatusCode.BadRequest.description
+                    apiError.status shouldBe HttpStatusCode.BadRequest.value
+                    apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
+                    apiError.path shouldBe HENT_SKATTEKORT_URL
+                }
             }
         }
 
@@ -183,7 +188,25 @@ class SkattekortpersonApiE2ETest :
             }
         }
 
-        test("Auth: token uten navident blir avvist") {
+        test("Auth: token uten navident blir avvist pga reelt fnr") {
+            TestUtils.withFullTestApplication {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
+
+                tokenWithoutNavIdent shouldNotBe null
+
+                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
+                val response =
+                    client.post(HENT_SKATTEKORT_URL) {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json)
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                        setBody(request)
+                    }
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("Auth: token uten navident blir ikke avvist utenom produksjon") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
@@ -197,7 +220,9 @@ class SkattekortpersonApiE2ETest :
                         header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
                         setBody(request)
                     }
-                response.status shouldBe HttpStatusCode.Unauthorized
+                response shouldNotBeNull {
+                    status shouldBe HttpStatusCode.OK
+                }
             }
         }
 

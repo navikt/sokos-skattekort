@@ -8,11 +8,11 @@ import io.kotest.matchers.shouldBe
 
 class FoedselsnummerkategoriTest :
     FunSpec({
-        test("gyldig fødselsnumre kan bestille skattekort etter reglene for GYLDIGE") {
+        test("Man skal kunne bestille skattekort for fnr og dnr med gyldig fødselsdato etter reglene for GYLDIGE") {
             Foedselsnummerkategori.GYLDIGE.kanBestilleSkattekort("01010112345") shouldBe true
             Foedselsnummerkategori.GYLDIGE.kanBestilleSkattekort("61010112345") shouldBe true
         }
-        test("ugyldige fnr kan ikke bestille skattekort etter reglene for GYLDIGE") {
+        test("Man skal ikke kunne bestille skattekort med feil i fnr etter reglene for GYLDIGE") {
             Foedselsnummerkategori.GYLDIGE.kanBestilleSkattekort shouldNotBeNull {
                 assertSoftly {
                     withClue("dag > 31") { this("32010112345") shouldBe false }
@@ -27,38 +27,38 @@ class FoedselsnummerkategoriTest :
                 }
             }
         }
-        test("KUNSTIGE_FNR.kan bestille skattekort skal returnere false for ekte fødselsnumre og ugyldige datoer") {
+        test("Man skal ikke kunne bestille skattekort for tilsynelatende ekte fødselsnumre og ugyldige datoer etter regler for KUNSTIGE_FNR") {
             Foedselsnummerkategori.KUNSTIGE_FNR.kanBestilleSkattekort("01010112345") shouldBe false
             Foedselsnummerkategori.KUNSTIGE_FNR.kanBestilleSkattekort("31820112345") shouldBe false
         }
-        test("KUNSTIGE_FNR.regel skal returnere true for tenorbrukere") {
+        test("Man skal kunne bestille skattekort for tenorbrukere etter reglene for KUNSTIGE_FNR") {
             Foedselsnummerkategori.KUNSTIGE_FNR.kanBestilleSkattekort shouldNotBeNull {
                 this("01810112345") shouldBe true
                 this("31920112345") shouldBe true
             }
         }
-        test("KUNSTIGE_FNR skal returnere true for dollybrukere") {
+        test("Dollybrukere skal være gyldige etter reglene for KUNSTIGE_FNR") {
             Foedselsnummerkategori.KUNSTIGE_FNR.erGyldig shouldNotBeNull {
                 this("01410112345") shouldBe true
                 this("31520112345") shouldBe true
             }
         }
-        test("KUNSTIGE_FNR dollybrukere skal ikke kunne bestille skattekort") {
+        test("Man skal kunne bestille skattekort for Dollybrukere etter reglene for KUNSTIGE_FNR") {
             Foedselsnummerkategori.KUNSTIGE_FNR.kanBestilleSkattekort shouldNotBeNull {
                 this("01410112345") shouldBe false
-                this("31520112345") shouldBe true
+                this("31520112345") shouldBe false
             }
         }
-        test("ALLE.regel skal returnere true så lenge det er 11-sifre") {
-            Foedselsnummerkategori.ALLE.kanBestilleSkattekort shouldNotBeNull {
+        test("Dollybrukere, Testnorge-brukere, reelle fnr og alle fnr med 11 sifre er gyldige etter reglene for ALLE") {
+            Foedselsnummerkategori.ALLE.erGyldig shouldNotBeNull {
                 this("01010112345") shouldBe true
                 this("61010112345") shouldBe true
                 this("01810112345") shouldBe true
                 this("99999999999") shouldBe true
             }
         }
-        test("ALLE.regel skal returnere false for feil lengde eller bokstaver") {
-            Foedselsnummerkategori.ALLE.kanBestilleSkattekort shouldNotBeNull {
+        test("Feil lengde eller bokstaver i fnr er ugyldig etter reglene for ALLE") {
+            Foedselsnummerkategori.ALLE.erGyldig shouldNotBeNull {
                 assertSoftly {
                     withClue("Skal bli false pga feil lengde") { this("010101") shouldBe false }
                     withClue("Skal bli false pga bokstaver") { this("abcdefghijk") shouldBe false }

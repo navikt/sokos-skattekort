@@ -70,12 +70,10 @@ class SkattekortPersonService(
             return null
         }
 
-        if (PropertiesConfig.getApplicationProperties().environment == PropertiesConfig.Environment.PROD) {
+        if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Manuell opprettelse av reelle skattekort må gjøres på vegne av en saksbehandler" }
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
         }
-
-        require(!(Foedselsnummerkategori.GYLDIGE.erGyldig(fnr) && saksbehandler == null)) { "Manuell opprettelse av skattekort for reelle fnr må gjøres på vegne av en saksbehandler" }
 
         return dataSource.transaction { tx ->
             val (personId) =

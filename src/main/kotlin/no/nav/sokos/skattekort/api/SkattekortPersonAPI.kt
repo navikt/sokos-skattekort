@@ -18,8 +18,8 @@ import io.ktor.server.routing.route
 import no.nav.sokos.skattekort.api.SkattekortPersonAPI.authorizeAndGetOptionalSaksbehandler
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.module.skattekort.SkattekortDTO
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidAar
@@ -110,7 +110,7 @@ object SkattekortPersonAPI {
         val authToken =
             call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
                 ?: return null
-        // Sjekk rolle for å kunne opprette skattekort
+        // Sjekk rolle for å kunne opprette skattekort i produksjon
         val navIdent = getNAVIdentFromToken(authToken)
         return navIdent?.let { Saksbehandler(it) }
     }

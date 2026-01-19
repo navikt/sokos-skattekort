@@ -24,7 +24,8 @@ paths:
       operationId: hentSkattekortPerson
 
       requestBody:
-        description: fnr og inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år
+        description: fnr er påkrevd. Inntektåret må være gjeldende år +/- 1 år hvis det er oppgitt.
+          Neste år kan kun benyttes fra og med 15. desember.
         content:
           application/json:
             schema:
@@ -86,14 +87,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
-        501:
-          description: Fordi den er ikke laget ennå
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
       requestBody:
-        description: fnr og inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år
+        description: fnr, inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år.
+
         content:
           application/json:
             schema:
@@ -109,10 +105,12 @@ components:
         fnr:
           type: string
           nullable: false
+          example: "12345678901"
         inntektsaar:
           type: integer
           format: int16
           nullable: true
+          example: 2026
 
     OpprettSkattekortRequest:
       type: object
@@ -120,6 +118,7 @@ components:
         fnr:
           type: string
           nullable: false
+          example: "12345678901"
         skattekort:
           $ref: '#/components/schemas/SkattekortDTO'
     SkattekortDTO:
@@ -129,20 +128,17 @@ components:
           type: string
           format: date
           nullable: true
-        identifikator:
-          type: string
-          nullable: true
         inntektsaar:
           type: integer
-        kilde:
-          type: string
-          description: Hvor kommer skattekortet fra?
-          enum:
-            - skatteetaten
-            - syntetisert
-            - dolly
+          format: year
+          example: 2026
         resultatForSkattekort:
           type: string
+          description: Result for skattekort
+          enum:
+            - skattekortopplysningerOK
+            - ikkeSkattekort
+            - ikkeTrekkplikt
         forskuddstrekkList:
           type: array
           items:
@@ -150,51 +146,41 @@ components:
         tilleggsopplysningList:
           type: array
           items:
-            $ref: '#/components/schemas/Tilleggsopplysning'
+            type: string
+            enum:
+              - oppholdPaaSvalbard
+              - kildeskattpensjonist
+              - oppholdITiltakssone
+              - kildeskattPaaLoenn
       required:
         - inntektsaar
         - forskuddstrekkList
         - tilleggsopplysningList
-    
-    ResultatForSkattekort:
-      type: string
-      description: Result for skattekort
-      enum:
-        - ikkeSkattekort
-        - ikkeTrekkplikt
-        - skattekortopplysningerOK
-        - ugyldigOrganisasjonsnummer
-        - ugyldigFoedselsEllerDnummer
-        - utgaattDnummerSkattekortForFoedselsnummerErLevert
-
-    Tilleggsopplysning:
-      type: string
-      items:
-        enum:
-          - oppholdPaaSvalbard
-          - kildeskattpensjonist
-          - oppholdITiltakssone
-          - kildeskattPaaLoenn
 
     ForskuddstrekkDTO:
       type: object
+      description: Frikortbeløp vil overstyre tabell, som igjen overstyrer prosentsats.
+        Oppgis tabell, må også antallMndForTrekk oppgis, eller brukes prosentsats.
       properties:
         trekkode:
           $ref: '#/components/schemas/Trekkode'
         frikortBeloep:
           type: integer
           nullable: true
-        tabellNummer:
+          example: 50000
+        tabell:
           type: string
+          example: "8010"
         prosentSats:
           type: number
           format: double
+          example: 25.5
         antallMndForTrekk:
           type: number
           format: double
+          example: 10.5
     Trekkode:
       type: string
-      description: Trekkode for forskuddstrekk
       enum:
         - loennFraNAV
         - pensjonFraNAV

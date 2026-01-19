@@ -2,12 +2,16 @@ package no.nav.sokos.skattekort.module.skattekort
 
 import javax.sql.DataSource
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.audit.AuditLogg
 import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
@@ -80,8 +84,20 @@ class SkattekortPersonService(
                     informasjon = "Skattekort manuelt opprettet for tidligere ukjent person",
                     tx = tx,
                 )
+            val today =
+                kotlin.time.Clock.System
+                    .now()
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                    .date
             // Evt opprette Bestilling for Testnorge-brukere?
-            val skattekort = Skattekort(skattekortDTO, personId)
+            val skattekort =
+                skattekortDTO.toDomainSkattekort(
+                    personId = personId,
+                    utstedtDato = skattekortDTO.utstedtDato ?: today,
+                    identifikator = "dolly",
+                    kilde = SkattekortKilde.MANUELL,
+                    resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+                )
             SkattekortRepository.insert(tx, skattekort)
         }
     }

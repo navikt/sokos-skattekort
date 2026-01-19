@@ -8,11 +8,11 @@ import io.kotest.matchers.shouldBe
 
 class FoedselsnummerkategoriTest :
     FunSpec({
-        test("GYLDIGE.regel skal returnere true for gyldig fødselsnumre") {
+        test("gyldig fødselsnumre kan bestille skattekort etter reglene for GYLDIGE") {
             Foedselsnummerkategori.GYLDIGE.kanBestilleSkattekort("01010112345") shouldBe true
             Foedselsnummerkategori.GYLDIGE.kanBestilleSkattekort("61010112345") shouldBe true
         }
-        test("GYLDIGE.regel skal returnere false for ugyldige fnr") {
+        test("ugyldige fnr kan ikke bestille skattekort etter reglene for GYLDIGE") {
             Foedselsnummerkategori.GYLDIGE.kanBestilleSkattekort shouldNotBeNull {
                 assertSoftly {
                     withClue("dag > 31") { this("32010112345") shouldBe false }
@@ -38,8 +38,14 @@ class FoedselsnummerkategoriTest :
             }
         }
         test("KUNSTIGE_FNR skal returnere true for dollybrukere") {
-            Foedselsnummerkategori.KUNSTIGE_FNR.kanBestilleSkattekort shouldNotBeNull {
+            Foedselsnummerkategori.KUNSTIGE_FNR.erGyldig shouldNotBeNull {
                 this("01410112345") shouldBe true
+                this("31520112345") shouldBe true
+            }
+        }
+        test("KUNSTIGE_FNR dollybrukere skal ikke kunne bestille skattekort") {
+            Foedselsnummerkategori.KUNSTIGE_FNR.kanBestilleSkattekort shouldNotBeNull {
+                this("01410112345") shouldBe false
                 this("31520112345") shouldBe true
             }
         }

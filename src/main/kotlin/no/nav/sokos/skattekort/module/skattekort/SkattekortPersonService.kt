@@ -33,15 +33,10 @@ class SkattekortPersonService(
     ): List<SkattekortDTO> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
 
-        if (PropertiesConfig.getApplicationProperties().environment == PropertiesConfig.Environment.PROD) {
-            requireNotNull(saksbehandler) { "Oppslag i produksjonsmiljø må gjøres på vegne av en saksbehandler" }
+        // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
+        if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
+            requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
-        }
-        require(!(Foedselsnummerkategori.GYLDIGE.erGyldig(fnr) && saksbehandler == null)) { "Oppslag på skattekort for reelle fnr må gjøres på vegne av en saksbehandler" }
-        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
-
-        if (!foedselsnummerkategori.erGyldig(fnr)) {
-            logger.warn(marker = TEAM_LOGS_MARKER) { "Ugyldig fnr for miljø ${PropertiesConfig.getApplicationProperties().environment}($fnr)" }
         }
 
         return dataSource

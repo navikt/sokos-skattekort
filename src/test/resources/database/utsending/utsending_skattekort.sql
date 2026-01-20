@@ -1,6 +1,6 @@
 INSERT INTO utsendinger (id, fnr, inntektsaar, forsystem, opprettet)
-VALUES (1, '12345678901', 2024, 'OS', '2024-12-15T08:30:00Z'),
-       (2,  '10987654321', 2025, 'OS', '2025-01-10T09:15:00Z'),
-       (3,  '34567890123', 2026, 'OS', '2025-12-20T07:45:00Z');
+VALUES (1, '01010112345', 2024, 'OS', '2024-12-15T08:30:00Z'),
+       (2, '10987654321', 2025, 'OS', '2025-01-10T09:15:00Z'),
+       (3, '34567890123', 2026, 'OS', '2025-12-20T07:45:00Z');
 
 SELECT setval('utsending_id_seq', (SELECT coalesce(max(id), 0) FROM utsending) + 1, false);

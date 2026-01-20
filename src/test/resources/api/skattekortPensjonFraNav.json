@@ -1,20 +1,15 @@
 [
   {
+    "utstedtDato": "2025-11-11",
     "inntektsaar": 2025,
-    "arbeidstakeridentifikator": "12345678901",
-    "resultatPaaForespoersel": "skattekortopplysningerOK",
-    "skattekort": {
-      "utstedtDato": "2025-11-11",
-      "skattekortidentifikator": 17,
-      "forskuddstrekk": [
-        {
-          "type": "Trekkprosent",
-          "trekkode": "pensjonFraNAV",
-          "prosentsats": 18.50,
-          "antallMaanederForTrekk": 12.0
-        }
-      ]
-    },
-    "tilleggsopplysning": []
+    "resultatForSkattekort": "SkattekortopplysningerOK",
+    "forskuddstrekkList": [
+      {
+        "trekkode": "pensjonFraNAV",
+        "prosentSats": 18.5,
+        "antallMndForTrekk": 12.0
+      }
+    ],
+    "tilleggsopplysningList": []
   }
 ]

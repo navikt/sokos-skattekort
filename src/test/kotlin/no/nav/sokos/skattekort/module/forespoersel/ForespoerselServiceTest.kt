@@ -41,7 +41,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val osMessage = "OS;2025;12345678901"
+                val osMessage = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -65,7 +65,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val osMessage = "OS;2025;12345678901;23456789012;"
+                val osMessage = "OS;2025;01010112345;23456789012;"
                 forespoerselService.taImotForespoersel(osMessage)
 
                 DbListener.dataSource.transaction { tx ->
@@ -102,7 +102,7 @@ class ForespoerselServiceTest :
 
         test("mot slutten av året skal vi også bestille for neste år") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                val osMessage = "OS;2025;12345678901"
+                val osMessage = "OS;2025;01010112345"
                 forespoerselService.taImotForespoersel(osMessage)
 
                 DbListener.dataSource.transaction { tx ->
@@ -124,7 +124,7 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val message = "MANUELL;2026;12345678901"
+            val message = "MANUELL;2026;01010112345"
             val brukerId = "Z123456"
 
             forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
@@ -151,8 +151,8 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme person og årstall som en tidligere forespoersel, skal det opprette kun en bestilling") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val message1 = "OS;2025;12345678901"
-                val message2 = "MANUELL;2025;12345678901"
+                val message1 = "OS;2025;01010112345"
+                val message2 = "MANUELL;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(message1)
                 forespoerselService.taImotForespoersel(message2)
@@ -176,7 +176,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme forsystem, person og årstall som en tidligere forespoersel, skal det kun audit logges dersom en utsending ikke er utført") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val message = "OS;2025;12345678901"
+                val message = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(message)
                 forespoerselService.taImotForespoersel(message)
@@ -201,7 +201,7 @@ class ForespoerselServiceTest :
         test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
             DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-            val message = "OS;2025;12345678901"
+            val message = "OS;2025;01010112345"
 
             forespoerselService.taImotForespoersel(message)
 
@@ -213,7 +213,7 @@ class ForespoerselServiceTest :
                         size shouldBe 1
                         shouldContainAllIgnoringFields(
                             listOf(
-                                Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                                Utsending(UtsendingId(1), Personidentifikator("01010112345"), 2025, Forsystem.OPPDRAGSSYSTEMET),
                             ),
                             Utsending::opprettet,
                         )
@@ -250,7 +250,7 @@ class ForespoerselServiceTest :
 
         test("skal ikke kaste en PSQLException: ERROR: duplicate key value violates unique constraint") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                val message = "OS;2025;12345678901"
+                val message = "OS;2025;01010112345"
                 val startLatch = java.util.concurrent.CountDownLatch(1)
                 val completeLatch = java.util.concurrent.CountDownLatch(2)
                 val exceptions = java.util.concurrent.ConcurrentHashMap<String, Exception>()

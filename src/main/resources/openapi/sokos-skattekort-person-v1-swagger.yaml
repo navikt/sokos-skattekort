@@ -105,20 +105,27 @@ components:
         fnr:
           type: string
           nullable: false
-          example: "12345678901"
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
         inntektsaar:
           type: integer
           format: int16
           nullable: true
           example: 2026
-
+          minimum: 2025
+          maximum: 3000
     OpprettSkattekortRequest:
       type: object
       properties:
         fnr:
           type: string
           nullable: false
-          example: "12345678901"
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
         skattekort:
           $ref: '#/components/schemas/SkattekortDTO'
     SkattekortDTO:
@@ -132,6 +139,8 @@ components:
           type: integer
           format: year
           example: 2026
+          minimum: 2025
+          maximum: 3000
         resultatForSkattekort:
           type: string
           description: Result for skattekort

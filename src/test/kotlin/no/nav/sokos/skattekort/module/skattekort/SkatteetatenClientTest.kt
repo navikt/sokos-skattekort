@@ -71,7 +71,7 @@ class SkatteetatenClientTest :
                         arbeidsgiveridentifikator.organisasjonsnummer shouldBe "312978083"
                         arbeidstaker.size shouldBe 1
                         arbeidstaker[0] shouldNotBeNull {
-                            arbeidstakeridentifikator shouldBe "12345678901"
+                            arbeidstakeridentifikator shouldBe "01010112345"
                             resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
                             skattekort.shouldNotBeNull {
                                 skattekortidentifikator shouldBe 54407

@@ -19,19 +19,32 @@ Sensitive meldinger logges til `Securelogs` [Team Logs](https://console.cloud.go
 - For Dev
     * Project: okonomi-dev
 
-### Kubectl
-
-TBD
-
 ### Alarmer
 
 Vi bruker [Grafana alerts](https://grafana.nav.cloud.nais.io/alerting/list?search=sokos-skattekort) for å sette opp alarmer.
 
 ### Grafana
 
+[Grafana prod](https://grafana.nav.cloud.nais.io/d/8c975fff-46f6-4eb3-8dac-df4a47425f3a/sokos-skattekort?var-datasource=000000021)
+[Grafana test](https://grafana.nav.cloud.nais.io/d/8c975fff-46f6-4eb3-8dac-df4a47425f3a/sokos-skattekort?var-datasource=000000020)
+
+### Foreslått rutine for drift ved ekstra overvåkning av applikasjonen, f.eks. ved årsskifte
+
+- Dersom disse punktene tilsier at noe må gjøres kan det bli kluss om flere forsøker å rette samme feil. Flagg korrektive tiltak i slack-kanalen slik at vi ikke går i beina på hverandre.
+- sjekk "eldste bestillinger" og "timer siden siste skattekort ble lagret" i grafana: https://grafana.nav.cloud.nais.io/d/8c975fff-46f6-4eb3-8dac-df4a47425f3a/sokos-skattekort?var-interval=2m&orgId=1&from=now-12h&to=now&timezone=browser&var-datasource=000000025&var-app=&var-namespace=okonomi&var-memory_pool_heap=$__all&refresh=30s
+- ```select * from bestillingsbatcher where status = 'FEILET';```
+  disse må kanskje re-kjøres. Vurder årsak, og oppdater eventuelt status-feltet til "NY". Vurder om det blir kollisjoner dersom batchen er gammel/vi henter inn utdaterte skattekort.
+- Sjekk cpu-bruk på databaseserver. Det har skjedd at applikasjonen spinner av gårde, og det synes ved at databasen bruker jevnt mye CPU
+  tiltak - logg kjørende query på databaseserveren, logg situasjonen i driftshåndboka, stopp/restart kjørende poder med "kubectl delete pod <podnavn>".
+- Sjekk backout-køer: http://10.33.43.58:8000/mq/admin/queues/MPLS02/P_SKATT*
+  backoutkøene skal ikke ha mye data. om det skjer må situasjonen vurderes. husk å oppdatere driftshåndbok om relevant.
+- Sjekk slack: #team-mob-alerts-prod
+- Logg at disse sjekkene er gjort slik at ikke andre sløser bort tid ved å repetere de
+
+
 ---
 
 - [Kjente feilsituasjoner](feil.md)
 - [Rutine for redeploy](redeploy.md)
-- [Teknisk sjekkliste for go-live - hører hjemme annetsteds senere](golive.md)
 - [Konfigurasjon](konfigurasjon.md)
+- [Import av bestillings-filer](bestillingsfiler.md)

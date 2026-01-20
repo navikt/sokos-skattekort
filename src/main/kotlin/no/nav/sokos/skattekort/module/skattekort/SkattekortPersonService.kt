@@ -6,7 +6,6 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.Arbeidstaker
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonResponse
 import no.nav.sokos.skattekort.audit.AuditLogg
 import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -24,14 +23,12 @@ class SkattekortPersonService(
     fun hentSkattekortPerson(
         skattekortPersonRequest: SkattekortPersonRequest,
         saksbehandler: Saksbehandler,
-    ): SkattekortPersonResponse =
+    ): List<Arbeidstaker> =
         dataSource.transaction { tx ->
             logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $skattekortPersonRequest" }
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = skattekortPersonRequest.fnr))
 
-            val person =
-                PersonRepository.findPersonByFnr(tx, Personidentifikator(skattekortPersonRequest.fnr))
-                    ?: return@transaction SkattekortPersonResponse(message = "Fant ikke person med fnr ${skattekortPersonRequest.fnr}")
+            val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(skattekortPersonRequest.fnr)) ?: return@transaction emptyList()
 
             val skattekort: List<Skattekort> =
                 SkattekortRepository
@@ -42,19 +39,16 @@ class SkattekortPersonService(
                         adminRole = false,
                     )
 
-            if (skattekort.isEmpty()) {
-                return@transaction SkattekortPersonResponse(message = "Fant ikke skattekort for person med fnr ${skattekortPersonRequest.fnr}")
-            }
-
-            SkattekortPersonResponse(
-                data =
-                    skattekort.map {
+            return@transaction when {
+                skattekort.isEmpty() -> emptyList()
+                else ->
+                    skattekort.map { skattekortItem ->
                         Arbeidstaker(
                             skattekortPersonRequest.inntektsaar.toLong(),
                             skattekortPersonRequest.fnr,
-                            it,
+                            skattekortItem,
                         )
-                    },
-            )
+                    }
+            }
         }
 }

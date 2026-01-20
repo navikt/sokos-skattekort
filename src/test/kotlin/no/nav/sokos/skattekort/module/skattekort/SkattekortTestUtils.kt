@@ -24,28 +24,33 @@ fun aForskuddstrekk(
     frikortbeløp: Int? = null,
 ): Forskuddstrekk =
     when (type) {
-        Prosentkort::class.simpleName ->
+        Prosentkort::class.simpleName -> {
             Prosentkort(
                 trekkode,
                 BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
                 antMndForTrekk?.let { belop -> BigDecimal(belop).setScale(1, RoundingMode.HALF_UP) },
             )
+        }
 
-        Tabellkort::class.simpleName ->
+        Tabellkort::class.simpleName -> {
             Tabellkort(
                 trekkode,
                 tabellNummer!!,
                 BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
                 BigDecimal(antMndForTrekk ?: 12.0).setScale(1, RoundingMode.HALF_UP),
             )
+        }
 
-        Frikort::class.simpleName ->
+        Frikort::class.simpleName -> {
             Frikort(
                 trekkode,
                 frikortbeløp,
             )
+        }
 
-        else -> error("Ukjent forskuddstrekk-type: $type")
+        else -> {
+            error("Ukjent forskuddstrekk-type: $type")
+        }
     }
 
 fun aSkdForskuddstrekk(
@@ -158,9 +163,33 @@ fun anAbonnement(
                     VALUES ($forespoerselId, $personId, $inntektsaar);
     """.trimIndent()
 
+fun aDbSkattekort(
+    id: Long,
+    personId: Long,
+    utstedtDato: String,
+    identifikator: String,
+    inntektsaar: Int,
+    opprettet: String,
+    kilde: String = "skatteetaten",
+    resultatForSkattekort: ResultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+    generertFra: Long? = null,
+) = """
+    INSERT INTO skattekort (id, person_id, utstedt_dato, identifikator, inntektsaar, kilde, opprettet, resultatForSkattekort, generert_fra)
+    VALUES ($id, $personId, '$utstedtDato', '$identifikator', $inntektsaar, '$kilde', '$opprettet', '${resultatForSkattekort.value}', $generertFra);
+    """.trimIndent()
+
 fun toBestillSkattekortResponse(json: String) =
     Json.decodeFromString(
         no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
             .serializer(),
         json,
     )
+
+fun anUtsending(
+    fnr: String,
+    inntektsaar: Int,
+    forsystem: String,
+) = """
+    INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
+    VALUES ('$fnr', $inntektsaar, '$forsystem');
+    """.trimIndent()

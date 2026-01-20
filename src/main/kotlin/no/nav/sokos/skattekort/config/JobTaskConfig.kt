@@ -13,6 +13,7 @@ import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.MetricsService
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
@@ -21,16 +22,19 @@ import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 private val logger = KotlinLogging.logger { }
 private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
 private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
-private const val JOB_TASK_HENT_SKATTEKORT_BATCH = "hentSkattekort"
 private const val JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH = "hentOppdaterteSkattekort"
 private const val JOB_TASK_FETCH_METRICS = "fetchMetrics"
+private const val JOB_TASK_FORESPOERSEL_INPUT = "forespoerselInput"
 
 object JobTaskConfig {
+    private var handleJobs: Boolean = true
+
     fun scheduler(
         bestillingService: BestillingService,
         utsendingService: UtsendingService,
         scheduledTaskService: ScheduledTaskService,
         metricsService: MetricsService,
+        forespoerselService: ForespoerselService,
         dataSource: DataSource,
     ): Scheduler =
         Scheduler
@@ -39,14 +43,14 @@ object JobTaskConfig {
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
-                recurringSendBestillingBatchTask(bestillingService, scheduledTaskService),
+                recurringBestillingManagementBatchTask(bestillingService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
-                recurringHentSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringFetchMetricsTask(metricsService, scheduledTaskService),
+                recurringFetchForespoerselInputTask(forespoerselService, scheduledTaskService),
             ).build()
 
-    fun recurringSendBestillingBatchTask(
+    fun recurringBestillingManagementBatchTask(
         bestillingService: BestillingService,
         scheduledTaskService: ScheduledTaskService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
@@ -58,11 +62,19 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronBestilling),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                withTracerId {
-                    showLog(showLogLocalTime, instance, context)
-                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
-                    bestillingService.opprettBestillingsbatch()
+                if (handleJobs) {
+                    withTracerId {
+                        try {
+                            showLog(showLogLocalTime, instance, context)
+                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
+                            bestillingService.hentSkattekort()
+                            bestillingService.opprettBestillingsbatch()
+                            bestillingService.opprettBestillingsbatch()
+                        } catch (e: Exception) {
+                            // Spis exception for å ha kontroll over logging
+                        }
+                    }
                 }
             }
     }
@@ -79,32 +91,17 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronUtsending),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                withTracerId {
-                    showLog(startTime, instance, context)
-                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_UTSENDING_BATCH)
-                    utsendingService.handleUtsending()
-                }
-            }
-    }
-
-    fun recurringHentSkattekortBatchTask(
-        bestillingService: BestillingService,
-        scheduledTaskService: ScheduledTaskService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
-    ): RecurringTask<String> {
-        val showLogLocalTime = LocalDateTime.now()
-        return Tasks
-            .recurring(
-                JOB_TASK_HENT_SKATTEKORT_BATCH,
-                cron(schedulerProperties.cronHenting),
-                String::class.java,
-            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                withTracerId {
-                    showLog(showLogLocalTime, instance, context)
-                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_SKATTEKORT_BATCH)
-                    bestillingService.hentSkattekort()
+                if (handleJobs) {
+                    withTracerId {
+                        try {
+                            showLog(startTime, instance, context)
+                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_UTSENDING_BATCH)
+                            utsendingService.handleUtsending()
+                        } catch (e: Exception) {
+                            // Spis exception for å ta kontroll over logging
+                        }
+                    }
                 }
             }
     }
@@ -121,11 +118,17 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronHentOppdaterte),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                withTracerId {
-                    showLog(showLogLocalTime, instance, context)
-                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
-                    bestillingService.hentOppdaterteSkattekort()
+                if (handleJobs) {
+                    withTracerId {
+                        try {
+                            showLog(showLogLocalTime, instance, context)
+                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
+                            bestillingService.hentOppdaterteSkattekort()
+                        } catch (e: Exception) {
+                            // Spis exception for å ta kontroll over logging
+                        }
+                    }
                 }
             }
     }
@@ -142,11 +145,45 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronFetchMetrics),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                withTracerId {
-                    showLog(showLogLocalTime, instance, context)
-                    val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                    scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
-                    metricsService.fetchMetrics()
+                if (handleJobs) {
+                    withTracerId {
+                        try {
+                            showLog(showLogLocalTime, instance, context)
+                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_FETCH_METRICS)
+                            metricsService.fetchMetrics()
+                        } catch (e: Exception) {
+                            // Spis exception for å ta kontroll over logging
+                        }
+                    }
+                }
+            }
+    }
+
+    fun recurringFetchForespoerselInputTask(
+        forespoerselService: ForespoerselService,
+        scheduledTaskService: ScheduledTaskService,
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+    ): RecurringTask<String> {
+        val showLogLocalTime = LocalDateTime.now()
+
+        return Tasks
+            .recurring(
+                JOB_TASK_FORESPOERSEL_INPUT,
+                cron(schedulerProperties.cronForespoerselInput),
+                String::class.java,
+            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
+                if (handleJobs) {
+                    withTracerId {
+                        try {
+                            showLog(showLogLocalTime, instance, context)
+                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_FORESPOERSEL_INPUT)
+                            forespoerselService.cronForespoerselInput()
+                        } catch (e: Exception) {
+                            // Spis exception for å ta kontroll over logging
+                        }
+                    }
                 }
             }
     }
@@ -161,5 +198,15 @@ object JobTaskConfig {
             return LocalDateTime.now()
         }
         return localtime
+    }
+
+    init {
+        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+            Runtime.getRuntime().addShutdownHook(
+                Thread {
+                    handleJobs = false
+                },
+            )
+        }
     }
 }

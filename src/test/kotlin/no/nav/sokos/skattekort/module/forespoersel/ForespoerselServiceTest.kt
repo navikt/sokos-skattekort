@@ -12,8 +12,10 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
+import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
@@ -34,7 +36,7 @@ class ForespoerselServiceTest :
         }
 
         val forespoerselService: ForespoerselService by lazy {
-            ForespoerselService(DbListener.dataSource, personService)
+            ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
@@ -57,6 +59,43 @@ class ForespoerselServiceTest :
                     utsendingList.size shouldBe 0
 
                     verifyData(abonnementList, bestillingList, forespoersel)
+                }
+            }
+        }
+
+        test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                val osMessage = "OS;2025;12345678901;23456789012;"
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    assertSoftly {
+                        forespoerselList shouldNotBeNull {
+                            size shouldBe 1
+                            shouldContainAllIgnoringFields(
+                                listOf(
+                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
+                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
+                                ),
+                                Forespoersel::id,
+                                Forespoersel::opprettet,
+                                Forespoersel::dataMottatt,
+                            )
+                        }
+                        abonnementList shouldNotBeNull {
+                            size shouldBe 2
+                        }
+                        bestillingList shouldNotBeNull {
+                            size shouldBe 2
+                        }
+                        utsendingList shouldNotBeNull {
+                            size shouldBe 0
+                        }
+                    }
                 }
             }
         }
@@ -85,30 +124,28 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            withConstantNow(LocalDateTime.parse("2026-04-12T00:00:00")) {
-                val message = "MANUELL;2026;12345678901"
-                val brukerId = "Z123456"
+            val message = "MANUELL;2026;12345678901"
+            val brukerId = "Z123456"
 
-                forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
+            forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
 
-                DbListener.dataSource.transaction { tx ->
-                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                    forespoerselList.size shouldBe 1
-                    val forespoersel = forespoerselList.first()
-                    forespoersel.forsystem shouldBe Forsystem.MANUELL
+            DbListener.dataSource.transaction { tx ->
+                val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                forespoerselList.size shouldBe 1
+                val forespoersel = forespoerselList.first()
+                forespoersel.forsystem shouldBe Forsystem.MANUELL
 
-                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                    abonnementList.size shouldBe 1
-                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
-                    bestillingList.size shouldBe 1
-                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
-                    utsendingList.size shouldBe 0
+                val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                abonnementList.size shouldBe 1
+                val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                bestillingList.size shouldBe 1
+                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                utsendingList.size shouldBe 0
 
-                    verifyData(abonnementList, bestillingList, forespoersel)
+                verifyData(abonnementList, bestillingList, forespoersel)
 
-                    val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
-                    auditList.first().brukerId shouldBe brukerId
-                }
+                val auditList = AuditRepository.getAuditByPersonId(tx, abonnementList.first().person.id!!)
+                auditList.first().brukerId shouldBe brukerId
             }
         }
 
@@ -139,7 +176,6 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme forsystem, person og årstall som en tidligere forespoersel, skal det kun audit logges dersom en utsending ikke er utført") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-
                 val message = "OS;2025;12345678901"
 
                 forespoerselService.taImotForespoersel(message)
@@ -163,27 +199,102 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
-            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+            DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val message = "OS;2025;12345678901"
+            val message = "OS;2025;12345678901"
 
-                forespoerselService.taImotForespoersel(message)
+            forespoerselService.taImotForespoersel(message)
 
-                DbListener.dataSource.transaction { tx ->
-                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+            DbListener.dataSource.transaction { tx ->
+                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
 
-                    assertSoftly {
-                        utsendingList shouldNotBeNull {
-                            size shouldBe 1
-                            shouldContainAllIgnoringFields(
-                                listOf(
-                                    Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                assertSoftly {
+                    utsendingList shouldNotBeNull {
+                        size shouldBe 1
+                        shouldContainAllIgnoringFields(
+                            listOf(
+                                Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                            ),
+                            Utsending::opprettet,
+                        )
+                    }
+                }
+            }
+        }
+
+        test("Skal ta i mot forespørsler fra databasetabell") {
+            DbListener.loadDataSet("database/forespoersler/forespoersel_fra_tabell.sql")
+            forespoerselService.cronForespoerselInput()
+            DbListener.dataSource.transaction { tx ->
+                val bestillinger = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+
+                assertSoftly {
+                    bestillinger shouldNotBeNull {
+                        size shouldBe 1
+                        shouldContainAllIgnoringFields(
+                            listOf(
+                                Bestilling(
+                                    personId = PersonId(1),
+                                    fnr = Personidentifikator("19876543210"),
+                                    inntektsaar = 2025,
                                 ),
-                                Utsending::opprettet,
-                            )
+                            ),
+                            Bestilling::id,
+                            Bestilling::bestillingsbatchId,
+                            Bestilling::oppdatert,
+                        )
+                    }
+                }
+            }
+        }
+
+        test("skal ikke kaste en PSQLException: ERROR: duplicate key value violates unique constraint") {
+            withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                val message = "OS;2025;12345678901"
+                val startLatch = java.util.concurrent.CountDownLatch(1)
+                val completeLatch = java.util.concurrent.CountDownLatch(2)
+                val exceptions = java.util.concurrent.ConcurrentHashMap<String, Exception>()
+
+                val thread1 =
+                    Thread {
+                        try {
+                            startLatch.await()
+                            forespoerselService.taImotForespoersel(message)
+                        } catch (e: Exception) {
+                            exceptions["thread1"] = e
+                        } finally {
+                            completeLatch.countDown()
                         }
                     }
+
+                val thread2 =
+                    Thread {
+                        try {
+                            startLatch.await()
+                            forespoerselService.taImotForespoersel(message)
+                        } catch (e: Exception) {
+                            exceptions["thread2"] = e
+                        } finally {
+                            completeLatch.countDown()
+                        }
+                    }
+
+                thread1.start()
+                thread2.start()
+
+                // Signal both threads to start simultaneously
+                startLatch.countDown()
+
+                // Wait for completion
+                completeLatch.await()
+
+                DbListener.dataSource.transaction { tx ->
+                    val personList = personService.getPersonList(count = 100, tx = tx)
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+
+                    exceptions.isEmpty() shouldBe true
+                    personList.size shouldBe 1
+                    forespoerselList.size shouldBe 4
                 }
             }
         }

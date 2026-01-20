@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort
 
+import kotlinx.coroutines.runBlocking
+
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -31,6 +33,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
+import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.mq.JmsProducerService
 import no.nav.sokos.skattekort.pdl.PdlClientService
@@ -75,19 +78,23 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
+        provide<Queue>(name = "forespoerselBoqQueue") {
+            MQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+        }
         provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
             MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort).apply {
                 messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             }
         }
-        provide<Queue>(name = "leveransekoeDarePocSkattekort") {
-            MQQueue(PropertiesConfig.getMQProperties().leveransekoeDarePocSkattekort)
+        provide<Queue>(name = "leveransekoeOppdragZSkattekortStor") {
+            val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+            queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
+            queue
         }
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
-        provide(UnleashIntegration::class)
-
+        provide(StatusService::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
@@ -99,6 +106,15 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(PdlClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
+        provide<UnleashIntegration> {
+            UnleashIntegration { enabled ->
+                val forespoerselListener: ForespoerselListener =
+                    runBlocking {
+                        this@module.dependencies.resolve()
+                    }
+                forespoerselListener.onOppdateringChanged(enabled)
+            }
+        }
     }
 
     securityConfig()
@@ -112,6 +128,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val utsendingService: UtsendingService by dependencies
         val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceReadCommit)
         val metricsService: MetricsService by dependencies
+        val forespoerselService: ForespoerselService by dependencies
 
         JobTaskConfig
             .scheduler(
@@ -119,6 +136,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 utsendingService,
                 scheduledTaskService,
                 metricsService,
+                forespoerselService,
                 DatabaseConfig.dataSourceReadCommit,
             ).start()
     }

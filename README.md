@@ -17,7 +17,7 @@ tilby samme funksjonalitet.
 
 ### Forutsetninger
 
-* Java 21
+* Java 25
 * [Gradle >= 8.9](https://gradle.org/)
 * [Kotest IntelliJ Plugin](https://plugins.jetbrains.com/plugin/14080-kotest)
 

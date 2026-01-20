@@ -15,7 +15,7 @@ tags:
   - name: sokos-skattekort
     description: API for å håndtere skattekort-forespørsler
 paths:
-  /api/v1/skattekort/bestille:
+  /bestille:
     post:
       tags:
         - skattekort
@@ -49,7 +49,7 @@ paths:
       security:
         - BearerAuth: [ ]
 
-  /api/v1/skattekort/status:
+  /status:
     post:
       tags:
         - skattekort

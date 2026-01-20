@@ -17,12 +17,13 @@ object SkattekortRepository {
     fun insert(
         tx: TransactionalSession,
         skattekort: Skattekort,
+        batchId: String,
     ): Long {
         AuditRepository.insert(
             tx,
             AuditTag.SKATTEKORTINFORMASJON_MOTTATT,
             skattekort.personId,
-            "Lagret skattekortresultat ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar}",
+            "Lagret skattekortresultat ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar} fra bestillingsbatch $batchId",
         )
         val id =
             tx.updateAndReturnGeneratedKey(
@@ -119,7 +120,7 @@ object SkattekortRepository {
                 """
                 SELECT * FROM skattekort 
                 WHERE person_id = :personId AND inntektsaar = :inntektsaar
-                ORDER BY opprettet, id DESC
+                ORDER BY opprettet DESC, id DESC
                 """.trimIndent(),
                 mapOf(
                     "personId" to personId.value,

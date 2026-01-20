@@ -31,13 +31,12 @@ class UtsendingEndToEndTest :
                 uut.handleUtsending()
                 val expectedCopybook =
                     "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
-
                 eventually(eventuallyConfiguration) {
-                    val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingOppdragZQueue)
+                    val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                     messages.size shouldBe 1
-                    messages[0] shouldBe expectedCopybook
+                    messages[0] shouldBe
+                        expectedCopybook
                 }
-
                 DbListener.dataSource.transaction { tx ->
                     val sendinger =
                         tx.list(
@@ -56,6 +55,24 @@ class UtsendingEndToEndTest :
                             )
                         }
                     }
+                }
+            }
+        }
+
+        test("utsending fra databasen og sende til utsendingStor JMS kø") {
+            withFullTestApplication {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                DbListener.loadDataSet("database/utsending/skattekort_oppdragz_stor.sql")
+
+                val utsendingService: UtsendingService by application.dependencies
+
+                utsendingService.handleUtsending()
+                val expectedCopybook =
+                    "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
+                eventually(eventuallyConfiguration) {
+                    val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingStorQueue)
+                    messages.size shouldBe 1
+                    messages[0] shouldBe expectedCopybook
                 }
             }
         }

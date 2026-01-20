@@ -9,8 +9,8 @@ spec:
   image: "{{{ image }}}"
   port: 8080
   replicas:
-    min: 2
-    max: 3
+    min: 1
+    max: 2
     cpuThresholdPercentage: 75
   liveness:
     path: /internal/isAlive
@@ -51,6 +51,8 @@ spec:
         - application: sokos-utbetalingsportalen
         - application: saas-proxy
           namespace: teamcrm
+        - application: saas-proxy
+          namespace: platforce
     outbound:
       rules:
         - application: logging
@@ -76,7 +78,7 @@ spec:
         diskAutoresize: true
         pointInTimeRecovery: true
         autoBackupHour: 3
-        tier: db-custom-4-3840
+        tier: db-custom-4-10240
         databases:
           - name: sokos-skattekort
             envVarPrefix: DB

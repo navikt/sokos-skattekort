@@ -54,12 +54,14 @@ spec:
         - application: sokos-utbetalingsportalen
         - application: saas-proxy
           namespace: teamcrm
+        - application: saas-proxy
+          namespace: platforce
     outbound:
       rules:
         - application: logging
           namespace: nais-system
       external:
-        - host: mqls01.preprod.local
+        - host: mqls02.preprod.local
           ports:
             - port: 1413
         - host: okonomi-unleash-api.nav.cloud.nais.io
@@ -85,11 +87,11 @@ spec:
             envVarPrefix: DB
         flags:
           - name: "cloudsql.enable_pgaudit"
-            value: "on"
+            value: "off"
           - name: "pgaudit.log"
             value: "write,ddl,role"
           - name: "pgaudit.log_parameter"
-            value: "on"
+            value: "off"
           - name: "cloudsql.logical_decoding"
             value: "on"
   envFrom:

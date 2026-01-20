@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.utils
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.sql.Connection.TRANSACTION_SERIALIZABLE
 import java.util.stream.Collectors
 import javax.sql.DataSource
 
@@ -98,11 +99,14 @@ object TestUtils {
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
                 }
+                provide<Queue>(name = "forespoerselBoqQueue") {
+                    ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+                }
                 provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
                 }
-                provide<Queue>(name = "leveransekoeDarePocSkattekort") {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeDarePocSkattekort)
+                provide<Queue>(name = "leveransekoeOppdragZSkattekortStor") {
+                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
                 }
             }
         }
@@ -116,6 +120,46 @@ object TestUtils {
                     query,
                 ).asExecute,
             )
+        }
+        updateIdentitySequences(DbListener.dataSource)
+    }
+
+    fun updateIdentitySequences(dataSource: DataSource) {
+        dataSource.connection.use { connection ->
+            connection.autoCommit = false
+            connection.transactionIsolation = TRANSACTION_SERIALIZABLE
+
+            val metadata = connection.metaData
+
+            val tables =
+                metadata.getTables(null, null, null, arrayOf("TABLE")).use { resultSet ->
+                    buildList {
+                        while (resultSet.next()) {
+                            val schema = resultSet.getString("TABLE_SCHEM")
+                            val tableName = resultSet.getString("TABLE_NAME")
+                            if (tableName.uppercase() != "FLYWAY_SCHEMA_HISTORY" && tableName.uppercase() != "SCHEDULED_TASKS_HISTORY") {
+                                add(schema to tableName)
+                            }
+                        }
+                    }
+                }
+
+            val tablesWithId =
+                tables.mapNotNull { (schema, table) ->
+                    metadata.getColumns(null, schema, table, "id").use { rs ->
+                        if (rs.next()) "$schema.$table" else null
+                    }
+                }
+
+            tablesWithId.asReversed().forEach { table ->
+                connection
+                    .prepareStatement(
+                        "SELECT setval(pg_get_serial_sequence('$table', 'id'), " +
+                            "COALESCE((SELECT MAX(id) FROM $table), 0) + 1, false);",
+                    ).use { it.execute() }
+            }
+
+            connection.commit()
         }
     }
 
@@ -146,8 +190,12 @@ object TestUtils {
                 // Vi ønsker bare en DataSource i bruk for en hel test-kjøring, selv om flere tester start/stopper applikasjonen
                 // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
                 is DataSource -> {}
+
                 is ConnectionFactory -> {}
-                is AutoCloseable -> instance.close()
+
+                is AutoCloseable -> {
+                    instance.close()
+                }
             }
         }
     }

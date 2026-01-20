@@ -3,17 +3,22 @@ package no.nav.sokos.skattekort.infrastructure
 import io.getunleash.DefaultUnleash
 import io.getunleash.FakeUnleash
 import io.getunleash.Unleash
+import io.getunleash.event.ClientFeaturesResponse
+import io.getunleash.event.ClientFeaturesResponse.Status
+import io.getunleash.event.UnleashSubscriber
 import io.getunleash.util.UnleashConfig
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 
-open class UnleashIntegration(
-    private val unleashProps: PropertiesConfig.UnleashProperties,
-    private val appProperties: PropertiesConfig.ApplicationProperties,
+private val logger = KotlinLogging.logger { }
+
+class UnleashIntegration(
+    private val onForespoerselListenerChanged: (Boolean) -> Unit = {},
 ) {
-    private lateinit var unleashClient: Unleash
-    private val logger = KotlinLogging.logger {}
+    private val unleashClient: Unleash
+    private val appProperties = PropertiesConfig.getApplicationProperties()
+    private val unleashProps = PropertiesConfig.getUnleashProperties()
 
     // Kill switcher:
     fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", true)
@@ -24,11 +29,15 @@ open class UnleashIntegration(
 
     fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled", true)
 
+    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled", true)
+
+    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.lagre-mottatte-bestillinger.enabled", false)
+
+    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled", true)
+
     init {
-        if (appProperties.environment == PropertiesConfig.Environment.TEST ||
-            appProperties.environment == PropertiesConfig.Environment.LOCAL
-        ) {
-            unleashClient = FakeUnleash()
+        if (appProperties.environment == PropertiesConfig.Environment.TEST) {
+            unleashClient = FakeUnleash().also { it.disable("sokos-skattekort.lagre-mottatte-bestillinger.enabled") }
         } else {
             val config =
                 UnleashConfig
@@ -39,7 +48,15 @@ open class UnleashIntegration(
                     .apiKey(unleashProps.apiKey)
                     .environment(unleashProps.environment)
                     .synchronousFetchOnInitialisation(true)
-                    .build()
+                    .subscriber(
+                        object : UnleashSubscriber {
+                            override fun togglesFetched(toggleResponse: ClientFeaturesResponse) {
+                                if (toggleResponse.status == Status.CHANGED) {
+                                    onForespoerselListenerChanged(isForespoerselListenerEnabled())
+                                }
+                            }
+                        },
+                    ).build()
             unleashClient = DefaultUnleash(config)
         }
     }

@@ -5,7 +5,6 @@ import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
 import jakarta.jms.JMSContext
-import jakarta.jms.JMSProducer
 import jakarta.jms.Queue
 import org.apache.activemq.artemis.api.core.SimpleString
 import org.apache.activemq.artemis.api.core.TransportConfiguration
@@ -20,7 +19,7 @@ import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.config.PropertiesConfig
 
 object MQListener : BeforeSpecListener, AfterTestListener {
-    val server: EmbeddedActiveMQ =
+    private val server: EmbeddedActiveMQ =
         EmbeddedActiveMQ()
             .setConfiguration(
                 ConfigurationImpl()
@@ -40,13 +39,14 @@ object MQListener : BeforeSpecListener, AfterTestListener {
         ActiveMQConnectionFactory("vm:localhost?create=false")
     }
 
-    val bestillingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
-    val utsendingOppdragZQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
-    val utsendingDarePocQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeDarePocSkattekort)
-    val allQueues: List<Queue> = listOf(bestillingsQueue, utsendingOppdragZQueue, utsendingDarePocQueue)
+    val forespoerselQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+    val forespoerselBoqQueue: Queue = ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+
+    val utsendingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+    val utsendingStorQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+    val allQueues: List<Queue> = listOf(forespoerselQueue, utsendingsQueue, utsendingStorQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }
-    val producer: JMSProducer by lazy { jmsContext.createProducer() }
 
     override suspend fun afterAny(
         testCase: TestCase,

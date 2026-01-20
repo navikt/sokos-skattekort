@@ -1,0 +1,1 @@
+INSERT INTO forespoersel_input (forsystem, inntektsaar, fnr) VALUES ('OS', 2025, '19876543210');

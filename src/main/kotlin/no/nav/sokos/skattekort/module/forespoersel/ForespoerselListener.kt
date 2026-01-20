@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.module.forespoersel
 
 import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
+import jakarta.jms.JMSConsumer
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
@@ -10,25 +11,62 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
-    connectionFactory: ConnectionFactory,
+    private val connectionFactory: ConnectionFactory,
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
+    @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
 ) {
-    private val jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
-    private val listener = jmsContext.createConsumer(forespoerselQueue)
+    private var jmsContext: JMSContext? = null
+    private var jmsConsumer: JMSConsumer? = null
 
-    // TODO: Legg til Opentelemetry trace
-    // TODO: Feilhåndtering, send melding videre til dead letter queue, eller hva det heter lokalt
-    init {
-        listener.setMessageListener { message: Message ->
-            val jmsMessage = message.getBody(String::class.java)
-            forespoerselService.taImotForespoersel(jmsMessage)
-            message.acknowledge()
+    @Volatile
+    private var isRunning = false
+
+    @Synchronized
+    fun start() {
+        // TODO: Legg til Opentelemetry trace
+
+        jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+        jmsConsumer = jmsContext!!.createConsumer(forespoerselQueue)
+
+        jmsConsumer!!.setMessageListener { message: Message ->
+            runCatching {
+                val jmsMessage = message.getBody(String::class.java)
+                forespoerselService.taImotForespoersel(jmsMessage)
+                message.acknowledge()
+            }.onFailure {
+                val boqProducer = jmsContext!!.createProducer()
+                boqProducer.send(forespoerselBoqQueue, message)
+                message.acknowledge()
+                logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
+            }
         }
+
+        jmsContext!!.start()
+        isRunning = true
+        logger.info { "Forespoersel started, listening on queue: ${forespoerselQueue.queueName}" }
     }
 
-    fun start() {
-        jmsContext.start()
-        logger.info { "Forespoersel started, listening on queue: ${forespoerselQueue.queueName}" }
+    @Synchronized
+    fun stop() {
+        isRunning = false
+        try {
+            jmsContext?.stop() // Stop message delivery first
+            jmsConsumer?.messageListener = null
+            jmsConsumer?.close()
+            jmsContext?.close() // This closes the underlying connection
+            jmsConsumer = null
+            jmsContext = null
+        } catch (e: Exception) {
+            logger.error(e) { "Error stopping ForespoerselListener" }
+        }
+        logger.info { "ForespoerselListener stopped on queue:  ${forespoerselQueue.queueName}" }
+    }
+
+    fun onOppdateringChanged(enabled: Boolean) {
+        when {
+            enabled && !isRunning -> start()
+            !enabled && isRunning -> stop()
+        }
     }
 }

@@ -205,6 +205,21 @@ class SkattekortpersonApiE2ETest :
             }
         }
 
+        test("Request uten inntektsår blir avvist hvis det er reelt fnr") {
+            TestUtils.withFullTestApplication {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = null)
+                val response =
+                    client.post(HENT_SKATTEKORT_URL) {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json)
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        setBody(request)
+                    }
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
         test("Auth: token uten navident blir ikke avvist når man søker opp fiktive fnr") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
@@ -228,13 +243,13 @@ class SkattekortpersonApiE2ETest :
         test("Auth: token fra feil issuer blir avvist") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "bogus")?.serialize()
+                val tokenWithBogusIssuer = authServer?.issueToken(issuerId = "bogus")?.serialize()
 
                 val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithBogusIssuer")
                         setBody(request)
                     }
             }

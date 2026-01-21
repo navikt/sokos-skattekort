@@ -211,6 +211,7 @@ enum class SkattekortKilde(
 ) {
     SKATTEETATEN(value = "skatteetaten"),
     SYNTETISERT(value = "syntetisert"),
+    MANUELL(value = "manuell"),
     MANGLER(value = "mangler"),
 }
 

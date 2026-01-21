@@ -38,7 +38,7 @@ class UtsendingCronJobTest :
                 assertTrue(auditEntries.map { it.tag }.contains(AuditTag.UTSENDING_OK))
                 val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                 assertTrue(messages.size == 1)
-                assertTrue(messages.first().contains("12345678903"))
+                assertTrue(messages.first().contains("03030312345"))
                 val utsendinger = uut.getAllUtsendinger()
                 assertEquals(0, utsendinger.size)
             }

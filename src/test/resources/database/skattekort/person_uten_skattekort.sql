@@ -5,7 +5,7 @@ VALUES (1, false);
 SELECT setval('personer_id_seq', (SELECT coalesce(max(id), 0) FROM personer) + 1, false);
 
 INSERT INTO foedselsnumre (id, person_id, fnr, gjelder_fom)
-VALUES (1, 1, '12345678903', CURRENT_DATE);
+VALUES (1, 1, '03030312345', CURRENT_DATE);
 
 SELECT setval('foedselsnumre_id_seq', (SELECT coalesce(max(id), 0) FROM foedselsnumre) + 1, false);
 

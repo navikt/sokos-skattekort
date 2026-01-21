@@ -30,7 +30,7 @@ class UtsendingEndToEndTest :
 
                 uut.handleUtsending()
                 val expectedCopybook =
-                    "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
+                    "03030312345skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
                 eventually(eventuallyConfiguration) {
                     val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                     messages.size shouldBe 1
@@ -68,7 +68,7 @@ class UtsendingEndToEndTest :
 
                 utsendingService.handleUtsending()
                 val expectedCopybook =
-                    "12345678903skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
+                    "03030312345skattekortopplysningerOK                20252025-11-1119        kildeskattpensjonist                              1TrekkprosentpensjonFraNAV                                              018,50       12,0"
                 eventually(eventuallyConfiguration) {
                     val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingStorQueue)
                     messages.size shouldBe 1

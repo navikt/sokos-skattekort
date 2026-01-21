@@ -1,19 +1,14 @@
 [
   {
+    "utstedtDato": "2025-11-11",
     "inntektsaar": 2025,
-    "arbeidstakeridentifikator": "12345678902",
-    "resultatPaaForespoersel": "skattekortopplysningerOK",
-    "skattekort": {
-      "utstedtDato": "2025-11-11",
-      "skattekortidentifikator": 18,
-      "forskuddstrekk": [
-        {
-          "type": "Frikort",
-          "trekkode": "loennFraNAV",
-          "frikortbeloep": 65000
-        }
-      ]
-    },
-    "tilleggsopplysning": []
+    "resultatForSkattekort": "SkattekortopplysningerOK",
+    "forskuddstrekkList": [
+      {
+        "trekkode": "loennFraNAV",
+        "frikortBeloep": 65000
+      }
+    ],
+    "tilleggsopplysningList": []
   }
 ]

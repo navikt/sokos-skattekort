@@ -265,7 +265,7 @@ class BestillingService(
                 personId = personId,
                 informasjon = "Ikke forventet skattekort mottatt fra skatteetaten; mulig tegn på manuell bestilling på Navs organisasjonsnummer",
             )
-            if (!foedselsnummerkategori.erGyldig(arbeidstaker.arbeidstakeridentifikator)) {
+            if (!foedselsnummerkategori.kanBestilleSkattekort(arbeidstaker.arbeidstakeridentifikator)) {
                 AuditRepository.insert(
                     tx = tx,
                     tag = AuditTag.INVALID_FNR,
@@ -468,6 +468,7 @@ class BestillingService(
 
     private fun bestillOppdateringer(tx: TransactionalSession) {
         val now = now().toKotlinLocalDateTime()
+        // TODO Bruke ReglerForInntektsaar
         val erEtterMidtenAvDesember = (now.day > 15 && now.month == Month.DECEMBER)
         val requests: List<BestillSkattekortRequest> =
             if (erEtterMidtenAvDesember) {

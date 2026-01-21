@@ -94,13 +94,14 @@ class SkattekortFixedRecordFormatter internal constructor(
                 when (it) {
                     Tilleggsopplysning.KILDESKATTPENSJONIST -> it
                     Tilleggsopplysning.OPPHOLD_PAA_SVALBARD -> it
+                    Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE -> it
                     else -> null
                 }
             }
         if (filtered.isEmpty()) {
             return ""
         } else {
-            return filtered.get(0).value // TODO: Dette _må_ være feil. Hva om vi får flere verdier?
+            return filtered.get(0).value
         }
     }
 
@@ -123,6 +124,7 @@ class SkattekortFixedRecordFormatter internal constructor(
                     sb.append(rightPad("", 7))
                     sb.append(rightPad(formaterAntallManederTrekk(skt.antallMaanederForTrekk), 4))
                 }
+
                 is Trekkprosent -> {
                     sb.append(rightPad("Trekkprosent", 12))
                     sb.append(rightPad(skt.trekkode.value, 55))
@@ -131,6 +133,7 @@ class SkattekortFixedRecordFormatter internal constructor(
                     sb.append(leftPad("", 7))
                     sb.append(rightPad(formaterAntallManederTrekk(skt.antallMaanederForTrekk), 4))
                 }
+
                 is Frikort -> {
                     sb.append(rightPad("Frikort", 12))
                     sb.append(rightPad(skt.trekkode.value, 55))

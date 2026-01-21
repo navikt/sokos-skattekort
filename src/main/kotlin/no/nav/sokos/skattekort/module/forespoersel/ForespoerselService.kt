@@ -188,11 +188,23 @@ class ForespoerselService(
                 var i = 0
                 retry@ while (i < 5) {
                     try {
-                        dataSource.transaction { tx ->
-                            val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
-                            handleForespoersel(tx, message, input, null)
+                        try {
+                            assert(input.fnrList.first().length == 11)
+                            input.fnrList.first().toLong()
+                            dataSource.transaction { tx ->
+                                val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
+                                handleForespoersel(tx, message, input, null)
+                            }
+                            break@retry
+                        } catch (e: NumberFormatException) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            break@retry
+                        } catch (e: AssertionError) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            break@retry
                         }
-                        break@retry
                     } catch (e: BatchUpdateException) {
                         logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
                         logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til secure log")

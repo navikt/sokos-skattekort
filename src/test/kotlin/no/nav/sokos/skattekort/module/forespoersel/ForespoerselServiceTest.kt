@@ -124,10 +124,15 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val message = "MANUELL;2026;12345678901"
+            val forespoerselInput =
+                ForespoerselInput(
+                    forsystem = Forsystem.MANUELL,
+                    inntektsaar = 2026,
+                    fnrList = listOf("12345678901"),
+                )
             val brukerId = "Z123456"
 
-            forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
+            forespoerselService.taImotForespoersel(forespoerselInput, Saksbehandler(brukerId))
 
             DbListener.dataSource.transaction { tx ->
                 val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)

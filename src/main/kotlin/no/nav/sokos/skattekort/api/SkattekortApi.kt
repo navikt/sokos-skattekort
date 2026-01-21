@@ -11,7 +11,9 @@ import io.ktor.server.routing.route
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.module.forespoersel.ForespoerselInput
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.security.AuthToken.getSaksbehandler
@@ -31,8 +33,13 @@ fun Route.skattekortApi(
 
             logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Mottatt forespørsel: $request" }
 
-            val message = "${request.forsystem};${request.aar};${request.personIdent}"
-            forespoerselService.taImotForespoersel(message, saksbehandler)
+            val forespoerselInput =
+                ForespoerselInput(
+                    forsystem = Forsystem.fromValue(request.forsystem),
+                    inntektsaar = request.aar,
+                    fnrList = request.personIdent,
+                )
+            forespoerselService.taImotForespoersel(forespoerselInput, saksbehandler)
             call.respond(HttpStatusCode.Created)
         }
     }
@@ -45,7 +52,7 @@ fun Route.skattekortApi(
             logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Ber om status på forespørsel: $request" }
 
             call.respond(
-                StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem)),
+                StatusResponse(statusService.statusForespoeresel(request.personIdent.first(), request.aar, request.forsystem)),
             )
         }
     }
@@ -58,7 +65,7 @@ data class StatusResponse(
 
 @Serializable
 data class ForespoerselRequest(
-    val personIdent: String,
+    val personIdent: List<String>,
     val aar: Int,
     val forsystem: String,
 )

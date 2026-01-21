@@ -33,41 +33,40 @@ class ForespoerselService(
     private val personService: PersonService,
     private val featureToggles: UnleashIntegration,
 ) {
+    fun taImotForespoersel(message: String) {
+        logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $message" }
+        val forespoerselInput = parseCopybookMessage(message)
+        taImotForespoersel(forespoerselInput)
+    }
+
     fun taImotForespoersel(
-        message: String,
+        input: ForespoerselInput,
         saksbehandler: Saksbehandler? = null,
     ) {
         runCatching {
-            logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $message" }
-
             val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
             val forespoerselInput =
-                when {
-                    message.startsWith("<") -> return
-                    else -> parseCopybookMessage(message)
-                }.let { input ->
-                    input.copy(
-                        fnrList =
-                            input.fnrList.filter { fnr ->
-                                val erGyldig = foedselsnummerkategori.erGyldig(fnr)
-                                if (!erGyldig) {
-                                    logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
-                                }
-                                erGyldig
-                            },
-                    )
-                }
+                input.copy(
+                    fnrList =
+                        input.fnrList.filter { fnr ->
+                            val erGyldig = foedselsnummerkategori.erGyldig(fnr)
+                            if (!erGyldig) {
+                                logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
+                            }
+                            erGyldig
+                        },
+                )
 
             dataSource.transaction { tx ->
-                handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
+                handleForespoersel(tx, forespoerselInput, saksbehandler?.ident)
                 if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
                     val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
-                    handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
+                    handleForespoersel(tx, forespoerselForNesteAar, saksbehandler?.ident)
                 }
             }
         }.onFailure { exception ->
             logger.error { "Feil ved mottak av forespørsel på skattekort, sjekk feilmeldingen i team logs." }
-            logger.error(marker = TEAM_LOGS_MARKER, exception) { "Feil ved mottak av forespørsel på skattekort: $message" }
+            logger.error(marker = TEAM_LOGS_MARKER, exception) { "Feil ved mottak av forespørsel på skattekort: $input" }
             throw exception
         }
     }
@@ -81,7 +80,6 @@ class ForespoerselService(
     @OptIn(ExperimentalTime::class)
     private fun handleForespoersel(
         tx: TransactionalSession,
-        message: String,
         forespoerselInput: ForespoerselInput,
         brukerId: String?,
     ) {
@@ -89,7 +87,7 @@ class ForespoerselService(
             ForespoerselRepository.insert(
                 tx = tx,
                 forsystem = forespoerselInput.forsystem,
-                dataMottatt = message,
+                dataMottatt = forespoerselInput.toString(),
             )
 
         var bestillingCount = 0
@@ -188,8 +186,7 @@ class ForespoerselService(
                 retry@ while (i < 5) {
                     try {
                         dataSource.transaction { tx ->
-                            val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
-                            handleForespoersel(tx, message, input, null)
+                            handleForespoersel(tx, input, null)
                         }
                         break@retry
                     } catch (e: BatchUpdateException) {
@@ -204,10 +201,4 @@ class ForespoerselService(
             }
         }
     }
-
-    data class ForespoerselInput(
-        val forsystem: Forsystem,
-        val inntektsaar: Int,
-        val fnrList: List<String>,
-    )
 }

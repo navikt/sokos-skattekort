@@ -49,11 +49,11 @@ class ForespoerselService(
                     input.copy(
                         fnrList =
                             input.fnrList.filter { fnr ->
-                                val erGyldig = foedselsnummerkategori.erGyldig(fnr)
-                                if (!erGyldig) {
+                                val kanBestilleSkattekort = foedselsnummerkategori.kanBestilleSkattekort(fnr)
+                                if (!kanBestilleSkattekort) {
                                     logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
                                 }
-                                erGyldig
+                                kanBestilleSkattekort
                             },
                     )
                 }
@@ -75,6 +75,7 @@ class ForespoerselService(
     private fun skalLagesForNesteAarOgsaa(forespoerselInput: ForespoerselInput): Boolean {
         val now = LocalDateTime.now().toKotlinLocalDateTime()
         val thisYear = now.year
+        // TODO Bruke ReglerforInntektsaar
         return (forespoerselInput.inntektsaar == thisYear && now.month == Month.DECEMBER && now.day >= 15)
     }
 

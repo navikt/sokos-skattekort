@@ -6,7 +6,9 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.atlassian.oai.validator.OpenApiInteractionValidator
+import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
@@ -31,7 +33,7 @@ import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.TestUtils.tokenWithNavIdent
 import no.nav.sokos.skattekort.utils.validationReport
 
-private const val HENT_SKATTEKORT_URL = "/api/v1/hent-skattekort"
+private const val HENT_SKATTEKORT_URL = "/api/v1/person/hent-skattekort"
 
 class SkattekortpersonApiE2ETest :
     FunSpec({
@@ -55,14 +57,15 @@ class SkattekortpersonApiE2ETest :
                     }
 
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
-                validationReport.hasErrors() shouldBe false
-                response.status shouldBe HttpStatusCode.BadRequest
-
                 val apiError = response.body<ApiError>()
-                apiError.error shouldBe HttpStatusCode.BadRequest.description
-                apiError.status shouldBe HttpStatusCode.BadRequest.value
-                apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
-                apiError.path shouldBe HENT_SKATTEKORT_URL
+                assertSoftly {
+                    validationReport.hasErrors() shouldBe true
+                    response.status shouldBe HttpStatusCode.BadRequest
+                    apiError.error shouldBe HttpStatusCode.BadRequest.description
+                    apiError.status shouldBe HttpStatusCode.BadRequest.value
+                    apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
+                    apiError.path shouldBe HENT_SKATTEKORT_URL
+                }
             }
         }
 
@@ -79,21 +82,22 @@ class SkattekortpersonApiE2ETest :
                     }
 
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
-                validationReport.hasErrors() shouldBe false
-                response.status shouldBe HttpStatusCode.BadRequest
-
                 val apiError = response.body<ApiError>()
-                apiError.error shouldBe HttpStatusCode.BadRequest.description
-                apiError.status shouldBe HttpStatusCode.BadRequest.value
-                apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
-                apiError.path shouldBe HENT_SKATTEKORT_URL
+                assertSoftly {
+                    validationReport.hasErrors() shouldBe true
+                    response.status shouldBe HttpStatusCode.BadRequest
+                    apiError.error shouldBe HttpStatusCode.BadRequest.description
+                    apiError.status shouldBe HttpStatusCode.BadRequest.value
+                    apiError.message shouldBe "fnr er ugyldig. Tillatt format er 11 siffer, var $fnr"
+                    apiError.path shouldBe HENT_SKATTEKORT_URL
+                }
             }
         }
 
         test("veldig stort inntektsaar dør på seg") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-                val fnr = "12345678901"
+                val fnr = "01010112345"
                 val request = SkattekortPersonRequest(fnr = fnr, inntektsaar = 20522)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
@@ -102,8 +106,8 @@ class SkattekortpersonApiE2ETest :
                         setBody(request)
                     }
 
-                val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
-                validationReport.hasErrors() shouldBe false
+                val swaggerValidationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
+                swaggerValidationReport.hasErrors() shouldBe true
                 response.status shouldBe HttpStatusCode.BadRequest
 
                 val apiError = response.body<ApiError>()
@@ -118,14 +122,14 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val listAppender = ListAppender<ILoggingEvent>()
-                listAppender.start()
+                val auditLogAdditions = ListAppender<ILoggingEvent>()
+                auditLogAdditions.start()
 
                 val auditLogger: Logger = LoggerFactory.getLogger("auditLogger") as Logger
-                auditLogger.addAppender(listAppender)
+                auditLogger.addAppender(auditLogAdditions)
 
                 try {
-                    val request = SkattekortPersonRequest(fnr = "12345678901", inntektsaar = 2025)
+                    val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
                     val response =
                         client.post(HENT_SKATTEKORT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -139,12 +143,12 @@ class SkattekortpersonApiE2ETest :
 
                     Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement(readFile("/api/skattekortPensjonFraNav.json"))
 
-                    listAppender.list.size shouldBe 1
-                    listAppender.list.get(0).formattedMessage shouldMatch
-                        "CEF\\:0\\|Utbetalingsportalen\\|sokos\\-skattekort\\|1\\.0\\|audit\\:access\\|sokos\\-skattekort\\|INFO\\|suid\\=aUser duid\\=12345678901 end=\\d+ msg\\=NAV\\-ansatt har søkt etter skattekort for bruker"
+                    auditLogAdditions.list.size shouldBe 1
+                    auditLogAdditions.list.get(0).formattedMessage shouldMatch
+                        "CEF\\:0\\|Utbetalingsportalen\\|sokos\\-skattekort\\|1\\.0\\|audit\\:access\\|sokos\\-skattekort\\|INFO\\|suid\\=aUser duid\\=01010112345 end=\\d+ msg\\=NAV\\-ansatt har søkt etter skattekort for bruker"
                 } finally {
-                    auditLogger.detachAppender(listAppender)
-                    listAppender.stop()
+                    auditLogger.detachAppender(auditLogAdditions)
+                    auditLogAdditions.stop()
                 }
             }
         }
@@ -153,7 +157,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val request = SkattekortPersonRequest(fnr = "12345678902", inntektsaar = 2025)
+                val request = SkattekortPersonRequest(fnr = "02020212345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -173,7 +177,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val request = SkattekortPersonRequest(fnr = "12345678901", inntektsaar = 2025)
+                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -183,34 +187,69 @@ class SkattekortpersonApiE2ETest :
             }
         }
 
-        test("Auth: token uten navident blir avvist") {
+        test("Auth: token uten navident blir avvist pga reelt fnr") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
 
                 tokenWithoutNavIdent shouldNotBe null
 
-                val request = SkattekortPersonRequest(fnr = "12345678901", inntektsaar = 2025)
+                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
                         setBody(request)
                     }
-                response.status shouldBe HttpStatusCode.Unauthorized
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("Request uten inntektsår blir avvist hvis det er reelt fnr") {
+            TestUtils.withFullTestApplication {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = null)
+                val response =
+                    client.post(HENT_SKATTEKORT_URL) {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json)
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        setBody(request)
+                    }
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("Auth: token uten navident blir ikke avvist når man søker opp fiktive fnr") {
+            TestUtils.withFullTestApplication {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
+
+                tokenWithoutNavIdent shouldNotBe null
+
+                val request = SkattekortPersonRequest(fnr = "01510112345", inntektsaar = 2025)
+                val response =
+                    client.post(HENT_SKATTEKORT_URL) {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json)
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                        setBody(request)
+                    }
+                response shouldNotBeNull {
+                    status shouldBe HttpStatusCode.OK
+                }
             }
         }
 
         test("Auth: token fra feil issuer blir avvist") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "bogus")?.serialize()
+                val tokenWithBogusIssuer = authServer?.issueToken(issuerId = "bogus")?.serialize()
 
-                val request = SkattekortPersonRequest(fnr = "12345678901", inntektsaar = 2025)
+                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithBogusIssuer")
                         setBody(request)
                     }
             }
@@ -235,7 +274,7 @@ class SkattekortpersonApiE2ETest :
         test("skattekort ikke funnet returnerer 200 med melding") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_uten_skattekort.sql")
-                val request = SkattekortPersonRequest(fnr = "12345678903", inntektsaar = 2025)
+                val request = SkattekortPersonRequest(fnr = "03030312345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)

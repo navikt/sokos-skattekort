@@ -7,7 +7,7 @@
       },
       "arbeidstaker": [
         {
-          "arbeidstakeridentifikator": "12345678901",
+          "arbeidstakeridentifikator": "01010112345",
           "resultatForSkattekort": "skattekortopplysningerOK",
           "skattekort": {
             "utstedtDato": "2025-10-20",

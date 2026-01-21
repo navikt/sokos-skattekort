@@ -90,7 +90,7 @@ components:
       properties:
         personIdent:
           type: string
-          example: "12345678901"
+          example: "01010112345"
         aar:
           type: integer
           format: int32

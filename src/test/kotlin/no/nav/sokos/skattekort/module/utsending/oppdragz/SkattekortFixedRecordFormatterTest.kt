@@ -111,9 +111,9 @@ class SkattekortFixedRecordFormatterDuplicatorTest :
                         ),
                     tilleggsopplysningList = listOf(),
                 )
-            val skattekortmelding = Skattekortmelding(skattekort, "12345678901")
+            val skattekortmelding = Skattekortmelding(skattekort, "01010112345")
             val copybook = SkattekortFixedRecordFormatter(skattekortmelding, 2025.toString()).format()
             copybook shouldBe
-                "12345678901skattekortopplysningerOK                20252020-09-09123                                                         1Frikort     loennFraNAV                                                      0007890    "
+                "01010112345skattekortopplysningerOK                20252020-09-09123                                                         1Frikort     loennFraNAV                                                      0007890    "
         }
     })

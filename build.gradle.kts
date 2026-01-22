@@ -56,7 +56,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "11.2.1"
+val unleashedVersion = "12.0.0"
 
 dependencies {
 

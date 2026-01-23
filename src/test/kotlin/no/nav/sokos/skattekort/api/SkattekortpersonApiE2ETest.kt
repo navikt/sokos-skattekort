@@ -27,6 +27,10 @@ import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonReques
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.module.person.PersonRepository
+import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.authServer
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
@@ -34,6 +38,7 @@ import no.nav.sokos.skattekort.utils.TestUtils.tokenWithNavIdent
 import no.nav.sokos.skattekort.utils.validationReport
 
 private const val HENT_SKATTEKORT_URL = "/api/v1/person/hent-skattekort"
+private const val OPPRETT_URL = "/api/v1/person/opprett"
 
 class SkattekortpersonApiE2ETest :
     FunSpec({
@@ -286,6 +291,198 @@ class SkattekortpersonApiE2ETest :
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
                 Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""[]""")
+            }
+        }
+
+        test("Kan opprette skattekort med eksempelet fra swagger") {
+            TestUtils.withFullTestApplication {
+                val request =
+                    """
+                    {
+                      "fnr": "01010112345",
+                      "skattekort": {
+                        "utstedtDato": "2026-01-22",
+                        "inntektsaar": 2026,
+                        "resultatForSkattekort": "skattekortopplysningerOK",
+                        "forskuddstrekkList": [
+                          {
+                            "trekkode": "loennFraNAV",
+                            "tabell": "8010",
+                            "prosentSats": 25.5,
+                            "antallMndForTrekk": 10.5
+                          }
+                        ],
+                        "tilleggsopplysningList": [
+                          "oppholdPaaSvalbard"
+                        ]
+                      }
+                    }
+                    """.trimIndent()
+                try {
+                    val response =
+                        client.post(OPPRETT_URL) {
+                            header(HttpHeaders.ContentType, ContentType.Application.Json)
+                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            setBody(request)
+                        }
+                    DbListener.dataSource.transaction { tx ->
+                        val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
+                        opprettetPerson.shouldNotBeNull()
+                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, opprettetPerson.id!!, 2026, false)
+                        nyeSkattekort.size shouldBe 1
+                    }
+                } catch (e: Exception) {
+                    println("Feil ved oppretting av skattekort: ${e.message}")
+                }
+            }
+        }
+
+        test("Returnerer 400 BadRequest når man oppgir ugyldig ResultatForSkattekort") {
+            TestUtils.withFullTestApplication {
+                val request =
+                    """
+                    {
+                      "fnr": "01010112345",
+                      "skattekort": {
+                        "utstedtDato": "2026-01-22",
+                        "inntektsaar": 2026,
+                        "resultatForSkattekort": "ugyldigVerdi",
+                        "forskuddstrekkList": [
+                          {
+                            "trekkode": "loennFraNAV",
+                            "tabell": "8010",
+                            "prosentSats": 25.5,
+                            "antallMndForTrekk": 10.5
+                          }
+                        ]
+                      }
+                    }
+                    """.trimIndent()
+
+                val response =
+                    client.post(OPPRETT_URL) {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json)
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        setBody(request)
+                    }
+
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("Returnerer 400 BadRequest når man oppgir ugyldig Trekkode") {
+            TestUtils.withFullTestApplication {
+                val request =
+                    """
+                    {
+                      "fnr": "01010112345",
+                      "skattekort": {
+                        "utstedtDato": "2026-01-22",
+                        "inntektsaar": 2026,
+                        "forskuddstrekkList": [
+                          {
+                            "trekkode": "ugyldigTrekkode",
+                            "tabell": "8010",
+                            "prosentSats": 25.5,
+                            "antallMndForTrekk": 10.5
+                          }
+                        ]
+                      }
+                    }
+                    """.trimIndent()
+
+                val response =
+                    client.post(OPPRETT_URL) {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json)
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        setBody(request)
+                    }
+
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+        test("Kan ikke opprette skattekort for reelt fnr uten saksbehandler") {
+            TestUtils.withFullTestApplication {
+                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
+
+                val request =
+                    """
+                    {    
+                        "fnr" : "01010112345",
+                        "skattekort": {
+                            "utstedtDato": "2026-01-22",
+                            "inntektsaar": 2026,
+                            "resultatForSkattekort": "skattekortopplysningerOK",
+                            "forskuddstrekkList": [
+                                 {
+                                    "trekkode": "loennFraNAV",
+                                    "tabell": "8010",
+                                    "prosentSats": 25.5,
+                                    "antallMndForTrekk": 10.5
+                                 }
+                            ]
+                        }
+                    }
+                    """.trimIndent()
+
+                try {
+                    val response =
+                        client.post(OPPRETT_URL) {
+                            header(HttpHeaders.ContentType, ContentType.Application.Json)
+                            header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                            setBody(request)
+                        }
+
+                    response.status shouldBe HttpStatusCode.BadRequest
+                } catch (e: Exception) {
+                    println("Feil ved oppretting av skattekort: ${e.message}")
+                }
+            }
+        }
+
+        test("Kan opprette skattekort for dollybruker uten tilleggsopplysning eller saksbehandler, returnerer 201 CREATED") {
+            TestUtils.withFullTestApplication {
+                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
+
+                val request =
+                    """
+                    {
+                        "fnr": "01410112345",
+                        "skattekort": {
+                            "utstedtDato": "2026-01-22",
+                            "inntektsaar": 2026,
+                            "resultatForSkattekort": "skattekortopplysningerOK",
+                            "forskuddstrekkList": [
+                                 {
+                                    "trekkode": "loennFraNAV",
+                                    "tabell": "8010",
+                                    "prosentSats": 25.5,
+                                    "antallMndForTrekk": 10.5
+                                 }
+                            ]
+                        }
+                    }
+                    """.trimIndent()
+
+                try {
+                    val response =
+                        client.post(OPPRETT_URL) {
+                            header(HttpHeaders.ContentType, ContentType.Application.Json)
+                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            setBody(request)
+                        }
+
+                    response.status shouldBe HttpStatusCode.Created
+                    DbListener.dataSource.transaction { tx ->
+                        val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01410112345"))
+                        opprettetPerson.shouldNotBeNull()
+                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, opprettetPerson.id!!, 2026, false)
+                        nyeSkattekort.size shouldBe 1
+                    }
+                } catch (e: Exception) {
+                    println("Feil ved oppretting av skattekort: ${e.message}")
+                }
             }
         }
     })

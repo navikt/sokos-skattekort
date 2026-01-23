@@ -20,11 +20,13 @@ import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonReques
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidAar
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidForsystem
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
+import no.nav.sokos.skattekort.module.skattekort.Trekkode
 import no.nav.sokos.skattekort.security.AuthToken.getNAVIdentFromToken
 import no.nav.sokos.skattekort.security.Saksbehandler
 
@@ -63,7 +65,7 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
                     request.skattekort,
                     saksbehandler,
                 )
-            call.respond(HttpStatusCode.Accepted)
+            call.respond(HttpStatusCode.Created)
         }
     }
 }
@@ -99,6 +101,25 @@ fun RequestValidationConfig.requestValidationSkattekortRequest() {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
             request.inntektsaar != null &&
                 !SkattekortPersonValidator.isValidInntektsaar(request.inntektsaar) -> ValidationResult.Invalid("inntektsaar ser ikke ut som et gyldig årstall, var ${request.inntektsaar}")
+
+            else -> ValidationResult.Valid
+        }
+    }
+}
+
+fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
+    validate<OpprettSkattekortRequest> { request ->
+        when {
+            !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
+            try {
+                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) != null
+                request.skattekort.forskuddstrekkList
+                    .map { it.trekkode }
+                    .map(Trekkode::from)
+                false
+            } catch (e: Exception) {
+                true
+            } -> ValidationResult.Invalid("ugyldige verdier i skattekort-json.")
 
             else -> ValidationResult.Valid
         }

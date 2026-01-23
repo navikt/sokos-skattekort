@@ -21,7 +21,7 @@ data class SkattekortDTO(
     val inntektsaar: Int,
     val resultatForSkattekort: String?,
     val forskuddstrekkList: List<ForskuddstrekkDTO>,
-    val tilleggsopplysningList: List<String>? = emptyList(),
+    val tilleggsopplysningList: List<String> = emptyList(),
 ) {
     constructor(skattekort: Skattekort) : this(
         utstedtDato = skattekort.utstedtDato,
@@ -98,7 +98,7 @@ data class SkattekortDTO(
                         else -> error("Ugyldig Forskuddstrekk: $it")
                     }
                 },
-            tilleggsopplysningList = this.tilleggsopplysningList?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+            tilleggsopplysningList = this.tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it) },
         )
 }
 

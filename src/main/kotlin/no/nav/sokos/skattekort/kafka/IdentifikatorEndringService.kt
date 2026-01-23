@@ -64,7 +64,13 @@ class IdentifikatorEndringService(
                 val identList = pdlResponse[identifikasjonsnummer]!!.filter { it.historisk }.map { it.ident }
 
                 if (identList.isNotEmpty()) {
-                    val personId = FoedselsnummerRepository.findPersonIdByFnrList(tx, identList)
+                    val personId =
+                        FoedselsnummerRepository
+                            .findPersonIdByFnrList(tx, identList)
+                            .filterValues { it != null }
+                            .values
+                            .firstOrNull()
+
                     personId?.let { id ->
                         logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
                         personService.updateFoedselsnummer(

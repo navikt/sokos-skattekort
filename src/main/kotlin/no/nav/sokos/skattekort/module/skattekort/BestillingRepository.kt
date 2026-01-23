@@ -47,7 +47,8 @@ object BestillingRepository {
             queryOf(
                 """
                     |INSERT INTO bestillinger (person_id, inntektsaar, fnr) 
-                    |VALUES (:personId, :inntektsaar, :fnr)
+                    |VALUES (:personId, :inntektsaar, :fnr) 
+                    |ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
                 """.trimMargin(),
                 mapOf(
                     "personId" to bestilling.personId.value,

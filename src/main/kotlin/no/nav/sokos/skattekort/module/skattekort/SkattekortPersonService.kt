@@ -90,7 +90,6 @@ class SkattekortPersonService(
                     utstedtDato = skattekortDTO.utstedtDato ?: today,
                     identifikator = "dolly",
                     kilde = SkattekortKilde.MANUELL,
-                    resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
                 )
             SkattekortRepository.insert(tx, skattekort)
         }

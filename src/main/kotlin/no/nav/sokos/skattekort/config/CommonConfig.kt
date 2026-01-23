@@ -31,6 +31,8 @@ import org.slf4j.event.Level
 import tools.jackson.databind.DeserializationFeature
 import tools.jackson.dataformat.xml.XmlMapper
 
+import no.nav.sokos.skattekort.api.requestValidationSkattekortConfig
+import no.nav.sokos.skattekort.api.requestValidationSkattekortRequest
 import no.nav.sokos.skattekort.infrastructure.Metrics
 
 val TEAM_LOGS_MARKER = MarkerFactory.getMarker("TEAM_LOGS")

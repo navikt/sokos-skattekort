@@ -334,10 +334,10 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any(), "BR1337") } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
 
             databaseHas(
-                aPerson(1L, "12345678901"),
+                aPerson(1L, "01010112345"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "12345678901", 2025, 1L),
+                aBestilling(1L, "01010112345", 2025, 1L),
             )
 
             bestillingService.hentSkattekort()
@@ -388,11 +388,11 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1L, "12345678901"),
+                aPerson(1L, "01010112345"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
                 aBestillingsBatch(2, "BR1338", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "12345678901", 2025, 1L),
+                aBestilling(1L, "01010112345", 2025, 1L),
                 aBestilling(1L, "23456789012", 2025, 2L),
             )
 
@@ -446,10 +446,10 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns response
 
             databaseHas(
-                aPerson(1L, "12345678901"),
+                aPerson(1L, "01010112345"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
-                aBestilling(1L, "12345678901", 2025, 1L),
+                aBestilling(1L, "01010112345", 2025, 1L),
             )
 
             bestillingService.hentSkattekort()

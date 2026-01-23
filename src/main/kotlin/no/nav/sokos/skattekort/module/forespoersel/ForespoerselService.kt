@@ -52,11 +52,11 @@ class ForespoerselService(
                     input.copy(
                         fnrList =
                             input.fnrList.filter { fnr ->
-                                val erGyldig = foedselsnummerkategori.erGyldig(fnr)
-                                if (!erGyldig) {
+                                val kanBestilleSkattekort = foedselsnummerkategori.kanBestilleSkattekort(fnr)
+                                if (!kanBestilleSkattekort) {
                                     logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
                                 }
-                                erGyldig
+                                kanBestilleSkattekort
                             },
                     )
                 }
@@ -79,6 +79,7 @@ class ForespoerselService(
     private fun skalLagesForNesteAarOgsaa(forespoerselInput: ForespoerselInput): Boolean {
         val now = LocalDateTime.now().toKotlinLocalDateTime()
         val thisYear = now.year
+        // TODO Bruke ReglerforInntektsaar
         return (forespoerselInput.inntektsaar == thisYear && now.month == Month.DECEMBER && now.day >= 15)
     }
 
@@ -193,12 +194,24 @@ class ForespoerselService(
                 var i = 0
                 retry@ while (i < 5) {
                     try {
-                        val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(input.fnrList)
-                        dataSource.transaction { tx ->
-                            val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
-                            handleForespoersel(tx, message, input, foedselsnumreWithPersonIdMap, null)
+                        try {
+                            assert(input.fnrList.first().length == 11)
+
+                            val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(input.fnrList)
+                            dataSource.transaction { tx ->
+                                val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
+                                handleForespoersel(tx, message, input, foedselsnumreWithPersonIdMap, null)
+                            }
+                            break@retry
+                        } catch (e: NumberFormatException) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            break@retry
+                        } catch (e: AssertionError) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            break@retry
                         }
-                        break@retry
                     } catch (e: BatchUpdateException) {
                         logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
                         logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til secure log")

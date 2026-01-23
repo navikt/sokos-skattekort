@@ -447,6 +447,7 @@ class BestillingService(
 
     private fun bestillOppdateringer(tx: TransactionalSession) {
         val now = now().toKotlinLocalDateTime()
+        // TODO Bruke ReglerForInntektsaar
         val erEtterMidtenAvDesember = (now.day > 15 && now.month == Month.DECEMBER)
         val requests: List<BestillSkattekortRequest> =
             if (erEtterMidtenAvDesember) {

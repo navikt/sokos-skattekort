@@ -45,7 +45,7 @@ class SkattekortApiTest :
         test("bestille skattekort skal returnere 201 Created") {
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val fnr = "12345678901"
+                val fnr = "01010112345"
                 WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
 
                 TestUtils.withFullTestApplication {
@@ -100,7 +100,7 @@ class SkattekortApiTest :
             TestUtils.withFullTestApplication {
                 val inntekstaar = Year.now().minusYears(2).value
 
-                val request = ForespoerselRequest(personIdent = "12345678901", aar = inntekstaar, forsystem = Forsystem.MANUELL.value)
+                val request = ForespoerselRequest(personIdent = "01010112345", aar = inntekstaar, forsystem = Forsystem.MANUELL.value)
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -127,7 +127,7 @@ class SkattekortApiTest :
 
         test("bestille skattekort skal returnere 400 Ugyldig request med feil forsystem") {
             TestUtils.withFullTestApplication {
-                val request = ForespoerselRequest(personIdent = "12345678901", aar = inntektsaar, forsystem = "")
+                val request = ForespoerselRequest(personIdent = "01010112345", aar = inntektsaar, forsystem = "")
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)

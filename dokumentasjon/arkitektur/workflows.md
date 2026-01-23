@@ -42,7 +42,6 @@ flowchart TD
 5. [Deploy application manual](.github/workflows/manual-deploy.yaml) -> For å deploye applikasjonen manuelt til ulike miljøer
     1. Denne workflow trigges manuelt basert på branch og miljø
 
-
 ### Statemaskin for bestillinger
 
 #### bestilling
@@ -79,10 +78,19 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    BB[Ta tak i en passende Bestillingsbatch] --> HS(Kall HentSkattekort hos Skatteetaten for aktuell bestillingsreferanse)
-    HS -->|For hver Bestilling| SK{Har vi fått skattekort?} -->|Ja| L(Lagre Skattekort i databasen) --> SLETT(Slett bestillinger som vi har fått skattekort for)
-    SK -->|Nei| RESET(Slett bestillingsbatchid fra bestilling)
-    SK -->|Feil FNR| FLAGG(Flagg FNR) --> SKRIK(Rop høyt et sted så noen hører) --> SLETT2(Slett Bestillinger og Abonnementer som feilet)
+    BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten for aktuell bestillingsreferanse) --> 
+    SVAR{Responskode} -->|200|OK -->|For hver Bestilling|SK{Har vi fått skattekort?} -->|Ja|L(Lagre Skattekort i databasen) -->
+SLETT(Slett bestilling som vi har fått skattekort for) -->
+OPPRETT(Opprett Utsending for hvert forsystem som abonnerer på fnr og inntektsår)
+SK -->|Nei|RESET(Slett bestillingsbatchid fra bestilling)
+
+SVAR -->|204|NoContent --> VENT(Ikke gjør noe og la
+neste kjøring
+plukke opp batchen)
+
+SVAR -->|503|503(Service Unavailable) --> VENT
+
+SVAR -->|Andre|FEIL(Feil som må undersøkes)
 ```
 
 ## Prosess 4: Send skattekort til Forsystem

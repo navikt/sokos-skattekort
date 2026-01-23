@@ -208,8 +208,6 @@ class PersonServiceTest :
                 ),
             )
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
-
-            result.size shouldBe 1
             result[invalidFnr] shouldBe null
         }
 

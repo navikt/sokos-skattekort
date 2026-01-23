@@ -27,15 +27,21 @@ object FoedselsnummerRepository {
     fun findPersonIdByFnrList(
         tx: TransactionalSession,
         fnrList: List<String>,
-    ): PersonId? =
-        tx.single(
-            queryOf(
-                """
-                SELECT person_id FROM foedselsnumre
-                WHERE fnr = ANY(?)
-                """.trimIndent(),
-                fnrList.toTypedArray(),
-            ),
-            extractor = { row -> PersonId(row.long("person_id")) },
-        )
+    ): Map<String, PersonId?> {
+        val resultMap =
+            tx
+                .list(
+                    queryOf(
+                        """
+                        SELECT person_id, fnr FROM foedselsnumre
+                        WHERE fnr = ANY(?)
+                        """.trimIndent(),
+                        fnrList.toTypedArray(),
+                    ),
+                    extractor = { row ->
+                        row.string("fnr") to PersonId(row.long("person_id"))
+                    },
+                ).toMap()
+        return fnrList.associateWith { fnr -> resultMap[fnr] }
+    }
 }

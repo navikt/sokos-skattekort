@@ -33,7 +33,7 @@ class SkatteetatenClient(
     private val skatteetatenUrl = PropertiesConfig.getSkatteetatenProperties().skatteetatenApiUrl
 
     suspend fun bestillSkattekort(request: BestillSkattekortRequest): BestillSkattekortResponse {
-        val url = "$skatteetatenUrl/api/forskudd/bestillSkattekort/"
+        val url = "$skatteetatenUrl/dd/bestillSkattekort/"
 
         val response: HttpResponse =
             client.post(url) {
@@ -53,7 +53,7 @@ class SkatteetatenClient(
         tx: TransactionalSession?,
         bestillingsreferanse: String,
     ): HentSkattekortResponse? {
-        val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
+        val url = "$skatteetatenUrl/dd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
 
         val response =
             client.get(url) {

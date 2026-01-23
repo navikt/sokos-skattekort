@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldBe
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.infrastructure.MQListener.forespoerselQueue
+import no.nav.sokos.skattekort.infrastructure.WiremockListener
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
@@ -22,7 +23,7 @@ import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
 
 class MottaBestillingEndToEndTest :
     FunSpec({
-        extensions(DbListener, MQListener)
+        extensions(DbListener, MQListener, WiremockListener)
 
         test("vi kan håndtere en forespørsel fra OS") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
@@ -31,6 +32,7 @@ class MottaBestillingEndToEndTest :
                     DbListener.loadDataSet("basicendtoendtest/basicdata.sql")
 
                     val fnr = "15467834260"
+                    WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
                     JmsTestUtil.sendMessage(msg = "OS;2027;$fnr", queue = forespoerselQueue)
 
                     eventually(eventuallyConfiguration) {

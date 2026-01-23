@@ -34,6 +34,7 @@ import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.infrastructure.WiremockListener
 import no.nav.sokos.skattekort.module
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT
@@ -93,8 +94,11 @@ object TestUtils {
             }
 
             dependencies {
+                provide<String>(name = "pdlUrl") { WiremockListener.wiremock.baseUrl() }
                 provide { mockk<MaskinportenTokenClient>(relaxed = true) }
-                provide { mockk<AzuredTokenClient>(relaxed = true) }
+                provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
+                    mockk<AzuredTokenClient>(relaxed = true)
+                }
                 provide { MQListener.connectionFactory }
                 provide<Queue>(name = "forespoerselQueue") {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)

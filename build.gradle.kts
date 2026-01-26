@@ -29,7 +29,7 @@ repositories {
 
 val ktorVersion = "3.3.3"
 val nimbusVersion = "10.7"
-val logbackVersion = "1.5.24"
+val logbackVersion = "1.5.25"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.2"
 val dbSchedulerVersion = "16.7.0"
@@ -44,11 +44,11 @@ val mockkVersion = "1.14.7"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "11.20.1"
-val postgresVersion = "42.7.8"
+val flywayVersion = "11.20.2"
+val postgresVersion = "42.7.9"
 val activemqVersion = "2.44.0"
 val ibmmqVersion = "9.4.4.1"
-val opentelemetryVersion = "2.23.0-alpha"
+val opentelemetryVersion = "2.24.0-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
 val kafkaClientsVersion = "8.1.1-ce"
 val avroVersion = "1.12.1"
@@ -56,7 +56,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "11.2.1"
+val unleashedVersion = "12.0.1"
 
 dependencies {
 
@@ -136,7 +136,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("net.bytebuddy:byte-buddy:1.18.3") // TEMP: Needed for mockk 1.14.6 with java25. Remove when Mockk is updated and bytebuddy is no longer needed.
+    testImplementation("net.bytebuddy:byte-buddy:1.18.4") // TEMP: Needed for mockk 1.14.6 with java25. Remove when Mockk is updated and bytebuddy is no longer needed.
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")

@@ -85,12 +85,21 @@ fun Route.deprecatedSkattekortPersonApi(skattekortPersonService: SkattekortPerso
 fun RequestValidationConfig.requestValidationSkattekortConfig() {
     validate<ForespoerselRequest> { request ->
         when {
-            !isValidPersonIdent(request.personIdent) -> ValidationResult.Invalid("personIdent er ugyldig. Tillatt format er 11 siffer")
-            !isValidAar(request.aar) -> ValidationResult.Invalid("Gyldig årstall er mellom ${Year.now().minusYears(1)} og inneværende år")
-            !isValidForsystem(request.forsystem) ->
-                ValidationResult.Invalid("forsystem er ugyldig. Gyldige verdier er: ${Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }.joinToString { it.value }}")
+            !isValidPersonIdent(request.personIdent) -> {
+                ValidationResult.Invalid("personIdent er ugyldig. Tillatt format er 11 siffer")
+            }
 
-            else -> ValidationResult.Valid
+            !isValidAar(request.aar) -> {
+                ValidationResult.Invalid("Gyldig årstall er mellom ${Year.now().minusYears(1)} og inneværende år")
+            }
+
+            !isValidForsystem(request.forsystem) -> {
+                ValidationResult.Invalid("forsystem er ugyldig. Gyldige verdier er: ${Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }.joinToString { it.value }}")
+            }
+
+            else -> {
+                ValidationResult.Valid
+            }
         }
     }
 }
@@ -99,6 +108,7 @@ fun RequestValidationConfig.requestValidationSkattekortRequest() {
     validate<SkattekortPersonRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
+
             request.inntektsaar != null &&
                 !SkattekortPersonValidator.isValidInntektsaar(request.inntektsaar) -> ValidationResult.Invalid("inntektsaar ser ikke ut som et gyldig årstall, var ${request.inntektsaar}")
 
@@ -111,11 +121,12 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
     validate<OpprettSkattekortRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
+
             try {
                 request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) != null
                 request.skattekort.forskuddstrekkList
                     .map { it.trekkode }
-                    .map(Trekkode::from)
+                    .map(Trekkode::fromValue)
                 false
             } catch (e: Exception) {
                 true

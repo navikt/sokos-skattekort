@@ -19,12 +19,10 @@ import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
-import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
@@ -38,7 +36,6 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
-    private val personService: PersonService,
     private val featureToggles: UnleashIntegration,
 ) {
     private val logger = KotlinLogging.logger {}
@@ -250,30 +247,12 @@ class BestillingService(
         arbeidstaker: Arbeidstaker,
         batchId: String,
     ) {
-        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
-        val (personId, opprettet) =
-            personService.findPersonIdOrCreatePersonByFnr(
-                fnr = Personidentifikator(arbeidstaker.arbeidstakeridentifikator),
-                informasjon = "Skattekort mottatt for tidligere ukjent person",
-                tx = tx,
-            )
-        if (opprettet) {
-            PersonRepository.flaggPerson(tx, personId)
-            AuditRepository.insert(
-                tx = tx,
-                tag = AuditTag.UVENTET_PERSON,
-                personId = personId,
-                informasjon = "Ikke forventet skattekort mottatt fra skatteetaten; mulig tegn på manuell bestilling på Navs organisasjonsnummer",
-            )
-            if (!foedselsnummerkategori.kanBestilleSkattekort(arbeidstaker.arbeidstakeridentifikator)) {
-                AuditRepository.insert(
-                    tx = tx,
-                    tag = AuditTag.INVALID_FNR,
-                    personId = personId,
-                    informasjon = "Personnummer mottatt fra skatteetaten er ugyldig",
-                )
+        val personId =
+            PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {
+                logger.error(marker = TEAM_LOGS_MARKER) { "Fant ikke person for fnr ${arbeidstaker.arbeidstakeridentifikator}" }
+                return
             }
-        }
+
         val inntektsaar = arbeidstaker.inntektsaar.toInt()
         val skattekort = toSkattekort(arbeidstaker, personId)
         if (skattekort.resultatForSkattekort == ResultatForSkattekort.UgyldigFoedselsEllerDnummer) {

@@ -7,6 +7,10 @@ import java.time.LocalDateTime
 import kotlin.time.ExperimentalTime
 import kotlinx.serialization.json.Json
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -15,6 +19,7 @@ import io.kotest.extensions.time.withConstantNow
 import io.kotest.inspectors.forAll
 import io.kotest.inspectors.forExactly
 import io.kotest.inspectors.forOne
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -24,7 +29,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
+import org.slf4j.LoggerFactory
 
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.person.Audit
@@ -33,7 +40,7 @@ import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
@@ -58,60 +65,55 @@ class BestillingServiceTest :
         extensions(DbListener)
 
         val skatteetatenClient = mockk<SkatteetatenClient>()
-        val personService = PersonService(DbListener.dataSource)
 
         val bestillingService: BestillingService by lazy {
             BestillingService(
                 dataSource = DbListener.dataSource,
                 skatteetatenClient = skatteetatenClient,
-                personService = personService,
                 featureToggles = UnleashIntegration(),
             )
         }
 
-        test("vi kan opprette bestillingsbatch og knytte bestillinger til batch") {
-            withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
-                coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
-                    toBestillSkattekortResponse(
-                        """
-                        {
-                          "dialogreferanse": "some-dialog-ref",
-                          "bestillingsreferanse": "some-bestillings-ref"
-                        }
-                        """.trimIndent(),
-                    )
+        test("Logger som feil for ukjente personer fra henting av skattekort") {
+            withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                val testAppender = ListAppender<ILoggingEvent>()
+                val logger = LoggerFactory.getLogger(BestillingService::class.java) as Logger
+                testAppender.start()
+                logger.addAppender(testAppender)
 
+                coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                    aHentSkattekortResponse(
+                        aSkattekortFor("0101010000X", 10007),
+                    )
                 databaseHas(
                     aPerson(1L, "01010100001"),
                     aPerson(2L, "02020200002"),
                     aPerson(3L, "03030300003"),
-                    aBestilling(1L, "01010100001", 2026, null),
-                    aBestilling(2L, "02020200002", 2026, null),
-                    aBestilling(3L, "03030300003", 2026, null),
+                    aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                 )
 
-                bestillingService.opprettBestillingsbatch()
+                bestillingService.hentOppdaterteSkattekort()
 
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+                val person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("0101010000X")) }
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+                val logEvents = testAppender.list
 
                 assertSoftly {
+                    person shouldBe null
                     batches shouldNotBeNull {
                         size shouldBe 1
                         first() shouldNotBeNull {
-                            status shouldBe BestillingBatchStatus.Ny.value
-                            bestillingsreferanse shouldBe "some-bestillings-ref"
-                            dataSendt shouldNotBeNull {
-                                shouldContain("01010100001")
-                                shouldContain("02020200002")
-                                shouldContain("03030300003")
-                            }
+                            status shouldBe BestillingBatchStatus.Ferdig.value
+                            type shouldBe "OPPDATERING"
+                            bestillingsreferanse shouldBe "REF0001"
                         }
                     }
-
-                    bestillings shouldNotBeNull {
-                        size shouldBe 3
-                        forAll { it.bestillingsbatchId shouldBe batches.first().id }
+                    logEvents.shouldNotBeNull {
+                        forOne {
+                            it.level shouldBe Level.ERROR
+                            it.message shouldContain "Fant ikke person for fnr"
+                            it.markerList.shouldContain(TEAM_LOGS_MARKER)
+                        }
                     }
                 }
             }

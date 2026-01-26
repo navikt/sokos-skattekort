@@ -1,17 +1,12 @@
 package no.nav.sokos.skattekort.kafka
 
-import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
-import com.github.tomakehurst.wiremock.common.ContentTypes
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.WiremockListener
+import no.nav.sokos.skattekort.infrastructure.WiremockListener.wiremockPDLStub
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -39,7 +34,7 @@ class IdentifikatorEndringServiceTest :
             IdentifikatorEndringService(
                 dataSource = DbListener.dataSource,
                 pdlClientService = pdlClientService,
-                personService = PersonService(DbListener.dataSource),
+                personService = PersonService(DbListener.dataSource, pdlClientService),
             )
         }
 
@@ -50,7 +45,7 @@ class IdentifikatorEndringServiceTest :
             }
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
-            wiremockStub(pdlResponse)
+            wiremockPDLStub(pdlResponse)
 
             val hendelse = getPersonHendelseMockData()
             val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
@@ -74,7 +69,7 @@ class IdentifikatorEndringServiceTest :
             }
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
-            wiremockStub(pdlResponse)
+            wiremockPDLStub(pdlResponse)
 
             val hendelse =
                 getPersonHendelseMockData().copy(
@@ -119,7 +114,7 @@ class IdentifikatorEndringServiceTest :
             }
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkUtenHistoriskResponse.json")
-            wiremockStub(pdlResponse)
+            wiremockPDLStub(pdlResponse)
 
             val hendelse = getPersonHendelseMockData()
             val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
@@ -157,19 +152,6 @@ private fun auditMatcher(
     audit.brukerId shouldBe "system"
     audit.tag shouldBe AuditTag.OPPDATERT_PERSONIDENTIFIKATOR
     audit.informasjon shouldBe "Oppdatert foedselsnummer: ${person.foedselsnummer.fnr.value}"
-}
-
-private fun wiremockStub(response: String) {
-    WiremockListener.wiremock.stubFor(
-        WireMock
-            .post(urlEqualTo("/graphql"))
-            .willReturn(
-                aResponse()
-                    .withHeader(HttpHeaders.ContentType, ContentTypes.APPLICATION_JSON)
-                    .withStatus(HttpStatusCode.OK.value)
-                    .withBody(response),
-            ),
-    )
 }
 
 private fun getPersonHendelseMockData() =

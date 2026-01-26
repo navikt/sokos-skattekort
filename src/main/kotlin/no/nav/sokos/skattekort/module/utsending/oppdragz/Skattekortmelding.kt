@@ -4,19 +4,21 @@ import java.math.BigDecimal
 import javax.xml.datatype.DatatypeFactory
 
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 
 data class Skattekortmelding(
     val inntektsaar: Long = 0,
     val arbeidstakeridentifikator: String? = null,
-    val resultatPaaForespoersel: Resultatstatus,
+    val resultatPaaForespoersel: ResultatForSkattekort,
     val skattekort: Skattekort? = null,
-    val tilleggsopplysning: List<Tilleggsopplysning> = listOf<Tilleggsopplysning>(),
+    val tilleggsopplysning: List<Tilleggsopplysning> = emptyList(),
 ) {
     constructor(sk: no.nav.sokos.skattekort.module.skattekort.Skattekort, forespurtFnr: String) : this(
         inntektsaar = sk.inntektsaar.toLong(),
         arbeidstakeridentifikator = forespurtFnr,
-        resultatPaaForespoersel = Resultatstatus.SKATTEKORTOPPLYSNINGER_OK,
+        resultatPaaForespoersel = ResultatForSkattekort.SkattekortopplysningerOK,
         skattekort =
             Skattekort(
                 inntektsaar = sk.inntektsaar.toLong(),
@@ -31,6 +33,7 @@ data class Skattekortmelding(
                         }
                     },
             ),
-        tilleggsopplysning = sk.tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it.value) },
+        tilleggsopplysning =
+            sk.tilleggsopplysningList,
     )
 }

@@ -8,6 +8,9 @@ import org.apache.commons.lang3.StringUtils.leftPad
 import org.apache.commons.lang3.StringUtils.rightPad
 import org.apache.commons.lang3.StringUtils.substring
 
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
+
 class SkattekortFixedRecordFormatter internal constructor(
     private val skattekortmelding: Skattekortmelding,
     private val inntektsaar: String?,
@@ -33,7 +36,7 @@ class SkattekortFixedRecordFormatter internal constructor(
 
     private fun inneholderSkattekort(): Boolean = (skattekortmelding.skattekort != null)
 
-    private fun erIkkeTrekkPliktig(): Boolean = Resultatstatus.IKKE_TREKKPLIKT.equals(skattekortmelding.resultatPaaForespoersel)
+    private fun erIkkeTrekkPliktig(): Boolean = ResultatForSkattekort.IkkeTrekkplikt.equals(skattekortmelding.resultatPaaForespoersel)
 
     fun format(): String {
         val frSkattekort = StringBuilder()
@@ -67,7 +70,7 @@ class SkattekortFixedRecordFormatter internal constructor(
         if (erIkkeTrekkPliktig() && !inneholderSkattekort()) {
             val utstedtDato = inntektsaar + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX
             return rightPad(utstedtDato, 10)
-        } else if (Resultatstatus.IKKE_SKATTEKORT.equals(skattekortmelding.resultatPaaForespoersel)) {
+        } else if (ResultatForSkattekort.IkkeSkattekort.equals(skattekortmelding.resultatPaaForespoersel)) {
             return rightPad("", 10)
         }
         return rightPad(skattekortmelding.skattekort?.utstedtDato?.toString() ?: "", 10)
@@ -75,7 +78,7 @@ class SkattekortFixedRecordFormatter internal constructor(
 
     private fun formaterSkattekortidentifikator(): String {
         val skattekortidentifikator: String
-        if ((erIkkeTrekkPliktig() && !inneholderSkattekort()) || Resultatstatus.IKKE_SKATTEKORT.equals(skattekortmelding.resultatPaaForespoersel)) {
+        if ((erIkkeTrekkPliktig() && !inneholderSkattekort()) || ResultatForSkattekort.IkkeSkattekort.equals(skattekortmelding.resultatPaaForespoersel)) {
             skattekortidentifikator = ""
         } else {
             skattekortidentifikator = skattekortmelding.skattekort?.skattekortidentifikator?.toString() ?: ""
@@ -92,16 +95,20 @@ class SkattekortFixedRecordFormatter internal constructor(
         val filtered =
             tilleggsopplysninger.mapNotNull {
                 when (it) {
-                    Tilleggsopplysning.KILDESKATTPENSJONIST -> it
-                    Tilleggsopplysning.OPPHOLD_PAA_SVALBARD -> it
-                    Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE -> it
+                    // These are mutually exclusive
+                    Tilleggsopplysning.KILDESKATT_PAA_PENSJON -> "kildeskattpensjonist"
+
+                    Tilleggsopplysning.OPPHOLD_PAA_SVALBARD -> it.value
+
+                    Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE -> it.value
+
                     else -> null
                 }
             }
         if (filtered.isEmpty()) {
             return ""
         } else {
-            return filtered.get(0).value
+            return filtered.first()
         }
     }
 

@@ -75,7 +75,7 @@ class SkattekortPersonService(
             val (personId) =
                 personService.findPersonIdOrCreatePersonByFnr(
                     fnr = Personidentifikator(fnr),
-                    informasjon = "Skattekort manuelt opprettet for tidligere ukjent person",
+                    informasjon = "Skattekort manuelt opprettet person",
                     tx = tx,
                 )
             val today =

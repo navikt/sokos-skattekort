@@ -22,6 +22,7 @@ import io.ktor.http.HttpStatusCode
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.infrastructure.WiremockListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -32,7 +33,7 @@ import no.nav.sokos.skattekort.utils.validationReport
 @OptIn(ExperimentalTime::class)
 class SkattekortApiTest :
     FunSpec({
-        extensions(DbListener, MQListener)
+        extensions(DbListener, MQListener, WiremockListener)
 
         val validator =
             OpenApiInteractionValidator
@@ -44,8 +45,11 @@ class SkattekortApiTest :
         test("bestille skattekort skal returnere 201 Created") {
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                val fnr = "01010112345"
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
+
                 TestUtils.withFullTestApplication {
-                    val request = ForespoerselRequest(personIdent = "01010112345", aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
+                    val request = ForespoerselRequest(personIdent = fnr, aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
                     val response =
                         client.post("$BASE_PATH/bestille") {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)

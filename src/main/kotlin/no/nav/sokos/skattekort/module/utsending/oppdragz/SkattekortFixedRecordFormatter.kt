@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils.substring
 
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.module.skattekort.Trekkode
 
 class SkattekortFixedRecordFormatter internal constructor(
     private val skattekortmelding: Skattekortmelding,

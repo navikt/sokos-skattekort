@@ -164,12 +164,11 @@ components:
       required:
         - inntektsaar
         - forskuddstrekkList
-        - tilleggsopplysningList
 
     ForskuddstrekkDTO:
       type: object
-      description: Frikortbeløp vil overstyre tabell, som igjen overstyrer prosentsats.
-        Oppgis tabell, må også antallMndForTrekk oppgis, eller brukes prosentsats.
+      description: Frikortbeløp vil overstyre tabell. Oppgis tabell, må også antallMndForTrekk oppgis for å få et tabellkort,
+        ellers brukes prosentsats.
       properties:
         trekkode:
           $ref: '#/components/schemas/Trekkode'
@@ -179,14 +178,17 @@ components:
           example: 50000
         tabell:
           type: string
+          nullable: true
           example: "8010"
         prosentSats:
           type: number
           format: double
+          nullable: true
           example: 25.5
         antallMndForTrekk:
           type: number
           format: double
+          nullable: true
           example: 10.5
     Trekkode:
       type: string

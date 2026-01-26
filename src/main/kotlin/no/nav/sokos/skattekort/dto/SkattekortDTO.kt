@@ -19,14 +19,14 @@ import no.nav.sokos.skattekort.module.skattekort.Trekkode
 data class SkattekortDTO(
     val utstedtDato: LocalDate?,
     val inntektsaar: Int,
-    val resultatForSkattekort: ResultatForSkattekort,
+    val resultatForSkattekort: String?,
     val forskuddstrekkList: List<ForskuddstrekkDTO>,
-    val tilleggsopplysningList: List<String>,
+    val tilleggsopplysningList: List<String> = emptyList(),
 ) {
     constructor(skattekort: Skattekort) : this(
         utstedtDato = skattekort.utstedtDato,
         inntektsaar = skattekort.inntektsaar,
-        resultatForSkattekort = skattekort.resultatForSkattekort,
+        resultatForSkattekort = skattekort.resultatForSkattekort.value,
         forskuddstrekkList =
             skattekort.forskuddstrekkList.map {
                 when (it) {
@@ -60,7 +60,6 @@ data class SkattekortDTO(
         utstedtDato: LocalDate,
         identifikator: String?,
         kilde: SkattekortKilde,
-        resultatForSkattekort: ResultatForSkattekort,
     ): Skattekort =
         Skattekort(
             personId = personId,
@@ -68,7 +67,7 @@ data class SkattekortDTO(
             identifikator = identifikator,
             kilde = kilde.value,
             inntektsaar = this.inntektsaar,
-            resultatForSkattekort = resultatForSkattekort,
+            resultatForSkattekort = resultatForSkattekort?.let(ResultatForSkattekort::fromValue) ?: ResultatForSkattekort.SkattekortopplysningerOK,
             forskuddstrekkList =
                 this.forskuddstrekkList.map {
                     when {

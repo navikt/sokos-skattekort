@@ -8,6 +8,7 @@ import kotlin.time.Instant
 import kotlin.time.toKotlinInstant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 import kotliquery.Row
@@ -40,6 +41,7 @@ enum class ResultatForSkattekort(
     }
 }
 
+@Serializable
 data class Skattekort
     @OptIn(ExperimentalTime::class)
     constructor(
@@ -47,12 +49,12 @@ data class Skattekort
         val generertFra: SkattekortId? = null,
         val personId: PersonId,
         val utstedtDato: LocalDate?,
-        val identifikator: String?,
+        @SerialName("skattekortidentifikator") val identifikator: String?,
         val inntektsaar: Int,
         val kilde: String,
         val resultatForSkattekort: ResultatForSkattekort,
         val opprettet: Instant = Clock.System.now(),
-        val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
+        @SerialName("forskuddstrekk") val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
         val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
     ) {
         @OptIn(ExperimentalTime::class)

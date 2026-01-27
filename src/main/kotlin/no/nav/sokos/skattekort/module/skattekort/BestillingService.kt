@@ -287,68 +287,6 @@ class BestillingService(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun toSkattekort(
-        arbeidstaker: Arbeidstaker,
-        personId: PersonId,
-    ): Skattekort =
-        when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
-            ResultatForSkattekort.SkattekortopplysningerOK -> {
-                Skattekort(
-                    personId = personId,
-                    utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
-                    identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
-                    inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = SkattekortKilde.SKATTEETATEN.value,
-                    resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
-                    forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-                )
-            }
-
-            ResultatForSkattekort.IkkeSkattekort -> {
-                Skattekort(
-                    personId = personId,
-                    utstedtDato = null,
-                    identifikator = null,
-                    inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = SkattekortKilde.SKATTEETATEN.value,
-                    resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
-                    forskuddstrekkList = emptyList(),
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-                )
-            }
-
-            ResultatForSkattekort.IkkeTrekkplikt -> {
-                Skattekort(
-                    personId = personId,
-                    utstedtDato = null,
-                    identifikator = null,
-                    inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = SkattekortKilde.SKATTEETATEN.value,
-                    resultatForSkattekort = ResultatForSkattekort.IkkeTrekkplikt,
-                    forskuddstrekkList = emptyList(),
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-                )
-            }
-
-            ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
-                throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
-            }
-
-            else -> {
-                Skattekort(
-                    personId = personId,
-                    utstedtDato = null,
-                    identifikator = null,
-                    inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                    kilde = SkattekortKilde.SKATTEETATEN.value,
-                    resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
-                    tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-                )
-            }
-        }
-
     fun hentOppdaterteSkattekort() {
         if (featureToggles.isOppdateringEnabled()) {
             dataSource.transaction { tx ->
@@ -488,5 +426,67 @@ class BestillingService(
                 name = "oppdaterte_skattekort",
                 helpText = "Mottatte oppdateringer av skattekort",
             )
+
+        @OptIn(ExperimentalTime::class)
+        fun toSkattekort(
+            arbeidstaker: Arbeidstaker,
+            personId: PersonId,
+        ): Skattekort =
+            when (val status = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
+                ResultatForSkattekort.SkattekortopplysningerOK, ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
+                    Skattekort(
+                        personId = personId,
+                        utstedtDato = LocalDate.parse(arbeidstaker.skattekort!!.utstedtDato),
+                        identifikator = arbeidstaker.skattekort.skattekortidentifikator.toString(),
+                        inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                        kilde = SkattekortKilde.SKATTEETATEN.value,
+                        resultatForSkattekort = status,
+                        forskuddstrekkList = arbeidstaker.skattekort.forskuddstrekk.map { Forskuddstrekk.create(it) },
+                        tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+                    )
+                }
+
+                ResultatForSkattekort.IkkeSkattekort -> {
+                    Skattekort(
+                        personId = personId,
+                        utstedtDato = null,
+                        identifikator = null,
+                        inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                        kilde = SkattekortKilde.SKATTEETATEN.value,
+                        resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
+                        forskuddstrekkList = emptyList(),
+                        tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+                    )
+                }
+
+                ResultatForSkattekort.IkkeTrekkplikt -> {
+                    Skattekort(
+                        personId = personId,
+                        utstedtDato = null,
+                        identifikator = null,
+                        inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                        kilde = SkattekortKilde.SKATTEETATEN.value,
+                        resultatForSkattekort = ResultatForSkattekort.IkkeTrekkplikt,
+                        forskuddstrekkList = emptyList(),
+                        tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+                    )
+                }
+
+                ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
+                    throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
+                }
+
+                ResultatForSkattekort.UgyldigFoedselsEllerDnummer -> {
+                    Skattekort(
+                        personId = personId,
+                        utstedtDato = null,
+                        identifikator = null,
+                        inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+                        kilde = SkattekortKilde.SKATTEETATEN.value,
+                        resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
+                        tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+                    )
+                }
+            }
     }
 }

@@ -1,7 +1,7 @@
 package no.nav.sokos.skattekort.module.status
 
 import io.kotest.core.spec.style.FunSpec
-import org.junit.jupiter.api.Assertions.assertEquals
+import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.DbListener.dataSource
@@ -28,14 +28,14 @@ class StatusServiceTest :
                 databaseHas()
 
                 val status = statusService.statusForespoeresel(fnr = "abc", aar = 2025, forsystem = "TEST")
-                assertEquals(Status.UGYLDIG_FNR, status)
+                status shouldBe Status.UGYLDIG_FNR
             }
 
             test("Gyldig fnr men person finnes ikke. Skal ha status IKKE_FORESPURT") {
                 databaseHas()
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                assertEquals(Status.IKKE_FORESPURT, status)
+                status shouldBe Status.IKKE_FORESPURT
             }
 
             test("Person finnes, men ikke noe annet. Skal ha status IKKE_FORESPURT") {
@@ -44,7 +44,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                assertEquals(Status.IKKE_FORESPURT, status)
+                status shouldBe Status.IKKE_FORESPURT
             }
 
             test("Person og en bestilling uten batch finnes. Skal ha status IKKE_BESTILT") {
@@ -54,7 +54,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                assertEquals(Status.IKKE_BESTILT, status)
+                status shouldBe Status.IKKE_BESTILT
             }
 
             test("Person, bestilling og batch finnes. Skal ha status BESTILT") {
@@ -65,7 +65,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                assertEquals(Status.BESTILT, status)
+                status shouldBe Status.BESTILT
             }
 
             test("Person og skattekort finnes. Skal ha status UGYLDIG_FORSYSTEM fordi forsystem ikke er i Forsystem-enum") {
@@ -75,7 +75,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                assertEquals(Status.UGYLDIG_FORSYSTEM, status)
+                status shouldBe Status.UGYLDIG_FORSYSTEM
             }
 
             test("Person, skattekort og utsending finnes. Skal ha status VENTER_PAA_UTSENDING") {
@@ -86,7 +86,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
-                assertEquals(Status.VENTER_PAA_UTSENDING, status)
+                status shouldBe Status.VENTER_PAA_UTSENDING
             }
 
             test("Person og skattekort for året før finnes. Skal ha status IKKE_FORESPURT") {
@@ -96,7 +96,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2026, forsystem = "OS")
-                assertEquals(Status.IKKE_FORESPURT, status)
+                status shouldBe Status.IKKE_FORESPURT
             }
             test("Person og skattekort finnes. Skal ha status SENDT_FORSYSTEM") {
                 databaseHas(
@@ -105,7 +105,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
-                assertEquals(Status.SENDT_FORSYSTEM, status)
+                status shouldBe Status.SENDT_FORSYSTEM
             }
             test("Person, skattekort og utsending for et annet forsystem finnes. Skal ha status SENDT_FORSYSTEM") {
                 databaseHas(
@@ -115,7 +115,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
-                assertEquals(Status.SENDT_FORSYSTEM, status)
+                status shouldBe Status.SENDT_FORSYSTEM
             }
         },
     )

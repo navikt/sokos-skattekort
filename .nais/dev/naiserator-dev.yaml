@@ -57,7 +57,8 @@ spec:
           namespace: teamcrm
         - application: saas-proxy
           namespace: platforce
-        - application: testnav-skattekort-service
+        - application: testnav-dolly-proxy-trygdeetaten
+          cluster: dev-fss
           namespace: dolly
     outbound:
       rules:

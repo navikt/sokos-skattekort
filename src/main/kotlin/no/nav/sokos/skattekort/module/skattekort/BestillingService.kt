@@ -446,27 +446,14 @@ class BestillingService(
                     )
                 }
 
-                ResultatForSkattekort.IkkeSkattekort -> {
+                ResultatForSkattekort.IkkeSkattekort, ResultatForSkattekort.IkkeTrekkplikt, ResultatForSkattekort.UgyldigFoedselsEllerDnummer -> {
                     Skattekort(
                         personId = personId,
                         utstedtDato = null,
                         identifikator = null,
                         inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
                         kilde = SkattekortKilde.SKATTEETATEN.value,
-                        resultatForSkattekort = ResultatForSkattekort.IkkeSkattekort,
-                        forskuddstrekkList = emptyList(),
-                        tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-                    )
-                }
-
-                ResultatForSkattekort.IkkeTrekkplikt -> {
-                    Skattekort(
-                        personId = personId,
-                        utstedtDato = null,
-                        identifikator = null,
-                        inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                        kilde = SkattekortKilde.SKATTEETATEN.value,
-                        resultatForSkattekort = ResultatForSkattekort.IkkeTrekkplikt,
+                        resultatForSkattekort = status,
                         forskuddstrekkList = emptyList(),
                         tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
                     )
@@ -474,18 +461,6 @@ class BestillingService(
 
                 ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
                     throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
-                }
-
-                ResultatForSkattekort.UgyldigFoedselsEllerDnummer -> {
-                    Skattekort(
-                        personId = personId,
-                        utstedtDato = null,
-                        identifikator = null,
-                        inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
-                        kilde = SkattekortKilde.SKATTEETATEN.value,
-                        resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
-                        tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-                    )
                 }
             }
     }

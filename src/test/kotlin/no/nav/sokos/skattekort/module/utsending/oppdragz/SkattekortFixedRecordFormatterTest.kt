@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.module.utsending.oppdragz
 
 import javax.xml.datatype.DatatypeFactory
 
-import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
@@ -86,7 +85,7 @@ class SkattekortFixedRecordFormatterDuplicatorTest :
                         val skattekortmelding = arbeidstakerConverter(arbeidstaker)
                         val nyFormatering = SkattekortFixedRecordFormatter(skattekortmelding, "2025").format()
                         val gammelFormatering = referanseverdier.get(arbeidstaker.arbeidstakeridentifikator)
-                        assertEquals(nyFormatering, gammelFormatering)
+                        gammelFormatering shouldBe nyFormatering
                         Pair(arbeidstaker.arbeidstakeridentifikator, nyFormatering)
                     }.toMap()
             // Kommentert ut for enkel oppdatering av referansedataene når vi eventuelt endrer serialiseringen

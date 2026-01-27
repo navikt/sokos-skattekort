@@ -30,9 +30,7 @@ fun Route.skattekortApi(
             val saksbehandler = authorizeAndGetMandatorySaksbehandler(call)
 
             logger.info(marker = TEAM_LOGS_MARKER) {
-                "skattekortApi - Mottatt forespørsel: $request ${
-                    if (saksbehandler != null) "på vegne av ${saksbehandler.ident}" else ""
-                }}"
+                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler.ident}"
             }
 
             val message = "${request.forsystem};${request.aar};${request.personIdent}"
@@ -44,9 +42,7 @@ fun Route.skattekortApi(
             val saksbehandler = authorizeAndGetMandatorySaksbehandler(call)
 
             logger.info(marker = TEAM_LOGS_MARKER) {
-                "skattekortApi - Mottatt forespørsel: $request ${
-                    if (saksbehandler != null) "på vegne av ${saksbehandler.ident}" else ""
-                }}"
+                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler.ident}"
             }
             call.respond(
                 StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem)),

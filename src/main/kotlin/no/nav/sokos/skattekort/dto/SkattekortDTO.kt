@@ -30,26 +30,29 @@ data class SkattekortDTO(
         forskuddstrekkList =
             skattekort.forskuddstrekkList.map {
                 when (it) {
-                    is Frikort ->
+                    is Frikort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
                             frikortBeloep = it.frikortBeloep,
                         )
+                    }
 
-                    is Prosentkort ->
+                    is Prosentkort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
                             prosentSats = it.prosentSats.toDouble(),
                             antallMndForTrekk = it.antallMndForTrekk?.toDouble(),
                         )
+                    }
 
-                    is Tabellkort ->
+                    is Tabellkort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
                             tabell = it.tabellNummer,
                             prosentSats = it.prosentSats.toDouble(),
                             antallMndForTrekk = it.antallMndForTrekk.toDouble(),
                         )
+                    }
                 }
             },
         tilleggsopplysningList = skattekort.tilleggsopplysningList.map { it.value },
@@ -71,31 +74,36 @@ data class SkattekortDTO(
             forskuddstrekkList =
                 this.forskuddstrekkList.map {
                     when {
-                        it.frikortBeloep != null ->
+                        it.frikortBeloep != null -> {
                             Frikort(
-                                trekkode = Trekkode.from(it.trekkode),
+                                trekkode = Trekkode.fromValue(it.trekkode),
                                 frikortBeloep = it.frikortBeloep,
                             )
+                        }
 
-                        it.tabell != null && it.prosentSats != null && it.antallMndForTrekk != null ->
+                        it.tabell != null && it.prosentSats != null && it.antallMndForTrekk != null -> {
                             Tabellkort(
-                                trekkode = Trekkode.from(it.trekkode),
+                                trekkode = Trekkode.fromValue(it.trekkode),
                                 tabellNummer = it.tabell,
                                 prosentSats = BigDecimal.valueOf(it.prosentSats),
                                 antallMndForTrekk = BigDecimal.valueOf(it.antallMndForTrekk),
                             )
+                        }
 
-                        it.prosentSats != null ->
+                        it.prosentSats != null -> {
                             Prosentkort(
-                                trekkode = Trekkode.from(it.trekkode),
+                                trekkode = Trekkode.fromValue(it.trekkode),
                                 prosentSats = BigDecimal.valueOf(it.prosentSats),
                                 antallMndForTrekk =
                                     it.antallMndForTrekk?.let { antallMnd ->
                                         BigDecimal.valueOf(antallMnd)
                                     },
                             )
+                        }
 
-                        else -> error("Ugyldig Forskuddstrekk: $it")
+                        else -> {
+                            error("Ugyldig Forskuddstrekk: $it")
+                        }
                     }
                 },
             tilleggsopplysningList = this.tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it) },

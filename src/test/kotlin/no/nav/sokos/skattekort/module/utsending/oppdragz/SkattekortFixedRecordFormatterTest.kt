@@ -12,6 +12,8 @@ import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.module.skattekort.Trekkode
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
@@ -22,7 +24,7 @@ fun arbeidstakerConverter(a: Arbeidstaker): Skattekortmelding =
     Skattekortmelding(
         a.inntektsaar.toLong(),
         a.arbeidstakeridentifikator,
-        Resultatstatus.fromValue(a.resultatForSkattekort),
+        ResultatForSkattekort.fromValue(a.resultatForSkattekort),
         skattekortConverter(a.skattekort, a.inntektsaar.toLong()),
         a.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
     )

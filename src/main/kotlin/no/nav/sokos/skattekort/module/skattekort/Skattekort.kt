@@ -91,51 +91,57 @@ sealed interface Forskuddstrekk {
         fun create(row: Row): Forskuddstrekk {
             val type = ForskuddstrekkType.from(row.string("type"))
             return when (type) {
-                ForskuddstrekkType.FRIKORT ->
+                ForskuddstrekkType.FRIKORT -> {
                     Frikort(
-                        trekkode = Trekkode.from(row.string("trekk_kode")),
+                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
                         frikortBeloep = row.intOrNull("frikort_beloep"),
                     )
+                }
 
-                ForskuddstrekkType.PROSENTKORT ->
+                ForskuddstrekkType.PROSENTKORT -> {
                     Prosentkort(
-                        trekkode = Trekkode.from(row.string("trekk_kode")),
+                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
+                }
 
-                ForskuddstrekkType.TABELLKORT ->
+                ForskuddstrekkType.TABELLKORT -> {
                     Tabellkort(
-                        trekkode = Trekkode.from(row.string("trekk_kode")),
+                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
                         tabellNummer = row.string("tabell_nummer"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
+                }
             }
         }
 
         fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): Forskuddstrekk {
             val type = klassifiserType(forskuddstrekk)
             return when (type) {
-                ForskuddstrekkType.FRIKORT ->
+                ForskuddstrekkType.FRIKORT -> {
                     Frikort(
-                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
                         frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt(),
                     )
+                }
 
-                ForskuddstrekkType.PROSENTKORT ->
+                ForskuddstrekkType.PROSENTKORT -> {
                     Prosentkort(
-                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
                         prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
                     )
+                }
 
-                ForskuddstrekkType.TABELLKORT ->
+                ForskuddstrekkType.TABELLKORT -> {
                     Tabellkort(
-                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
                         tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
                         prosentSats = forskuddstrekk.trekktabell.prosentsats,
                         antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
                     )
+                }
             }
         }
 
@@ -233,6 +239,6 @@ enum class Trekkode(
     ;
 
     companion object {
-        fun from(kode: String): Trekkode = entries.find { it.value == kode } ?: error("Ukjent trekkode: $kode")
+        fun fromValue(kode: String): Trekkode = entries.find { it.value == kode } ?: error("Ukjent trekkode: $kode")
     }
 }

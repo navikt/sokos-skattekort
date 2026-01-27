@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort.module.utsending.oppdragz
 
 import java.math.BigDecimal
 
+import no.nav.sokos.skattekort.module.skattekort.Trekkode
+
 abstract class Forskuddstrekk(
     open val trekkode: Trekkode,
 )

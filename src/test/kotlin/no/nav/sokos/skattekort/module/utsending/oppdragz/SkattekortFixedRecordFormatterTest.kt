@@ -11,7 +11,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.skattekort.Frikort
+import no.nav.sokos.skattekort.module.skattekort.Prosentkort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.skattekort.Trekkode
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
@@ -44,21 +47,24 @@ fun skattekortConverter(
         null
     }
 
-fun forskuddstrekkConverter(f: Forskuddstrekk): no.nav.sokos.skattekort.module.utsending.oppdragz.Forskuddstrekk =
+fun forskuddstrekkConverter(f: Forskuddstrekk): no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk =
     if (f.trekkprosent != null) {
-        Trekkprosent(
-            Trekkode.fromValue(f.trekkode),
-            f.trekkprosent.prosentsats,
+        Prosentkort(
+            trekkode = Trekkode.fromValue(f.trekkode),
+            prosentSats = f.trekkprosent.prosentsats,
         )
     } else if (f.trekktabell != null) {
-        Trekktabell(
-            Trekkode.fromValue(f.trekkode),
-            Tabelltype.TREKKTABELL_FOR_LOENN,
-            f.trekktabell.tabellnummer,
-            f.trekktabell.prosentsats,
+        Tabellkort(
+            trekkode = Trekkode.fromValue(f.trekkode),
+            tabellNummer = f.trekktabell.tabellnummer,
+            prosentSats = f.trekktabell.prosentsats,
+            antallMndForTrekk = f.trekktabell.antallMaanederForTrekk,
         )
     } else {
-        Frikort(Trekkode.fromValue(f.trekkode), f.frikort?.frikortbeloep)
+        Frikort(
+            trekkode = Trekkode.fromValue(f.trekkode),
+            frikortBeloep = f.frikort?.frikortbeloep?.toInt(),
+        )
     }
 
 /*

@@ -58,8 +58,8 @@ class PersonService(
                 .transaction { tx ->
                     fnrList
                         .chunked(chunkedSize)
-                        .map { chunk -> FoedselsnummerRepository.findPersonIdByFnrList(tx, chunk) }
-                        .reduce { acc, map -> acc + map }
+                        .flatMap { chunk -> FoedselsnummerRepository.findPersonIdByFnrList(tx, chunk).entries }
+                        .associate { it.toPair() }
                 }.toMutableMap()
 
         val foedselsnummerList = foedselsnumreWithPersonIdMap.filterValues { it == null }.keys.toList()

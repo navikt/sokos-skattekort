@@ -41,6 +41,11 @@ class PersonServiceTest :
             PersonService(DbListener.dataSource, pdlClientService)
         }
 
+        test("Skal ikke kaste exception når det kommer inn en tom liste") {
+            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(emptyList(), AUDIT_SYSTEM)
+            result.size shouldBe 0
+        }
+
         test("getPersonList skal returnere en liste med personer") {
             personService.getPersonList().isEmpty() shouldBe true
 

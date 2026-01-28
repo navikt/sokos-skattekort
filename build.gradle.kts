@@ -112,9 +112,6 @@ dependencies {
     implementation("org.apache.avro:avro:$avroVersion")
     implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
 
-    // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
-    implementation("org.apache.commons:commons-lang3:3.20.0")
-
     // Scheduler
     implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
 

@@ -13,6 +13,8 @@ object ReglerForInntektsaar {
         return (min..maxInntektsaar(now)).map { it.toShort() }.toList()
     }
 
+    fun inntektsaarAaBestille(): List<Short> = lovligeInntektsAarAaBestilleFraSkatteetaten().filter { it >= now().year }
+
     fun alleLovligeInntektsaarAaHenteSkattekortFor(): List<Short> {
         val now = now().toKotlinLocalDateTime()
         val min = now.year - 1

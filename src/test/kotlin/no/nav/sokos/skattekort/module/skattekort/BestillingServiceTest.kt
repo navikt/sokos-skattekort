@@ -45,9 +45,12 @@ import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_BIARBEIDSGIVER
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV
+import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
@@ -467,9 +470,9 @@ class BestillingServiceTest :
                         forskuddstrekkList shouldContainExactly
                             listOf(
                                 aForskuddstrekk("Frikort", UFOERETRYGD_FRA_NAV, frikortbeløp = null),
-                                aForskuddstrekk("Frikort", Trekkode.UFOEREYTELSER_FRA_ANDRE, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", UFOEREYTELSER_FRA_ANDRE, frikortbeløp = null),
                                 aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),
-                                aForskuddstrekk("Frikort", Trekkode.PENSJON, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", PENSJON, frikortbeløp = null),
                             )
                     }
                 }
@@ -628,14 +631,14 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     anArbeidstaker(
-                        resultat = ResultatForSkattekort.UgyldigFoedselsEllerDnummer,
+                        resultat = UgyldigFoedselsEllerDnummer,
                         fnr = "01010100001",
                         inntektsaar = "2025",
                     ),
                 ) andThen
                 aHentSkattekortResponse(
                     anArbeidstaker(
-                        resultat = ResultatForSkattekort.IkkeSkattekort,
+                        resultat = IkkeSkattekort,
                         fnr = "02020200002",
                         inntektsaar = "2025",
                     ),
@@ -680,7 +683,7 @@ class BestillingServiceTest :
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
                         tilleggsopplysningList shouldBe emptyList()
-                        resultatForSkattekort shouldBe ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+                        resultatForSkattekort shouldBe UgyldigFoedselsEllerDnummer
                     }
                 }
 
@@ -690,7 +693,7 @@ class BestillingServiceTest :
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
                         tilleggsopplysningList shouldBe emptyList()
-                        resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort
+                        resultatForSkattekort shouldBe IkkeSkattekort
                     }
                 }
 
@@ -717,7 +720,7 @@ class BestillingServiceTest :
                                 arbeidstaker =
                                     listOf(
                                         anArbeidstaker(
-                                            resultat = ResultatForSkattekort.UgyldigOrganisasjonsnummer,
+                                            resultat = UgyldigOrganisasjonsnummer,
                                             fnr = "01010100001",
                                             inntektsaar = "2025",
                                         ),
@@ -1106,7 +1109,7 @@ class BestillingServiceTest :
         }
 """,
                 )
-            val skattekort = BestillingService.toSkattekort(arbeidstaker, PersonId(0))
+            val skattekort = Skattekort(PersonId(0), arbeidstaker)
             skattekort.forskuddstrekkList shouldHaveSize 2
         }
     })

@@ -10,7 +10,6 @@ import io.kotest.matchers.shouldBe
 import io.ktor.serialization.kotlinx.json.DefaultJson
 
 import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
@@ -43,14 +42,13 @@ class SkattekortFixedRecordFormatterTest :
                     .arbeidsgiver!!
                     .flatMap { it.arbeidstaker }
             val referanseverdier: Map<String, String> = Json.decodeFromString(readFile("/oppdragz/skattekortreferanser.json"))
-            arbeidstakere
-                .map { arbeidstaker ->
-                    val skattekort = BestillingService.toSkattekort(arbeidstaker, PersonId(0))
-                    val nyFormatering = SkattekortFixedRecordFormatter(skattekort, arbeidstaker.arbeidstakeridentifikator).format()
-                    val gammelFormatering = referanseverdier.get(arbeidstaker.arbeidstakeridentifikator)
-                    nyFormatering shouldBe gammelFormatering
-                    Pair(arbeidstaker.arbeidstakeridentifikator, nyFormatering)
-                }.toMap()
+            arbeidstakere.associate { arbeidstaker ->
+                val skattekort = Skattekort(PersonId(0), arbeidstaker)
+                val nyFormatering = SkattekortFixedRecordFormatter(skattekort, arbeidstaker.arbeidstakeridentifikator).format()
+                val gammelFormatering = referanseverdier.get(arbeidstaker.arbeidstakeridentifikator)
+                nyFormatering shouldBe gammelFormatering
+                Pair(arbeidstaker.arbeidstakeridentifikator, nyFormatering)
+            }
             // Kommentert ut for enkel oppdatering av referansedataene når vi eventuelt endrer serialiseringen
             //    .let { nyeReferanseVerdier ->
             //        File("src/test/resources/oppdragz/skattekortreferanser.json").writeText(json.encodeToString(nyeReferanseVerdier))

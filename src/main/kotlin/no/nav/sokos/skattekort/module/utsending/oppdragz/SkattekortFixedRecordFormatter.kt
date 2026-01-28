@@ -4,10 +4,6 @@ import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 
-import org.apache.commons.lang3.StringUtils.leftPad
-import org.apache.commons.lang3.StringUtils.rightPad
-import org.apache.commons.lang3.StringUtils.substring
-
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
@@ -21,11 +17,13 @@ class SkattekortFixedRecordFormatter internal constructor(
     private val skattekort: Skattekort,
     private val fnr: String,
 ) {
-    private val simulertSkattekort = Frikort(Trekkode.LOENN_FRA_NAV, null)
-
     private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> {
-        if (erIkkeTrekkPliktig()) {
-            return listOf(simulertSkattekort) // TODO: Dette er vel ikke riktig for ikke trekkpliktige? De skal ha noe standardsatser, yesno?
+        if (skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeTrekkplikt) {
+            return listOf(
+                Frikort(Trekkode.LOENN_FRA_NAV, null),
+                Frikort(Trekkode.PENSJON_FRA_NAV, null),
+                Frikort(Trekkode.UFOERETRYGD_FRA_NAV, null),
+            )
         } else {
             return skattekort
                 .forskuddstrekkList
@@ -40,17 +38,13 @@ class SkattekortFixedRecordFormatter internal constructor(
         }
     }
 
-    private fun inneholderSkattekort(): Boolean = true
-
-    private fun erIkkeTrekkPliktig(): Boolean = ResultatForSkattekort.IkkeTrekkplikt.equals(skattekort.resultatForSkattekort)
-
     fun format(): String {
         val frSkattekort = StringBuilder()
-        if ((inneholderSkattekort() || erIkkeTrekkPliktig()) && finnesGyldigTrekkode()) {
+        if (gyldigeForskuddstrekk().isNotEmpty()) {
             frSkattekort
-                .append(formaterFnr())
+                .append(fnr.padEnd(11))
                 .append(formaterResultatPaaForesporsel())
-                .append(rightPad(skattekort.inntektsaar.toString(), 4))
+                .append(skattekort.inntektsaar.toString().padEnd(4))
                 .append(formaterUtstedtDato())
                 .append(formaterSkattekortidentifikator())
                 .append(formaterTilleggsopplysning())
@@ -60,48 +54,39 @@ class SkattekortFixedRecordFormatter internal constructor(
         return frSkattekort.toString()
     }
 
-    private fun formaterFnr(): String = rightPad(fnr, 11)
-
-    private fun formaterResultatPaaForesporsel(): String {
-        val resultat: String = skattekort.resultatForSkattekort.value
+    private fun formaterResultatPaaForesporsel(): String =
         // Maks 40 posisjoner i fixedfield format til OS
-        if (resultat.length > 40) {
-            return substring(resultat, 0, 40)
+        if (skattekort.resultatForSkattekort.value.length > 40) {
+            skattekort.resultatForSkattekort.value.substring(0, 40)
         } else {
-            return rightPad(resultat, 40)
+            skattekort.resultatForSkattekort.value.padEnd(40)
         }
-    }
 
-    private fun formaterUtstedtDato(): String {
-        if (erIkkeTrekkPliktig()) {
-            val utstedtDato = skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX
-            return rightPad(utstedtDato, 10)
+    private fun formaterUtstedtDato(): String =
+        if (skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeTrekkplikt) {
+            (skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX).padEnd(10)
         } else if (ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
-            return rightPad("", 10)
-        }
-        return rightPad(skattekort.utstedtDato?.toString() ?: "", 10)
-    }
-
-    private fun formaterSkattekortidentifikator(): String {
-        val skattekortidentifikator: String
-        if ((erIkkeTrekkPliktig() && !inneholderSkattekort()) || ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
-            skattekortidentifikator = ""
+            "".padEnd(10, ' ')
         } else {
-            skattekortidentifikator = skattekort.identifikator ?: ""
+            (skattekort.utstedtDato?.toString() ?: "").padEnd(10)
         }
-        return rightPad(skattekortidentifikator, 10)
-    }
 
-    private fun formaterTilleggsopplysning(): String {
-        val tilleggopplysninger: List<Tilleggsopplysning> = skattekort.tilleggsopplysningList
-        return rightPad(if (tilleggopplysninger.isEmpty()) "" else filterTilleggsopplysning(tilleggopplysninger), 50)
-    }
+    private fun formaterSkattekortidentifikator(): String =
+        (
+            if (skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeTrekkplikt || skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeSkattekort) {
+                ""
+            } else {
+                skattekort.identifikator ?: ""
+            }
+        ).padEnd(10)
+
+    private fun formaterTilleggsopplysning(): String = filterTilleggsopplysning(skattekort.tilleggsopplysningList).padEnd(50)
 
     private fun filterTilleggsopplysning(tilleggsopplysninger: List<Tilleggsopplysning>): String {
         val filtered =
             tilleggsopplysninger.mapNotNull {
                 when (it) {
-                    // These are mutually exclusive
+                    // Det er ikke noe overlapp her.
                     Tilleggsopplysning.KILDESKATT_PAA_PENSJON -> "kildeskattpensjonist"
 
                     Tilleggsopplysning.OPPHOLD_PAA_SVALBARD -> it.value
@@ -118,10 +103,7 @@ class SkattekortFixedRecordFormatter internal constructor(
         }
     }
 
-    private fun formaterAntallSkattekortMedIMelding(): String {
-        val antallSkattekort = gyldigeForskuddstrekk().size
-        return rightPad(antallSkattekort.toString(), 1)
-    }
+    private fun formaterAntallSkattekortMedIMelding(): String = gyldigeForskuddstrekk().size.toString()
 
     // end-header
     private fun formaterForskuddstrekk(): String {
@@ -130,30 +112,30 @@ class SkattekortFixedRecordFormatter internal constructor(
         gyldigeForskuddstrekk().map { skt: Forskuddstrekk ->
             when (skt) {
                 is Tabellkort -> {
-                    sb.append(rightPad("Trekktabell", 12))
-                    sb.append(rightPad(skt.trekkode.value, 55))
-                    sb.append(rightPad(skt.tabellNummer, 4))
-                    sb.append(rightPad(formaterProsentsats(skt.prosentSats), 6))
-                    sb.append(rightPad("", 7))
-                    sb.append(rightPad(formaterAntallManederTrekk(skt.antallMndForTrekk), 4))
+                    sb.append("Trekktabell".padEnd(12))
+                    sb.append(skt.trekkode.value.padEnd(55))
+                    sb.append(skt.tabellNummer.padEnd(4))
+                    sb.append(formaterProsentsats(skt.prosentSats).padEnd(6))
+                    sb.append("".padEnd(7))
+                    sb.append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
                 }
 
                 is Prosentkort -> {
-                    sb.append(rightPad("Trekkprosent", 12))
-                    sb.append(rightPad(skt.trekkode.value, 55))
-                    sb.append(rightPad("", 4))
-                    sb.append(rightPad(formaterProsentsats(skt.prosentSats), 6))
-                    sb.append(leftPad("", 7))
-                    sb.append(rightPad(formaterAntallManederTrekk(skt.antallMndForTrekk), 4))
+                    sb.append("Trekkprosent".padEnd(12))
+                    sb.append(skt.trekkode.value.padEnd(55))
+                    sb.append("".padEnd(4))
+                    sb.append(formaterProsentsats(skt.prosentSats).padEnd(6))
+                    sb.append("".padEnd(7))
+                    sb.append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
                 }
 
                 is Frikort -> {
-                    sb.append(rightPad("Frikort", 12))
-                    sb.append(rightPad(skt.trekkode.value, 55))
-                    sb.append(rightPad("", 4))
-                    sb.append(rightPad("", 6))
-                    sb.append(finnFrikortbeloep(skt))
-                    sb.append(rightPad("", 4))
+                    sb.append("Frikort".padEnd(12))
+                    sb.append(skt.trekkode.value.padEnd(55))
+                    sb.append("".padEnd(4))
+                    sb.append("".padEnd(6))
+                    sb.append(formaterFrikortbeloep(skt))
+                    sb.append("".padEnd(4))
                 }
             }
         }
@@ -162,31 +144,21 @@ class SkattekortFixedRecordFormatter internal constructor(
 
     private fun formaterProsentsats(prosentsats: BigDecimal?): String = dfProsentsats.format(prosentsats)
 
-    private fun formaterAntallManederTrekk(antallManederTrekk: BigDecimal?): String {
-        if (antallManederTrekk == null) {
-            return ""
-        }
-        return dfAntallMndTrekk.format(antallManederTrekk)
-    }
+    private fun formaterAntallManederTrekk(antallManederTrekk: BigDecimal?): String = antallManederTrekk?.let { dfAntallMndTrekk.format(it) } ?: ""
 
-    private fun finnesGyldigTrekkode(): Boolean = gyldigeForskuddstrekk().isNotEmpty()
-
-    private fun finnFrikortbeloep(frikort: Frikort): String {
-        val frikortbeloep: Int? = frikort.frikortBeloep
-        val harIkkeFrikortBeloep = frikortbeloep == null
-        return leftPad(if (harIkkeFrikortBeloep) "" else frikortbeloep.toString(), 7, if (harIkkeFrikortBeloep) " " else "0")
-    }
+    private fun formaterFrikortbeloep(frikort: Frikort): String =
+        (
+            if (frikort.frikortBeloep == null) {
+                ""
+            } else {
+                frikort.frikortBeloep.toString()
+            }
+        ).padStart(7, if (frikort.frikortBeloep == null) ' ' else '0')
 
     companion object {
         private const val UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX = "-01-01"
-        private val dfProsentsats: DecimalFormat
-        private val dfAntallMndTrekk: DecimalFormat
-
-        init {
-            val symbols = DecimalFormatSymbols()
-            symbols.setDecimalSeparator(',')
-            dfProsentsats = DecimalFormat("000.00", symbols)
-            dfAntallMndTrekk = DecimalFormat("00.0", symbols)
-        }
+        private val symbols = DecimalFormatSymbols().apply { decimalSeparator = ',' }
+        private val dfProsentsats: DecimalFormat = DecimalFormat("000.00", symbols)
+        private val dfAntallMndTrekk: DecimalFormat = DecimalFormat("00.0", symbols)
     }
 }

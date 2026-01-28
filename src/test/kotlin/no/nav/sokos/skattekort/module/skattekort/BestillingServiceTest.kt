@@ -23,6 +23,7 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -53,6 +54,7 @@ import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDR
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
@@ -1072,6 +1074,40 @@ class BestillingServiceTest :
                     flagget shouldBe false
                 }
             }
+        }
+
+        test("Vi skal kunne parse skattekort med utløpt d-nummer") {
+            val arbeidstaker =
+                Json.decodeFromString<Arbeidstaker>(
+                    """        {
+          "arbeidstakeridentifikator": "67853500256",
+          "resultatForSkattekort": "utgaattDnummerSkattekortForFoedselsnummerErLevert",
+          "skattekort": {
+            "utstedtDato": "2025-10-16",
+            "skattekortidentifikator": 53112,
+            "forskuddstrekk": [
+              {
+                "trekkode": "pensjon",
+                "trekkprosent": {
+                  "prosentsats": 36,
+                  "antallMaanederForTrekk": 11
+                }
+              },
+              {
+                "trekkode": "pensjonFraNAV",
+                "trekkprosent": {
+                  "prosentsats": 36,
+                  "antallMaanederForTrekk": 11
+                }
+              }
+            ]
+          },
+          "inntektsaar": "2025"
+        }
+""",
+                )
+            val skattekort = BestillingService.toSkattekort(arbeidstaker, PersonId(0))
+            skattekort.forskuddstrekkList shouldHaveSize 2
         }
     })
 

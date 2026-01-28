@@ -12,36 +12,37 @@ import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.skattekort.Trekkode
 
 class SkattekortFixedRecordFormatter internal constructor(
-    private val skattekortmelding: Skattekortmelding,
-    private val inntektsaar: String?,
+    private val skattekort: Skattekort,
+    private val fnr: String,
 ) {
     private val simulertSkattekort = Frikort(Trekkode.LOENN_FRA_NAV, null)
 
     private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> {
-        if (erIkkeTrekkPliktig() && !inneholderSkattekort()) {
+        if (erIkkeTrekkPliktig()) {
             return listOf(simulertSkattekort) // TODO: Dette er vel ikke riktig for ikke trekkpliktige? De skal ha noe standardsatser, yesno?
         } else {
-            return skattekortmelding.skattekort
-                ?.forskuddstrekk
-                ?.mapNotNull { t ->
+            return skattekort
+                .forskuddstrekkList
+                .mapNotNull { t ->
                     when (t.trekkode()) {
                         Trekkode.LOENN_FRA_NAV -> t
                         Trekkode.PENSJON_FRA_NAV -> t
                         Trekkode.UFOERETRYGD_FRA_NAV -> t
                         else -> null
                     }
-                } ?: emptyList()
+                }
         }
     }
 
-    private fun inneholderSkattekort(): Boolean = (skattekortmelding.skattekort != null)
+    private fun inneholderSkattekort(): Boolean = true
 
-    private fun erIkkeTrekkPliktig(): Boolean = ResultatForSkattekort.IkkeTrekkplikt.equals(skattekortmelding.resultatPaaForespoersel)
+    private fun erIkkeTrekkPliktig(): Boolean = ResultatForSkattekort.IkkeTrekkplikt.equals(skattekort.resultatForSkattekort)
 
     fun format(): String {
         val frSkattekort = StringBuilder()
@@ -49,7 +50,7 @@ class SkattekortFixedRecordFormatter internal constructor(
             frSkattekort
                 .append(formaterFnr())
                 .append(formaterResultatPaaForesporsel())
-                .append(rightPad(inntektsaar, 4))
+                .append(rightPad(skattekort.inntektsaar.toString(), 4))
                 .append(formaterUtstedtDato())
                 .append(formaterSkattekortidentifikator())
                 .append(formaterTilleggsopplysning())
@@ -59,10 +60,10 @@ class SkattekortFixedRecordFormatter internal constructor(
         return frSkattekort.toString()
     }
 
-    private fun formaterFnr(): String = rightPad(skattekortmelding.arbeidstakeridentifikator, 11)
+    private fun formaterFnr(): String = rightPad(fnr, 11)
 
     private fun formaterResultatPaaForesporsel(): String {
-        val resultat: String = skattekortmelding.resultatPaaForespoersel.value
+        val resultat: String = skattekort.resultatForSkattekort.value
         // Maks 40 posisjoner i fixedfield format til OS
         if (resultat.length > 40) {
             return substring(resultat, 0, 40)
@@ -72,27 +73,27 @@ class SkattekortFixedRecordFormatter internal constructor(
     }
 
     private fun formaterUtstedtDato(): String {
-        if (erIkkeTrekkPliktig() && !inneholderSkattekort()) {
-            val utstedtDato = inntektsaar + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX
+        if (erIkkeTrekkPliktig()) {
+            val utstedtDato = skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX
             return rightPad(utstedtDato, 10)
-        } else if (ResultatForSkattekort.IkkeSkattekort.equals(skattekortmelding.resultatPaaForespoersel)) {
+        } else if (ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
             return rightPad("", 10)
         }
-        return rightPad(skattekortmelding.skattekort?.utstedtDato?.toString() ?: "", 10)
+        return rightPad(skattekort.utstedtDato?.toString() ?: "", 10)
     }
 
     private fun formaterSkattekortidentifikator(): String {
         val skattekortidentifikator: String
-        if ((erIkkeTrekkPliktig() && !inneholderSkattekort()) || ResultatForSkattekort.IkkeSkattekort.equals(skattekortmelding.resultatPaaForespoersel)) {
+        if ((erIkkeTrekkPliktig() && !inneholderSkattekort()) || ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
             skattekortidentifikator = ""
         } else {
-            skattekortidentifikator = skattekortmelding.skattekort?.skattekortidentifikator?.toString() ?: ""
+            skattekortidentifikator = skattekort.identifikator ?: ""
         }
         return rightPad(skattekortidentifikator, 10)
     }
 
     private fun formaterTilleggsopplysning(): String {
-        val tilleggopplysninger: List<Tilleggsopplysning> = skattekortmelding.tilleggsopplysning
+        val tilleggopplysninger: List<Tilleggsopplysning> = skattekort.tilleggsopplysningList
         return rightPad(if (tilleggopplysninger.isEmpty()) "" else filterTilleggsopplysning(tilleggopplysninger), 50)
     }
 

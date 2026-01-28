@@ -71,6 +71,20 @@ data class Skattekort
             forskuddstrekkList = forskuddstrekkList,
             tilleggsopplysningList = tilleggsopplysningList,
         )
+
+        constructor(
+            personId: PersonId,
+            arbeidstaker: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker,
+        ) : this(
+            personId = personId,
+            utstedtDato = arbeidstaker.skattekort?.utstedtDato?.let(LocalDate::parse),
+            identifikator = arbeidstaker.skattekort?.skattekortidentifikator?.toString(),
+            inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+            kilde = SkattekortKilde.SKATTEETATEN.value,
+            resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
+            forskuddstrekkList = arbeidstaker.skattekort?.forskuddstrekk?.map(Forskuddstrekk::create) ?: emptyList(),
+            tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+        )
     }
 
 @Serializable
@@ -220,7 +234,6 @@ enum class SkattekortKilde(
     SKATTEETATEN(value = "skatteetaten"),
     SYNTETISERT(value = "syntetisert"),
     MANUELL(value = "manuell"),
-    MANGLER(value = "mangler"),
 }
 
 enum class Trekkode(

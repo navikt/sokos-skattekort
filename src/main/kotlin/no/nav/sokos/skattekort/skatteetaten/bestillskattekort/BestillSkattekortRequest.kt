@@ -66,7 +66,7 @@ fun bestillSkattekortRequest(
             ),
     )
 
-fun bestillOppdateringRequest(inntektsaar: Int): BestillSkattekortRequest =
+fun bestillOppdateringRequest(inntektsaar: Short): BestillSkattekortRequest =
     BestillSkattekortRequest(
         inntektsaar = inntektsaar.toString(),
         bestillingstype = "HENT_KUN_ENDRING",

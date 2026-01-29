@@ -50,13 +50,13 @@ object BestillingRepository {
             queryOf(
                 """
                     |INSERT INTO bestillinger (person_id, inntektsaar, fnr, forespoersel_id) 
-                    |VALUES (:personId, :inntektsaar, :fnr, :forespoerselId)
+                    |VALUES (:personId, :inntektsaar, :fnr, :forespoerselId) 
+                    |ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
                 """.trimMargin(),
                 mapOf(
                     "personId" to bestilling.personId.value,
                     "inntektsaar" to bestilling.inntektsaar,
                     "fnr" to bestilling.fnr.value,
-                    "forespoerselId" to bestilling.forespoerselId.value,
                 ),
             ),
         )
@@ -222,7 +222,6 @@ object BestillingRepository {
             inntektsaar = row.int("inntektsaar"),
             bestillingsbatchId = row.longOrNull("bestillingsbatch_id")?.let { BestillingsbatchId(it) },
             oppdatert = row.instant("oppdatert").toKotlinInstant(),
-            forespoerselId = ForespoerselId(row.long("forespoersel_id")),
         )
     }
 }

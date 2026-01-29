@@ -9,11 +9,14 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
+import io.kotest.matchers.maps.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
+import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.WiremockListener
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
@@ -24,16 +27,25 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingId
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
+import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 @OptIn(ExperimentalTime::class)
 class ForespoerselServiceTest :
     FunSpec({
-        extensions(DbListener)
+        extensions(DbListener, WiremockListener)
+
+        val pdlClientService: PdlClientService by lazy {
+            PdlClientService(
+                client = createHttpClient(),
+                pdlUrl = WiremockListener.wiremock.baseUrl(),
+                azuredTokenClient = WiremockListener.azuredTokenClient,
+            )
+        }
 
         val personService: PersonService by lazy {
-            PersonService(DbListener.dataSource)
+            PersonService(DbListener.dataSource, pdlClientService)
         }
 
         val forespoerselService: ForespoerselService by lazy {
@@ -42,7 +54,8 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val osMessage = "OS;2025;12345678901"
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                val osMessage = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -67,7 +80,7 @@ class ForespoerselServiceTest :
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDate.parse("2024-04-12").atStartOfDay()) {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("12345678901", "23456789012"))
                 val osMessage = "OS;2025;12345678901;23456789012;"
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -113,7 +126,8 @@ class ForespoerselServiceTest :
 
         test("mot slutten av året skal vi også bestille for neste år") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                val osMessage = "OS;2025;12345678901"
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                val osMessage = "OS;2025;01010112345"
                 forespoerselService.taImotForespoersel(osMessage)
 
                 DbListener.dataSource.transaction { tx ->
@@ -135,7 +149,8 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            val message = "MANUELL;2026;12345678901"
+            WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+            val message = "MANUELL;2026;01010112345"
             val brukerId = "Z123456"
 
             forespoerselService.taImotForespoersel(message, Saksbehandler(brukerId))
@@ -162,8 +177,9 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme person og årstall som en tidligere forespoersel, skal det opprette kun en bestilling") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val message1 = "OS;2025;12345678901"
-                val message2 = "MANUELL;2025;12345678901"
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                val message1 = "OS;2025;01010112345"
+                val message2 = "MANUELL;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(message1)
                 forespoerselService.taImotForespoersel(message2)
@@ -187,7 +203,8 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme forsystem, person og årstall som en tidligere forespoersel, skal det kun audit logges dersom en utsending ikke er utført") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val message = "OS;2025;12345678901"
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                val message = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(message)
                 forespoerselService.taImotForespoersel(message)
@@ -212,7 +229,7 @@ class ForespoerselServiceTest :
         test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
             DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-            val message = "OS;2025;12345678901"
+            val message = "OS;2025;01010112345"
 
             forespoerselService.taImotForespoersel(message)
 
@@ -224,7 +241,7 @@ class ForespoerselServiceTest :
                         size shouldBe 1
                         shouldContainAllIgnoringFields(
                             listOf(
-                                Utsending(UtsendingId(1), Personidentifikator("12345678901"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                                Utsending(UtsendingId(1), Personidentifikator("01010112345"), 2025, Forsystem.OPPDRAGSSYSTEMET),
                             ),
                             Utsending::opprettet,
                         )
@@ -235,6 +252,8 @@ class ForespoerselServiceTest :
 
         test("Skal ta i mot forespørsler fra databasetabell") {
             DbListener.loadDataSet("database/forespoersler/forespoersel_fra_tabell.sql")
+            WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("19876543210"))
+
             forespoerselService.cronForespoerselInput()
             DbListener.dataSource.transaction { tx ->
                 val bestillinger = BestillingRepository.getBestillingsKandidaterForBatch(tx)
@@ -248,7 +267,6 @@ class ForespoerselServiceTest :
                                     personId = PersonId(1),
                                     fnr = Personidentifikator("19876543210"),
                                     inntektsaar = 2025,
-                                    forespoerselId = ForespoerselId(1),
                                 ),
                             ),
                             Bestilling::id,
@@ -262,7 +280,9 @@ class ForespoerselServiceTest :
 
         test("skal ikke kaste en PSQLException: ERROR: duplicate key value violates unique constraint") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                val message = "OS;2025;12345678901"
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+
+                val message = "OS;2025;01010112345"
                 val startLatch = java.util.concurrent.CountDownLatch(1)
                 val completeLatch = java.util.concurrent.CountDownLatch(2)
                 val exceptions = java.util.concurrent.ConcurrentHashMap<String, Exception>()
@@ -304,7 +324,7 @@ class ForespoerselServiceTest :
                     val personList = personService.getPersonList(count = 100, tx = tx)
                     val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
 
-                    exceptions.isEmpty() shouldBe true
+                    exceptions.shouldBeEmpty()
                     personList.size shouldBe 1
                     forespoerselList.size shouldBe 4
                 }

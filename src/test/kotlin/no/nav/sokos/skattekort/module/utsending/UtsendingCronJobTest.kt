@@ -1,10 +1,11 @@
 package no.nav.sokos.skattekort.module.utsending
 
-import kotlin.test.assertTrue
-
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.toDataSource
-import junit.framework.TestCase
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.DbListener
@@ -14,6 +15,7 @@ import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditService
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.utsending.UtsendingService
 
 class UtsendingCronJobTest :
     FunSpec(
@@ -34,12 +36,12 @@ class UtsendingCronJobTest :
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz.sql")
                 uut.handleUtsending()
                 val auditEntries: List<Audit> = auditService.getAuditByPersonId(PersonId(3))
-                assertTrue(auditEntries.map { it.tag }.contains(AuditTag.UTSENDING_OK))
+                auditEntries.map { it.tag } shouldContain (AuditTag.UTSENDING_OK)
                 val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
-                assertTrue(messages.size == 1)
-                assertTrue(messages.first().contains("12345678903"))
+                messages.size shouldBe 1
+                messages.first() shouldContain "03030312345"
                 val utsendinger = uut.getAllUtsendinger()
-                TestCase.assertEquals(0, utsendinger.size)
+                utsendinger.size shouldBe 0
             }
 
             test("Vi skal håndtere feil i utsendelse til oppdragz") {
@@ -52,12 +54,12 @@ class UtsendingCronJobTest :
                 }
                 uut.handleUtsending()
                 val auditEntries: List<Audit> = auditService.getAuditByPersonId(PersonId(3))
-                assertTrue(auditEntries.map { it.tag }.contains(AuditTag.UTSENDING_FEILET))
+                auditEntries.map { it.tag } shouldContain (AuditTag.UTSENDING_FEILET)
                 val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
-                assertTrue(messages.size == 0)
+                messages.size shouldBe 0
                 val utsendinger = uut.getAllUtsendinger()
-                TestCase.assertEquals("Skal ha en utsending", 1, utsendinger.size)
-                TestCase.assertEquals("Skal ha failcount på en", 1, utsendinger[0].failCount)
+                withClue("Skal ha en utsending") { utsendinger.size shouldBe 1 }
+                withClue("Skal ha failcount på en") { utsendinger[0].failCount shouldBe 1 }
             }
         },
     )

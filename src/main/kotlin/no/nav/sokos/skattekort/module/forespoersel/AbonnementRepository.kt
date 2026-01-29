@@ -55,23 +55,37 @@ object AbonnementRepository {
             mapToAbonnement,
         )
 
-    fun findForsystemByPersonIdAndInntektsaar(
+    fun findForsystemAndFnr(
         tx: TransactionalSession,
         personId: PersonId,
         inntektsaar: Int,
-    ): List<Forsystem> =
+    ): List<Pair<Forsystem, Personidentifikator>> =
         tx.list(
             queryOf(
                 """
-                    |SELECT distinct f.forsystem FROM abonnementer a JOIN forespoersler f ON f.id = a.forespoersel_id 
-                    |WHERE a.person_id = :personId and a.inntektsaar = :inntektsaar
-                """.trimMargin(),
+                SELECT DISTINCT f.forsystem as forsystem,
+                                (SELECT fn.fnr
+                                 FROM abonnementer a
+                                          INNER JOIN forespoersler f ON f.id = a.forespoersel_id
+                                          INNER JOIN foedselsnumre fn ON a.person_id = fn.person_id
+                                 WHERE a.person_id = :personId
+                                   AND f.data_mottatt LIKE '%' || fn.fnr || '%'
+                                 order by f.id desc
+                                 limit 1) as fnr
+                FROM abonnementer a
+                         JOIN forespoersler f ON f.id = a.forespoersel_id
+                WHERE a.person_id = :personId
+                  AND a.inntektsaar = :inntektsaar;
+                """.trimIndent(),
                 mapOf(
                     "personId" to personId.value,
                     "inntektsaar" to inntektsaar,
                 ),
             ),
-            { row -> Forsystem.fromValue(row.string("forsystem")) },
+            { row ->
+                println()
+                Pair(Forsystem.fromValue(row.string("forsystem")), Personidentifikator(row.string("fnr")))
+            },
         )
 
     @OptIn(ExperimentalTime::class)

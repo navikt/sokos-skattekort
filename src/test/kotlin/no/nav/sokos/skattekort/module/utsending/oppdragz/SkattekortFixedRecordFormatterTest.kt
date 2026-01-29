@@ -1,8 +1,5 @@
 package no.nav.sokos.skattekort.module.utsending.oppdragz
 
-import javax.xml.datatype.DatatypeFactory
-
-import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
@@ -10,54 +7,19 @@ import kotlinx.serialization.json.Json
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.ktor.serialization.kotlinx.json.DefaultJson
 
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
-fun arbeidstakerConverter(a: Arbeidstaker): Skattekortmelding =
-    Skattekortmelding(
-        a.inntektsaar.toLong(),
-        a.arbeidstakeridentifikator,
-        Resultatstatus.fromValue(a.resultatForSkattekort),
-        skattekortConverter(a.skattekort, a.inntektsaar.toLong()),
-        a.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-    )
-
-fun skattekortConverter(
-    s: Skattekort?,
-    inntektsaar: Long,
-): no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekort? =
-    if (s != null) {
-        Skattekort(
-            inntektsaar,
-            DatatypeFactory.newInstance().newXMLGregorianCalendar(s.utstedtDato),
-            s.skattekortidentifikator,
-            s.forskuddstrekk.map { forskuddstrekkConverter(it) },
-        )
-    } else {
-        null
-    }
-
-fun forskuddstrekkConverter(f: Forskuddstrekk): no.nav.sokos.skattekort.module.utsending.oppdragz.Forskuddstrekk =
-    if (f.trekkprosent != null) {
-        Trekkprosent(
-            Trekkode.fromValue(f.trekkode),
-            f.trekkprosent.prosentsats,
-        )
-    } else if (f.trekktabell != null) {
-        Trekktabell(
-            Trekkode.fromValue(f.trekkode),
-            Tabelltype.TREKKTABELL_FOR_LOENN,
-            f.trekktabell.tabellnummer,
-            f.trekktabell.prosentsats,
-        )
-    } else {
-        Frikort(Trekkode.fromValue(f.trekkode), f.frikort?.frikortbeloep)
+private val json =
+    Json(DefaultJson) {
+        isLenient = true
+        prettyPrint = true
     }
 
 /*
@@ -71,31 +33,31 @@ Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringe
 og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
  */
 @OptIn(ExperimentalTime::class)
-class SkattekortFixedRecordFormatterDuplicatorTest :
+class SkattekortFixedRecordFormatterTest :
     FunSpec({
         test("gå gjennom alle skattekort og sjekk at vi får et stabilt svar") {
             val arbeidstakere: List<Arbeidstaker> =
-                Json
+                json
                     .decodeFromString<HentSkattekortResponse>(readFile("/oppdragz/skattekortsvar.json"))
                     .arbeidsgiver!!
                     .flatMap { it.arbeidstaker }
             val referanseverdier: Map<String, String> = Json.decodeFromString(readFile("/oppdragz/skattekortreferanser.json"))
-            val nyeReferanseVerdier: Map<String, String> =
-                arbeidstakere
-                    .map { arbeidstaker ->
-                        val skattekortmelding = arbeidstakerConverter(arbeidstaker)
-                        val nyFormatering = SkattekortFixedRecordFormatter(skattekortmelding, "2025").format()
-                        val gammelFormatering = referanseverdier.get(arbeidstaker.arbeidstakeridentifikator)
-                        assertEquals(nyFormatering, gammelFormatering)
-                        Pair(arbeidstaker.arbeidstakeridentifikator, nyFormatering)
-                    }.toMap()
+            arbeidstakere.associate { arbeidstaker ->
+                val skattekort = Skattekort(PersonId(0), arbeidstaker)
+                val nyFormatering = SkattekortFixedRecordFormatter(skattekort, arbeidstaker.arbeidstakeridentifikator).format()
+                val gammelFormatering = referanseverdier.get(arbeidstaker.arbeidstakeridentifikator)
+                nyFormatering shouldBe gammelFormatering
+                Pair(arbeidstaker.arbeidstakeridentifikator, nyFormatering)
+            }
             // Kommentert ut for enkel oppdatering av referansedataene når vi eventuelt endrer serialiseringen
-            // File("src/test/resources/oppdragz/skattekortreferanser.json").writeText(Json { prettyPrint = true }.encodeToString(nyeReferanseVerdier))
+            //    .let { nyeReferanseVerdier ->
+            //        File("src/test/resources/oppdragz/skattekortreferanser.json").writeText(json.encodeToString(nyeReferanseVerdier))
+            //    }
         }
 
         test("vi kan serialisere et frikort med beløpsgrense") {
             val skattekort =
-                no.nav.sokos.skattekort.module.skattekort.Skattekort(
+                Skattekort(
                     id = null,
                     personId = PersonId(value = 1),
                     utstedtDato = LocalDate.parse("2020-09-09"),
@@ -111,9 +73,8 @@ class SkattekortFixedRecordFormatterDuplicatorTest :
                         ),
                     tilleggsopplysningList = listOf(),
                 )
-            val skattekortmelding = Skattekortmelding(skattekort, "12345678901")
-            val copybook = SkattekortFixedRecordFormatter(skattekortmelding, 2025.toString()).format()
+            val copybook = SkattekortFixedRecordFormatter(skattekort, "01010112345").format()
             copybook shouldBe
-                "12345678901skattekortopplysningerOK                20252020-09-09123                                                         1Frikort     loennFraNAV                                                      0007890    "
+                "01010112345skattekortopplysningerOK                20252020-09-09123                                                         1Frikort     loennFraNAV                                                      0007890    "
         }
     })

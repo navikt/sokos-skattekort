@@ -120,12 +120,15 @@ fun databaseHas(vararg strings: String) {
     runThisSql(strings.joinToString("\n"))
 }
 
-fun aPerson(
+fun aPerson(personId: Long) =
+    """
+        INSERT INTO personer(id) VALUES ($personId);            
+    """
+
+fun afoedselsnummer(
     personId: Long,
     fnr: String,
 ) = """
-        INSERT INTO personer(id) VALUES ($personId);
-            
         INSERT INTO foedselsnumre(person_id, fnr)
             VALUES ($personId, '$fnr');
     """
@@ -145,10 +148,9 @@ fun aBestilling(
     fnr: String,
     inntektsaar: Int,
     batchId: Long?,
-    forespoerselId: Long,
 ) = """
-    INSERT INTO bestillinger(person_id, fnr, inntektsaar, bestillingsbatch_id, forespoersel_id)
-                    VALUES ($personId, '$fnr', $inntektsaar, $batchId, $forespoerselId);
+    INSERT INTO bestillinger(person_id, fnr, inntektsaar, bestillingsbatch_id)
+                    VALUES ($personId, '$fnr', $inntektsaar, $batchId);
     """.trimIndent()
 
 fun anAbonnement(
@@ -159,9 +161,8 @@ fun anAbonnement(
     batch: Boolean = false,
 ) = """
     INSERT INTO forespoersler(id, data_mottatt, forsystem, batch)
-                    VALUES ($forespoerselId, '', '${forsystem.value}', $batch)
-                    ON CONFLICT DO NOTHING;
-    
+        SELECT $forespoerselId, '${forsystem.value}:$inntektsaar:' || fnr, '${forsystem.value}', $batch FROM foedselsnumre WHERE person_id = $personId;
+        
     INSERT INTO abonnementer(forespoersel_id, person_id, inntektsaar)
                     VALUES ($forespoerselId, $personId, $inntektsaar);
     """.trimIndent()

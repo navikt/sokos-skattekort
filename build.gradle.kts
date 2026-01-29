@@ -27,28 +27,27 @@ repositories {
     maven { url = uri("https://packages.confluent.io/maven/") }
 }
 
-val ktorVersion = "3.3.3"
-val nimbusVersion = "10.6"
-val logbackVersion = "1.5.23"
+val ktorVersion = "3.4.0"
+val nimbusVersion = "10.7"
+val logbackVersion = "1.5.25"
 val logstashVersion = "9.0"
-val micrometerVersion = "1.16.1"
-val dbSchedulerVersion = "16.6.0"
+val micrometerVersion = "1.16.2"
+val dbSchedulerVersion = "16.7.0"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
-val kotestVersion = "6.0.7"
-val kotlinxSerializationVersion = "1.9.0"
+val kotestVersion = "6.1.1"
+val kotlinxSerializationVersion = "1.10.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
-val jacksonVersion = "3.0.3"
 val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.7"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "11.20.0"
-val postgresVersion = "42.7.8"
+val flywayVersion = "11.20.2"
+val postgresVersion = "42.7.9"
 val activemqVersion = "2.44.0"
 val ibmmqVersion = "9.4.4.1"
-val opentelemetryVersion = "2.23.0-alpha"
+val opentelemetryVersion = "2.24.0-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
 val kafkaClientsVersion = "8.1.1-ce"
 val avroVersion = "1.12.1"
@@ -56,7 +55,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "11.2.1"
+val unleashedVersion = "12.0.1"
 
 dependencies {
 
@@ -90,10 +89,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation("tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
-
     // Monitorering
     implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
     implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
@@ -111,9 +106,6 @@ dependencies {
     implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
     implementation("org.apache.avro:avro:$avroVersion")
     implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
-
-    // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
-    implementation("org.apache.commons:commons-lang3:3.20.0")
 
     // Scheduler
     implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
@@ -136,7 +128,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("net.bytebuddy:byte-buddy:1.18.3") // TEMP: Needed for mockk 1.14.6 with java25. Remove when Mockk is updated and bytebuddy is no longer needed.
+    testImplementation("net.bytebuddy:byte-buddy:1.18.4") // TEMP: Needed for mockk 1.14.6 with java25. Remove when Mockk is updated and bytebuddy is no longer needed.
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
@@ -153,7 +145,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.10.2")
+                useTarget("at.yawk.lz4:lz4-java:1.10.3")
                 because("Prefer the patched fork for vulnerability fix")
             }
         }

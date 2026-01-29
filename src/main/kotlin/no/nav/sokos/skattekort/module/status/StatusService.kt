@@ -26,7 +26,7 @@ class StatusService(
         forsystem: String,
     ): Status {
         val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
-        if (!kategoriMapper.erGyldig(fnr)) {
+        if (!kategoriMapper.kanBestilleSkattekort(fnr)) {
             return Status.UGYLDIG_FNR
         }
         val person: Person? =

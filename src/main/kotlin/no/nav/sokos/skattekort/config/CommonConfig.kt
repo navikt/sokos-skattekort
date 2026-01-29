@@ -28,9 +28,10 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import mu.KotlinLogging
 import org.slf4j.MarkerFactory
 import org.slf4j.event.Level
-import tools.jackson.databind.DeserializationFeature
-import tools.jackson.dataformat.xml.XmlMapper
 
+import no.nav.sokos.skattekort.api.requestValidationOpprettSkattekortRequest
+import no.nav.sokos.skattekort.api.requestValidationSkattekortConfig
+import no.nav.sokos.skattekort.api.requestValidationSkattekortRequest
 import no.nav.sokos.skattekort.infrastructure.Metrics
 
 val TEAM_LOGS_MARKER = MarkerFactory.getMarker("TEAM_LOGS")
@@ -62,6 +63,7 @@ fun Application.commonConfig() {
     install(RequestValidation) {
         requestValidationSkattekortConfig()
         requestValidationSkattekortRequest()
+        requestValidationOpprettSkattekortRequest()
     }
     install(MicrometerMetrics) {
         registry = Metrics.prometheusMeterRegistry
@@ -75,13 +77,6 @@ fun Application.commonConfig() {
             )
     }
 }
-
-val xmlMapper: XmlMapper =
-    XmlMapper
-        .builder()
-        .findAndAddModules()
-        .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .build()
 
 fun Routing.internalNaisRoutes(
     applicationState: ApplicationState,

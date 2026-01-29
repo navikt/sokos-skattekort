@@ -15,6 +15,9 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.module.person.AuditRepository
+import no.nav.sokos.skattekort.module.person.AuditTag
+import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
@@ -49,20 +52,21 @@ class ForespoerselService(
                     input.copy(
                         fnrList =
                             input.fnrList.filter { fnr ->
-                                val erGyldig = foedselsnummerkategori.erGyldig(fnr)
-                                if (!erGyldig) {
+                                val kanBestilleSkattekort = foedselsnummerkategori.kanBestilleSkattekort(fnr)
+                                if (!kanBestilleSkattekort) {
                                     logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
                                 }
-                                erGyldig
+                                kanBestilleSkattekort
                             },
                     )
                 }
 
+            val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(forespoerselInput.fnrList, saksbehandler?.ident)
             dataSource.transaction { tx ->
-                handleForespoersel(tx, message, forespoerselInput, saksbehandler?.ident)
+                handleForespoersel(tx, message, forespoerselInput, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
                 if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
                     val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
-                    handleForespoersel(tx, message, forespoerselForNesteAar, saksbehandler?.ident)
+                    handleForespoersel(tx, message, forespoerselForNesteAar, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
                 }
             }
         }.onFailure { exception ->
@@ -75,6 +79,7 @@ class ForespoerselService(
     private fun skalLagesForNesteAarOgsaa(forespoerselInput: ForespoerselInput): Boolean {
         val now = LocalDateTime.now().toKotlinLocalDateTime()
         val thisYear = now.year
+        // TODO Bruke ReglerforInntektsaar
         return (forespoerselInput.inntektsaar == thisYear && now.month == Month.DECEMBER && now.day >= 15)
     }
 
@@ -83,6 +88,7 @@ class ForespoerselService(
         tx: TransactionalSession,
         message: String,
         forespoerselInput: ForespoerselInput,
+        foedselsnumreWithPersonIdMap: Map<String, PersonId?>,
         brukerId: String?,
     ) {
         val forespoerselId =
@@ -97,14 +103,14 @@ class ForespoerselService(
         var utsendingCount = 0
 
         forespoerselInput.fnrList.forEach { fnr ->
-            val personId =
-                personService
-                    .findPersonIdOrCreatePersonByFnr(
-                        tx = tx,
-                        fnr = Personidentifikator(fnr),
-                        informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
-                        brukerId = brukerId,
-                    ).first
+            val personId = foedselsnumreWithPersonIdMap[fnr] ?: return@forEach
+            AuditRepository.insert(
+                tx,
+                tag = AuditTag.MOTTATT_FORESPOERSEL,
+                personId,
+                informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
+                brukerId = brukerId,
+            )
 
             AbonnementRepository.insert(
                 tx = tx,
@@ -128,7 +134,6 @@ class ForespoerselService(
                                 personId = personId,
                                 fnr = Personidentifikator(fnr),
                                 inntektsaar = forespoerselInput.inntektsaar,
-                                forespoerselId = ForespoerselId(forespoerselId),
                             ),
                     )
                     bestillingCount++
@@ -186,15 +191,29 @@ class ForespoerselService(
                     ForespoerselRepository.deleteAllForespoerselInput(tx)
                     returverdi
                 }
+
             forespoerselInput.forEach { input ->
                 var i = 0
                 retry@ while (i < 5) {
                     try {
-                        dataSource.transaction { tx ->
-                            val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
-                            handleForespoersel(tx, message, input, null)
+                        try {
+                            assert(input.fnrList.first().length == 11)
+
+                            val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(input.fnrList)
+                            dataSource.transaction { tx ->
+                                val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
+                                handleForespoersel(tx, message, input, foedselsnumreWithPersonIdMap, null)
+                            }
+                            break@retry
+                        } catch (e: NumberFormatException) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            break@retry
+                        } catch (e: AssertionError) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            break@retry
                         }
-                        break@retry
                     } catch (e: BatchUpdateException) {
                         logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
                         logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til secure log")

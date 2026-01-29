@@ -8,6 +8,7 @@ import kotlin.time.Instant
 import kotlin.time.toKotlinInstant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 import kotliquery.Row
@@ -40,6 +41,7 @@ enum class ResultatForSkattekort(
     }
 }
 
+@Serializable
 data class Skattekort
     @OptIn(ExperimentalTime::class)
     constructor(
@@ -47,12 +49,12 @@ data class Skattekort
         val generertFra: SkattekortId? = null,
         val personId: PersonId,
         val utstedtDato: LocalDate?,
-        val identifikator: String?,
+        @SerialName("skattekortidentifikator") val identifikator: String?,
         val inntektsaar: Int,
         val kilde: String,
         val resultatForSkattekort: ResultatForSkattekort,
         val opprettet: Instant = Clock.System.now(),
-        val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
+        @SerialName("forskuddstrekk") val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
         val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
     ) {
         @OptIn(ExperimentalTime::class)
@@ -68,6 +70,20 @@ data class Skattekort
             opprettet = row.instant("opprettet").toKotlinInstant(),
             forskuddstrekkList = forskuddstrekkList,
             tilleggsopplysningList = tilleggsopplysningList,
+        )
+
+        constructor(
+            personId: PersonId,
+            arbeidstaker: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker,
+        ) : this(
+            personId = personId,
+            utstedtDato = arbeidstaker.skattekort?.utstedtDato?.let(LocalDate::parse),
+            identifikator = arbeidstaker.skattekort?.skattekortidentifikator?.toString(),
+            inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+            kilde = SkattekortKilde.SKATTEETATEN.value,
+            resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
+            forskuddstrekkList = arbeidstaker.skattekort?.forskuddstrekk?.map(Forskuddstrekk::create) ?: emptyList(),
+            tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
         )
     }
 
@@ -91,51 +107,57 @@ sealed interface Forskuddstrekk {
         fun create(row: Row): Forskuddstrekk {
             val type = ForskuddstrekkType.from(row.string("type"))
             return when (type) {
-                ForskuddstrekkType.FRIKORT ->
+                ForskuddstrekkType.FRIKORT -> {
                     Frikort(
-                        trekkode = Trekkode.from(row.string("trekk_kode")),
+                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
                         frikortBeloep = row.intOrNull("frikort_beloep"),
                     )
+                }
 
-                ForskuddstrekkType.PROSENTKORT ->
+                ForskuddstrekkType.PROSENTKORT -> {
                     Prosentkort(
-                        trekkode = Trekkode.from(row.string("trekk_kode")),
+                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
                     )
+                }
 
-                ForskuddstrekkType.TABELLKORT ->
+                ForskuddstrekkType.TABELLKORT -> {
                     Tabellkort(
-                        trekkode = Trekkode.from(row.string("trekk_kode")),
+                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
                         tabellNummer = row.string("tabell_nummer"),
                         prosentSats = row.bigDecimal("prosentsats"),
                         antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
                     )
+                }
             }
         }
 
         fun create(forskuddstrekk: no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk): Forskuddstrekk {
             val type = klassifiserType(forskuddstrekk)
             return when (type) {
-                ForskuddstrekkType.FRIKORT ->
+                ForskuddstrekkType.FRIKORT -> {
                     Frikort(
-                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
                         frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt(),
                     )
+                }
 
-                ForskuddstrekkType.PROSENTKORT ->
+                ForskuddstrekkType.PROSENTKORT -> {
                     Prosentkort(
-                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
                         prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
                     )
+                }
 
-                ForskuddstrekkType.TABELLKORT ->
+                ForskuddstrekkType.TABELLKORT -> {
                     Tabellkort(
-                        trekkode = Trekkode.from(forskuddstrekk.trekkode),
+                        trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
                         tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
                         prosentSats = forskuddstrekk.trekktabell.prosentsats,
                         antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
                     )
+                }
             }
         }
 
@@ -211,7 +233,7 @@ enum class SkattekortKilde(
 ) {
     SKATTEETATEN(value = "skatteetaten"),
     SYNTETISERT(value = "syntetisert"),
-    MANGLER(value = "mangler"),
+    MANUELL(value = "manuell"),
 }
 
 enum class Trekkode(
@@ -232,6 +254,6 @@ enum class Trekkode(
     ;
 
     companion object {
-        fun from(kode: String): Trekkode = entries.find { it.value == kode } ?: error("Ukjent trekkode: $kode")
+        fun fromValue(kode: String): Trekkode = entries.find { it.value == kode } ?: error("Ukjent trekkode: $kode")
     }
 }

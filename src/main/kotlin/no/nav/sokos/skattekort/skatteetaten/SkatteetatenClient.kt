@@ -63,7 +63,7 @@ class SkatteetatenClient(
             }
         hentBestillingReturkode.labelValues(response.status.description).inc()
 
-        if (response.status == HttpStatusCode.NoContent) {
+        if (response.status == HttpStatusCode.NoContent || response.status == HttpStatusCode.ServiceUnavailable) {
             hentBestillingFeilet.labelValues(bestillingsreferanse).inc()
             return null
         }

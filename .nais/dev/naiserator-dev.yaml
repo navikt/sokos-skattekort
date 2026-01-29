@@ -52,10 +52,14 @@ spec:
           namespace: nais
         - application: sokos-up-skattekort-ssr
         - application: sokos-utbetalingsportalen
+        - application: sokos-dare-poc
         - application: saas-proxy
           namespace: teamcrm
         - application: saas-proxy
           namespace: platforce
+        - application: testnav-dolly-proxy-trygdeetaten
+          cluster: dev-fss
+          namespace: dolly
     outbound:
       rules:
         - application: logging

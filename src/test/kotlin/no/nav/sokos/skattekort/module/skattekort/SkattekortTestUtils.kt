@@ -120,12 +120,15 @@ fun databaseHas(vararg strings: String) {
     runThisSql(strings.joinToString("\n"))
 }
 
-fun aPerson(
+fun aPerson(personId: Long) =
+    """
+        INSERT INTO personer(id) VALUES ($personId);            
+    """
+
+fun afoedselsnummer(
     personId: Long,
     fnr: String,
 ) = """
-        INSERT INTO personer(id) VALUES ($personId);
-            
         INSERT INTO foedselsnumre(person_id, fnr)
             VALUES ($personId, '$fnr');
     """
@@ -157,7 +160,7 @@ fun anAbonnement(
     forsystem: Forsystem = Forsystem.OPPDRAGSSYSTEMET,
 ) = """
     INSERT INTO forespoersler(id, data_mottatt, forsystem)
-                    VALUES ($forespoerselId, '', '${forsystem.value}');
+        SELECT $forespoerselId, '${forsystem.value}:$inntektsaar:' || fnr, '${forsystem.value}' FROM foedselsnumre WHERE person_id = $personId;
     
     INSERT INTO abonnementer(forespoersel_id, person_id, inntektsaar)
                     VALUES ($forespoerselId, $personId, $inntektsaar);

@@ -28,8 +28,6 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import mu.KotlinLogging
 import org.slf4j.MarkerFactory
 import org.slf4j.event.Level
-import tools.jackson.databind.DeserializationFeature
-import tools.jackson.dataformat.xml.XmlMapper
 
 import no.nav.sokos.skattekort.api.requestValidationOpprettSkattekortRequest
 import no.nav.sokos.skattekort.api.requestValidationSkattekortConfig
@@ -79,13 +77,6 @@ fun Application.commonConfig() {
             )
     }
 }
-
-val xmlMapper: XmlMapper =
-    XmlMapper
-        .builder()
-        .findAndAddModules()
-        .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .build()
 
 fun Routing.internalNaisRoutes(
     applicationState: ApplicationState,

@@ -7,7 +7,12 @@ import java.text.DecimalFormatSymbols
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
@@ -17,15 +22,15 @@ class SkattekortFixedRecordFormatter internal constructor(
     private val skattekort: Skattekort,
     private val fnr: String,
 ) {
-    private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> {
-        if (skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeTrekkplikt) {
-            return listOf(
+    private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> =
+        if (skattekort.resultatForSkattekort == IkkeTrekkplikt) {
+            listOf(
                 Frikort(Trekkode.LOENN_FRA_NAV, null),
                 Frikort(Trekkode.PENSJON_FRA_NAV, null),
                 Frikort(Trekkode.UFOERETRYGD_FRA_NAV, null),
             )
         } else {
-            return skattekort
+            skattekort
                 .forskuddstrekkList
                 .mapNotNull { t ->
                     when (t.trekkode()) {
@@ -36,7 +41,6 @@ class SkattekortFixedRecordFormatter internal constructor(
                     }
                 }
         }
-    }
 
     fun format(): String {
         val frSkattekort = StringBuilder()
@@ -63,22 +67,19 @@ class SkattekortFixedRecordFormatter internal constructor(
         }
 
     private fun formaterUtstedtDato(): String =
-        if (skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeTrekkplikt) {
+        if (skattekort.resultatForSkattekort == IkkeTrekkplikt) {
             (skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX).padEnd(10)
-        } else if (ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
+        } else if (IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
             "".padEnd(10, ' ')
         } else {
             (skattekort.utstedtDato?.toString() ?: "").padEnd(10)
         }
 
     private fun formaterSkattekortidentifikator(): String =
-        (
-            if (skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeTrekkplikt || skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeSkattekort) {
-                ""
-            } else {
-                skattekort.identifikator ?: ""
-            }
-        ).padEnd(10)
+        when (skattekort.resultatForSkattekort) {
+            IkkeTrekkplikt, IkkeSkattekort -> ""
+            SkattekortopplysningerOK, UgyldigOrganisasjonsnummer, UgyldigFoedselsEllerDnummer, UtgaattDnummerSkattekortForFoedselsnummerErLevert -> skattekort.identifikator ?: ""
+        }.padEnd(10)
 
     private fun formaterTilleggsopplysning(): String = filterTilleggsopplysning(skattekort.tilleggsopplysningList).padEnd(50)
 
@@ -112,30 +113,33 @@ class SkattekortFixedRecordFormatter internal constructor(
         gyldigeForskuddstrekk().map { skt: Forskuddstrekk ->
             when (skt) {
                 is Tabellkort -> {
-                    sb.append("Trekktabell".padEnd(12))
-                    sb.append(skt.trekkode.value.padEnd(55))
-                    sb.append(skt.tabellNummer.padEnd(4))
-                    sb.append(formaterProsentsats(skt.prosentSats).padEnd(6))
-                    sb.append("".padEnd(7))
-                    sb.append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
+                    sb
+                        .append("Trekktabell".padEnd(12))
+                        .append(skt.trekkode.value.padEnd(55))
+                        .append(skt.tabellNummer.padEnd(4))
+                        .append(formaterProsentsats(skt.prosentSats).padEnd(6))
+                        .append("".padEnd(7))
+                        .append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
                 }
 
                 is Prosentkort -> {
-                    sb.append("Trekkprosent".padEnd(12))
-                    sb.append(skt.trekkode.value.padEnd(55))
-                    sb.append("".padEnd(4))
-                    sb.append(formaterProsentsats(skt.prosentSats).padEnd(6))
-                    sb.append("".padEnd(7))
-                    sb.append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
+                    sb
+                        .append("Trekkprosent".padEnd(12))
+                        .append(skt.trekkode.value.padEnd(55))
+                        .append("".padEnd(4))
+                        .append(formaterProsentsats(skt.prosentSats).padEnd(6))
+                        .append("".padEnd(7))
+                        .append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
                 }
 
                 is Frikort -> {
-                    sb.append("Frikort".padEnd(12))
-                    sb.append(skt.trekkode.value.padEnd(55))
-                    sb.append("".padEnd(4))
-                    sb.append("".padEnd(6))
-                    sb.append(formaterFrikortbeloep(skt))
-                    sb.append("".padEnd(4))
+                    sb
+                        .append("Frikort".padEnd(12))
+                        .append(skt.trekkode.value.padEnd(55))
+                        .append("".padEnd(4))
+                        .append("".padEnd(6))
+                        .append(formaterFrikortbeloep(skt))
+                        .append("".padEnd(4))
                 }
             }
         }

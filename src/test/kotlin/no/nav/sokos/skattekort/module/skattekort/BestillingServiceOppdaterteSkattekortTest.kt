@@ -45,9 +45,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                             """.trimIndent(),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                     )
 
                     bestillingService.hentOppdaterteSkattekort()
@@ -89,9 +92,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                             ),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                     )
 
                     bestillingService.hentOppdaterteSkattekort()
@@ -124,9 +130,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                             aSkattekortFor("01010100001", 10001),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
@@ -165,9 +174,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                             aSkattekortFor("0101010000X", 10007),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
@@ -195,9 +207,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                     coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.INGEN_ENDRINGER)
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
@@ -223,9 +238,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                     coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.UGYLDIG_INNTEKTSAAR)
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 

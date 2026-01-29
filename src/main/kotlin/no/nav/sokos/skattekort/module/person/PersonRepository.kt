@@ -178,6 +178,25 @@ object PersonRepository {
         ),
     )
 
+    fun findGyldigFnrByPersonId(
+        tx: TransactionalSession,
+        personId: PersonId,
+    ): Personidentifikator? =
+        tx.single(
+            queryOf(
+                """
+            |SELECT fnr 
+            |FROM foedselsnumre 
+            |WHERE person_id = :personId 
+            |ORDER BY id DESC 
+            |LIMIT 1
+                """.trimMargin(),
+                mapOf("personId" to personId.value),
+            ),
+        ) { row ->
+            Personidentifikator(row.string("fnr"))
+        }
+
     private val mapToPerson: (Row) -> Person = { row ->
         Person(
             id = PersonId(row.long("person_id")),

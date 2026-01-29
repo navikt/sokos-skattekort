@@ -262,20 +262,20 @@ class BestillingService(
         val id = SkattekortId(SkattekortRepository.insert(tx, skattekort, batchId))
 
         when (skattekort.resultatForSkattekort) {
-            IkkeSkattekort, IkkeTrekkplikt, SkattekortopplysningerOK,
-            -> {
+            IkkeSkattekort, IkkeTrekkplikt, SkattekortopplysningerOK -> {
                 Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, aarsak) ->
                     SkattekortRepository.insert(tx, syntetisertSkattekort, "syntetisk")
                     AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, personId, aarsak)
                 }
-                opprettUtsendingerForAbonnementer(tx, personId, Personidentifikator(arbeidstaker.arbeidstakeridentifikator), inntektsaar)
+                opprettUtsendingerForAbonnementer(tx, personId, inntektsaar)
             }
 
-            UtgaattDnummerSkattekortForFoedselsnummerErLevert,
-            -> {
+            UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
                 // finn nytt fnr
-                val gyldigFnr = PersonRepository.findGyldigFnrByPersonId(tx, personId)
-                require(gyldigFnr != null) { "Fant ikke gyldig fnr for personId $personId" }
+                val gyldigFnr = PersonRepository.findGyldigFnrByPersonId(tx, personId)!!
+                if (gyldigFnr.value == arbeidstaker.arbeidstakeridentifikator) {
+                    throw IllegalStateException("Har ikke fått nytt fnr for personId $personId")
+                }
                 BestillingRepository.insert(
                     tx,
                     Bestilling(
@@ -293,7 +293,7 @@ class BestillingService(
 
             UgyldigFoedselsEllerDnummer -> {
                 PersonRepository.flaggPerson(tx, personId)
-                opprettUtsendingerForAbonnementer(tx, personId, Personidentifikator(arbeidstaker.arbeidstakeridentifikator), inntektsaar)
+                opprettUtsendingerForAbonnementer(tx, personId, inntektsaar)
             }
         }
     }
@@ -302,16 +302,15 @@ class BestillingService(
     private fun opprettUtsendingerForAbonnementer(
         tx: TransactionalSession,
         personId: PersonId,
-        personidentifikator: Personidentifikator,
         inntektsaar: Int,
     ) {
-        AbonnementRepository.finnAktiveSystemer(tx, personId, inntektsaar).forEach { system ->
+        AbonnementRepository.findForsystemAndFnr(tx, personId, inntektsaar).forEach { (forsystem, fnr) ->
             UtsendingRepository.insert(
                 tx,
                 Utsending(
                     inntektsaar = inntektsaar,
-                    fnr = personidentifikator,
-                    forsystem = system,
+                    fnr = fnr,
+                    forsystem = forsystem,
                 ),
             )
         }

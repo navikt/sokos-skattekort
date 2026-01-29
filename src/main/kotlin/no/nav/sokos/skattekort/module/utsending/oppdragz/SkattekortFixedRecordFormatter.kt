@@ -4,10 +4,6 @@ import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 
-import org.apache.commons.lang3.StringUtils.leftPad
-import org.apache.commons.lang3.StringUtils.rightPad
-import org.apache.commons.lang3.StringUtils.substring
-
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
@@ -23,11 +19,11 @@ class SkattekortFixedRecordFormatter internal constructor(
 ) {
     private val simulertSkattekort = Frikort(Trekkode.LOENN_FRA_NAV, null)
 
-    private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> {
+    private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> =
         if (erIkkeTrekkPliktig()) {
-            return listOf(simulertSkattekort) // TODO: Dette er vel ikke riktig for ikke trekkpliktige? De skal ha noe standardsatser, yesno?
+            listOf(simulertSkattekort) // TODO: Dette er vel ikke riktig for ikke trekkpliktige? De skal ha noe standardsatser, yesno?
         } else {
-            return skattekort
+            skattekort
                 .forskuddstrekkList
                 .mapNotNull { t ->
                     when (t.trekkode()) {
@@ -38,11 +34,10 @@ class SkattekortFixedRecordFormatter internal constructor(
                     }
                 }
         }
-    }
 
     private fun inneholderSkattekort(): Boolean = true
 
-    private fun erIkkeTrekkPliktig(): Boolean = ResultatForSkattekort.IkkeTrekkplikt.equals(skattekort.resultatForSkattekort)
+    private fun erIkkeTrekkPliktig(): Boolean = ResultatForSkattekort.IkkeTrekkplikt == skattekort.resultatForSkattekort
 
     fun format(): String {
         val frSkattekort = StringBuilder()
@@ -50,7 +45,7 @@ class SkattekortFixedRecordFormatter internal constructor(
             frSkattekort
                 .append(formaterFnr())
                 .append(formaterResultatPaaForesporsel())
-                .append(rightPad(skattekort.inntektsaar.toString(), 4))
+                .append(skattekort.inntektsaar.toString().padEnd(4))
                 .append(formaterUtstedtDato())
                 .append(formaterSkattekortidentifikator())
                 .append(formaterTilleggsopplysning())
@@ -60,26 +55,26 @@ class SkattekortFixedRecordFormatter internal constructor(
         return frSkattekort.toString()
     }
 
-    private fun formaterFnr(): String = rightPad(fnr, 11)
+    private fun formaterFnr(): String = fnr.padEnd(11)
 
     private fun formaterResultatPaaForesporsel(): String {
         val resultat: String = skattekort.resultatForSkattekort.value
         // Maks 40 posisjoner i fixedfield format til OS
         if (resultat.length > 40) {
-            return substring(resultat, 0, 40)
+            return resultat.substring(0, 40)
         } else {
-            return rightPad(resultat, 40)
+            return resultat.padEnd(40)
         }
     }
 
     private fun formaterUtstedtDato(): String {
         if (erIkkeTrekkPliktig()) {
             val utstedtDato = skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX
-            return rightPad(utstedtDato, 10)
+            return utstedtDato.padEnd(10)
         } else if (ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
-            return rightPad("", 10)
+            return "".padEnd(10)
         }
-        return rightPad(skattekort.utstedtDato?.toString() ?: "", 10)
+        return (skattekort.utstedtDato?.toString() ?: "").padEnd(10)
     }
 
     private fun formaterSkattekortidentifikator(): String {
@@ -89,12 +84,12 @@ class SkattekortFixedRecordFormatter internal constructor(
         } else {
             skattekortidentifikator = skattekort.identifikator ?: ""
         }
-        return rightPad(skattekortidentifikator, 10)
+        return skattekortidentifikator.padEnd(10)
     }
 
     private fun formaterTilleggsopplysning(): String {
         val tilleggopplysninger: List<Tilleggsopplysning> = skattekort.tilleggsopplysningList
-        return rightPad(if (tilleggopplysninger.isEmpty()) "" else filterTilleggsopplysning(tilleggopplysninger), 50)
+        return (if (tilleggopplysninger.isEmpty()) "" else filterTilleggsopplysning(tilleggopplysninger)).padEnd(50)
     }
 
     private fun filterTilleggsopplysning(tilleggsopplysninger: List<Tilleggsopplysning>): String {
@@ -120,7 +115,7 @@ class SkattekortFixedRecordFormatter internal constructor(
 
     private fun formaterAntallSkattekortMedIMelding(): String {
         val antallSkattekort = gyldigeForskuddstrekk().size
-        return rightPad(antallSkattekort.toString(), 1)
+        return antallSkattekort.toString().padEnd(1)
     }
 
     // end-header
@@ -130,30 +125,33 @@ class SkattekortFixedRecordFormatter internal constructor(
         gyldigeForskuddstrekk().map { skt: Forskuddstrekk ->
             when (skt) {
                 is Tabellkort -> {
-                    sb.append(rightPad("Trekktabell", 12))
-                    sb.append(rightPad(skt.trekkode.value, 55))
-                    sb.append(rightPad(skt.tabellNummer, 4))
-                    sb.append(rightPad(formaterProsentsats(skt.prosentSats), 6))
-                    sb.append(rightPad("", 7))
-                    sb.append(rightPad(formaterAntallManederTrekk(skt.antallMndForTrekk), 4))
+                    sb
+                        .append("Trekktabell".padEnd(12))
+                        .append(skt.trekkode.value.padEnd(55))
+                        .append(skt.tabellNummer.padEnd(4))
+                        .append(formaterProsentsats(skt.prosentSats).padEnd(6))
+                        .append("".padEnd(7))
+                        .append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
                 }
 
                 is Prosentkort -> {
-                    sb.append(rightPad("Trekkprosent", 12))
-                    sb.append(rightPad(skt.trekkode.value, 55))
-                    sb.append(rightPad("", 4))
-                    sb.append(rightPad(formaterProsentsats(skt.prosentSats), 6))
-                    sb.append(leftPad("", 7))
-                    sb.append(rightPad(formaterAntallManederTrekk(skt.antallMndForTrekk), 4))
+                    sb
+                        .append("Trekkprosent".padEnd(12))
+                        .append(skt.trekkode.value.padEnd(55))
+                        .append("".padEnd(4))
+                        .append(formaterProsentsats(skt.prosentSats).padEnd(6))
+                        .append("".padStart(7))
+                        .append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
                 }
 
                 is Frikort -> {
-                    sb.append(rightPad("Frikort", 12))
-                    sb.append(rightPad(skt.trekkode.value, 55))
-                    sb.append(rightPad("", 4))
-                    sb.append(rightPad("", 6))
-                    sb.append(finnFrikortbeloep(skt))
-                    sb.append(rightPad("", 4))
+                    sb
+                        .append("Frikort".padEnd(12))
+                        .append(skt.trekkode.value.padEnd(55))
+                        .append("".padEnd(4))
+                        .append("".padEnd(6))
+                        .append(finnFrikortbeloep(skt))
+                        .append("".padEnd(4))
                 }
             }
         }
@@ -174,7 +172,7 @@ class SkattekortFixedRecordFormatter internal constructor(
     private fun finnFrikortbeloep(frikort: Frikort): String {
         val frikortbeloep: Int? = frikort.frikortBeloep
         val harIkkeFrikortBeloep = frikortbeloep == null
-        return leftPad(if (harIkkeFrikortBeloep) "" else frikortbeloep.toString(), 7, if (harIkkeFrikortBeloep) " " else "0")
+        return (if (harIkkeFrikortBeloep) "" else frikortbeloep.toString()).padStart(7, if (harIkkeFrikortBeloep) ' ' else '0')
     }
 
     companion object {

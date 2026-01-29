@@ -147,16 +147,9 @@ class SkattekortFixedRecordFormatter internal constructor(
     private fun formaterAntallManederTrekk(antallManederTrekk: BigDecimal?): String = antallManederTrekk?.let { dfAntallMndTrekk.format(it) } ?: ""
 
     private fun formaterFrikortbeloep(frikort: Frikort): String {
-      val beloep = frikort.frikortBeloep?.toString() ?: ""
-      return beloep.padStart(7, if (beloep.isEmpty()) ' ' else '0')
-  }
-        (
-            if (frikort.frikortBeloep == null) {
-                ""
-            } else {
-                frikort.frikortBeloep.toString()
-            }
-        ).padStart(7, if (frikort.frikortBeloep == null) ' ' else '0')
+        val beloep = frikort.frikortBeloep?.toString() ?: ""
+        return beloep.padStart(7, if (beloep.isEmpty()) ' ' else '0')
+    }
 
     companion object {
         private const val UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX = "-01-01"

@@ -7,7 +7,12 @@ import java.text.DecimalFormatSymbols
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.Tabellkort
 import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
@@ -17,11 +22,13 @@ class SkattekortFixedRecordFormatter internal constructor(
     private val skattekort: Skattekort,
     private val fnr: String,
 ) {
-    private val simulertSkattekort = Frikort(Trekkode.LOENN_FRA_NAV, null)
-
     private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> =
-        if (erIkkeTrekkPliktig()) {
-            listOf(simulertSkattekort) // TODO: Dette er vel ikke riktig for ikke trekkpliktige? De skal ha noe standardsatser, yesno?
+        if (skattekort.resultatForSkattekort == IkkeTrekkplikt) {
+            listOf(
+                Frikort(Trekkode.LOENN_FRA_NAV, null),
+                Frikort(Trekkode.PENSJON_FRA_NAV, null),
+                Frikort(Trekkode.UFOERETRYGD_FRA_NAV, null),
+            )
         } else {
             skattekort
                 .forskuddstrekkList
@@ -35,15 +42,11 @@ class SkattekortFixedRecordFormatter internal constructor(
                 }
         }
 
-    private fun inneholderSkattekort(): Boolean = true
-
-    private fun erIkkeTrekkPliktig(): Boolean = ResultatForSkattekort.IkkeTrekkplikt == skattekort.resultatForSkattekort
-
     fun format(): String {
         val frSkattekort = StringBuilder()
-        if ((inneholderSkattekort() || erIkkeTrekkPliktig()) && finnesGyldigTrekkode()) {
+        if (gyldigeForskuddstrekk().isNotEmpty()) {
             frSkattekort
-                .append(formaterFnr())
+                .append(fnr.padEnd(11))
                 .append(formaterResultatPaaForesporsel())
                 .append(skattekort.inntektsaar.toString().padEnd(4))
                 .append(formaterUtstedtDato())
@@ -55,48 +58,36 @@ class SkattekortFixedRecordFormatter internal constructor(
         return frSkattekort.toString()
     }
 
-    private fun formaterFnr(): String = fnr.padEnd(11)
-
-    private fun formaterResultatPaaForesporsel(): String {
-        val resultat: String = skattekort.resultatForSkattekort.value
+    private fun formaterResultatPaaForesporsel(): String =
         // Maks 40 posisjoner i fixedfield format til OS
-        if (resultat.length > 40) {
-            return resultat.substring(0, 40)
+        if (skattekort.resultatForSkattekort.value.length > 40) {
+            skattekort.resultatForSkattekort.value.substring(0, 40)
         } else {
-            return resultat.padEnd(40)
+            skattekort.resultatForSkattekort.value.padEnd(40)
         }
-    }
 
-    private fun formaterUtstedtDato(): String {
-        if (erIkkeTrekkPliktig()) {
-            val utstedtDato = skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX
-            return utstedtDato.padEnd(10)
-        } else if (ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
-            return "".padEnd(10)
-        }
-        return (skattekort.utstedtDato?.toString() ?: "").padEnd(10)
-    }
-
-    private fun formaterSkattekortidentifikator(): String {
-        val skattekortidentifikator: String
-        if ((erIkkeTrekkPliktig() && !inneholderSkattekort()) || ResultatForSkattekort.IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
-            skattekortidentifikator = ""
+    private fun formaterUtstedtDato(): String =
+        if (skattekort.resultatForSkattekort == IkkeTrekkplikt) {
+            (skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX).padEnd(10)
+        } else if (IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
+            "".padEnd(10, ' ')
         } else {
-            skattekortidentifikator = skattekort.identifikator ?: ""
+            (skattekort.utstedtDato?.toString() ?: "").padEnd(10)
         }
-        return skattekortidentifikator.padEnd(10)
-    }
 
-    private fun formaterTilleggsopplysning(): String {
-        val tilleggopplysninger: List<Tilleggsopplysning> = skattekort.tilleggsopplysningList
-        return (if (tilleggopplysninger.isEmpty()) "" else filterTilleggsopplysning(tilleggopplysninger)).padEnd(50)
-    }
+    private fun formaterSkattekortidentifikator(): String =
+        when (skattekort.resultatForSkattekort) {
+            IkkeTrekkplikt, IkkeSkattekort -> ""
+            SkattekortopplysningerOK, UgyldigOrganisasjonsnummer, UgyldigFoedselsEllerDnummer, UtgaattDnummerSkattekortForFoedselsnummerErLevert -> skattekort.identifikator ?: ""
+        }.padEnd(10)
+
+    private fun formaterTilleggsopplysning(): String = filterTilleggsopplysning(skattekort.tilleggsopplysningList).padEnd(50)
 
     private fun filterTilleggsopplysning(tilleggsopplysninger: List<Tilleggsopplysning>): String {
         val filtered =
             tilleggsopplysninger.mapNotNull {
                 when (it) {
-                    // These are mutually exclusive
+                    // Det er ikke noe overlapp her.
                     Tilleggsopplysning.KILDESKATT_PAA_PENSJON -> "kildeskattpensjonist"
 
                     Tilleggsopplysning.OPPHOLD_PAA_SVALBARD -> it.value
@@ -113,10 +104,7 @@ class SkattekortFixedRecordFormatter internal constructor(
         }
     }
 
-    private fun formaterAntallSkattekortMedIMelding(): String {
-        val antallSkattekort = gyldigeForskuddstrekk().size
-        return antallSkattekort.toString().padEnd(1)
-    }
+    private fun formaterAntallSkattekortMedIMelding(): String = gyldigeForskuddstrekk().size.toString()
 
     // end-header
     private fun formaterForskuddstrekk(): String {
@@ -140,7 +128,7 @@ class SkattekortFixedRecordFormatter internal constructor(
                         .append(skt.trekkode.value.padEnd(55))
                         .append("".padEnd(4))
                         .append(formaterProsentsats(skt.prosentSats).padEnd(6))
-                        .append("".padStart(7))
+                        .append("".padEnd(7))
                         .append(formaterAntallManederTrekk(skt.antallMndForTrekk).padEnd(4))
                 }
 
@@ -150,7 +138,7 @@ class SkattekortFixedRecordFormatter internal constructor(
                         .append(skt.trekkode.value.padEnd(55))
                         .append("".padEnd(4))
                         .append("".padEnd(6))
-                        .append(finnFrikortbeloep(skt))
+                        .append(formaterFrikortbeloep(skt))
                         .append("".padEnd(4))
                 }
             }
@@ -160,31 +148,17 @@ class SkattekortFixedRecordFormatter internal constructor(
 
     private fun formaterProsentsats(prosentsats: BigDecimal?): String = dfProsentsats.format(prosentsats)
 
-    private fun formaterAntallManederTrekk(antallManederTrekk: BigDecimal?): String {
-        if (antallManederTrekk == null) {
-            return ""
-        }
-        return dfAntallMndTrekk.format(antallManederTrekk)
-    }
+    private fun formaterAntallManederTrekk(antallManederTrekk: BigDecimal?): String = antallManederTrekk?.let { dfAntallMndTrekk.format(it) } ?: ""
 
-    private fun finnesGyldigTrekkode(): Boolean = gyldigeForskuddstrekk().isNotEmpty()
-
-    private fun finnFrikortbeloep(frikort: Frikort): String {
-        val frikortbeloep: Int? = frikort.frikortBeloep
-        val harIkkeFrikortBeloep = frikortbeloep == null
-        return (if (harIkkeFrikortBeloep) "" else frikortbeloep.toString()).padStart(7, if (harIkkeFrikortBeloep) ' ' else '0')
+    private fun formaterFrikortbeloep(frikort: Frikort): String {
+        val beloep = frikort.frikortBeloep?.toString() ?: ""
+        return beloep.padStart(7, if (beloep.isEmpty()) ' ' else '0')
     }
 
     companion object {
         private const val UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX = "-01-01"
-        private val dfProsentsats: DecimalFormat
-        private val dfAntallMndTrekk: DecimalFormat
-
-        init {
-            val symbols = DecimalFormatSymbols()
-            symbols.setDecimalSeparator(',')
-            dfProsentsats = DecimalFormat("000.00", symbols)
-            dfAntallMndTrekk = DecimalFormat("00.0", symbols)
-        }
+        private val symbols = DecimalFormatSymbols().apply { decimalSeparator = ',' }
+        private val dfProsentsats: DecimalFormat = DecimalFormat("000.00", symbols)
+        private val dfAntallMndTrekk: DecimalFormat = DecimalFormat("00.0", symbols)
     }
 }

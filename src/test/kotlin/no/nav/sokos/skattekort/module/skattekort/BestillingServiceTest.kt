@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -45,9 +46,13 @@ import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
+import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_BIARBEIDSGIVER
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV
+import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
 import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
@@ -88,9 +93,12 @@ class BestillingServiceTest :
                         aSkattekortFor("0101010000X", 10007),
                     )
                 databaseHas(
-                    aPerson(1L, "01010100001"),
-                    aPerson(2L, "02020200002"),
-                    aPerson(3L, "03030300003"),
+                    aPerson(1L),
+                    afoedselsnummer(personId = 1L, fnr = "01010100001"),
+                    aPerson(2L),
+                    afoedselsnummer(personId = 2L, fnr = "02020200002"),
+                    aPerson(3L),
+                    afoedselsnummer(personId = 3L, fnr = "03030300003"),
                     aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                 )
 
@@ -140,9 +148,12 @@ class BestillingServiceTest :
                     """.trimIndent(),
                 )
             databaseHas(
-                aPerson(1L, "01010100001"),
-                aPerson(2L, "02020200002"),
-                aPerson(3L, "03030300003"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
+                aPerson(2L),
+                afoedselsnummer(personId = 2L, fnr = "02020200002"),
+                aPerson(3L),
+                afoedselsnummer(personId = 3L, fnr = "03030300003"),
                 aBestilling(1L, "01010100001", 2025, null),
                 aBestilling(2L, "02020200002", 2026, null),
                 aBestilling(3L, "03030300003", 2026, null),
@@ -238,7 +249,8 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1L, "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
                 aBestilling(1L, "01010100001", 2025, 1L),
@@ -285,7 +297,8 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1L, "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
                 aBestilling(1L, "01010100001", 2025, 1L),
@@ -312,7 +325,8 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1L, "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
                 aBestilling(1L, "01010100001", 2025, 1L),
@@ -336,7 +350,8 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any(), "BR1337") } returns aHentSkattekortResponseFromFile("src/test/resources/skatteetaten/hentSkattekort/skattekortopplysningerOK.json")
 
             databaseHas(
-                aPerson(1L, "01010112345"),
+                aPerson(1L),
+                afoedselsnummer(1L, "01010112345"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
                 aBestilling(1L, "01010112345", 2025, 1L),
@@ -390,7 +405,8 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1L, "01010112345"),
+                aPerson(1L),
+                afoedselsnummer(1L, "01010112345"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
                 aBestillingsBatch(2, "BR1338", BestillingBatchStatus.Ny.value),
@@ -448,7 +464,8 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns response
 
             databaseHas(
-                aPerson(1L, "01010112345"),
+                aPerson(1L),
+                afoedselsnummer(1L, "01010112345"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "BR1337", BestillingBatchStatus.Ny.value),
                 aBestilling(1L, "01010112345", 2025, 1L),
@@ -467,9 +484,9 @@ class BestillingServiceTest :
                         forskuddstrekkList shouldContainExactly
                             listOf(
                                 aForskuddstrekk("Frikort", UFOERETRYGD_FRA_NAV, frikortbeløp = null),
-                                aForskuddstrekk("Frikort", Trekkode.UFOEREYTELSER_FRA_ANDRE, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", UFOEREYTELSER_FRA_ANDRE, frikortbeløp = null),
                                 aForskuddstrekk("Frikort", PENSJON_FRA_NAV, frikortbeløp = null),
-                                aForskuddstrekk("Frikort", Trekkode.PENSJON, frikortbeløp = null),
+                                aForskuddstrekk("Frikort", PENSJON, frikortbeløp = null),
                             )
                     }
                 }
@@ -505,7 +522,8 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1L, "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 aBestillingsBatch(1, "ref1", BestillingBatchStatus.Ny.value),
                 aBestilling(1L, "01010100001", 2025, 1L),
@@ -588,10 +606,14 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1, "01010100001"),
-                aPerson(2, "02020200002"),
-                aPerson(3, "03030300003"),
-                aPerson(4, "04040400004"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
+                aPerson(2L),
+                afoedselsnummer(personId = 2L, fnr = "02020200002"),
+                aPerson(3L),
+                afoedselsnummer(personId = 3L, fnr = "03030300003"),
+                aPerson(4L),
+                afoedselsnummer(personId = 4L, fnr = "04040400004"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
                 anAbonnement(2L, personId = 2L, inntektsaar = 2025),
                 anAbonnement(3L, personId = 3L, inntektsaar = 2025),
@@ -628,24 +650,26 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                 aHentSkattekortResponse(
                     anArbeidstaker(
-                        resultat = ResultatForSkattekort.UgyldigFoedselsEllerDnummer,
+                        resultat = UgyldigFoedselsEllerDnummer,
                         fnr = "01010100001",
                         inntektsaar = "2025",
                     ),
                 ) andThen
                 aHentSkattekortResponse(
                     anArbeidstaker(
-                        resultat = ResultatForSkattekort.IkkeSkattekort,
+                        resultat = IkkeSkattekort,
                         fnr = "02020200002",
                         inntektsaar = "2025",
                     ),
                 )
 
             databaseHas(
-                aPerson(1L, "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(1L, "01010100001"),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
-                aPerson(2L, "02020200002"),
+                aPerson(2L),
+                afoedselsnummer(2L, "02020200002"),
                 aBestillingsBatch(id = 2L, ref = "ref2", status = "NY"),
                 aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L),
             )
@@ -680,7 +704,7 @@ class BestillingServiceTest :
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
                         tilleggsopplysningList shouldBe emptyList()
-                        resultatForSkattekort shouldBe ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+                        resultatForSkattekort shouldBe UgyldigFoedselsEllerDnummer
                     }
                 }
 
@@ -690,7 +714,7 @@ class BestillingServiceTest :
                         identifikator shouldBe null
                         forskuddstrekkList shouldBe emptyList()
                         tilleggsopplysningList shouldBe emptyList()
-                        resultatForSkattekort shouldBe ResultatForSkattekort.IkkeSkattekort
+                        resultatForSkattekort shouldBe IkkeSkattekort
                     }
                 }
 
@@ -717,7 +741,7 @@ class BestillingServiceTest :
                                 arbeidstaker =
                                     listOf(
                                         anArbeidstaker(
-                                            resultat = ResultatForSkattekort.UgyldigOrganisasjonsnummer,
+                                            resultat = UgyldigOrganisasjonsnummer,
                                             fnr = "01010100001",
                                             inntektsaar = "2025",
                                         ),
@@ -727,7 +751,8 @@ class BestillingServiceTest :
                 )
 
             databaseHas(
-                aPerson(1L, "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(1L, "01010100001"),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
             )
@@ -775,9 +800,12 @@ class BestillingServiceTest :
                     ),
                 )
             databaseHas(
-                aPerson(personId = 1L, fnr = "01010100001"),
-                aPerson(personId = 2L, fnr = "02020200002"),
-                aPerson(personId = 3L, fnr = "03030300003"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
+                aPerson(2L),
+                afoedselsnummer(personId = 2L, fnr = "02020200002"),
+                aPerson(3L),
+                afoedselsnummer(personId = 3L, fnr = "03030300003"),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestillingsBatch(id = 2L, ref = "ref2", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
@@ -856,7 +884,8 @@ class BestillingServiceTest :
                     ),
                 )
             databaseHas(
-                aPerson(personId = 1L, fnr = "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
             )
@@ -930,7 +959,8 @@ class BestillingServiceTest :
                     ),
                 )
             databaseHas(
-                aPerson(personId = 1L, fnr = "01010100001"),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
             )
@@ -997,9 +1027,12 @@ class BestillingServiceTest :
         test("plukker opp batch med status NY, får 404 fra skatt") {
             coEvery { skatteetatenClient.hentSkattekort(any(), any()) } throws RuntimeException("Feil ved henting av skattekort: 404")
             databaseHas(
-                aPerson(fnr = "01010100001", personId = 1L),
-                aPerson(fnr = "02020200002", personId = 2L),
-                aPerson(fnr = "03030300003", personId = 3L),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
+                aPerson(2L),
+                afoedselsnummer(personId = 2L, fnr = "02020200002"),
+                aPerson(3L),
+                afoedselsnummer(personId = 3L, fnr = "03030300003"),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
                 aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 1L),
@@ -1046,8 +1079,12 @@ class BestillingServiceTest :
             coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
 
             databaseHas(
-                aPerson(fnr = "01010100001", personId = 1L),
-                aPerson(fnr = "02020200002", personId = 2L),
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = "01010100001"),
+                aPerson(2L),
+                afoedselsnummer(personId = 2L, fnr = "02020200002"),
+                aPerson(3L),
+                afoedselsnummer(personId = 3L, fnr = "03030300003"),
                 aBestillingsBatch(id = 1L, ref = "ref1", status = "FEILET"),
                 aBestillingsBatch(id = 2L, ref = "ref2", status = "NY"),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
@@ -1106,8 +1143,84 @@ class BestillingServiceTest :
         }
 """,
                 )
-            val skattekort = BestillingService.toSkattekort(arbeidstaker, PersonId(0))
+            val skattekort = Skattekort(PersonId(0), arbeidstaker)
             skattekort.forskuddstrekkList shouldHaveSize 2
+        }
+
+        test("UtgaattDnummerSkattekortForFoedselsnummerErLevert skal opprette ny bestilling med gyldig fnr") {
+            val dnr = "41010100001"
+            val fnr = "01010112345"
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                aHentSkattekortResponse(
+                    anArbeidstaker(
+                        resultat = UtgaattDnummerSkattekortForFoedselsnummerErLevert,
+                        fnr = dnr,
+                        inntektsaar = "2025",
+                    ),
+                ) andThen aHentSkattekortResponse(aSkattekortFor(fnr = fnr, id = 1L))
+
+            databaseHas(
+                aPerson(personId = 1L),
+                afoedselsnummer(personId = 1L, fnr = dnr),
+                anAbonnement(forespoerselId = 1L, personId = 1L, inntektsaar = 2025),
+                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestilling(personId = 1L, fnr = dnr, inntektsaar = 2025, batchId = 1L),
+                // Oppdatert foedselsnummer
+                afoedselsnummer(personId = 1L, fnr = fnr),
+            )
+
+            bestillingService.hentSkattekort()
+
+            val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+            var skattekort: List<Skattekort> =
+                tx {
+                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false)
+                }
+            val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
+            var utsendinger = tx(UtsendingRepository::getAllUtsendinger)
+
+            assertSoftly {
+                updatedBatches.count { it.status == BestillingBatchStatus.Ferdig.value } shouldBe 1
+
+                bestillingsAfter shouldNotBeNull {
+                    size shouldBe 1
+                    first().fnr.value shouldBe fnr
+                    first().personId.value shouldBe 1L
+                    first().inntektsaar shouldBe 2025
+                }
+
+                skattekort shouldNotBeNull {
+                    size shouldBe 1
+                    last() shouldNotBeNull {
+                        kilde shouldBe SkattekortKilde.SKATTEETATEN.value
+                        resultatForSkattekort shouldBe UtgaattDnummerSkattekortForFoedselsnummerErLevert
+                        utstedtDato shouldBe null
+                        identifikator shouldBe null
+                        forskuddstrekkList shouldBe emptyList()
+                    }
+                }
+                utsendinger shouldBe emptyList()
+            }
+
+            // Kjør hent skattekort på nytt
+            databaseHas(
+                aBestillingsBatch(id = 2L, ref = "ref1", status = "NY"),
+            )
+
+            bestillingService.hentSkattekort()
+
+            skattekort = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
+            utsendinger = tx(UtsendingRepository::getAllUtsendinger)
+
+            skattekort shouldNotBeNull {
+                size shouldBe 2
+            }
+            utsendinger shouldNotBeNull {
+                size shouldBe 1
+                first().fnr.value shouldBe dnr
+                first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                first().inntektsaar shouldBe 2025
+            }
         }
     })
 

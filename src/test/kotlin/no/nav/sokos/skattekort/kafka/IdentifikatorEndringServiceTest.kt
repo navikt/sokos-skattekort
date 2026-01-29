@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.kafka
 
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -14,6 +15,7 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
 import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
@@ -56,9 +58,11 @@ class IdentifikatorEndringServiceTest :
                 person.foedselsnummer.fnr shouldBe personidentifikator
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
-
-                auditList.size shouldBe 2
+                withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
                 auditMatcher(auditList[1], person)
+
+                val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
             }
         }
 
@@ -83,9 +87,11 @@ class IdentifikatorEndringServiceTest :
                 person.foedselsnummer.fnr shouldBe personidentifikator
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
-
-                auditList.size shouldBe 2
+                withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
                 auditMatcher(auditList[1], person)
+
+                val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
             }
         }
 

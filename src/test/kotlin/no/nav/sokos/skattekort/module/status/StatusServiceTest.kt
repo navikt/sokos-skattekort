@@ -10,6 +10,7 @@ import no.nav.sokos.skattekort.module.skattekort.aBestilling
 import no.nav.sokos.skattekort.module.skattekort.aBestillingsBatch
 import no.nav.sokos.skattekort.module.skattekort.aDbSkattekort
 import no.nav.sokos.skattekort.module.skattekort.aPerson
+import no.nav.sokos.skattekort.module.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.module.skattekort.anUtsending
 import no.nav.sokos.skattekort.module.skattekort.databaseHas
 
@@ -40,7 +41,8 @@ class StatusServiceTest :
 
             test("Person finnes, men ikke noe annet. Skal ha status IKKE_FORESPURT") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
@@ -49,7 +51,8 @@ class StatusServiceTest :
 
             test("Person og en bestilling uten batch finnes. Skal ha status IKKE_BESTILT") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                     aBestilling(1L, "01010100001", 2025, null),
                 )
 
@@ -59,7 +62,8 @@ class StatusServiceTest :
 
             test("Person, bestilling og batch finnes. Skal ha status BESTILT") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                     aBestillingsBatch(1L, ref = "1234", status = "NY", type = "BESTILLING"),
                     aBestilling(1L, "01010100001", 2025, 1L),
                 )
@@ -70,7 +74,8 @@ class StatusServiceTest :
 
             test("Person og skattekort finnes. Skal ha status UGYLDIG_FORSYSTEM fordi forsystem ikke er i Forsystem-enum") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                     aSkattekort(1L, 2025),
                 )
 
@@ -80,7 +85,8 @@ class StatusServiceTest :
 
             test("Person, skattekort og utsending finnes. Skal ha status VENTER_PAA_UTSENDING") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                     aSkattekort(1L, 2025),
                     anUtsending("01010100001", 2025, forsystem = "OS"),
                 )
@@ -91,7 +97,8 @@ class StatusServiceTest :
 
             test("Person og skattekort for året før finnes. Skal ha status IKKE_FORESPURT") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                     aSkattekort(1L, 2025),
                 )
 
@@ -100,7 +107,8 @@ class StatusServiceTest :
             }
             test("Person og skattekort finnes. Skal ha status SENDT_FORSYSTEM") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                     aSkattekort(1L, 2025),
                 )
 
@@ -109,7 +117,8 @@ class StatusServiceTest :
             }
             test("Person, skattekort og utsending for et annet forsystem finnes. Skal ha status SENDT_FORSYSTEM") {
                 databaseHas(
-                    aPerson(1L, "01010100001"),
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
                     aSkattekort(1L, 2025),
                     anUtsending("01010100001", 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR"),
                 )

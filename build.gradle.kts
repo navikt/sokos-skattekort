@@ -36,9 +36,8 @@ val dbSchedulerVersion = "16.7.0"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val kotestVersion = "6.1.1"
-val kotlinxSerializationVersion = "1.9.0"
+val kotlinxSerializationVersion = "1.10.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
-val jacksonVersion = "3.0.3"
 val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.7"
 val hikariVersion = "7.0.2"
@@ -89,10 +88,6 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
-
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation("tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
 
     // Monitorering
     implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
@@ -150,7 +145,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.10.2")
+                useTarget("at.yawk.lz4:lz4-java:1.10.3")
                 because("Prefer the patched fork for vulnerability fix")
             }
         }

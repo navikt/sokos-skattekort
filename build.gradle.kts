@@ -38,7 +38,6 @@ val janionVersion = "3.1.12"
 val kotestVersion = "6.1.1"
 val kotlinxSerializationVersion = "1.10.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
-val jacksonVersion = "3.0.4"
 val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.7"
 val hikariVersion = "7.0.2"
@@ -89,10 +88,6 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
-
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation("tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
 
     // Monitorering
     implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")

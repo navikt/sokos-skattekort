@@ -5,7 +5,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselId
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 
@@ -18,7 +17,6 @@ data class Bestilling
         val inntektsaar: Int,
         val bestillingsbatchId: BestillingsbatchId? = null,
         val oppdatert: Instant = Clock.System.now(),
-        val forespoerselId: ForespoerselId,
     )
 
 @Serializable

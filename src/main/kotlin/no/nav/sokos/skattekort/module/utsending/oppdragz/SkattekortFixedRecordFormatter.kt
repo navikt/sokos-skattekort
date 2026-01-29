@@ -146,7 +146,10 @@ class SkattekortFixedRecordFormatter internal constructor(
 
     private fun formaterAntallManederTrekk(antallManederTrekk: BigDecimal?): String = antallManederTrekk?.let { dfAntallMndTrekk.format(it) } ?: ""
 
-    private fun formaterFrikortbeloep(frikort: Frikort): String =
+    private fun formaterFrikortbeloep(frikort: Frikort): String {
+      val beloep = frikort.frikortBeloep?.toString() ?: ""
+      return beloep.padStart(7, if (beloep.isEmpty()) ' ' else '0')
+  }
         (
             if (frikort.frikortBeloep == null) {
                 ""

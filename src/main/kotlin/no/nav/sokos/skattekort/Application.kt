@@ -124,7 +124,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
         val utsendingService: UtsendingService by dependencies
-        val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceReadCommit)
+        val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceScheduler)
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
 
@@ -135,7 +135,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 scheduledTaskService,
                 metricsService,
                 forespoerselService,
-                DatabaseConfig.dataSourceReadCommit,
+                DatabaseConfig.dataSourceScheduler,
             ).start()
     }
 

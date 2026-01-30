@@ -59,9 +59,8 @@ object DatabaseConfig {
         val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
         return HikariConfig().apply {
             poolName = poolname
-            maximumPoolSize = 10
+            maximumPoolSize = 15
             minimumIdle = 1
-            connectionTestQuery = "SELECT 1"
             isAutoCommit = false
             connectionTimeout = Duration.ofSeconds(30).toMillis()
             initializationFailTimeout = Duration.ofMinutes(10).toMillis()

@@ -57,10 +57,12 @@ object DatabaseConfig {
         return HikariConfig().apply {
             poolName = poolname
             maximumPoolSize = 15
-            minimumIdle = 1
+            minimumIdle = 3
             isAutoCommit = false
-            connectionTimeout = Duration.ofSeconds(10).toMillis()
-            initializationFailTimeout = Duration.ofMinutes(5).toMillis()
+            connectionTimeout = Duration.ofSeconds(30).toMillis()
+            initializationFailTimeout = Duration.ofMinutes(10).toMillis()
+            idleTimeout = Duration.ofMinutes(10).toMillis()
+            maxLifetime = Duration.ofMinutes(30).toMillis()
 
             when {
                 !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {

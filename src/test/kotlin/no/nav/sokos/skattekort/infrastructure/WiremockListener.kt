@@ -27,15 +27,20 @@ import no.nav.sokos.skattekort.pdl.GraphQLResponse
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
 object WiremockListener : BeforeSpecListener, AfterEachListener {
-    val wiremock = WireMockServer(WireMockConfiguration.options().dynamicPort())
+    val wiremock =
+        WireMockServer(WireMockConfiguration.options().dynamicPort()).apply {
+            start()
+        }
     val azuredTokenClient = mockk<AzuredTokenClient>()
 
+    init {
+        wiremock.start()
+        configureFor(wiremock.port())
+        coEvery { azuredTokenClient.getSystemToken() } returns "token"
+    }
+
     override suspend fun beforeSpec(spec: Spec) {
-        if (!wiremock.isRunning) {
-            wiremock.start()
-            configureFor(wiremock.port())
-            coEvery { azuredTokenClient.getSystemToken() } returns "token"
-        }
+        // WireMock server is already started in init block
     }
 
     override suspend fun afterEach(

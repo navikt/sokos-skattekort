@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Month
 import kotlinx.datetime.toKotlinLocalDateTime
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 import org.postgresql.util.PSQLException
@@ -103,6 +104,9 @@ class BestillingService(
                                     logger.error(ex) { "Oppretting av bestillingsbatch feilet: ${ex.message}" }
                                 }
                                 throw ex
+                            } catch (cnpe: CallNotPermittedException) {
+                                // Her venter vi med å bestille fordi vi tror det er et forbigående problem med kommunikasjon mot skatteetaten
+                                throw cnpe
                             } catch (ex: Exception) {
                                 auditLogBestillingFeilet()
                                 logger.error(ex) { "Oppretting av bestillingsbatch feilet: ${ex.message}" }
@@ -227,6 +231,9 @@ class BestillingService(
                                 }
                             }
                             throw ex
+                        } catch (cnpe: CallNotPermittedException) {
+                            // Her venter vi med å bestille fordi vi tror det er et forbigående problem med kommunikasjon mot skatteetaten
+                            throw cnpe
                         } catch (ex: Exception) {
                             dataSource.transaction { errorTx ->
                                 logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
@@ -271,11 +278,8 @@ class BestillingService(
             }
 
             UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
-                // finn nytt fnr
                 val gyldigFnr = PersonRepository.findGyldigFnrByPersonId(tx, personId)!!
-                if (gyldigFnr.value == arbeidstaker.arbeidstakeridentifikator) {
-                    throw IllegalStateException("Har ikke fått nytt fnr for personId $personId")
-                }
+                check(gyldigFnr.value != arbeidstaker.arbeidstakeridentifikator) { "Har ikke fått nytt fnr for personId $personId" }
                 BestillingRepository.insert(
                     tx,
                     Bestilling(
@@ -396,6 +400,9 @@ class BestillingService(
                     )
                 }
                 throw e // For å rulle tilbake "tx"
+            } catch (cnpe: CallNotPermittedException) {
+                // Her venter vi med å bestille fordi vi tror det er et forbigående problem med kommunikasjon mot skatteetaten
+                throw cnpe
             } catch (ex: Exception) {
                 logger.error(ex) { "Henting av skattekort for batch $batchId feilet: ${ex.message}" }
                 dataSource.transaction { errorTx ->
@@ -430,6 +437,9 @@ class BestillingService(
                 logger.error(marker = TEAM_LOGS_MARKER, e) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${e.message}" }
                 logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til secure log")
                 throw e
+            } catch (cnpe: CallNotPermittedException) {
+                // Her venter vi med å bestille fordi vi tror det er et forbigående problem med kommunikasjon mot skatteetaten
+                throw cnpe
             } catch (ex: Exception) {
                 logger.error(ex) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${ex.message}" }
                 throw ex

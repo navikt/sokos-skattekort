@@ -95,6 +95,8 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
     implementation("io.github.resilience4j:resilience4j-circuitbreaker:$resilience4jVersion")
     implementation("io.github.resilience4j:resilience4j-kotlin:$resilience4jVersion")
+    implementation("io.github.resilience4j:resilience4j-micrometer:$resilience4jVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")

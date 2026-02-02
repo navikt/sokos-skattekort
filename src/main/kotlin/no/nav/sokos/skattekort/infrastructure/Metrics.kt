@@ -1,20 +1,20 @@
 package no.nav.sokos.skattekort.infrastructure
 
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry
 import io.github.resilience4j.micrometer.tagged.TaggedCircuitBreakerMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.core.metrics.Counter
 import io.prometheus.metrics.core.metrics.Gauge
 
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
-
 const val METRICS_NAMESPACE = "sokos_skattekort"
 
 object Metrics {
+    val circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults()
     val prometheusMeterRegistry =
         PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
             .also {
-                TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(SkatteetatenClient.circuitBreakerRegistry).bindTo(it)
+                TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(circuitBreakerRegistry).bindTo(it)
             }
 
     fun counter(

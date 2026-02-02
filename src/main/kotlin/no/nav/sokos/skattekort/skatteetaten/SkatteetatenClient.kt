@@ -1,7 +1,6 @@
 package no.nav.sokos.skattekort.skatteetaten
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.custom
-import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry
 import io.github.resilience4j.kotlin.circuitbreaker.decorateSuspendFunction
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -21,6 +20,7 @@ import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
+import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.skattekort.BestillingBatchRepository
@@ -101,15 +101,14 @@ class SkatteetatenClient(
                 helpText = "Returkode på henting av bestilling",
                 labelNames = "returkode",
             )
-        val circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults()
         val circuitBreaker =
-            circuitBreakerRegistry.circuitBreaker(
+            Metrics.circuitBreakerRegistry.circuitBreaker(
                 "${METRICS_NAMESPACE}_skatteetatenClientCircuitBreaker",
                 custom()
                     .failureRateThreshold(10f)
                     .slidingWindowSize(10)
                     .waitDurationInOpenState(java.time.Duration.ofMinutes(5))
-                    .permittedNumberOfCallsInHalfOpenState(2)
+                    .permittedNumberOfCallsInHalfOpenState(1)
                     .build(),
             )
     }

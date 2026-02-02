@@ -13,9 +13,7 @@ object Metrics {
     val circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults()
     val prometheusMeterRegistry =
         PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-            .also {
-                TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(circuitBreakerRegistry).bindTo(it)
-            }
+            .also(TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(circuitBreakerRegistry)::bindTo)
 
     fun counter(
         name: String,

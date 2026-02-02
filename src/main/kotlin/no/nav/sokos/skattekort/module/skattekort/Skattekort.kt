@@ -79,7 +79,7 @@ data class Skattekort
             personId = personId,
             utstedtDato = arbeidstaker.skattekort?.utstedtDato?.let(LocalDate::parse),
             identifikator = arbeidstaker.skattekort?.skattekortidentifikator?.toString(),
-            inntektsaar = Integer.parseInt(arbeidstaker.inntektsaar),
+            inntektsaar = arbeidstaker.inntektsaar,
             kilde = SkattekortKilde.SKATTEETATEN.value,
             resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
             forskuddstrekkList = arbeidstaker.skattekort?.forskuddstrekk?.map(Forskuddstrekk::create) ?: emptyList(),

@@ -84,7 +84,7 @@ fun aSkattekort(
 fun anArbeidstaker(
     resultat: ResultatForSkattekort,
     fnr: String,
-    inntektsaar: String,
+    inntektsaar: Int,
     tilleggsopplysninger: List<Tilleggsopplysning>? = null,
     skattekort: Skattekort? = null,
 ): Arbeidstaker =

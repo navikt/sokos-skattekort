@@ -499,7 +499,7 @@ class BestillingServiceTest :
                     anArbeidstaker(
                         resultat = SkattekortopplysningerOK,
                         fnr = "01010100001",
-                        inntektsaar = "2025",
+                        inntektsaar = 2025,
                         skattekort =
                             aSkattekort(
                                 utstedtDato = "2025-11-01",
@@ -652,14 +652,14 @@ class BestillingServiceTest :
                     anArbeidstaker(
                         resultat = UgyldigFoedselsEllerDnummer,
                         fnr = "01010100001",
-                        inntektsaar = "2025",
+                        inntektsaar = 2025,
                     ),
                 ) andThen
                 aHentSkattekortResponse(
                     anArbeidstaker(
                         resultat = IkkeSkattekort,
                         fnr = "02020200002",
-                        inntektsaar = "2025",
+                        inntektsaar = 2025,
                     ),
                 )
 
@@ -743,7 +743,7 @@ class BestillingServiceTest :
                                         anArbeidstaker(
                                             resultat = UgyldigOrganisasjonsnummer,
                                             fnr = "01010100001",
-                                            inntektsaar = "2025",
+                                            inntektsaar = 2025,
                                         ),
                                     ),
                             ),
@@ -792,7 +792,7 @@ class BestillingServiceTest :
                     anArbeidstaker(
                         resultat = IkkeSkattekort,
                         fnr = "01010100001",
-                        inntektsaar = "2025",
+                        inntektsaar = 2025,
                         tilleggsopplysninger =
                             listOf(
                                 Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
@@ -864,7 +864,7 @@ class BestillingServiceTest :
                     anArbeidstaker(
                         resultat = SkattekortopplysningerOK,
                         fnr = "01010100001",
-                        inntektsaar = "2025",
+                        inntektsaar = 2025,
                         tilleggsopplysninger =
                             listOf(
                                 Tilleggsopplysning.fromValue("oppholdPaaSvalbard"),
@@ -955,7 +955,7 @@ class BestillingServiceTest :
                     anArbeidstaker(
                         resultat = IkkeTrekkplikt,
                         fnr = "01010100001",
-                        inntektsaar = "2025",
+                        inntektsaar = 2025,
                     ),
                 )
             databaseHas(
@@ -1076,7 +1076,7 @@ class BestillingServiceTest :
         }
 
         test("plukker ikke opp batch med status FEILET men tar den andre istedenfor") {
-            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = "2025"))
+            coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns aHentSkattekortResponse(anArbeidstaker(resultat = IkkeSkattekort, fnr = "02020200002", inntektsaar = 2025))
 
             databaseHas(
                 aPerson(1L),
@@ -1139,7 +1139,7 @@ class BestillingServiceTest :
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         }
 """,
                 )
@@ -1155,7 +1155,7 @@ class BestillingServiceTest :
                     anArbeidstaker(
                         resultat = UtgaattDnummerSkattekortForFoedselsnummerErLevert,
                         fnr = dnr,
-                        inntektsaar = "2025",
+                        inntektsaar = 2025,
                     ),
                 ) andThen aHentSkattekortResponse(aSkattekortFor(fnr = fnr, id = 1L))
 
@@ -1230,7 +1230,7 @@ fun aSkattekortFor(
 ) = anArbeidstaker(
     resultat = SkattekortopplysningerOK,
     fnr = fnr,
-    inntektsaar = "2025",
+    inntektsaar = 2025,
     skattekort =
         no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort(
             utstedtDato = "2025-11-01",

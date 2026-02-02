@@ -10,10 +10,10 @@ import io.prometheus.metrics.core.metrics.Gauge
 const val METRICS_NAMESPACE = "sokos_skattekort"
 
 object Metrics {
+    val circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults()
     val prometheusMeterRegistry =
         PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
             .also {
-                val circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults()
                 TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(circuitBreakerRegistry).bindTo(it)
             }
 

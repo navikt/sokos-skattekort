@@ -158,7 +158,7 @@ components:
             type: string
             enum:
               - oppholdPaaSvalbard
-              - kildeskattpensjonist
+              - kildeskattPaaPensjon
               - oppholdITiltakssone
               - kildeskattPaaLoenn
       required:

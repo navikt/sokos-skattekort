@@ -27,6 +27,7 @@ repositories {
     maven { url = uri("https://packages.confluent.io/maven/") }
 }
 
+val resilience4jVersion = "2.3.0"
 val ktorVersion = "3.4.0"
 val nimbusVersion = "10.7"
 val logbackVersion = "1.5.26"
@@ -92,6 +93,10 @@ dependencies {
     // Monitorering
     implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
     implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:$resilience4jVersion")
+    implementation("io.github.resilience4j:resilience4j-kotlin:$resilience4jVersion")
+    implementation("io.github.resilience4j:resilience4j-micrometer:$resilience4jVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")

@@ -8,6 +8,8 @@ import jakarta.jms.Message
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.util.TraceUtils
+
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
@@ -24,21 +26,21 @@ class ForespoerselListener(
 
     @Synchronized
     fun start() {
-        // TODO: Legg til Opentelemetry trace
-
         jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
         jmsConsumer = jmsContext!!.createConsumer(forespoerselQueue)
 
         jmsConsumer!!.setMessageListener { message: Message ->
-            runCatching {
-                val jmsMessage = message.getBody(String::class.java)
-                forespoerselService.taImotForespoersel(jmsMessage)
-                message.acknowledge()
-            }.onFailure {
-                val boqProducer = jmsContext!!.createProducer()
-                boqProducer.send(forespoerselBoqQueue, message)
-                message.acknowledge()
-                logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
+            TraceUtils.withTracerId {
+                runCatching {
+                    val jmsMessage = message.getBody(String::class.java)
+                    forespoerselService.taImotForespoersel(jmsMessage)
+                    message.acknowledge()
+                }.onFailure {
+                    val boqProducer = jmsContext!!.createProducer()
+                    boqProducer.send(forespoerselBoqQueue, message)
+                    message.acknowledge()
+                    logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
+                }
             }
         }
 

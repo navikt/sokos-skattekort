@@ -20,6 +20,7 @@ import io.ktor.http.isSuccess
 import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.skattekort.BestillingBatchRepository
@@ -102,7 +103,7 @@ class SkatteetatenClient(
             )
         val circuitBreaker =
             CircuitBreaker.of(
-                "skatteetatenCircuitBreaker",
+                "${METRICS_NAMESPACE}_skatteetatenCircuitBreaker",
                 custom()
                     .failureRateThreshold(20f)
                     .slidingWindowSize(10)

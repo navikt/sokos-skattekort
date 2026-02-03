@@ -40,11 +40,11 @@ val kotestVersion = "6.1.1"
 val kotlinxSerializationVersion = "1.10.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
 val mockOAuth2ServerVersion = "3.0.1"
-val mockkVersion = "1.14.7"
+val mockkVersion = "1.14.9"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "11.20.2"
+val flywayVersion = "11.20.3"
 val postgresVersion = "42.7.9"
 val activemqVersion = "2.50.0"
 val ibmmqVersion = "9.4.4.1"
@@ -133,7 +133,6 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("net.bytebuddy:byte-buddy:1.18.4") // TEMP: Needed for mockk 1.14.6 with java25. Remove when Mockk is updated and bytebuddy is no longer needed.
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")

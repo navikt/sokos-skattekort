@@ -44,7 +44,7 @@ val mockkVersion = "1.14.9"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "11.20.3"
+val flywayVersion = "12.0.0"
 val postgresVersion = "42.7.9"
 val activemqVersion = "2.50.0"
 val ibmmqVersion = "9.4.4.1"
@@ -56,7 +56,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "12.1.0"
+val unleashedVersion = "12.1.1"
 
 dependencies {
 

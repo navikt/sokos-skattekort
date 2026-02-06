@@ -33,24 +33,30 @@ data class SkattekortDTO(
                     is Frikort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
-                            frikortBeloep = it.frikortBeloep,
+                            frikort = FrikortDTO(frikortBeloep = it.frikortBeloep),
                         )
                     }
 
                     is Prosentkort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
-                            prosentSats = it.prosentSats.toDouble(),
-                            antallMndForTrekk = it.antallMndForTrekk?.toDouble(),
+                            prosentkort =
+                                ProsentkortDTO(
+                                    prosentSats = it.prosentSats.toDouble(),
+                                    antallMndForTrekk = it.antallMndForTrekk?.toDouble(),
+                                ),
                         )
                     }
 
                     is Tabellkort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
-                            tabell = it.tabellNummer,
-                            prosentSats = it.prosentSats.toDouble(),
-                            antallMndForTrekk = it.antallMndForTrekk.toDouble(),
+                            trekktabell =
+                                TabellkortDTO(
+                                    tabell = it.tabellNummer,
+                                    prosentSats = it.prosentSats.toDouble(),
+                                    antallMndForTrekk = it.antallMndForTrekk.toDouble(),
+                                ),
                         )
                     }
                 }
@@ -74,28 +80,28 @@ data class SkattekortDTO(
             forskuddstrekkList =
                 this.forskuddstrekkList.map {
                     when {
-                        it.frikortBeloep != null -> {
+                        it.frikort != null -> {
                             Frikort(
                                 trekkode = Trekkode.fromValue(it.trekkode),
-                                frikortBeloep = it.frikortBeloep,
+                                frikortBeloep = it.frikort.frikortBeloep,
                             )
                         }
 
-                        it.tabell != null && it.prosentSats != null && it.antallMndForTrekk != null -> {
+                        it.trekktabell != null -> {
                             Tabellkort(
                                 trekkode = Trekkode.fromValue(it.trekkode),
-                                tabellNummer = it.tabell,
-                                prosentSats = BigDecimal.valueOf(it.prosentSats),
-                                antallMndForTrekk = BigDecimal.valueOf(it.antallMndForTrekk),
+                                tabellNummer = it.trekktabell.tabell,
+                                prosentSats = BigDecimal.valueOf(it.trekktabell.prosentSats),
+                                antallMndForTrekk = BigDecimal.valueOf(it.trekktabell.antallMndForTrekk),
                             )
                         }
 
-                        it.prosentSats != null -> {
+                        it.prosentkort != null -> {
                             Prosentkort(
                                 trekkode = Trekkode.fromValue(it.trekkode),
-                                prosentSats = BigDecimal.valueOf(it.prosentSats),
+                                prosentSats = BigDecimal.valueOf(it.prosentkort.prosentSats),
                                 antallMndForTrekk =
-                                    it.antallMndForTrekk?.let { antallMnd ->
+                                    it.prosentkort.antallMndForTrekk?.let { antallMnd ->
                                         BigDecimal.valueOf(antallMnd)
                                     },
                             )
@@ -113,8 +119,25 @@ data class SkattekortDTO(
 @Serializable
 data class ForskuddstrekkDTO(
     val trekkode: String,
+    val frikort: FrikortDTO? = null,
+    val prosentkort: ProsentkortDTO? = null,
+    val trekktabell: TabellkortDTO? = null,
+)
+
+@Serializable
+data class FrikortDTO(
     val frikortBeloep: Int? = null,
-    val tabell: String? = null,
-    val prosentSats: Double? = null,
+)
+
+@Serializable
+data class ProsentkortDTO(
+    val prosentSats: Double,
     val antallMndForTrekk: Double? = null,
+)
+
+@Serializable
+data class TabellkortDTO(
+    val tabell: String,
+    val prosentSats: Double,
+    val antallMndForTrekk: Double,
 )

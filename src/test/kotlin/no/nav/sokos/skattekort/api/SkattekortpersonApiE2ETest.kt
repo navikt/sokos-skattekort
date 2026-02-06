@@ -307,9 +307,12 @@ class SkattekortpersonApiE2ETest :
                         "forskuddstrekkList": [
                           {
                             "trekkode": "loennFraNAV",
-                            "tabell": "8010",
-                            "prosentSats": 25.5,
-                            "antallMndForTrekk": 10.5
+                            "trekktabell": 
+                            {
+                              "tabell": "8010",
+                              "prosentSats": 25.5,
+                              "antallMndForTrekk": 10.5
+                            }
                           }
                         ],
                         "tilleggsopplysningList": [
@@ -456,9 +459,11 @@ class SkattekortpersonApiE2ETest :
                             "forskuddstrekkList": [
                                  {
                                     "trekkode": "loennFraNAV",
-                                    "tabell": "8010",
-                                    "prosentSats": 25.5,
-                                    "antallMndForTrekk": 10.5
+                                    "trekktabell": {
+                                       "tabell": "8010",
+                                       "prosentSats": 25.5,
+                                       "antallMndForTrekk": 10.5
+                                    }
                                  }
                             ]
                         }

@@ -6,8 +6,10 @@
     "forskuddstrekkList": [
       {
         "trekkode": "pensjonFraNAV",
-        "prosentSats": 18.5,
-        "antallMndForTrekk": 12.0
+        "prosentkort": {
+          "prosentSats": 18.5,
+          "antallMndForTrekk": 12.0
+        }
       }
     ],
     "tilleggsopplysningList": []

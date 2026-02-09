@@ -6,7 +6,9 @@
     "forskuddstrekkList": [
       {
         "trekkode": "loennFraNAV",
-        "frikortBeloep": 65000
+        "frikort": {
+          "frikortBeloep": 65000
+        }
       }
     ],
     "tilleggsopplysningList": []

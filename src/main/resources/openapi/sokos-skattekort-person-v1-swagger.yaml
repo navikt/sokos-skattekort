@@ -61,6 +61,8 @@ paths:
   
   /opprett:
     post:
+      tags:
+        - skattekort
       summary: Opprett fiktivt skattekort
       description: Oppretter fiktivt skattekort for person og inntektsår
       operationId: opprettSkattekort

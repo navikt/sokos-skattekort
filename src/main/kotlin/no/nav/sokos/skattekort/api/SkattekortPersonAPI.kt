@@ -26,7 +26,6 @@ import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidAar
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidForsystem
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
-import no.nav.sokos.skattekort.module.skattekort.Trekkode
 import no.nav.sokos.skattekort.security.AuthToken.getNAVIdentFromToken
 import no.nav.sokos.skattekort.security.Saksbehandler
 
@@ -125,8 +124,7 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
             try {
                 request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) != null
                 request.skattekort.forskuddstrekkList
-                    .map { it.trekkode }
-                    .map(Trekkode::fromValue)
+                    .map { it.toDomainForskuddstrekk() }
                 false
             } catch (e: Exception) {
                 true

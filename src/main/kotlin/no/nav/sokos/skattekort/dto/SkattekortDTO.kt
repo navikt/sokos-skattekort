@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
@@ -77,41 +78,7 @@ data class SkattekortDTO(
             kilde = kilde.value,
             inntektsaar = this.inntektsaar,
             resultatForSkattekort = resultatForSkattekort?.let(ResultatForSkattekort::fromValue) ?: ResultatForSkattekort.SkattekortopplysningerOK,
-            forskuddstrekkList =
-                this.forskuddstrekkList.map {
-                    when {
-                        it.frikort != null -> {
-                            Frikort(
-                                trekkode = Trekkode.fromValue(it.trekkode),
-                                frikortBeloep = it.frikort.frikortBeloep,
-                            )
-                        }
-
-                        it.trekktabell != null -> {
-                            Tabellkort(
-                                trekkode = Trekkode.fromValue(it.trekkode),
-                                tabellNummer = it.trekktabell.tabell,
-                                prosentSats = BigDecimal.valueOf(it.trekktabell.prosentSats),
-                                antallMndForTrekk = BigDecimal.valueOf(it.trekktabell.antallMndForTrekk),
-                            )
-                        }
-
-                        it.prosentkort != null -> {
-                            Prosentkort(
-                                trekkode = Trekkode.fromValue(it.trekkode),
-                                prosentSats = BigDecimal.valueOf(it.prosentkort.prosentSats),
-                                antallMndForTrekk =
-                                    it.prosentkort.antallMndForTrekk?.let { antallMnd ->
-                                        BigDecimal.valueOf(antallMnd)
-                                    },
-                            )
-                        }
-
-                        else -> {
-                            error("Ugyldig Forskuddstrekk: $it")
-                        }
-                    }
-                },
+            forskuddstrekkList = this.forskuddstrekkList.map { it.toDomainForskuddstrekk() },
             tilleggsopplysningList = this.tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it) },
         )
 }
@@ -122,7 +89,41 @@ data class ForskuddstrekkDTO(
     val frikort: FrikortDTO? = null,
     val prosentkort: ProsentkortDTO? = null,
     val trekktabell: TabellkortDTO? = null,
-)
+) {
+    fun toDomainForskuddstrekk(): Forskuddstrekk =
+        when {
+            frikort != null -> {
+                Frikort(
+                    trekkode = Trekkode.fromValue(trekkode),
+                    frikortBeloep = frikort.frikortBeloep,
+                )
+            }
+
+            trekktabell != null -> {
+                Tabellkort(
+                    trekkode = Trekkode.fromValue(trekkode),
+                    tabellNummer = trekktabell.tabell,
+                    prosentSats = BigDecimal.valueOf(trekktabell.prosentSats),
+                    antallMndForTrekk = BigDecimal.valueOf(trekktabell.antallMndForTrekk),
+                )
+            }
+
+            prosentkort != null -> {
+                Prosentkort(
+                    trekkode = Trekkode.fromValue(trekkode),
+                    prosentSats = BigDecimal.valueOf(prosentkort.prosentSats),
+                    antallMndForTrekk =
+                        prosentkort.antallMndForTrekk?.let { antallMnd ->
+                            BigDecimal.valueOf(antallMnd)
+                        },
+                )
+            }
+
+            else -> {
+                error("Ugyldig Forskuddstrekk: $this")
+            }
+        }
+}
 
 @Serializable
 data class FrikortDTO(

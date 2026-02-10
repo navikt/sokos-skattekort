@@ -1,0 +1,2714 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "https://tilgangsmaskin.intern.dev.nav.no",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "DevBrukerController",
+      "description": "Denne kontrolleren skal kun brukes til testing"
+    },
+    {
+      "name": "DevAnsattController",
+      "description": "Denne kontrolleren skal kun brukes til testing"
+    },
+    {
+      "name": "DevTilgangController",
+      "description": "Denne kontrolleren skal kun brukes til testing"
+    },
+    {
+      "name": "TilgangController",
+      "description": "Denne kontrolleren skal brukes i produksjon"
+    },
+    {
+      "name": "DevRegelController",
+      "description": "Denne kontrolleren skal kun brukes til testing"
+    },
+    {
+      "name": "DevCacheController",
+      "description": "Denne kontrolleren skal kun brukes til testing"
+    }
+  ],
+  "paths": {
+    "/dev/skjermning/skjerminger": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "skjerminger",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/skjermning/skjermingadaptere": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "skjermingAdapter",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/skjermning/skjerming": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "skjerming",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/regel/bulk/{ansattId}": {
+      "post": {
+        "tags": [
+          "DevRegelController"
+        ],
+        "operationId": "bulkregler",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BrukerIdOgRegelsett"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/bulk/A222222/KJERNE_REGELTYPE",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Mer enn 1000 id-er ble sendt i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregertBulkRespons"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Tilganger ble evaluert for alle brukere i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkSwaggerResultater",
+                  "example": {
+                    "ansattId": "Z990883",
+                    "resultater": [
+                      {
+                        "brukerId": "08526835671",
+                        "status": 204
+                      },
+                      {
+                        "brukerId": "03508331575",
+                        "status": 403,
+                        "detaljer": {
+                          "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                          "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                          "status": 403,
+                          "instance": "Z990883/03508331575",
+                          "brukerIdent": "03508331575",
+                          "navIdent": "Z990883",
+                          "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                          "traceId": "f85c9caa87a57b6dfde1068ce97f10a5",
+                          "kanOverstyres": false
+                        }
+                      },
+                      {
+                        "brukerId": "01011111111",
+                        "status": 204
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/regel/bulk/{ansattId}/{regelType}": {
+      "post": {
+        "tags": [
+          "DevRegelController"
+        ],
+        "operationId": "bulkreglerForRegelType",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "regelType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "KJERNE_REGELTYPE",
+                "TELLENDE_REGELTYPE",
+                "KOMPLETT_REGELTYPE",
+                "OVERSTYRBAR_REGELTYPE"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/bulk/A222222/KJERNE_REGELTYPE",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Mer enn 1000 id-er ble sendt i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregertBulkRespons"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Tilganger ble evaluert for alle brukere i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkSwaggerResultater",
+                  "example": {
+                    "ansattId": "Z990883",
+                    "resultater": [
+                      {
+                        "brukerId": "08526835671",
+                        "status": 204
+                      },
+                      {
+                        "brukerId": "03508331575",
+                        "status": 403,
+                        "detaljer": {
+                          "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                          "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                          "status": 403,
+                          "instance": "Z990883/03508331575",
+                          "brukerIdent": "03508331575",
+                          "navIdent": "Z990883",
+                          "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                          "traceId": "f85c9caa87a57b6dfde1068ce97f10a5",
+                          "kanOverstyres": false
+                        }
+                      },
+                      {
+                        "brukerId": "01011111111",
+                        "status": 204
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/overstyringer/{ansattId}": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "summary": "Hent overstyringer for en ansatt og en eller flere brukere",
+        "description": "Henter overstyringer for en eller flere  brukere.",
+        "operationId": "overstyringer",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/overstyr/{ansattId}": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "summary": "Overstyr regler for en bruker",
+        "description": "Setter overstyring for en bruker, slik at den kan saksbehandles selv om saksbehandler opprinnelig ikke har tilgang.\n                BrukerId må være gyldig og finnes i PDL. Kjerneregelsettet vil bli kjørt før overstyring, og hvis de feiler vil overstyring ikke bli gjort.\n                Overstyring vil gjelde frem til og med utløpsdatoen.",
+        "operationId": "overstyr",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverstyringData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/oppfolging/{uuid}/{kontor}/registrer": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "registrer",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "kontor",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Identer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/oppfolging/{uuid}/avslutt": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "oppfølgingAvslutt",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Identer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/dev/cache/cache/skjerminger": {
+      "post": {
+        "tags": [
+          "DevCacheController"
+        ],
+        "operationId": "cacheSkjerminger",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/cache/cache/personer": {
+      "post": {
+        "tags": [
+          "DevCacheController"
+        ],
+        "operationId": "cachePersoner",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Person"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/bruker/brukeridentifikator": {
+      "post": {
+        "tags": [
+          "DevBrukerController"
+        ],
+        "operationId": "brukerIdentifikator",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bruker"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/bruker/brukere": {
+      "post": {
+        "tags": [
+          "DevBrukerController"
+        ],
+        "operationId": "brukere",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Bruker"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/ansatt/{ansattId}/{brukerId}": {
+      "post": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "summary": "Sette kobling mellom ansatt og fnr",
+        "description": "Funksjon for å opprette relasjon mellom nav-ident og fnrslik  at oppslag på egne data og familierelasjoner kan testes ",
+        "operationId": "nom",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brukerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/overstyr": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Overstyr regler for en bruker",
+        "description": "Setter overstyring for en bruker, slik at den kan saksbehandles selv om tilgang opprinnelig avslås.\n    BrukerId må være gyldig og finnes i PDL. Kjerneregelsettet vil bli kjørt før overstyring, og hvis de feiler vil overstyring ikke bli gjort.\n    Overstyring vil gjelde frem til og med utløpsdatoen.",
+        "operationId": "overstyr_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverstyringData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/komplett": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Evaluer et komplett regelsett for en bruker, forutsetter OBO-token",
+        "operationId": "kompletteRegler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent"
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/kjerne": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Evaluer et kjerneregelsett for en bruker, forutsetter OBO-token",
+        "operationId": "kjerneregler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent"
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ccf/komplett/{ansattId}": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Evaluer et komplett regelsett for en bruker, forutsetter CCF-token",
+        "operationId": "kompletteReglerCCF",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent"
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ccf/kjerne/{ansattId}": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Evaluer et komplett regelsett for en bruker, forutsetter CCF-token",
+        "operationId": "kjerneReglerCCF",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent"
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bulk/obo": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Kjør bulkregler for en ansatt",
+        "description": "Dette endepunktet er kun tilgjengelig for obo flow. Det evaluerer regler for en ansatt mot et sett av brukerId-er og regeltyper. Om ingen regeltype oppgis, evalueres det komplette regelsettet",
+        "operationId": "bulkOBO",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BrukerIdOgRegelsett"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/bulk/A222222/KJERNE_REGELTYPE",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Mer enn 1000 id-er ble sendt i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregertBulkRespons"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Tilganger ble evaluert for alle brukere i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkSwaggerResultater",
+                  "example": {
+                    "ansattId": "Z990883",
+                    "resultater": [
+                      {
+                        "brukerId": "08526835671",
+                        "status": 204
+                      },
+                      {
+                        "brukerId": "03508331575",
+                        "status": 403,
+                        "detaljer": {
+                          "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                          "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                          "status": 403,
+                          "instance": "Z990883/03508331575",
+                          "brukerIdent": "03508331575",
+                          "navIdent": "Z990883",
+                          "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                          "traceId": "f85c9caa87a57b6dfde1068ce97f10a5",
+                          "kanOverstyres": false
+                        }
+                      },
+                      {
+                        "brukerId": "01011111111",
+                        "status": 204
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bulk/obo/{regelType}": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Kjør bulkregler for en ansatt",
+        "description": "Dette endepunktet er kun tilgjengelig for obo flow. Det evaluerer regler for en ansatt mot et sett av brukerId-er med gitt regeltype",
+        "operationId": "bulkOBOForRegelType",
+        "parameters": [
+          {
+            "name": "regelType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "KJERNE_REGELTYPE",
+                "TELLENDE_REGELTYPE",
+                "KOMPLETT_REGELTYPE",
+                "OVERSTYRBAR_REGELTYPE"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/bulk/A222222/KJERNE_REGELTYPE",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Mer enn 1000 id-er ble sendt i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregertBulkRespons"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Tilganger ble evaluert for alle brukere i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkSwaggerResultater",
+                  "example": {
+                    "ansattId": "Z990883",
+                    "resultater": [
+                      {
+                        "brukerId": "08526835671",
+                        "status": 204
+                      },
+                      {
+                        "brukerId": "03508331575",
+                        "status": 403,
+                        "detaljer": {
+                          "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                          "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                          "status": 403,
+                          "instance": "Z990883/03508331575",
+                          "brukerIdent": "03508331575",
+                          "navIdent": "Z990883",
+                          "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                          "traceId": "f85c9caa87a57b6dfde1068ce97f10a5",
+                          "kanOverstyres": false
+                        }
+                      },
+                      {
+                        "brukerId": "01011111111",
+                        "status": 204
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bulk/ccf/{ansattId}": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Kjør bulkregler for en ansatt",
+        "description": "Dette endepunktet er kun tilgjengelig for client credentials flow. Det evaluerer regler for en ansatt mot et sett av brukerId-er og regeltyper. Om ingen regeltype oppgis, evalueres det komplette regelsettet",
+        "operationId": "bulkCCF",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BrukerIdOgRegelsett"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/bulk/A222222/KJERNE_REGELTYPE",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Mer enn 1000 id-er ble sendt i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregertBulkRespons"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Tilganger ble evaluert for alle brukere i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkSwaggerResultater",
+                  "example": {
+                    "ansattId": "Z990883",
+                    "resultater": [
+                      {
+                        "brukerId": "08526835671",
+                        "status": 204
+                      },
+                      {
+                        "brukerId": "03508331575",
+                        "status": 403,
+                        "detaljer": {
+                          "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                          "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                          "status": 403,
+                          "instance": "Z990883/03508331575",
+                          "brukerIdent": "03508331575",
+                          "navIdent": "Z990883",
+                          "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                          "traceId": "f85c9caa87a57b6dfde1068ce97f10a5",
+                          "kanOverstyres": false
+                        }
+                      },
+                      {
+                        "brukerId": "01011111111",
+                        "status": 204
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bulk/ccf/{ansattId}/{regelType}": {
+      "post": {
+        "tags": [
+          "TilgangController"
+        ],
+        "summary": "Kjør bulkregler for en ansatt",
+        "description": "Dette endepunktet er kun tilgjengelig for client credentials flow. Det evaluerer regler for en ansatt mot et sett av brukerId-er med gitt regeltype",
+        "operationId": "bulkCCFForRegelType",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "regelType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "KJERNE_REGELTYPE",
+                "TELLENDE_REGELTYPE",
+                "KOMPLETT_REGELTYPE",
+                "OVERSTYRBAR_REGELTYPE"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/bulk/A222222/KJERNE_REGELTYPE",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Mer enn 1000 id-er ble sendt i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregertBulkRespons"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Tilganger ble evaluert for alle brukere i bulk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkSwaggerResultater",
+                  "example": {
+                    "ansattId": "Z990883",
+                    "resultater": [
+                      {
+                        "brukerId": "08526835671",
+                        "status": 204
+                      },
+                      {
+                        "brukerId": "03508331575",
+                        "status": 403,
+                        "detaljer": {
+                          "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                          "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                          "status": 403,
+                          "instance": "Z990883/03508331575",
+                          "brukerIdent": "03508331575",
+                          "navIdent": "Z990883",
+                          "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                          "traceId": "f85c9caa87a57b6dfde1068ce97f10a5",
+                          "kanOverstyres": false
+                        }
+                      },
+                      {
+                        "brukerId": "01011111111",
+                        "status": 204
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dev/sivilstand/{id}": {
+      "get": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "sivilstand",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FamilieMedlem"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/regel/komplett/{ansattId}/{brukerId}": {
+      "get": {
+        "tags": [
+          "DevRegelController"
+        ],
+        "operationId": "kompletteRegler_1",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brukerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent"
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/regel/kjerne/{ansattId}/{brukerId}": {
+      "get": {
+        "tags": [
+          "DevRegelController"
+        ],
+        "operationId": "kjerneregler_1",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brukerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "navident ikke funnet i Entra (gjelder kun Client Credentials Flow der navident oppgis som path-parameter)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": {
+                    "detail": "Fant ingen oid for navident A222222, er den fremdeles gyldig?",
+                    "instance": "/api/v1/ccf/komplett/A222222",
+                    "status": 404,
+                    "title": "Uventet respons fra Entra",
+                    "navident": "A222222"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Tilgang ble godkjent"
+          },
+          "403": {
+            "description": "Tilgang ble avvist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailResponse",
+                  "example": {
+                    "type": "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
+                    "title": "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+                    "status": 403,
+                    "instance": "Z990883/03508331575",
+                    "brukerIdent": "03508331575",
+                    "navIdent": "Z990883",
+                    "traceId": "444290be30ed4fdd9a849654bad9dc1b",
+                    "begrunnelse": "Du har ikke tilgang til brukere med strengt fortrolig adresse",
+                    "kanOverstyres": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/oppfolging/enhet": {
+      "get": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "enhetFor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/nom/{ansattId}": {
+      "get": {
+        "tags": [
+          "DevTilgangController"
+        ],
+        "operationId": "nomFnr",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/cache/cache/keys/{cache}": {
+      "get": {
+        "tags": [
+          "DevCacheController"
+        ],
+        "operationId": "keys",
+        "parameters": [
+          {
+            "name": "cache",
+            "in": "path",
+            "description": "Cache navn",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Caches"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/bruker/person/{id}": {
+      "get": {
+        "tags": [
+          "DevBrukerController"
+        ],
+        "operationId": "person",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Person"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/bruker/person/pip/{id}": {
+      "get": {
+        "tags": [
+          "DevBrukerController"
+        ],
+        "operationId": "pip",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Person"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/bruker/bruker/{id}": {
+      "get": {
+        "tags": [
+          "DevBrukerController"
+        ],
+        "operationId": "bruker",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bruker"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/ansatt/{ansattId}": {
+      "get": {
+        "tags": [
+          "DevAnsattController"
+        ],
+        "operationId": "ansatt",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ansatt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/ansatt/proxy/{ansattId}": {
+      "get": {
+        "tags": [
+          "DevAnsattController"
+        ],
+        "operationId": "enhet",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Enhet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/ansatt/enheter/{ansattId}": {
+      "get": {
+        "tags": [
+          "DevAnsattController"
+        ],
+        "operationId": "enheter",
+        "parameters": [
+          {
+            "name": "ansattId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Enhet"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BrukerIdOgRegelsett": {
+        "type": "object",
+        "description": "Sett av identifikatorer og regelsett",
+        "example": {
+          "brukerId": "22420094160",
+          "type": "KOMPLETT_REGELTYPE"
+        },
+        "properties": {
+          "brukerId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "KJERNE_REGELTYPE",
+              "TELLENDE_REGELTYPE",
+              "KOMPLETT_REGELTYPE",
+              "OVERSTYRBAR_REGELTYPE"
+            ]
+          }
+        },
+        "required": [
+          "brukerId",
+          "type"
+        ]
+      },
+      "BulkSwaggerDetaljer": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "description": "Avvisningskoder",
+            "enum": [
+              "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+              "AVVIST_STRENGT_FORTROLIG_UTLAND",
+              "AVVIST_AVDØD",
+              "AVVIST_PERSON_UTLAND",
+              "AVVIST_SKJERMING",
+              "AVVIST_FORTROLIG_ADRESSE",
+              "AVVIST_UKJENT_BOSTED",
+              "AVVIST_GEOGRAFISK",
+              "AVVIST_HABILITET"
+            ]
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "brukerIdent": {
+            "type": "string"
+          },
+          "navIdent": {
+            "type": "string"
+          },
+          "begrunnelse": {
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "kanOverstyres": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "begrunnelse",
+          "brukerIdent",
+          "instance",
+          "kanOverstyres",
+          "navIdent",
+          "status",
+          "title",
+          "traceId",
+          "type"
+        ]
+      },
+      "BulkSwaggerResultat": {
+        "type": "object",
+        "properties": {
+          "brukerId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detaljer": {
+            "$ref": "#/components/schemas/BulkSwaggerDetaljer"
+          }
+        },
+        "required": [
+          "brukerId",
+          "status"
+        ]
+      },
+      "BulkSwaggerResultater": {
+        "type": "object",
+        "properties": {
+          "ansattId": {
+            "type": "string"
+          },
+          "resultater": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BulkSwaggerResultat"
+            }
+          }
+        },
+        "required": [
+          "ansattId",
+          "resultater"
+        ]
+      },
+      "AggregertBulkRespons": {
+        "type": "object",
+        "properties": {
+          "ansattId": {
+            "type": "string"
+          },
+          "resultater": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnkeltBulkRespons"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "ansattId",
+          "resultater"
+        ]
+      },
+      "EnkeltBulkRespons": {
+        "type": "object",
+        "properties": {
+          "brukerId": {
+            "type": "string"
+          },
+          "detaljer": {
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "brukerId",
+          "status"
+        ]
+      },
+      "ProblemDetailResponse": {
+        "type": "object",
+        "description": "Problem Detail",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string",
+            "description": "Avvisningskoder",
+            "enum": [
+              "AVVIST_STRENGT_FORTROLIG_ADRESSE",
+              "AVVIST_STRENGT_FORTROLIG_UTLAND",
+              "AVVIST_AVDØD",
+              "AVVIST_PERSON_UTLAND",
+              "AVVIST_SKJERMING",
+              "AVVIST_FORTROLIG_ADRESSE",
+              "AVVIST_UKJENT_BOSTED",
+              "AVVIST_GEOGRAFISK",
+              "AVVIST_HABILITET"
+            ]
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "brukerIdent": {
+            "type": "string"
+          },
+          "navIdent": {
+            "type": "string"
+          },
+          "begrunnelse": {
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "kanOverstyres": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "begrunnelse",
+          "brukerIdent",
+          "instance",
+          "kanOverstyres",
+          "navIdent",
+          "status",
+          "title",
+          "traceId",
+          "type"
+        ]
+      },
+      "OverstyringData": {
+        "type": "object",
+        "example": {
+          "brukerId": "22420094160",
+          "begrunnelse": "En begrunnelse",
+          "gyldigtil": "2025-05-24"
+        },
+        "properties": {
+          "brukerId": {
+            "type": "string"
+          },
+          "begrunnelse": {
+            "type": "string"
+          },
+          "gyldigtil": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "begrunnelse",
+          "brukerId",
+          "gyldigTil",
+          "gyldigtil"
+        ]
+      },
+      "Identer": {
+        "type": "object",
+        "properties": {
+          "brukerId": {
+            "type": "string"
+          },
+          "aktorId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "aktorId",
+          "brukerId"
+        ]
+      },
+      "Bydel": {
+        "type": "object",
+        "properties": {
+          "verdi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdi"
+        ]
+      },
+      "BydelTilknytning": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeografiskTilknytning"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "bydel": {
+                "$ref": "#/components/schemas/Bydel"
+              }
+            }
+          }
+        ],
+        "required": [
+          "bydel"
+        ]
+      },
+      "Familie": {
+        "type": "object",
+        "properties": {
+          "foreldre": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilieMedlem"
+            },
+            "uniqueItems": true
+          },
+          "barn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilieMedlem"
+            },
+            "uniqueItems": true
+          },
+          "søsken": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilieMedlem"
+            },
+            "uniqueItems": true
+          },
+          "partnere": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilieMedlem"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "barn",
+          "foreldre",
+          "partnere",
+          "søsken"
+        ]
+      },
+      "FamilieMedlem": {
+        "type": "object",
+        "properties": {
+          "brukerId": {
+            "type": "string"
+          },
+          "relasjon": {
+            "type": "string",
+            "enum": [
+              "MOR",
+              "FAR",
+              "BARN",
+              "SØSKEN",
+              "PARTNER",
+              "TIDLIGERE_PARTNER",
+              "INGEN"
+            ]
+          }
+        },
+        "required": [
+          "brukerId",
+          "relasjon"
+        ]
+      },
+      "GeografiskTilknytning": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "BYDEL",
+              "KOMMUNE",
+              "UDEFINERT",
+              "UTLAND",
+              "UKJENT_BOSTED"
+            ],
+            "writeOnly": true
+          }
+        }
+      },
+      "Kommune": {
+        "type": "object",
+        "properties": {
+          "verdi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdi"
+        ]
+      },
+      "KommuneTilknytning": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeografiskTilknytning"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kommune": {
+                "$ref": "#/components/schemas/Kommune"
+              }
+            }
+          }
+        ],
+        "required": [
+          "kommune"
+        ]
+      },
+      "Person": {
+        "type": "object",
+        "properties": {
+          "brukerId": {
+            "type": "string"
+          },
+          "oppslagId": {
+            "type": "string"
+          },
+          "aktørId": {
+            "type": "string"
+          },
+          "geoTilknytning": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BydelTilknytning"
+              },
+              {
+                "$ref": "#/components/schemas/KommuneTilknytning"
+              },
+              {
+                "$ref": "#/components/schemas/UdefinertTilknytning"
+              },
+              {
+                "$ref": "#/components/schemas/UkjentBosted"
+              },
+              {
+                "$ref": "#/components/schemas/UtenlandskTilknytning"
+              }
+            ]
+          },
+          "graderinger": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "STRENGT_FORTROLIG_UTLAND",
+                "STRENGT_FORTROLIG",
+                "FORTROLIG",
+                "UGRADERT"
+              ]
+            }
+          },
+          "familie": {
+            "$ref": "#/components/schemas/Familie"
+          },
+          "dødsdato": {
+            "type": "string",
+            "format": "date"
+          },
+          "historiskeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "aktørId",
+          "brukerId",
+          "familie",
+          "geoTilknytning",
+          "graderinger",
+          "historiskeIds",
+          "oppslagId"
+        ]
+      },
+      "UdefinertTilknytning": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeografiskTilknytning"
+          }
+        ]
+      },
+      "UkjentBosted": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeografiskTilknytning"
+          }
+        ]
+      },
+      "UtenlandskTilknytning": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeografiskTilknytning"
+          }
+        ]
+      },
+      "Bruker": {
+        "type": "object",
+        "properties": {
+          "brukerIds": {
+            "$ref": "#/components/schemas/BrukerIds"
+          },
+          "geografiskTilknytning": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BydelTilknytning"
+              },
+              {
+                "$ref": "#/components/schemas/KommuneTilknytning"
+              },
+              {
+                "$ref": "#/components/schemas/UdefinertTilknytning"
+              },
+              {
+                "$ref": "#/components/schemas/UkjentBosted"
+              },
+              {
+                "$ref": "#/components/schemas/UtenlandskTilknytning"
+              }
+            ]
+          },
+          "påkrevdeGrupper": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "STRENGT_FORTROLIG",
+                "STRENGT_FORTROLIG_UTLAND",
+                "FORTROLIG",
+                "SKJERMING",
+                "UKJENT_BOSTED",
+                "UTENLANDSK",
+                "NASJONAL"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "familie": {
+            "$ref": "#/components/schemas/Familie"
+          },
+          "dødsdato": {
+            "type": "string",
+            "format": "date"
+          },
+          "oppslagId": {
+            "type": "string"
+          },
+          "harUkjentBosted": {
+            "type": "boolean"
+          },
+          "harUtenlandskBosted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "brukerIds",
+          "familie",
+          "geografiskTilknytning",
+          "harUkjentBosted",
+          "harUtenlandskBosted",
+          "oppslagId",
+          "påkrevdeGrupper"
+        ]
+      },
+      "BrukerIds": {
+        "type": "object",
+        "properties": {
+          "aktivBrukerId": {
+            "type": "string"
+          },
+          "oppslagId": {
+            "type": "string"
+          },
+          "historiskeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "aktørId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "aktivBrukerId",
+          "aktørId",
+          "historiskeIds",
+          "oppslagId"
+        ]
+      },
+      "Caches": {
+        "type": "string",
+        "description": "Cache navn",
+        "enum": [
+          "PDL",
+          "SKJERMING",
+          "OID",
+          "OPPFØLGING",
+          "NOM",
+          "GRAPH"
+        ]
+      },
+      "Ansatt": {
+        "type": "object",
+        "properties": {
+          "ansattId": {
+            "type": "string"
+          },
+          "bruker": {
+            "$ref": "#/components/schemas/Bruker"
+          },
+          "grupper": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntraGruppe"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "ansattId",
+          "grupper"
+        ]
+      },
+      "EntraGruppe": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "id"
+        ]
+      },
+      "Enhet": {
+        "type": "object",
+        "properties": {
+          "enhetnummer": {
+            "type": "string"
+          },
+          "navn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enhetnummer",
+          "navn"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

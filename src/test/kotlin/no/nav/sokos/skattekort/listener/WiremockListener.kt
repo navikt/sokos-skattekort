@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.infrastructure
+package no.nav.sokos.skattekort.listener
 
 import kotlinx.serialization.json.Json
 
@@ -23,7 +23,7 @@ import no.nav.pdl.HentIdenterBolk
 import no.nav.pdl.enums.IdentGruppe
 import no.nav.pdl.hentidenterbolk.HentIdenterBolkResult
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
-import no.nav.sokos.skattekort.pdl.GraphQLResponse
+import no.nav.sokos.skattekort.infrastructure.pdl.GraphQLResponse
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
 object WiremockListener : BeforeSpecListener, AfterEachListener {

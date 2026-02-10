@@ -64,6 +64,8 @@ spec:
       rules:
         - application: logging
           namespace: nais-system
+        - application: populasjonstilgangskontroll
+          namespace: tilgangsmaskin
       external:
         - host: mqls02.preprod.local
           ports:

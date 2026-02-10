@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.infrastructure
+package no.nav.sokos.skattekort.listener
 
 import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.spec.Spec

@@ -3,8 +3,8 @@ package no.nav.sokos.skattekort.module.status
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.DbListener.dataSource
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.DbListener.dataSource
 import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.skattekort.aBestilling
 import no.nav.sokos.skattekort.module.skattekort.aBestillingsBatch

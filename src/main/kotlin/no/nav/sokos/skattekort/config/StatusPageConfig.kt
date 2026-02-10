@@ -27,9 +27,6 @@ private val logger = KotlinLogging.logger { }
 fun StatusPagesConfig.statusPageConfig() {
     exception<Throwable> { call, cause ->
         run {
-            println("cause = $cause")
-            println("cause = ${cause.cause}")
-            println("cause = ${cause.cause?.cause}")
             val (responseStatus, apiError) =
                 when (cause) {
                     is BadRequestException -> {

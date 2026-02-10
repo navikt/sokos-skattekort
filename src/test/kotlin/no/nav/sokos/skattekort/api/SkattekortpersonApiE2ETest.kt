@@ -11,6 +11,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldMatch
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -483,6 +484,40 @@ class SkattekortpersonApiE2ETest :
                 } catch (e: Exception) {
                     println("Feil ved oppretting av skattekort: ${e.message}")
                 }
+            }
+        }
+
+        test("Mer informativ feilmelding når forskuddstrekk mangler informasjon") {
+            TestUtils.withFullTestApplication {
+                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
+
+                val request =
+                    """
+                    {
+                      "fnr" : "15477399948",
+                      "skattekort" : {
+                        "inntektsaar" : 2026,
+                        "resultatForSkattekort" : "skattekortopplysningerOK",
+                        "forskuddstrekkList" : [ {
+                          "trekkode" : "loennFraNAV",
+                          "trekktabell" : {
+                            "tabell" : ""
+                          }
+                        } ],
+                        "tilleggsopplysningList" : [ ]
+                      }
+                    }
+                    """.trimIndent()
+
+                val response =
+                    client.post(OPPRETT_URL) {
+                        header(HttpHeaders.ContentType, ContentType.Application.Json)
+                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        setBody(request)
+                    }
+                response.status shouldBe HttpStatusCode.BadRequest
+                response.bodyAsText() shouldContain
+                    "Illegal input: Fields [prosentSats, antallMndForTrekk] are required for type with serial name 'no.nav.sokos.skattekort.dto.TabellkortDTO', but they were missing at path: \$.skattekort.forskuddstrekkList[0].trekktabell"
             }
         }
     })

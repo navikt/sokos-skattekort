@@ -33,8 +33,8 @@ import io.mockk.mockk
 import org.slf4j.LoggerFactory
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository

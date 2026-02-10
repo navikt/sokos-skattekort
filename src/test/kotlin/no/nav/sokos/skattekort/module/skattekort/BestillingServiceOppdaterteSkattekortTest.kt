@@ -10,8 +10,8 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator

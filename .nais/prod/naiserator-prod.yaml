@@ -57,6 +57,8 @@ spec:
       rules:
         - application: logging
           namespace: nais-system
+        - application: populasjonstilgangskontroll
+          namespace: tilgangsmaskin
       external:
         - host: mpls02.adeo.no
           ports:

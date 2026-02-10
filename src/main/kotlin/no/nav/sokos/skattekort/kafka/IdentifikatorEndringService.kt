@@ -9,6 +9,7 @@ import kotlinx.datetime.toKotlinLocalDate
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
 import no.nav.sokos.skattekort.module.person.Foedselsnummer
@@ -18,7 +19,6 @@ import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Bestilling
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
-import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}

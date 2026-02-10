@@ -5,7 +5,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotliquery.TransactionalSession
 
-import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 

@@ -61,18 +61,14 @@ paths:
   
   /opprett:
     post:
+      tags:
+        - skattekort
       summary: Opprett fiktivt skattekort
       description: Oppretter fiktivt skattekort for person og inntektsår
       operationId: opprettSkattekort
       responses:
         201:
           description: OK - Skattekort er lagret
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SkattekortDTO'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -167,35 +163,57 @@ components:
 
     ForskuddstrekkDTO:
       type: object
-      description: Frikortbeløp vil overstyre tabell. Oppgis tabell, må også antallMndForTrekk oppgis for å få et tabellkort,
-        ellers brukes prosentsats.
       properties:
         trekkode:
-          $ref: '#/components/schemas/Trekkode'
+          type: string
+          enum:
+            - loennFraNAV
+            - pensjonFraNAV
+            - ufoeretrygdFraNAV
+        frikort:
+          $ref: '#/components/schemas/FrikortDTO'
+        prosentkort:
+          $ref: '#/components/schemas/ProsentkortDTO'
+        trekktabell:
+          $ref: '#/components/schemas/TabellkortDTO'
+      required:
+        - trekkode
+
+    FrikortDTO:
+      type: object
+      properties:
         frikortBeloep:
           type: integer
           nullable: true
-          example: 50000
-        tabell:
-          type: string
-          nullable: true
-          example: "8010"
+
+    ProsentkortDTO:
+      type: object
+      properties:
         prosentSats:
           type: number
           format: double
-          nullable: true
-          example: 25.5
         antallMndForTrekk:
           type: number
           format: double
           nullable: true
-          example: 10.5
-    Trekkode:
-      type: string
-      enum:
-        - loennFraNAV
-        - pensjonFraNAV
-        - ufoeretrygdFraNAV
+      required:
+        - prosentSats
+
+    TabellkortDTO:
+      type: object
+      properties:
+        tabell:
+          type: string
+        prosentSats:
+          type: number
+          format: double
+        antallMndForTrekk:
+          type: number
+          format: double
+      required:
+        - tabell
+        - prosentSats
+        - antallMndForTrekk
     
     ApiError:
       type: object

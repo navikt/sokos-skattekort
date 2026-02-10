@@ -42,7 +42,7 @@ val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
 val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.9"
 val hikariVersion = "7.0.2"
-val kotliqueryVersion = "1.9.1"
+val kotliqueryVersion = "2.0.2"
 val testcontainersVersion = "1.21.4"
 val flywayVersion = "12.0.0"
 val postgresVersion = "42.7.9"
@@ -80,7 +80,7 @@ dependencies {
     // Database
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation("no.nav:kotliquery:$kotliqueryVersion")
 
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     runtimeOnly("org.flywaydb:flyway-database-postgresql:$flywayVersion")

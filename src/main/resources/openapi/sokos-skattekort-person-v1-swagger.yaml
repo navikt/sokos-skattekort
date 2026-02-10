@@ -166,6 +166,10 @@ components:
       properties:
         trekkode:
           type: string
+          enum:
+            - loennFraNAV
+            - pensjonFraNAV
+            - ufoeretrygdFraNAV
         frikort:
           $ref: '#/components/schemas/FrikortDTO'
         prosentkort:

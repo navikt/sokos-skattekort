@@ -9,7 +9,9 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.JsonConvertException
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.path
@@ -26,6 +28,9 @@ fun StatusPagesConfig.statusPageConfig() {
     exception<Throwable> { call, cause ->
         val (responseStatus, apiError) =
             when (cause) {
+                is BadRequestException if (cause.cause is JsonConvertException) ->
+                    createApiError(HttpStatusCode.BadRequest, "Feil i format på request body. Detaljer: ${cause.message}, ${cause.cause?.message}", call)
+
                 is RequestValidationException -> createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
                 is IllegalArgumentException -> createApiError(HttpStatusCode.BadRequest, cause.message, call)
                 is UnauthorizedException -> createApiError(HttpStatusCode.Unauthorized, cause.message, call)

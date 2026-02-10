@@ -31,6 +31,7 @@ import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.authServer
@@ -308,9 +309,12 @@ class SkattekortpersonApiE2ETest :
                         "forskuddstrekkList": [
                           {
                             "trekkode": "loennFraNAV",
-                            "tabell": "8010",
-                            "prosentSats": 25.5,
-                            "antallMndForTrekk": 10.5
+                            "trekktabell": 
+                            {
+                              "tabell": "8010",
+                              "prosentSats": 25.5,
+                              "antallMndForTrekk": 10.5
+                            }
                           }
                         ],
                         "tilleggsopplysningList": [
@@ -330,7 +334,49 @@ class SkattekortpersonApiE2ETest :
                         val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
                         opprettetPerson.shouldNotBeNull()
                         val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, opprettetPerson.id!!, 2026, false)
-                        nyeSkattekort.size shouldBe 1
+                        nyeSkattekort.size shouldBe 2
+                    }
+                } catch (e: Exception) {
+                    println("Feil ved oppretting av skattekort: ${e.message}")
+                }
+            }
+        }
+
+        test("Genererer skattekort når det er tilleggsopplysning Svalbard") {
+            TestUtils.withFullTestApplication {
+                val request =
+                    """
+                    {
+                      "fnr": "01010112345",
+                      "skattekort": {
+                        "utstedtDato": "2026-01-22",
+                        "inntektsaar": 2026,
+                        "resultatForSkattekort": "ikkeSkattekort",
+                        "forskuddstrekkList": [],
+                        "tilleggsopplysningList": [
+                          "oppholdPaaSvalbard"
+                        ]
+                      }
+                    }
+                    """.trimIndent()
+                try {
+                    val response =
+                        client.post(OPPRETT_URL) {
+                            header(HttpHeaders.ContentType, ContentType.Application.Json)
+                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            setBody(request)
+                        }
+                    DbListener.dataSource.transaction { tx ->
+                        val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
+                        opprettetPerson.shouldNotBeNull()
+                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, opprettetPerson.id!!, 2026, false)
+                        nyeSkattekort shouldNotBeNull {
+                            size shouldBe 2
+                            first() shouldNotBeNull {
+                                tilleggsopplysningList shouldBe listOf(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD)
+                                forskuddstrekkList.size shouldBe 3
+                            }
+                        }
                     }
                 } catch (e: Exception) {
                     println("Feil ved oppretting av skattekort: ${e.message}")
@@ -457,9 +503,11 @@ class SkattekortpersonApiE2ETest :
                             "forskuddstrekkList": [
                                  {
                                     "trekkode": "loennFraNAV",
-                                    "tabell": "8010",
-                                    "prosentSats": 25.5,
-                                    "antallMndForTrekk": 10.5
+                                    "trekktabell": {
+                                       "tabell": "8010",
+                                       "prosentSats": 25.5,
+                                       "antallMndForTrekk": 10.5
+                                    }
                                  }
                             ]
                         }

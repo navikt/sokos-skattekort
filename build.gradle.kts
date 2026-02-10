@@ -10,7 +10,7 @@ plugins {
     kotlin("jvm") version "2.3.0"
     kotlin("plugin.serialization") version "2.3.0"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
-    id("org.jetbrains.kotlinx.kover") version "0.9.4"
+    id("org.jetbrains.kotlinx.kover") version "0.9.5"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "8.8.1"
 
@@ -30,10 +30,10 @@ repositories {
 val resilience4jVersion = "2.3.0"
 val ktorVersion = "3.4.0"
 val nimbusVersion = "10.7"
-val logbackVersion = "1.5.26"
+val logbackVersion = "1.5.27"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.2"
-val dbSchedulerVersion = "16.7.0"
+val dbSchedulerVersion = "16.7.1"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val kotestVersion = "6.1.2"
@@ -42,7 +42,7 @@ val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
 val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.9"
 val hikariVersion = "7.0.2"
-val kotliqueryVersion = "1.9.1"
+val kotliqueryVersion = "2.0.2"
 val testcontainersVersion = "1.21.4"
 val flywayVersion = "12.0.0"
 val postgresVersion = "42.7.9"
@@ -80,7 +80,7 @@ dependencies {
     // Database
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation("no.nav:kotliquery:$kotliqueryVersion")
 
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     runtimeOnly("org.flywaydb:flyway-database-postgresql:$flywayVersion")

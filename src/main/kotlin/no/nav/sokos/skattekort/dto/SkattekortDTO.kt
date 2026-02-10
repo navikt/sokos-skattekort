@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.module.skattekort.Frikort
 import no.nav.sokos.skattekort.module.skattekort.Prosentkort
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
@@ -33,24 +34,30 @@ data class SkattekortDTO(
                     is Frikort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
-                            frikortBeloep = it.frikortBeloep,
+                            frikort = FrikortDTO(frikortBeloep = it.frikortBeloep),
                         )
                     }
 
                     is Prosentkort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
-                            prosentSats = it.prosentSats.toDouble(),
-                            antallMndForTrekk = it.antallMndForTrekk?.toDouble(),
+                            prosentkort =
+                                ProsentkortDTO(
+                                    prosentSats = it.prosentSats.toDouble(),
+                                    antallMndForTrekk = it.antallMndForTrekk?.toDouble(),
+                                ),
                         )
                     }
 
                     is Tabellkort -> {
                         ForskuddstrekkDTO(
                             trekkode = it.trekkode.value,
-                            tabell = it.tabellNummer,
-                            prosentSats = it.prosentSats.toDouble(),
-                            antallMndForTrekk = it.antallMndForTrekk.toDouble(),
+                            trekktabell =
+                                TabellkortDTO(
+                                    tabell = it.tabellNummer,
+                                    prosentSats = it.prosentSats.toDouble(),
+                                    antallMndForTrekk = it.antallMndForTrekk.toDouble(),
+                                ),
                         )
                     }
                 }
@@ -71,41 +78,7 @@ data class SkattekortDTO(
             kilde = kilde.value,
             inntektsaar = this.inntektsaar,
             resultatForSkattekort = resultatForSkattekort?.let(ResultatForSkattekort::fromValue) ?: ResultatForSkattekort.SkattekortopplysningerOK,
-            forskuddstrekkList =
-                this.forskuddstrekkList.map {
-                    when {
-                        it.frikortBeloep != null -> {
-                            Frikort(
-                                trekkode = Trekkode.fromValue(it.trekkode),
-                                frikortBeloep = it.frikortBeloep,
-                            )
-                        }
-
-                        it.tabell != null && it.prosentSats != null && it.antallMndForTrekk != null -> {
-                            Tabellkort(
-                                trekkode = Trekkode.fromValue(it.trekkode),
-                                tabellNummer = it.tabell,
-                                prosentSats = BigDecimal.valueOf(it.prosentSats),
-                                antallMndForTrekk = BigDecimal.valueOf(it.antallMndForTrekk),
-                            )
-                        }
-
-                        it.prosentSats != null -> {
-                            Prosentkort(
-                                trekkode = Trekkode.fromValue(it.trekkode),
-                                prosentSats = BigDecimal.valueOf(it.prosentSats),
-                                antallMndForTrekk =
-                                    it.antallMndForTrekk?.let { antallMnd ->
-                                        BigDecimal.valueOf(antallMnd)
-                                    },
-                            )
-                        }
-
-                        else -> {
-                            error("Ugyldig Forskuddstrekk: $it")
-                        }
-                    }
-                },
+            forskuddstrekkList = this.forskuddstrekkList.map { it.toDomainForskuddstrekk() },
             tilleggsopplysningList = this.tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it) },
         )
 }
@@ -113,8 +86,59 @@ data class SkattekortDTO(
 @Serializable
 data class ForskuddstrekkDTO(
     val trekkode: String,
+    val frikort: FrikortDTO? = null,
+    val prosentkort: ProsentkortDTO? = null,
+    val trekktabell: TabellkortDTO? = null,
+) {
+    fun toDomainForskuddstrekk(): Forskuddstrekk =
+        when {
+            frikort != null -> {
+                Frikort(
+                    trekkode = Trekkode.fromValue(trekkode),
+                    frikortBeloep = frikort.frikortBeloep,
+                )
+            }
+
+            trekktabell != null -> {
+                Tabellkort(
+                    trekkode = Trekkode.fromValue(trekkode),
+                    tabellNummer = trekktabell.tabell,
+                    prosentSats = BigDecimal.valueOf(trekktabell.prosentSats),
+                    antallMndForTrekk = BigDecimal.valueOf(trekktabell.antallMndForTrekk),
+                )
+            }
+
+            prosentkort != null -> {
+                Prosentkort(
+                    trekkode = Trekkode.fromValue(trekkode),
+                    prosentSats = BigDecimal.valueOf(prosentkort.prosentSats),
+                    antallMndForTrekk =
+                        prosentkort.antallMndForTrekk?.let { antallMnd ->
+                            BigDecimal.valueOf(antallMnd)
+                        },
+                )
+            }
+
+            else -> {
+                error("Ugyldig Forskuddstrekk: $this")
+            }
+        }
+}
+
+@Serializable
+data class FrikortDTO(
     val frikortBeloep: Int? = null,
-    val tabell: String? = null,
-    val prosentSats: Double? = null,
+)
+
+@Serializable
+data class ProsentkortDTO(
+    val prosentSats: Double,
     val antallMndForTrekk: Double? = null,
+)
+
+@Serializable
+data class TabellkortDTO(
+    val tabell: String,
+    val prosentSats: Double,
+    val antallMndForTrekk: Double,
 )

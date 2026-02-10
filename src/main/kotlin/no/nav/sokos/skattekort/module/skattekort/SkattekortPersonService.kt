@@ -88,10 +88,14 @@ class SkattekortPersonService(
                 skattekortDTO.toDomainSkattekort(
                     personId = personId,
                     utstedtDato = skattekortDTO.utstedtDato ?: today,
-                    identifikator = "dolly",
+                    identifikator = null,
                     kilde = SkattekortKilde.MANUELL,
                 )
-            SkattekortRepository.insert(tx, skattekort)
+            val id = SkattekortId(SkattekortRepository.insert(tx, skattekort))
+
+            Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, _) ->
+                SkattekortRepository.insert(tx, syntetisertSkattekort, "manuelt syntetisk")
+            }
         }
     }
 }

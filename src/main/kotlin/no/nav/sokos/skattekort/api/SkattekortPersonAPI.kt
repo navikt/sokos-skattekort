@@ -17,7 +17,6 @@ import io.ktor.server.routing.route
 
 import no.nav.sokos.skattekort.api.SkattekortPersonAPI.authorizeAndGetOptionalSaksbehandler
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
@@ -34,25 +33,11 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
         post("hent-skattekort") {
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
+            val skattekort = skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler)
+
             call.respond(
-                skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                skattekort,
             )
-        }
-        post("sjekk") {
-            if (PropertiesConfig.getApplicationProperties().environment != PropertiesConfig.Environment.PROD) {
-                val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
-                val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
-                call.respond(
-                    skattekortPersonService
-                        .hentSkattekortPerson(
-                            skattekortPersonRequest.fnr,
-                            skattekortPersonRequest.inntektsaar,
-                            saksbehandler,
-                        ).isNotEmpty(),
-                )
-            } else {
-                call.respond(HttpStatusCode.NotAcceptable)
-            }
         }
 
         post("opprett") {

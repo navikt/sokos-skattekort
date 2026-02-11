@@ -129,6 +129,12 @@ object PropertiesConfig {
             pdlScope = getOrEmpty("PDL_SCOPE"),
         )
 
+    fun getTilgangsmaskinProperties(): TilgangsmaskinProperties =
+        TilgangsmaskinProperties(
+            tilgangsmaskinUrl = getOrEmpty("TILGANGSMASKIN_URL"),
+            tilgangsmaskinScope = getOrEmpty("TILGANGSMASKIN_SCOPE"),
+        )
+
     fun getUnleashProperties(): UnleashProperties =
         UnleashProperties(
             unleashAPI = getOrEmpty("UNLEASH_SERVER_API_URL"),
@@ -213,6 +219,11 @@ object PropertiesConfig {
     data class PdlProperties(
         val pdlUrl: String,
         val pdlScope: String,
+    )
+
+    data class TilgangsmaskinProperties(
+        val tilgangsmaskinUrl: String,
+        val tilgangsmaskinScope: String,
     )
 
     data class UnleashProperties(

@@ -11,12 +11,12 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.MQListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.infrastructure.WiremockListener
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 
@@ -29,7 +29,7 @@ class ForespoerselListenerTest :
 
         val pdlClientService: PdlClientService by lazy {
             PdlClientService(
-                client = createHttpClient(),
+                httpClient = createHttpClient(),
                 pdlUrl = WiremockListener.wiremock.baseUrl(),
                 azuredTokenClient = WiremockListener.azuredTokenClient,
             )

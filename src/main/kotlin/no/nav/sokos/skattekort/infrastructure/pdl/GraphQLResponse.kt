@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.pdl
+package no.nav.sokos.skattekort.infrastructure.pdl
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement

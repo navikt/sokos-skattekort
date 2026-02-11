@@ -30,15 +30,8 @@ fun StatusPagesConfig.statusPageConfig() {
             val (responseStatus, apiError) =
                 when (cause) {
                     is BadRequestException -> {
-                        var realcause = cause
-                        if (cause.cause is BadRequestException) {
-                            realcause = cause.cause!!
-                        }
-                        if (realcause.cause is JsonConvertException) {
-                            realcause = realcause.cause as JsonConvertException
-                            createApiError(HttpStatusCode.BadRequest, "Feil i format på request body. Detaljer: ${realcause.cause?.message}", call)
-                        }
-                        createApiError(HttpStatusCode.BadRequest, "Feil i format på request body. Detaljer: ${realcause.message}", call)
+                        val jsonException = cause.findCauseOfType<JsonConvertException>()
+                        createApiError(HttpStatusCode.BadRequest, jsonException?.message ?: cause.message, call)
                     }
 
                     is RequestValidationException -> createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
@@ -78,3 +71,12 @@ data class ApiError(
     val message: String?,
     val path: String,
 )
+
+private inline fun <reified T : Throwable> Throwable.findCauseOfType(): T? {
+    var current: Throwable? = this
+    while (current != null) {
+        if (current is T) return current
+        current = current.cause
+    }
+    return null
+}

@@ -26,6 +26,8 @@ import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
@@ -35,7 +37,6 @@ import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
-import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
@@ -72,7 +73,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(AuditLogger::class)
 
         provide { MQConfig.connectionFactory }
-        provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
@@ -89,8 +89,13 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
+        provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
+        }
+        provide<String>(name = "tilgangsmaskinUrl") { PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinUrl }
+        provide<AzuredTokenClient>(name = "tilgangsmaksinAzuredTokenClient") {
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinScope)
         }
         provide(StatusService::class)
         provide(PersonService::class)
@@ -102,6 +107,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(SkattekortPersonService::class)
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
+        provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
         provide<UnleashIntegration> {

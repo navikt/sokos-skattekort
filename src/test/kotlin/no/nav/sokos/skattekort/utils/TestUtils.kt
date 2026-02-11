@@ -32,9 +32,9 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.MQListener
-import no.nav.sokos.skattekort.infrastructure.WiremockListener
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.module
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT

@@ -17,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 
 fun createHttpClient(): HttpClient =
     HttpClient(Apache5) {
-        expectSuccess = true
+        expectSuccess = false
         engine {
             socketTimeout = 30_000
             connectTimeout = 30_000

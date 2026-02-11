@@ -5,8 +5,8 @@ import jakarta.jms.JMSContext.SESSION_TRANSACTED
 import jakarta.jms.Message
 import jakarta.jms.Queue
 
-import no.nav.sokos.skattekort.infrastructure.MQListener
-import no.nav.sokos.skattekort.infrastructure.MQListener.allQueues
+import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.MQListener.allQueues
 
 object JmsTestUtil {
     fun sendMessage(

@@ -27,7 +27,7 @@ fun Route.skattekortApi(
 ) {
     route(BASE_PATH) {
         post("bestille") {
-            // if(!call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
+            // call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)
             val request = call.receive<ForespoerselRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 
@@ -40,7 +40,7 @@ fun Route.skattekortApi(
             call.respond(HttpStatusCode.Created)
         }
         post("status") {
-            // if(!call.requireScope(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
+            // call.requireScope(Scope.UTBETALINGSPORTALEN_READ.value)
             val request = call.receive<ForespoerselRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 

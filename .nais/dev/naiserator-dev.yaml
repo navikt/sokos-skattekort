@@ -50,16 +50,33 @@ spec:
       rules:
         - application: azure-token-generator
           namespace: nais
+          permissions:
+            scopes:
+              - "spk-mottak.admin"
+            roles:
+              - "leveattester.read"
         - application: sokos-up-skattekort-ssr
         - application: sokos-utbetalingsportalen
+          permissions:
+            scopes:
+              - "utbetalingsportalen.read"
         - application: sokos-dare-poc
+          permissions:
+            roles:
+              - "dare-poc.read"
         - application: saas-proxy
           namespace: teamcrm
+          permissions:
+            - roles:
+                - "saas-proxy.read"
         - application: saas-proxy
           namespace: platforce
         - application: testnav-dolly-proxy-trygdeetaten
           cluster: dev-fss
           namespace: dolly
+          permissions:
+            - roles:
+                - "dolly-proxy.read"
     outbound:
       rules:
         - application: logging

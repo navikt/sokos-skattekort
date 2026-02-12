@@ -10,7 +10,6 @@ import kotlin.time.Duration.Companion.seconds
 
 import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.pluginOrNull
@@ -32,6 +31,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
@@ -79,7 +79,7 @@ object TestUtils {
                 client =
                     createClient {
                         install(ContentNegotiation) {
-                            json()
+                            jsonConfig
                         }
                     }
 

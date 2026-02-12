@@ -14,7 +14,8 @@ import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.status.StatusService
-import no.nav.sokos.skattekort.security.AuthToken.authorizeAndGetMandatorySaksbehandler
+import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
+import no.nav.sokos.skattekort.security.Saksbehandler
 
 private val logger = KotlinLogging.logger { }
 
@@ -26,11 +27,12 @@ fun Route.skattekortApi(
 ) {
     route(BASE_PATH) {
         post("bestille") {
+            // if(!call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
             val request = call.receive<ForespoerselRequest>()
-            val saksbehandler = authorizeAndGetMandatorySaksbehandler(call)
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 
             logger.info(marker = TEAM_LOGS_MARKER) {
-                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler.ident}"
+                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler?.ident}"
             }
 
             val message = "${request.forsystem};${request.aar};${request.personIdent}"
@@ -38,11 +40,12 @@ fun Route.skattekortApi(
             call.respond(HttpStatusCode.Created)
         }
         post("status") {
+            // if(!call.requireScope(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
             val request = call.receive<ForespoerselRequest>()
-            val saksbehandler = authorizeAndGetMandatorySaksbehandler(call)
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 
             logger.info(marker = TEAM_LOGS_MARKER) {
-                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler.ident}"
+                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler?.ident}"
             }
             call.respond(
                 StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem)),

@@ -18,6 +18,8 @@ import io.ktor.server.routing.route
 import no.nav.sokos.skattekort.api.SkattekortPersonAPI.authorizeAndGetOptionalSaksbehandler
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.dto.SkattekortDTO
+import no.nav.sokos.skattekort.dto.validTilleggsopplysning
+import no.nav.sokos.skattekort.dto.validTrekkoder
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
@@ -33,10 +35,10 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
         post("hent-skattekort") {
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
-            val skattekort = skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler)
-
             call.respond(
-                skattekort,
+                skattekortPersonService
+                    .hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler)
+                    .distinctBy { it.inntektsaar },
             )
         }
 
@@ -107,10 +109,12 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
 
             try {
-                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) != null
-                request.skattekort.forskuddstrekkList
-                    .map { it.toDomainForskuddstrekk() }
-                false
+                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) == null ||
+                    request.skattekort.forskuddstrekkList
+                        .map { it.toDomainForskuddstrekk() }
+                        .map { it.trekkode() }
+                        .any { trekkode -> trekkode !in validTrekkoder } ||
+                    request.skattekort.tilleggsopplysningList.any { opplysning -> opplysning !in validTilleggsopplysning }
             } catch (e: Exception) {
                 true
             } -> ValidationResult.Invalid("ugyldige verdier i skattekort-json.")

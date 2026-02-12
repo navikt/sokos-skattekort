@@ -43,18 +43,13 @@ class SkattekortPersonService(
         return dataSource
             .transaction { tx ->
                 val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
-                val skattekortList =
-                    SkattekortRepository
-                        .findAllByPersonId(
-                            tx,
-                            person.id!!,
-                            inntektsaar?.toInt(),
-                            adminRole = false,
-                        )
-                val seenYears = mutableSetOf<Int>()
-                skattekortList
-                    .filter { seenYears.add(it.inntektsaar) }
-                    .map(::SkattekortDTO)
+                SkattekortRepository
+                    .findAllByPersonId(
+                        tx,
+                        person.id!!,
+                        inntektsaar?.toInt(),
+                        adminRole = false,
+                    ).map(::SkattekortDTO)
             }.toList()
     }
 

@@ -1,16 +1,9 @@
 package no.nav.sokos.skattekort.security
 
-import kotlin.time.Clock
-
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
-import io.ktor.server.request.path
-import io.ktor.server.response.respond
 import mu.KotlinLogging
-
-import no.nav.sokos.skattekort.config.ApiError
 
 private val logger = KotlinLogging.logger {}
 
@@ -45,10 +38,10 @@ object AuthorizationGuard {
      * Require a specific scope (OBO token) OR a specific role (M2M token).
      * Returns true if authorized, false (and sends 403) if not.
      */
-    suspend fun ApplicationCall.requireScopeOrRole(scopeOrRole: String): Boolean {
+    fun ApplicationCall.requireScopeOrRole(scopeOrRole: String) {
         val principal =
             principal<JWTPrincipal>()
-                ?: throw IllegalStateException("No principal found - authentication not configured")
+                ?: throw AuthenticationException("No principal found - authentication not configured")
 
         val callingSystem = getCallingSystem()
 
@@ -60,14 +53,14 @@ object AuthorizationGuard {
                 ?.split(" ") ?: emptyList()
         if (AccessPolicy.hasRequiredScope(scopes, scopeOrRole)) {
             logger.debug { "Authorized: '$callingSystem' with OBO token has required scope '$scopeOrRole'" }
-            return true
+            return
         }
 
         // Check M2M token role
         val roles = principal.payload.getClaim("roles")?.asList(String::class.java) ?: emptyList()
         if (AccessPolicy.hasRequiredRole(roles, scopeOrRole)) {
             logger.debug { "Authorized: '$callingSystem' with M2M token has required role '$scopeOrRole'" }
-            return true
+            return
         }
 
         // Neither scope nor role found
@@ -75,27 +68,18 @@ object AuthorizationGuard {
             "Authorization failed: '$callingSystem' missing required scope/role '$scopeOrRole'. " +
                 "Found scopes: $scopes, roles: $roles"
         }
-        respond(
-            HttpStatusCode.Forbidden,
-            ApiError(
-                timestamp = Clock.System.now(),
-                status = HttpStatusCode.Forbidden.value,
-                error = "Forbidden",
-                message = "Missing required permission: $scopeOrRole",
-                path = this.request.path(),
-            ),
-        )
-        return false
+
+        throw AuthorizationException("Missing required scope or role: $scopeOrRole")
     }
 
     /**
      * Require a specific scope (OBO token only).
      * Returns true if authorized, false (and sends 403) if not.
      */
-    suspend fun ApplicationCall.requireScope(requiredScope: String): Boolean {
+    fun ApplicationCall.requireScope(requiredScope: String) {
         val principal =
             principal<JWTPrincipal>()
-                ?: throw IllegalStateException("No principal found - authentication not configured")
+                ?: throw AuthenticationException("No principal found - authentication not configured")
 
         val callingSystem = getCallingSystem()
         val scopes =
@@ -108,31 +92,20 @@ object AuthorizationGuard {
             logger.warn {
                 "Authorization failed: '$callingSystem' missing required scope '$requiredScope'. Found scopes: $scopes"
             }
-            respond(
-                HttpStatusCode.Forbidden,
-                ApiError(
-                    timestamp = Clock.System.now(),
-                    status = HttpStatusCode.Forbidden.value,
-                    error = "Forbidden",
-                    message = "Missing required scope: $requiredScope",
-                    path = this.request.path(),
-                ),
-            )
-            return false
+            throw AuthorizationException("Missing required scope: $requiredScope")
         }
 
         logger.debug { "Authorized: '$callingSystem' has required scope '$requiredScope'" }
-        return true
     }
 
     /**
      * Require a specific role (M2M token only).
      * Returns true if authorized, false (and sends 403) if not.
      */
-    suspend fun ApplicationCall.requireRole(requiredRole: String): Boolean {
+    fun ApplicationCall.requireRole(requiredRole: String) {
         val principal =
             principal<JWTPrincipal>()
-                ?: throw IllegalStateException("No principal found - authentication not configured")
+                ?: throw AuthenticationException("No principal found - authentication not configured")
 
         val callingSystem = getCallingSystem()
         val roles = principal.payload.getClaim("roles")?.asList(String::class.java) ?: emptyList()
@@ -141,20 +114,18 @@ object AuthorizationGuard {
             logger.warn {
                 "Authorization failed: '$callingSystem' missing required role '$requiredRole'. Found roles: $roles"
             }
-            respond(
-                HttpStatusCode.Forbidden,
-                ApiError(
-                    timestamp = Clock.System.now(),
-                    status = HttpStatusCode.Forbidden.value,
-                    error = "Forbidden",
-                    message = "Missing required role: $requiredRole",
-                    path = this.request.path(),
-                ),
-            )
-            return false
+
+            throw AuthorizationException("Missing required role: $requiredRole")
         }
 
         logger.debug { "Authorized: '$callingSystem' has required role '$requiredRole'" }
-        return true
     }
 }
+
+class AuthorizationException(
+    override val message: String,
+) : Exception(message)
+
+class AuthenticationException(
+    override val message: String,
+) : Exception(message)

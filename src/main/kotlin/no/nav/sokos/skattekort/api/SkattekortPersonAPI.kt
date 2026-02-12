@@ -29,7 +29,7 @@ import no.nav.sokos.skattekort.security.Saksbehandler
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1/person") {
         post("hent-skattekort") {
-            // if(!call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
+            // call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             call.respond(
@@ -37,7 +37,7 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             )
         }
         post("sjekk") {
-            // if(!call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
+            // call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)
             if (PropertiesConfig.getApplicationProperties().environment != PropertiesConfig.Environment.PROD) {
                 val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
                 val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
@@ -55,7 +55,7 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
         }
 
         post("opprett") {
-            // if(!call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
+            // call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)
             val request = call.receive<OpprettSkattekortRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             val id =
@@ -72,7 +72,7 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
 fun Route.deprecatedSkattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1") {
         post("hent-skattekort") {
-            // if(!call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)) return@post
+            // call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             call.respond(

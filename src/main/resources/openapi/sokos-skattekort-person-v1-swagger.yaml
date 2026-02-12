@@ -20,7 +20,7 @@ paths:
       tags:
         - skattekort
       summary: Hente skattekort for person
-      description: Returnerer skattekort for person
+      description: Returnerer siste skattekort for hvert inntektsår
       operationId: hentSkattekortPerson
 
       requestBody:
@@ -156,7 +156,6 @@ components:
               - oppholdPaaSvalbard
               - kildeskattPaaPensjon
               - oppholdITiltakssone
-              - kildeskattPaaLoenn
       required:
         - inntektsaar
         - forskuddstrekkList

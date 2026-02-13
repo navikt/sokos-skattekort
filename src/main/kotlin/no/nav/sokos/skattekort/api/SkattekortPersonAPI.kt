@@ -17,8 +17,9 @@ import io.ktor.server.routing.route
 
 import no.nav.sokos.skattekort.api.SkattekortPersonAPI.authorizeAndGetOptionalSaksbehandler
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.dto.SkattekortDTO
+import no.nav.sokos.skattekort.dto.validTilleggsopplysningList
+import no.nav.sokos.skattekort.dto.validTrekkodeList
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
@@ -35,24 +36,9 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
             call.respond(
-                skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                skattekortPersonService
+                    .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
             )
-        }
-        post("sjekk") {
-            if (PropertiesConfig.getApplicationProperties().environment != PropertiesConfig.Environment.PROD) {
-                val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
-                val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
-                call.respond(
-                    skattekortPersonService
-                        .hentSkattekortPerson(
-                            skattekortPersonRequest.fnr,
-                            skattekortPersonRequest.inntektsaar,
-                            saksbehandler,
-                        ).isNotEmpty(),
-                )
-            } else {
-                call.respond(HttpStatusCode.NotAcceptable)
-            }
         }
 
         post("opprett") {
@@ -120,15 +106,26 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
     validate<OpprettSkattekortRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
-
             try {
-                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) != null
-                request.skattekort.forskuddstrekkList
-                    .map { it.toDomainForskuddstrekk() }
-                false
+                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) == null
             } catch (e: Exception) {
                 true
-            } -> ValidationResult.Invalid("ugyldige verdier i skattekort-json.")
+            } -> ValidationResult.Invalid("Ugyldig ResultatForSkattekort, lovlige verdier er: ${ResultatForSkattekort.entries.joinToString { it.value }} .")
+
+            try {
+                request.skattekort.forskuddstrekkList
+                    .map { it.toDomainForskuddstrekk() }
+                    .map { it.trekkode() }
+                    .any { trekkode -> trekkode !in validTrekkodeList }
+            } catch (e: Exception) {
+                true
+            } -> ValidationResult.Invalid("Ugyldige trekkode. Lovlige verdier er ${validTrekkodeList.joinToString { it.value }}.")
+
+            try {
+                request.skattekort.tilleggsopplysningList.any { opplysning -> opplysning !in validTilleggsopplysningList }
+            } catch (e: Exception) {
+                true
+            } -> ValidationResult.Invalid("Ugyldig tilleggsopplysning. Lovlige verdier er ${validTilleggsopplysningList.joinToString()}.")
 
             else -> ValidationResult.Valid
         }

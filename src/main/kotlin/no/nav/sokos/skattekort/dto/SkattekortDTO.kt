@@ -142,3 +142,17 @@ data class TabellkortDTO(
     val prosentSats: Double,
     val antallMndForTrekk: Double,
 )
+
+val validTrekkodeList =
+    listOf(
+        Trekkode.LOENN_FRA_NAV,
+        Trekkode.PENSJON_FRA_NAV,
+        Trekkode.UFOERETRYGD_FRA_NAV,
+    )
+
+val validTilleggsopplysningList =
+    listOf(
+        Tilleggsopplysning.OPPHOLD_PAA_SVALBARD.value,
+        Tilleggsopplysning.KILDESKATT_PAA_PENSJON.value,
+        Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE.value,
+    )

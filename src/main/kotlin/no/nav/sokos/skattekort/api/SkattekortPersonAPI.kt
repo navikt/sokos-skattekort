@@ -107,17 +107,26 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
     validate<OpprettSkattekortRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
-
             try {
-                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) == null ||
-                    request.skattekort.forskuddstrekkList
-                        .map { it.toDomainForskuddstrekk() }
-                        .map { it.trekkode() }
-                        .any { trekkode -> trekkode !in validTrekkoder } ||
-                    request.skattekort.tilleggsopplysningList.any { opplysning -> opplysning !in validTilleggsopplysning }
+                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) == null
             } catch (e: Exception) {
                 true
-            } -> ValidationResult.Invalid("ugyldige verdier i skattekort-json.")
+            } -> ValidationResult.Invalid("Ugyldig ResultatForSkattekort, lovlige verdier er: ${ResultatForSkattekort.entries.joinToString { it.value }} .")
+
+            try {
+                request.skattekort.forskuddstrekkList
+                    .map { it.toDomainForskuddstrekk() }
+                    .map { it.trekkode() }
+                    .any { trekkode -> trekkode !in validTrekkoder }
+            } catch (e: Exception) {
+                true
+            } -> ValidationResult.Invalid("Ugyldige trekkode. Lovlige verdier er ${validTrekkoder.joinToString { it.value }}.")
+
+            try {
+                request.skattekort.tilleggsopplysningList.any { opplysning -> opplysning !in validTilleggsopplysning }
+            } catch (e: Exception) {
+                true
+            } -> ValidationResult.Invalid("Ugyldig tilleggsopplysning. Lovlige verdier er ${validTilleggsopplysning.joinToString()}.")
 
             else -> ValidationResult.Valid
         }

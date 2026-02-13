@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.pdl
+package no.nav.sokos.skattekort.infrastructure.pdl
 
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
@@ -12,7 +12,7 @@ import io.ktor.http.HttpStatusCode
 
 import no.nav.pdl.enums.IdentGruppe
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.WiremockListener
+import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 internal class PdlClientServiceTest :
@@ -21,7 +21,7 @@ internal class PdlClientServiceTest :
 
         val pdlClientService: PdlClientService by lazy {
             PdlClientService(
-                client = createHttpClient(),
+                httpClient = createHttpClient(),
                 pdlUrl = WiremockListener.wiremock.baseUrl(),
                 azuredTokenClient = WiremockListener.azuredTokenClient,
             )

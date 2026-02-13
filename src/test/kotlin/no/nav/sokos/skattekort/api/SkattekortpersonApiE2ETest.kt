@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.config.ApiError
-import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository

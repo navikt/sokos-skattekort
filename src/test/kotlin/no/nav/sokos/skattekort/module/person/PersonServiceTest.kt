@@ -18,11 +18,11 @@ import no.nav.pdl.enums.IdentGruppe
 import no.nav.pdl.hentidenterbolk.HentIdenterBolkResult
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.WiremockListener
-import no.nav.sokos.skattekort.infrastructure.WiremockListener.generatePDLResponse
-import no.nav.sokos.skattekort.pdl.GraphQLResponse
-import no.nav.sokos.skattekort.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.pdl.GraphQLResponse
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.WiremockListener
+import no.nav.sokos.skattekort.listener.WiremockListener.generatePDLResponse
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class PersonServiceTest :
@@ -31,7 +31,7 @@ class PersonServiceTest :
 
         val pdlClientService: PdlClientService by lazy {
             PdlClientService(
-                client = createHttpClient(),
+                httpClient = createHttpClient(),
                 pdlUrl = WiremockListener.wiremock.baseUrl(),
                 azuredTokenClient = WiremockListener.azuredTokenClient,
             )

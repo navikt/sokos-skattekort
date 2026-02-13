@@ -4,7 +4,9 @@ import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
 import com.expediagroup.graphql.plugin.gradle.tasks.GraphQLGenerateClientTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
     kotlin("jvm") version "2.3.0"
@@ -13,6 +15,7 @@ plugins {
     id("org.jetbrains.kotlinx.kover") version "0.9.5"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "8.8.1"
+    id("org.openapi.generator") version "7.19.0"
 
     application
 }
@@ -181,15 +184,18 @@ kotlin {
 tasks {
     named("runKtlintCheckOverMainSourceSet").configure {
         dependsOn("graphqlGenerateClient")
+        dependsOn("openApiGenerate")
     }
 
     named("runKtlintFormatOverMainSourceSet").configure {
         dependsOn("graphqlGenerateClient")
+        dependsOn("openApiGenerate")
     }
 
     withType<KotlinCompile>().configureEach {
         dependsOn("ktlintFormat")
         dependsOn("graphqlGenerateClient")
+        dependsOn("openApiGenerate")
     }
 
     withType<KoverReport>().configureEach {
@@ -211,6 +217,31 @@ tasks {
         queryFileDirectory.set(file("$projectDir/src/main/resources/graphql"))
         outputDirectory.set(file("$projectDir/build/generated/sources/graphql/main"))
         serializer = GraphQLSerializer.KOTLINX
+    }
+
+    withType<GenerateTask>().configureEach {
+        generatorName.set("kotlin")
+        inputSpec.set("$rootDir/src/main/resources/tilgangsmaskinen/openapi.json")
+        outputDir.set("${layout.buildDirectory.get()}/generated")
+        modelPackage.set("no.nav.tilgangsmaskinen")
+        generateApiTests.set(false)
+        generateModelTests.set(false)
+        configOptions.set(
+            mapOf(
+                "library" to "jvm-ktor",
+                "serializationLibrary" to "kotlinx_serialization",
+            ),
+        )
+        globalProperties.set(
+            mapOf(
+                "models" to "",
+            ),
+        )
+        typeMappings.set(
+            mapOf(
+                "URI" to "kotlin.String",
+            ),
+        )
     }
 
     withType<Test>().configureEach {

@@ -10,7 +10,7 @@ import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.util.SQLUtils.withTx
 

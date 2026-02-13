@@ -5,9 +5,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.WiremockListener
-import no.nav.sokos.skattekort.infrastructure.WiremockListener.wiremockPDLStub
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.WiremockListener
+import no.nav.sokos.skattekort.listener.WiremockListener.wiremockPDLStub
 import no.nav.sokos.skattekort.module.person.Audit
 import no.nav.sokos.skattekort.module.person.AuditRepository
 import no.nav.sokos.skattekort.module.person.AuditTag
@@ -16,7 +17,6 @@ import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
-import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
@@ -26,7 +26,7 @@ class IdentifikatorEndringServiceTest :
 
         val pdlClientService: PdlClientService by lazy {
             PdlClientService(
-                client = createHttpClient(),
+                httpClient = createHttpClient(),
                 pdlUrl = WiremockListener.wiremock.baseUrl(),
                 azuredTokenClient = WiremockListener.azuredTokenClient,
             )

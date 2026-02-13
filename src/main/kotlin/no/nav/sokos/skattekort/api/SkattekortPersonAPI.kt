@@ -18,8 +18,8 @@ import io.ktor.server.routing.route
 import no.nav.sokos.skattekort.api.SkattekortPersonAPI.authorizeAndGetOptionalSaksbehandler
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.dto.SkattekortDTO
-import no.nav.sokos.skattekort.dto.validTilleggsopplysning
-import no.nav.sokos.skattekort.dto.validTrekkoder
+import no.nav.sokos.skattekort.dto.validTilleggsopplysningList
+import no.nav.sokos.skattekort.dto.validTrekkodeList
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
@@ -116,16 +116,16 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
                 request.skattekort.forskuddstrekkList
                     .map { it.toDomainForskuddstrekk() }
                     .map { it.trekkode() }
-                    .any { trekkode -> trekkode !in validTrekkoder }
+                    .any { trekkode -> trekkode !in validTrekkodeList }
             } catch (e: Exception) {
                 true
-            } -> ValidationResult.Invalid("Ugyldige trekkode. Lovlige verdier er ${validTrekkoder.joinToString { it.value }}.")
+            } -> ValidationResult.Invalid("Ugyldige trekkode. Lovlige verdier er ${validTrekkodeList.joinToString { it.value }}.")
 
             try {
-                request.skattekort.tilleggsopplysningList.any { opplysning -> opplysning !in validTilleggsopplysning }
+                request.skattekort.tilleggsopplysningList.any { opplysning -> opplysning !in validTilleggsopplysningList }
             } catch (e: Exception) {
                 true
-            } -> ValidationResult.Invalid("Ugyldig tilleggsopplysning. Lovlige verdier er ${validTilleggsopplysning.joinToString()}.")
+            } -> ValidationResult.Invalid("Ugyldig tilleggsopplysning. Lovlige verdier er ${validTilleggsopplysningList.joinToString()}.")
 
             else -> ValidationResult.Valid
         }

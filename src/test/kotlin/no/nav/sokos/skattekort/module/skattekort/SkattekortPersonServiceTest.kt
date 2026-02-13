@@ -12,7 +12,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.audit.AuditLogger
-import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
 

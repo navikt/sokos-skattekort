@@ -1,10 +1,5 @@
 package no.nav.sokos.skattekort.module.status
 
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -135,22 +130,13 @@ class StatusServiceTest :
     )
 
 fun aSkattekort(
-    id: Long,
     personId: Long,
-    inntektsaar: Int = now().year,
-    opprettet: LocalDateTime = now(),
-    identifikator: String = "1",
-    utstedtDato: LocalDate = now().date,
+    inntektsaar: Int,
 ) = aDbSkattekort(
-    id = id,
+    id = 10015752,
     personId = personId,
-    utstedtDato = utstedtDato.toString(),
-    identifikator = identifikator,
+    utstedtDato = "2024-12-05",
+    identifikator = "1085419887",
     inntektsaar = inntektsaar,
-    opprettet = opprettet.toString(),
+    opprettet = "2025-12-19 15:52:47.833756",
 )
-
-fun now() =
-    kotlin.time.Clock.System
-        .now()
-        .toLocalDateTime(TimeZone.currentSystemDefault())

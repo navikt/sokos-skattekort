@@ -1116,32 +1116,33 @@ class BestillingServiceTest :
         test("Vi skal kunne parse skattekort med utløpt d-nummer") {
             val arbeidstaker =
                 Json.decodeFromString<Arbeidstaker>(
-                    """        {
-          "arbeidstakeridentifikator": "67853500256",
-          "resultatForSkattekort": "utgaattDnummerSkattekortForFoedselsnummerErLevert",
-          "skattekort": {
-            "utstedtDato": "2025-10-16",
-            "skattekortidentifikator": 53112,
-            "forskuddstrekk": [
-              {
-                "trekkode": "pensjon",
-                "trekkprosent": {
-                  "prosentsats": 36,
-                  "antallMaanederForTrekk": 11
-                }
-              },
-              {
-                "trekkode": "pensjonFraNAV",
-                "trekkprosent": {
-                  "prosentsats": 36,
-                  "antallMaanederForTrekk": 11
-                }
-              }
-            ]
-          },
-          "inntektsaar": 2025
-        }
-""",
+                    """        
+                            {
+                              "arbeidstakeridentifikator": "67853500256",
+                              "resultatForSkattekort": "utgaattDnummerSkattekortForFoedselsnummerErLevert",
+                              "skattekort": {
+                                "utstedtDato": "2025-10-16",
+                                "skattekortidentifikator": 53112,
+                                "forskuddstrekk": [
+                                  {
+                                    "trekkode": "pensjon",
+                                    "trekkprosent": {
+                                      "prosentsats": 36,
+                                      "antallMaanederForTrekk": 11
+                                    }
+                                  },
+                                  {
+                                    "trekkode": "pensjonFraNAV",
+                                    "trekkprosent": {
+                                      "prosentsats": 36,
+                                      "antallMaanederForTrekk": 11
+                                    }
+                                  }
+                                ]
+                              },
+                              "inntektsaar": 2025
+                            }
+                            """,
                 )
             val skattekort = Skattekort(PersonId(0), arbeidstaker)
             skattekort.forskuddstrekkList shouldHaveSize 2

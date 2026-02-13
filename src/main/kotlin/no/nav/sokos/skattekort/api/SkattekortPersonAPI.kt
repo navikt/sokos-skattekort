@@ -37,8 +37,7 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
             call.respond(
                 skattekortPersonService
-                    .hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler)
-                    .distinctBy { it.inntektsaar },
+                    .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
             )
         }
 

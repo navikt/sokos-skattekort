@@ -191,7 +191,7 @@ object SkattekortRepository {
     fun findLatestByPersonId(
         tx: TransactionalSession,
         personId: PersonId,
-        inntektsaar: Int?,
+        inntektsaar: Int,
         adminRole: Boolean,
     ): Skattekort = findAllByPersonId(tx, personId, inntektsaar, adminRole).first()
 

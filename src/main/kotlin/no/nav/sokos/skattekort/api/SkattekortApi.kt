@@ -15,7 +15,9 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScopeOrRole
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.security.Scope
 
 private val logger = KotlinLogging.logger { }
 
@@ -27,7 +29,7 @@ fun Route.skattekortApi(
 ) {
     route(BASE_PATH) {
         post("bestille") {
-            // call.requireScopeOrRole(Scope.UTBETALINGSPORTALEN_READ.value)
+            call.requireScopeOrRole(Scope.BASIC_READ.value)
             val request = call.receive<ForespoerselRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 

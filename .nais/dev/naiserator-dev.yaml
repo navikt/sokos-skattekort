@@ -52,23 +52,24 @@ spec:
           namespace: nais
           permissions:
             scopes:
-              - "spk-mottak.admin"
+              - "basic.read"
             roles:
-              - "leveattester.read"
+              - "skattekort.read"
+              - "skattekort.write"
         - application: sokos-up-skattekort-ssr
         - application: sokos-utbetalingsportalen
           permissions:
             scopes:
-              - "utbetalingsportalen.read"
+              - "basic.read"
         - application: sokos-dare-poc
           permissions:
             roles:
-              - "dare-poc.read"
+              - "skattekort.read"
         - application: saas-proxy
           namespace: teamcrm
           permissions:
             - roles:
-                - "saas-proxy.read"
+                - "skattekort.read"
         - application: saas-proxy
           namespace: platforce
         - application: testnav-dolly-proxy-trygdeetaten
@@ -76,7 +77,8 @@ spec:
           namespace: dolly
           permissions:
             - roles:
-                - "dolly-proxy.read"
+                - "skattekort.read"
+                - "skattekort.write"
     outbound:
       rules:
         - application: logging

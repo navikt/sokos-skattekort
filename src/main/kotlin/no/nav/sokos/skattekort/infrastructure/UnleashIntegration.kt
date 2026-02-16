@@ -21,19 +21,19 @@ class UnleashIntegration(
     private val unleashProps = PropertiesConfig.getUnleashProperties()
 
     // Kill switcher:
-    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", true)
+    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled")
 
-    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled", true)
+    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled")
 
-    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled", true)
+    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled")
 
-    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled", true)
+    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled")
 
-    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled", true)
+    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled")
 
-    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.lagre-mottatte-bestillinger.enabled", false)
+    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.lagre-mottatte-bestillinger.enabled")
 
-    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled", true)
+    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled")
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST) {
@@ -46,7 +46,6 @@ class UnleashIntegration(
                     .instanceId(appProperties.podName)
                     .unleashAPI(unleashProps.unleashAPI + "/api/")
                     .apiKey(unleashProps.apiKey)
-                    .environment(unleashProps.environment)
                     .synchronousFetchOnInitialisation(true)
                     .subscriber(
                         object : UnleashSubscriber {

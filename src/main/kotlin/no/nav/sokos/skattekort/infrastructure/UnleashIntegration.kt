@@ -37,7 +37,16 @@ class UnleashIntegration(
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST) {
-            unleashClient = FakeUnleash().also { it.disable("sokos-skattekort.lagre-mottatte-bestillinger.enabled") }
+            unleashClient =
+                FakeUnleash().also { fakeUnleash ->
+                    fakeUnleash.enable("sokos-skattekort.forespoersel-listener.enabled")
+                    fakeUnleash.enable("sokos-skattekort.utsendinger.enabled")
+                    fakeUnleash.enable("sokos-skattekort.bestillinger.enabled")
+                    fakeUnleash.enable("sokos-skattekort.oppdateringer.enabled")
+                    fakeUnleash.enable("sokos-skattekort.bevisforsending.enabled")
+                    fakeUnleash.enable("sokos-skattekort.forespoerselinput.enabled")
+                    fakeUnleash.disable("sokos-skattekort.lagre-mottatte-bestillinger.enabled")
+                }
         } else {
             val config =
                 UnleashConfig

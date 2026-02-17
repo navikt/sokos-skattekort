@@ -19,15 +19,15 @@ class AccessPolicyTest :
         context("hasRequiredScope") {
             test("returns true when required scope is present and allowed") {
                 AccessPolicy.hasRequiredScope(
-                    scopes = listOf("other.scope", Scope.BASIC_READ.value),
-                    requiredScope = Scope.BASIC_READ.value,
+                    scopes = listOf("other.scope", Scope.HENT_SCOPE.value),
+                    requiredScope = Scope.HENT_SCOPE.value,
                 ) shouldBe true
             }
 
             test("returns false when required scope is missing") {
                 AccessPolicy.hasRequiredScope(
                     scopes = listOf("other.scope"),
-                    requiredScope = Scope.BASIC_READ.value,
+                    requiredScope = Scope.HENT_SCOPE.value,
                 ) shouldBe false
             }
 
@@ -41,7 +41,7 @@ class AccessPolicyTest :
             test("returns false when scopes list is empty") {
                 AccessPolicy.hasRequiredScope(
                     scopes = emptyList(),
-                    requiredScope = Scope.BASIC_READ.value,
+                    requiredScope = Scope.HENT_SCOPE.value,
                 ) shouldBe false
             }
         }
@@ -49,15 +49,15 @@ class AccessPolicyTest :
         context("hasRequiredRole") {
             test("returns true when required role is present and allowed") {
                 AccessPolicy.hasRequiredRole(
-                    roles = listOf("other.role", Role.SKATTEKORT_READ.value),
-                    requiredRole = Role.SKATTEKORT_READ.value,
+                    roles = listOf("other.role", Role.HENT_ROLE.value),
+                    requiredRole = Role.HENT_ROLE.value,
                 ) shouldBe true
             }
 
             test("returns false when required role is missing") {
                 AccessPolicy.hasRequiredRole(
                     roles = listOf("other.role"),
-                    requiredRole = Role.SKATTEKORT_READ.value,
+                    requiredRole = Role.HENT_ROLE.value,
                 ) shouldBe false
             }
 
@@ -71,7 +71,7 @@ class AccessPolicyTest :
             test("returns false when roles list is empty") {
                 AccessPolicy.hasRequiredRole(
                     roles = emptyList(),
-                    requiredRole = Role.SKATTEKORT_READ.value,
+                    requiredRole = Role.HENT_ROLE.value,
                 ) shouldBe false
             }
         }

@@ -52,33 +52,39 @@ spec:
           namespace: nais
           permissions:
             scopes:
-              - "basic.read"
+              - "bestille-scope"
+              - "hent-scope"
+              - "status-scope"
+              - "opprett-scope"
             roles:
-              - "skattekort.read"
-              - "skattekort.write"
+              - "bestille-role"
+              - "hent-role"
         - application: sokos-up-skattekort-ssr
+          permissions:
+            scopes:
+              - "hent-scope"
         - application: sokos-utbetalingsportalen
           permissions:
             scopes:
-              - "basic.read"
+              - "bestille-scope"
+              - "status-scope"
         - application: sokos-dare-poc
           permissions:
             roles:
-              - "skattekort.read"
-        - application: saas-proxy
-          namespace: teamcrm
-          permissions:
-            - roles:
-                - "skattekort.read"
+              - "hent-role"
+              - "bestille-role"
         - application: saas-proxy
           namespace: platforce
+          permissions:
+            scopes:
+              - "hent-scope"
         - application: testnav-dolly-proxy-trygdeetaten
           cluster: dev-fss
           namespace: dolly
           permissions:
-            - roles:
-                - "skattekort.read"
-                - "skattekort.write"
+            roles:
+              - "opprett-role"
+              - "hent-role"
     outbound:
       rules:
         - application: logging

@@ -181,6 +181,20 @@ fun aDbSkattekort(
     VALUES ($id, $personId, '$utstedtDato', '$identifikator', $inntektsaar, '$kilde', '$opprettet', '${resultatForSkattekort.value}', $generertFra);
     """.trimIndent()
 
+fun aDbForskuddstrekk(
+    id: Long,
+    skattekortId: Long,
+    type: String,
+    trekkode: Trekkode,
+    prosentSats: Double? = null,
+    antMndForTrekk: Double? = null,
+    tabellNummer: String? = null,
+    frikortbeløp: Int? = null,
+) = """
+    INSERT INTO forskuddstrekk (id, skattekort_id, type, trekk_kode, prosentsats, antall_mnd_for_trekk, tabell_nummer, frikort_beloep)
+    VALUES ($id, $skattekortId, '$type', '${trekkode.value}', ${prosentSats ?: "NULL"}, ${antMndForTrekk ?: "NULL"}, ${tabellNummer?.let { "'$it'" } ?: "NULL"}, ${frikortbeløp ?: "NULL"});
+    """.trimIndent()
+
 fun toBestillSkattekortResponse(json: String) =
     Json.decodeFromString(
         no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse

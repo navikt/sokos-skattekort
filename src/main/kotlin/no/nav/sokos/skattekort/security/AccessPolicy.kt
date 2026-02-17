@@ -7,7 +7,10 @@ package no.nav.sokos.skattekort.security
 enum class Scope(
     val value: String,
 ) {
-    BASIC_READ("basic.read"),
+    BESTILLE_SCOPE("bestille-scope"),
+    STATUS_SCOPE("status-scope"),
+    HENT_SCOPE("hent-scope"),
+    OPPRETT_SCOPE("opprett-scope"),
     ;
 
     override fun toString() = value
@@ -19,8 +22,8 @@ enum class Scope(
 enum class Role(
     val value: String,
 ) {
-    SKATTEKORT_READ("skattekort.read"),
-    SKATTEKORT_WRITE("skattekort.write"),
+    BESTILLE_ROLE("bestille-role"),
+    HENT_ROLE("hent-role"),
     ;
 
     override fun toString() = value

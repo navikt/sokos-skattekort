@@ -56,13 +56,13 @@ fun Application.commonConfig() {
         filter { call -> call.request.path().startsWith("/api") }
         disableDefaultColors()
     }
+    install(StatusPages) {
+        statusPageConfig()
+    }
     install(ContentNegotiation) {
         json(
             jsonConfig,
         )
-    }
-    install(StatusPages) {
-        statusPageConfig()
     }
     install(RequestValidation) {
         requestValidationSkattekortConfig()

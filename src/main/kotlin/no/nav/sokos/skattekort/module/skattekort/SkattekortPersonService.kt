@@ -26,6 +26,12 @@ class SkattekortPersonService(
     val personService: PersonService,
     private val auditLogger: AuditLogger,
 ) {
+    fun hentSingleSkattekortForEachYear(
+        fnr: String,
+        inntektsaar: Short? = null,
+        saksbehandler: Saksbehandler? = null,
+    ) = hentSkattekortPerson(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
+
     fun hentSkattekortPerson(
         fnr: String,
         inntektsaar: Short? = null,

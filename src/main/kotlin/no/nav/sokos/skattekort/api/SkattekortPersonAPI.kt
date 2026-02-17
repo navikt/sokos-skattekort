@@ -14,8 +14,9 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.dto.SkattekortDTO
+import no.nav.sokos.skattekort.dto.validTilleggsopplysningList
+import no.nav.sokos.skattekort.dto.validTrekkodeList
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
@@ -24,7 +25,8 @@ import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isVal
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidForsystem
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
-import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScopeOrRole
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
@@ -32,33 +34,17 @@ import no.nav.sokos.skattekort.security.Scope
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1/person") {
         post("hent-skattekort") {
-            call.requireScopeOrRole(Scope.BASIC_READ.value)
+            call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             call.respond(
-                skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                skattekortPersonService
+                    .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
             )
-        }
-        post("sjekk") {
-            call.requireScopeOrRole(Scope.BASIC_READ.value)
-            if (PropertiesConfig.getApplicationProperties().environment != PropertiesConfig.Environment.PROD) {
-                val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
-                val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-                call.respond(
-                    skattekortPersonService
-                        .hentSkattekortPerson(
-                            skattekortPersonRequest.fnr,
-                            skattekortPersonRequest.inntektsaar,
-                            saksbehandler,
-                        ).isNotEmpty(),
-                )
-            } else {
-                call.respond(HttpStatusCode.NotAcceptable)
-            }
         }
 
         post("opprett") {
-            call.requireScopeOrRole(Role.SKATTEKORT_WRITE.value)
+            call.requireScope(Scope.OPPRETT_SCOPE)
             val request = call.receive<OpprettSkattekortRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             val id =
@@ -75,7 +61,7 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
 fun Route.deprecatedSkattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1") {
         post("hent-skattekort") {
-            call.requireScopeOrRole(Scope.BASIC_READ.value)
+            call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             call.respond(
@@ -124,14 +110,26 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
     validate<OpprettSkattekortRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> ValidationResult.Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
-
             try {
-                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) != null
-                request.skattekort.forskuddstrekkList.forEach { it.toDomainForskuddstrekk() }
-                false
+                request.skattekort.resultatForSkattekort?.let(ResultatForSkattekort::fromValue) == null
             } catch (e: Exception) {
                 true
-            } -> ValidationResult.Invalid("ugyldige verdier i skattekort-json.")
+            } -> ValidationResult.Invalid("Ugyldig ResultatForSkattekort, lovlige verdier er: ${ResultatForSkattekort.entries.joinToString { it.value }} .")
+
+            try {
+                request.skattekort.forskuddstrekkList
+                    .map { it.toDomainForskuddstrekk() }
+                    .map { it.trekkode() }
+                    .any { trekkode -> trekkode !in validTrekkodeList }
+            } catch (e: Exception) {
+                true
+            } -> ValidationResult.Invalid("Ugyldige trekkode. Lovlige verdier er ${validTrekkodeList.joinToString { it.value }}.")
+
+            try {
+                request.skattekort.tilleggsopplysningList.any { opplysning -> opplysning !in validTilleggsopplysningList }
+            } catch (e: Exception) {
+                true
+            } -> ValidationResult.Invalid("Ugyldig tilleggsopplysning. Lovlige verdier er ${validTilleggsopplysningList.joinToString()}.")
 
             else -> ValidationResult.Valid
         }

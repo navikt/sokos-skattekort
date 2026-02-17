@@ -49,10 +49,15 @@ spec:
     inbound:
       rules:
         - application: sokos-utbetalingsportalen
-        - application: saas-proxy
-          namespace: teamcrm
+          permissions:
+            scopes:
+              - "bestille-scope"
+              - "status-scope"
         - application: saas-proxy
           namespace: platforce
+          permissions:
+            scopes:
+              - "hent-scope"
     outbound:
       rules:
         - application: logging

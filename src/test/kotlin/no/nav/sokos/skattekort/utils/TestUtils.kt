@@ -67,7 +67,11 @@ object TestUtils {
                     .issueToken(
                         issuerId = "default",
                         claims =
-                            mapOf<kotlin.String, kotlin.String>(JWT_CLAIM_NAVIDENT to "aUser"),
+                            mapOf(
+                                JWT_CLAIM_NAVIDENT to "aUser",
+                                // JWT_CLAIM_ROLES to Role.entries.toTypedArray(),
+                                // JWT_CLAIM_SCOPES to Scope.entries.joinToString(" ") { it.name },
+                            ),
                     ).serialize()
 
             testApplication {

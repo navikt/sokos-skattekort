@@ -6,6 +6,8 @@ import io.ktor.server.auth.principal
 import mu.KotlinLogging
 
 const val JWT_CLAIM_NAVIDENT = "NAVident"
+const val JWT_CLAIM_ROLES = "roles"
+const val JWT_CLAIM_SCOPES = "scp"
 
 private val logger = KotlinLogging.logger {}
 
@@ -14,9 +16,6 @@ private val logger = KotlinLogging.logger {}
  * Validates scopes (OBO tokens) and roles (M2M tokens) for endpoints.
  */
 object AuthorizationGuard {
-    private const val CLAIM_SCOPES = "scp"
-    private const val CLAIM_ROLES = "roles"
-
     /**
      * Get NAVident from OBO token, or null if M2M token.
      * Use this when you need to handle both OBO and M2M tokens differently.
@@ -40,27 +39,29 @@ object AuthorizationGuard {
      * Require a specific scope (OBO token) OR a specific role (M2M token).
      * Returns true if authorized, false (and sends 403) if not.
      */
-    fun ApplicationCall.requireScopeOrRole(scopeOrRole: String) {
-        val principal = requirePrincipal()
+    fun ApplicationCall.requirePermission(
+        scope: Scope? = null,
+        role: Role? = null,
+    ) {
         val callingSystem = getCallingSystem()
 
-        val scopes = principal.scopes()
-        if (AccessPolicy.hasRequiredScope(scopes, scopeOrRole)) {
-            logger.debug { "Authorized: `$callingSystem` with OBO token has required scope `$scopeOrRole`" }
-            return
+        if (scope == null && role == null) {
+            logger.warn {
+                "Authorization failed: `$callingSystem` missing required scope/role"
+            }
+            throw AuthorizationException("Missing required scope or role")
         }
 
-        val roles = principal.roles()
-        if (AccessPolicy.hasRequiredRole(roles, scopeOrRole)) {
-            logger.debug { "Authorized: `$callingSystem` with M2M token has required role `$scopeOrRole`" }
+        scope?.let { requiredScope ->
+            logger.debug { "Authorized: `$callingSystem` with OBO token has required scope `${requiredScope.value}`" }
+            requireScope(requiredScope)
             return
         }
-
-        logger.warn {
-            "Authorization failed: `$callingSystem` missing required scope/role `$scopeOrRole`. " +
-                "Found scopes: $scopes, roles: $roles"
+        role?.let { requiredRole ->
+            logger.debug { "Authorized: `$callingSystem` with M2M token has required role `${requiredRole.value}`" }
+            requireRole(requiredRole)
+            return
         }
-        throw AuthorizationException("Missing required scope or role: $scopeOrRole")
     }
 
     /**
@@ -68,24 +69,24 @@ object AuthorizationGuard {
      * Returns true if authorized, false (and sends 403) if not.
      */
 
-    fun ApplicationCall.requireScope(requiredScope: String) =
+    fun ApplicationCall.requireScope(requiredScope: Scope) =
         require(
             claimName = "scope",
-            required = requiredScope,
+            required = requiredScope.value,
             values = requirePrincipal().scopes(),
-            has = { scopes -> AccessPolicy.hasRequiredScope(scopes, requiredScope) },
+            has = { scopes -> AccessPolicy.hasRequiredScope(scopes, requiredScope.value) },
         )
 
     /**
      * Require a specific role (M2M token only).
      * Returns true if authorized, false (and sends 403) if not.
      */
-    fun ApplicationCall.requireRole(requiredRole: String) =
+    fun ApplicationCall.requireRole(requiredRole: Role) =
         require(
             claimName = "role",
-            required = requiredRole,
+            required = requiredRole.value,
             values = requirePrincipal().roles(),
-            has = { roles -> AccessPolicy.hasRequiredRole(roles, requiredRole) },
+            has = { roles -> AccessPolicy.hasRequiredRole(roles, requiredRole.value) },
         )
 
     private fun ApplicationCall.require(
@@ -97,20 +98,20 @@ object AuthorizationGuard {
         val callingSystem = getCallingSystem()
         if (!has(values)) {
             logger.warn { "Authorization failed: `$callingSystem` missing required $claimName $required. Found $claimName${if (claimName.endsWith("s")) "" else "s"}: $values" }
-            throw AuthorizationException("Missing required $claimName: $required")
+            throw AuthorizationException("Missing required $claimName")
         }
-        logger.debug { "Authorized: `$callingSystem` has required $claimName `$required`" }
+        logger.debug { "Authorized: `$callingSystem` has required $claimName" }
     }
 
     private fun ApplicationCall.requirePrincipal(): JWTPrincipal = principal<JWTPrincipal>() ?: throw AuthenticationException("No principal found - authentication not configured")
 
     private fun JWTPrincipal.scopes(): List<String> =
         payload
-            .getClaim(CLAIM_SCOPES)
+            .getClaim(JWT_CLAIM_SCOPES)
             ?.asString()
             ?.split(" ") ?: emptyList()
 
-    private fun JWTPrincipal.roles(): List<String> = payload.getClaim(CLAIM_ROLES)?.asList(String::class.java) ?: emptyList()
+    private fun JWTPrincipal.roles(): List<String> = payload.getClaim(JWT_CLAIM_ROLES)?.asList(String::class.java) ?: emptyList()
 }
 
 class AuthorizationException(

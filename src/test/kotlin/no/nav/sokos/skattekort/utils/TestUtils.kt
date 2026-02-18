@@ -10,6 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 
 import io.kotest.assertions.nondeterministic.eventuallyConfig
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.pluginOrNull
@@ -31,14 +32,17 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.module
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT
+import no.nav.sokos.skattekort.security.JWT_CLAIM_ROLES
+import no.nav.sokos.skattekort.security.JWT_CLAIM_SCOPES
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
+import no.nav.sokos.skattekort.security.Role
+import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 object TestUtils {
@@ -57,20 +61,29 @@ object TestUtils {
     }
 
     var authServer: MockOAuth2Server? = null
-    var tokenWithNavIdent: String? = null
+    var oboTokenWithNavIdent: String? = null
+    var m2mTokenWithNavIdent: String? = null
 
     fun withFullTestApplication(thunk: suspend ApplicationTestBuilder.() -> Unit) =
         withMockOAuth2Server {
             authServer = this
-            tokenWithNavIdent =
+            oboTokenWithNavIdent =
                 this
                     .issueToken(
                         issuerId = "default",
                         claims =
                             mapOf(
                                 JWT_CLAIM_NAVIDENT to "aUser",
-                                // JWT_CLAIM_ROLES to Role.entries.toTypedArray(),
-                                // JWT_CLAIM_SCOPES to Scope.entries.joinToString(" ") { it.name },
+                                JWT_CLAIM_SCOPES to Scope.entries.joinToString(" ") { it.value },
+                            ),
+                    ).serialize()
+            m2mTokenWithNavIdent =
+                this
+                    .issueToken(
+                        issuerId = "default",
+                        claims =
+                            mapOf(
+                                JWT_CLAIM_ROLES to Role.entries.map { it.value }.toTypedArray(),
                             ),
                     ).serialize()
 
@@ -83,7 +96,7 @@ object TestUtils {
                 client =
                     createClient {
                         install(ContentNegotiation) {
-                            jsonConfig
+                            json()
                         }
                     }
 

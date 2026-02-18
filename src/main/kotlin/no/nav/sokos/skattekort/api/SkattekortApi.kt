@@ -15,7 +15,9 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
+import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
 
@@ -29,7 +31,7 @@ fun Route.skattekortApi(
 ) {
     route(BASE_PATH) {
         post("bestille") {
-            //  call.requirePermission(scope = Scope.BESTILLE_SCOPE, role = Role.BESTILLE_ROLE)
+            call.requirePermission(requiredScope = Scope.BESTILLE_SCOPE, requiredRole = Role.BESTILLE_ROLE)
             val request = call.receive<ForespoerselRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 

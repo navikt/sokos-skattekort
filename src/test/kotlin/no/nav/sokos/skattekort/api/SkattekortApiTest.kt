@@ -27,7 +27,7 @@ import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils
-import no.nav.sokos.skattekort.utils.TestUtils.tokenWithNavIdent
+import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
 import no.nav.sokos.skattekort.utils.validationReport
 
 @OptIn(ExperimentalTime::class)
@@ -53,7 +53,7 @@ class SkattekortApiTest :
                     val response =
                         client.post("$BASE_PATH/bestille") {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
                     val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
@@ -75,7 +75,7 @@ class SkattekortApiTest :
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -104,7 +104,7 @@ class SkattekortApiTest :
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -131,7 +131,7 @@ class SkattekortApiTest :
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 

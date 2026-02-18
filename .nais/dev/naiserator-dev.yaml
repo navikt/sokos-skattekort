@@ -78,6 +78,11 @@ spec:
           permissions:
             scopes:
               - "hent-scope"
+        - application: saas-proxy
+          namespace: teamcrm
+          permissions:
+            scopes:
+              - "hent-scope"
         - application: testnav-dolly-proxy-trygdeetaten
           cluster: dev-fss
           namespace: dolly

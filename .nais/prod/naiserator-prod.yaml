@@ -58,6 +58,11 @@ spec:
           permissions:
             scopes:
               - "hent-scope"
+        - application: saas-proxy
+          namespace: teamcrm
+          permissions:
+            scopes:
+              - "hent-scope"
     outbound:
       rules:
         - application: logging

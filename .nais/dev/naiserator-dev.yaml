@@ -88,7 +88,7 @@ spec:
           namespace: dolly
           permissions:
             scopes:
-              - "bestille-scope"
+              - "opprett-scope"
               - "hent-scope"
     outbound:
       rules:

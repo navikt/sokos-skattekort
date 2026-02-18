@@ -43,23 +43,17 @@ object AuthorizationGuard {
         requiredScope: Scope,
         requiredRole: Role,
     ) {
-        val principal =
-            principal<JWTPrincipal>() ?: throw AuthenticationException("No principal found - authentication not configured")
         val callingSystem = getCallingSystem()
 
         // Check OBO token scope
-        val scopes =
-            principal.payload
-                .getClaim("scp")
-                ?.asString()
-                ?.split(" ") ?: emptyList()
+        val scopes = requirePrincipal().scopes()
         if (scopes.isNotEmpty() && AccessPolicy.hasRequiredScope(scopes, requiredScope.value)) {
             logger.debug { "Authorized: '$callingSystem' with OBO token has required scope '$scopes'" }
             return
         }
 
         // Check M2M token role
-        val roles = principal.payload.getClaim("roles")?.asList(String::class.java) ?: emptyList()
+        val roles = requirePrincipal().roles()
         if (roles.isNotEmpty() && AccessPolicy.hasRequiredRole(roles, requiredRole.value)) {
             logger.debug { "Authorized: '$callingSystem' with M2M token has required role '$roles'" }
             return
@@ -90,15 +84,13 @@ object AuthorizationGuard {
      * Require a specific role (M2M token only).
      * Returns true if authorized, false (and sends 403) if not.
      */
-    fun ApplicationCall.requireRole(requiredRole: Role) {
-        val test = requirePrincipal().roles()
-        return require(
+    fun ApplicationCall.requireRole(requiredRole: Role) =
+        require(
             claimName = "role",
             required = requiredRole.value,
             values = requirePrincipal().roles(),
             has = { roles -> AccessPolicy.hasRequiredRole(roles, requiredRole.value) },
         )
-    }
 
     private fun ApplicationCall.require(
         claimName: String,

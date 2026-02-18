@@ -53,8 +53,7 @@ class AuthorizationGuardTest :
             val token = generateToken(scopes = Scope.entries.map { it.value }, roles = Role.entries.map { it.value })
             every { call.principal<JWTPrincipal>() } returns token.getPrincipal()
 
-            shouldNotThrowAny { call.requirePermission(scope = Scope.HENT_SCOPE) }
-            shouldNotThrowAny { call.requirePermission(role = Role.HENT_ROLE) }
+            shouldNotThrowAny { call.requirePermission(requiredScope = Scope.HENT_SCOPE, requiredRole = Role.HENT_ROLE) }
         }
 
         test("requirePermission throws AuthenticationException when principal is missing") {
@@ -63,7 +62,7 @@ class AuthorizationGuardTest :
 
             val response =
                 shouldThrow<AuthenticationException> {
-                    call.requirePermission(Scope.HENT_SCOPE)
+                    call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
                 }
 
             response.message shouldBe "No principal found - authentication not configured"
@@ -72,13 +71,14 @@ class AuthorizationGuardTest :
         test("requirePermission throws AuthorizationException with unknown scope or role") {
             val call = mockk<ApplicationCall>(relaxed = true)
             val mockScope = mockk<Scope>(relaxed = true)
+            val mockRole = mockk<Role>(relaxed = true)
 
             val token = generateToken(scopes = Scope.entries.map { it.value }, roles = Role.entries.map { it.value })
             every { call.principal<JWTPrincipal>() } returns token.getPrincipal()
 
             shouldThrow<AuthorizationException> {
-                call.requirePermission(mockScope)
-            }.message shouldBe "Missing required scope"
+                call.requirePermission(mockScope, mockRole)
+            }.message shouldBe "Missing required scope or role"
         }
 
         test("requireScope should not throw any exception") {

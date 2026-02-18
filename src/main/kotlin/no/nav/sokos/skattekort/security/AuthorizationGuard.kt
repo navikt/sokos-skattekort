@@ -40,28 +40,37 @@ object AuthorizationGuard {
      * Returns true if authorized, false (and sends 403) if not.
      */
     fun ApplicationCall.requirePermission(
-        scope: Scope? = null,
-        role: Role? = null,
+        requiredScope: Scope,
+        requiredRole: Role,
     ) {
+        val principal =
+            principal<JWTPrincipal>() ?: throw AuthenticationException("No principal found - authentication not configured")
         val callingSystem = getCallingSystem()
 
-        if (scope == null && role == null) {
-            logger.warn {
-                "Authorization failed: `$callingSystem` missing required scope/role"
-            }
-            throw AuthorizationException("Missing required scope or role")
+        // Check OBO token scope
+        val scopes =
+            principal.payload
+                .getClaim("scp")
+                ?.asString()
+                ?.split(" ") ?: emptyList()
+        if (scopes.isNotEmpty() && AccessPolicy.hasRequiredScope(scopes, requiredScope.value)) {
+            logger.debug { "Authorized: '$callingSystem' with OBO token has required scope '$scopes'" }
+            return
         }
 
-        scope?.let { requiredScope ->
-            logger.debug { "Authorized: `$callingSystem` with OBO token has required scope `${requiredScope.value}`" }
-            requireScope(requiredScope)
+        // Check M2M token role
+        val roles = principal.payload.getClaim("roles")?.asList(String::class.java) ?: emptyList()
+        if (roles.isNotEmpty() && AccessPolicy.hasRequiredRole(roles, requiredRole.value)) {
+            logger.debug { "Authorized: '$callingSystem' with M2M token has required role '$roles'" }
             return
         }
-        role?.let { requiredRole ->
-            logger.debug { "Authorized: `$callingSystem` with M2M token has required role `${requiredRole.value}`" }
-            requireRole(requiredRole)
-            return
+
+        // Neither scope nor role found
+        logger.warn {
+            "Authorization failed: '$callingSystem' missing required scope/role. Found scopes: $scopes, roles: $roles"
         }
+
+        throw AuthorizationException("Missing required scope or role")
     }
 
     /**
@@ -81,13 +90,15 @@ object AuthorizationGuard {
      * Require a specific role (M2M token only).
      * Returns true if authorized, false (and sends 403) if not.
      */
-    fun ApplicationCall.requireRole(requiredRole: Role) =
-        require(
+    fun ApplicationCall.requireRole(requiredRole: Role) {
+        val test = requirePrincipal().roles()
+        return require(
             claimName = "role",
             required = requiredRole.value,
             values = requirePrincipal().roles(),
             has = { roles -> AccessPolicy.hasRequiredRole(roles, requiredRole.value) },
         )
+    }
 
     private fun ApplicationCall.require(
         claimName: String,

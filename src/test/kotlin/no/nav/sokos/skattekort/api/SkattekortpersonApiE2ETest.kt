@@ -10,7 +10,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldMatch
 import io.ktor.client.call.body
@@ -35,8 +34,9 @@ import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.authServer
+import no.nav.sokos.skattekort.utils.TestUtils.m2mTokenWithNavIdent
+import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
-import no.nav.sokos.skattekort.utils.TestUtils.tokenWithNavIdent
 import no.nav.sokos.skattekort.utils.validationReport
 
 private const val HENT_SKATTEKORT_URL = "/api/v1/person/hent-skattekort"
@@ -59,7 +59,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -84,7 +84,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -109,7 +109,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -140,7 +140,7 @@ class SkattekortpersonApiE2ETest :
                     val response =
                         client.post(HENT_SKATTEKORT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
 
@@ -168,7 +168,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -197,15 +197,12 @@ class SkattekortpersonApiE2ETest :
         test("Auth: token uten navident blir avvist pga reelt fnr") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
-
-                tokenWithoutNavIdent shouldNotBe null
 
                 val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                         setBody(request)
                     }
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -220,7 +217,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -230,15 +227,11 @@ class SkattekortpersonApiE2ETest :
         test("Auth: token uten navident blir ikke avvist når man søker opp fiktive fnr") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
-
-                tokenWithoutNavIdent shouldNotBe null
-
                 val request = SkattekortPersonRequest(fnr = "01510112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                         setBody(request)
                     }
                 response shouldNotBeNull {
@@ -267,7 +260,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -285,7 +278,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -327,7 +320,7 @@ class SkattekortpersonApiE2ETest :
                     val response =
                         client.post(OPPRETT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
                     DbListener.dataSource.transaction { tx ->
@@ -363,7 +356,7 @@ class SkattekortpersonApiE2ETest :
                     val response =
                         client.post(OPPRETT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
                     DbListener.dataSource.transaction { tx ->
@@ -409,7 +402,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(OPPRETT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -441,7 +434,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(OPPRETT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -451,8 +444,6 @@ class SkattekortpersonApiE2ETest :
 
         test("Kan ikke opprette skattekort for reelt fnr uten saksbehandler") {
             TestUtils.withFullTestApplication {
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
-
                 val request =
                     """
                     {    
@@ -477,11 +468,11 @@ class SkattekortpersonApiE2ETest :
                     val response =
                         client.post(OPPRETT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $tokenWithoutNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                             setBody(request)
                         }
 
-                    response.status shouldBe HttpStatusCode.BadRequest
+                    response.status shouldBe HttpStatusCode.Forbidden
                 } catch (e: Exception) {
                     println("Feil ved oppretting av skattekort: ${e.message}")
                 }
@@ -490,8 +481,6 @@ class SkattekortpersonApiE2ETest :
 
         test("Kan opprette skattekort for dollybruker uten tilleggsopplysning eller saksbehandler, returnerer 201 CREATED") {
             TestUtils.withFullTestApplication {
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
-
                 val request =
                     """
                     {
@@ -518,7 +507,7 @@ class SkattekortpersonApiE2ETest :
                     val response =
                         client.post(OPPRETT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
 
@@ -537,8 +526,6 @@ class SkattekortpersonApiE2ETest :
 
         test("Mer informativ feilmelding når forskuddstrekk mangler informasjon") {
             TestUtils.withFullTestApplication {
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
-
                 val request =
                     """
                     {
@@ -560,7 +547,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(OPPRETT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -570,8 +557,6 @@ class SkattekortpersonApiE2ETest :
         }
         test("Mer informativ feilmelding når tilleggsopplysning er feil") {
             TestUtils.withFullTestApplication {
-                val tokenWithoutNavIdent = authServer?.issueToken(issuerId = "default")?.serialize()
-
                 val request =
                     """
                     {
@@ -595,7 +580,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(OPPRETT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
                 response.status shouldBe HttpStatusCode.BadRequest

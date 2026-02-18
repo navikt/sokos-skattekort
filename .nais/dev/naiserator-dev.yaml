@@ -87,9 +87,9 @@ spec:
           cluster: dev-fss
           namespace: dolly
           permissions:
-            roles:
-              - "opprett-role"
-              - "hent-role"
+            scopes:
+              - "bestille-scope"
+              - "hent-scope"
     outbound:
       rules:
         - application: logging

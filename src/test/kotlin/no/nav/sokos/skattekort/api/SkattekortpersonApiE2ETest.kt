@@ -323,6 +323,7 @@ class SkattekortpersonApiE2ETest :
                             header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
+                    response.status shouldBe HttpStatusCode.Created
                     DbListener.dataSource.transaction { tx ->
                         val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
                         opprettetPerson.shouldNotBeNull()
@@ -359,6 +360,7 @@ class SkattekortpersonApiE2ETest :
                             header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
+                    response.status shouldBe HttpStatusCode.Created
                     DbListener.dataSource.transaction { tx ->
                         val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
                         opprettetPerson.shouldNotBeNull()
@@ -472,7 +474,7 @@ class SkattekortpersonApiE2ETest :
                             setBody(request)
                         }
 
-                    response.status shouldBe HttpStatusCode.Forbidden
+                    response.status shouldBe HttpStatusCode.BadRequest
                 } catch (e: Exception) {
                     println("Feil ved oppretting av skattekort: ${e.message}")
                 }
@@ -507,7 +509,7 @@ class SkattekortpersonApiE2ETest :
                     val response =
                         client.post(OPPRETT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                             setBody(request)
                         }
 
@@ -547,7 +549,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(OPPRETT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                         setBody(request)
                     }
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -580,7 +582,7 @@ class SkattekortpersonApiE2ETest :
                 val response =
                     client.post(OPPRETT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                         setBody(request)
                     }
                 response.status shouldBe HttpStatusCode.BadRequest

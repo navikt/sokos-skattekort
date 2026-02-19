@@ -36,10 +36,16 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            call.respond(
-                skattekortPersonService
-                    .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
-            )
+            if (skattekortPersonRequest.hentAlle) {
+                call.respond(
+                    skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                )
+            } else {
+                call.respond(
+                    skattekortPersonService
+                        .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                )
+            }
         }
 
         post("opprett") {
@@ -52,19 +58,6 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
                 saksbehandler,
             )
             call.respond(HttpStatusCode.Created)
-        }
-    }
-}
-
-fun Route.deprecatedSkattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
-    route("/api/v1") {
-        post("hent-skattekort") {
-            call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
-            val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
-            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            call.respond(
-                skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
-            )
         }
     }
 }

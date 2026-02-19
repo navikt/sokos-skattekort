@@ -112,6 +112,10 @@ components:
           example: 2026
           minimum: 2025
           maximum: 3000
+        hentAlle:
+            type: boolean
+            nullable: true
+            description: Hent alle skattekort for person, ikke bare siste for hvert inntektsår.
     OpprettSkattekortRequest:
       type: object
       properties:

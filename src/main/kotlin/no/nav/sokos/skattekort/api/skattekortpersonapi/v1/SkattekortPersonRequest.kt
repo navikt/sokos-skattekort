@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class SkattekortPersonRequest(
     val fnr: String,
     val inntektsaar: Short? = null,
+    val hentAlle: Boolean = false,
 )

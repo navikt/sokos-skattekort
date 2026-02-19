@@ -33,7 +33,7 @@ import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
 
-val logger = KotlinLogging.logger { }
+private val logger = KotlinLogging.logger {}
 
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1/person") {

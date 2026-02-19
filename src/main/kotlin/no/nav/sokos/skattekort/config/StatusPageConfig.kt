@@ -16,32 +16,27 @@ import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
-import mu.KotlinLogging
 
-class UnauthorizedException(
-    override val message: String,
-) : RuntimeException(message)
-
-private val logger = KotlinLogging.logger { }
+import no.nav.sokos.skattekort.security.AuthenticationException
+import no.nav.sokos.skattekort.security.AuthorizationException
 
 fun StatusPagesConfig.statusPageConfig() {
     exception<Throwable> { call, cause ->
-        run {
-            val (responseStatus, apiError) =
-                when (cause) {
-                    is BadRequestException -> {
-                        val jsonException = cause.findCauseOfType<JsonConvertException>()
-                        createApiError(HttpStatusCode.BadRequest, jsonException?.message ?: cause.message, call)
-                    }
-
-                    is RequestValidationException -> createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
-                    is IllegalArgumentException -> createApiError(HttpStatusCode.BadRequest, cause.message, call)
-                    is UnauthorizedException -> createApiError(HttpStatusCode.Unauthorized, cause.message, call)
-                    is BatchUpdateException -> createApiError(HttpStatusCode.InternalServerError, "En teknisk feil har oppstått. Ta kontakt med utviklerne, detaljer er logget til secure log", call)
-                    else -> createApiError(HttpStatusCode.InternalServerError, cause.message ?: "En teknisk feil har oppstått. Ta kontakt med utviklerne", call)
+        val (responseStatus, apiError) =
+            when (cause) {
+                is BadRequestException -> {
+                    val jsonException = cause.findCauseOfType<JsonConvertException>()
+                    createApiError(HttpStatusCode.BadRequest, jsonException?.message ?: cause.message, call)
                 }
-            call.respond(responseStatus, apiError)
-        }
+
+                is RequestValidationException -> createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
+                is IllegalArgumentException -> createApiError(HttpStatusCode.BadRequest, cause.message, call)
+                is AuthenticationException -> createApiError(HttpStatusCode.Unauthorized, cause.message, call)
+                is AuthorizationException -> createApiError(HttpStatusCode.Forbidden, cause.message, call)
+                is BatchUpdateException -> createApiError(HttpStatusCode.InternalServerError, "En teknisk feil har oppstått. Ta kontakt med utviklerne, detaljer er logget til secure log", call)
+                else -> createApiError(HttpStatusCode.InternalServerError, cause.message ?: "En teknisk feil har oppstått. Ta kontakt med utviklerne", call)
+            }
+        call.respond(responseStatus, apiError)
     }
 }
 

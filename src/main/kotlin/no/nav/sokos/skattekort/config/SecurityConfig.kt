@@ -33,16 +33,19 @@ fun Application.securityConfig(azureAdProperties: PropertiesConfig.AzureAdProper
             validate { credential ->
                 try {
                     requireNotNull(credential.payload.audience) {
-                        logger.info("Auth: Missing audience in token")
+                        logger.info { "Auth: Missing audience in token" }
                         "Auth: Missing audience in token"
                     }
                     require(credential.payload.audience.contains(azureAdProperties.clientId)) {
-                        logger.info("Auth: Valid audience not found in claims")
+                        logger.info { "Auth: Valid audience not found in claims" }
                         "Auth: Valid audience not found in claims"
                     }
+
+                    // Accept both OBO and M2M tokens - validation of specific scopes/roles happens in endpoints
+                    logger.debug { "Auth: Token validated successfully" }
                     JWTPrincipal(credential.payload)
                 } catch (e: Exception) {
-                    logger.warn(e) { "Client authentication failed" }
+                    logger.warn(e) { "Token authentication failed" }
                     null
                 }
             }

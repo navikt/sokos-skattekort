@@ -90,6 +90,13 @@ spec:
             roles:
               - "opprett-role"
               - "hent-role"
+        - application: testnav-dolly-proxy
+          cluster: dev-fss
+          namespace: dolly
+          permissions:
+            roles:
+              - "opprett-role"
+              - "hent-role"
     outbound:
       rules:
         - application: logging

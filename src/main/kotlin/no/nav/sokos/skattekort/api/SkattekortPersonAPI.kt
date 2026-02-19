@@ -69,6 +69,10 @@ fun Route.deprecatedSkattekortPersonApi(skattekortPersonService: SkattekortPerso
     route("/api/v1") {
         post("hent-skattekort") {
             call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
+            val token =
+                call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
+                    ?: throw Error("Could not get token from request header")
+            logger.info(marker = TEAM_LOGS_MARKER) { "Mottok request for hent-skattekort med token: $token" }
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             call.respond(

@@ -32,6 +32,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
@@ -96,7 +97,9 @@ object TestUtils {
                 client =
                     createClient {
                         install(ContentNegotiation) {
-                            json()
+                            json(
+                                jsonConfig,
+                            )
                         }
                     }
 

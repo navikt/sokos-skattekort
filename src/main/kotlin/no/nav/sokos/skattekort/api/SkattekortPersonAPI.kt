@@ -26,7 +26,6 @@ import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isVal
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
-import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
@@ -44,15 +43,14 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
         }
 
         post("opprett") {
-            call.requireScope(Scope.OPPRETT_SCOPE)
+            call.requirePermission(Scope.OPPRETT_SCOPE, Role.OPPRETT_ROLE)
             val request = call.receive<OpprettSkattekortRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            val id =
-                skattekortPersonService.opprettSkattekort(
-                    request.fnr,
-                    request.skattekort,
-                    saksbehandler,
-                )
+            skattekortPersonService.opprettSkattekort(
+                request.fnr,
+                request.skattekort,
+                saksbehandler,
+            )
             call.respond(HttpStatusCode.Created)
         }
     }

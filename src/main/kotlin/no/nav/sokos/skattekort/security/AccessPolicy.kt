@@ -23,6 +23,7 @@ enum class Role(
     val value: String,
 ) {
     BESTILLE_ROLE("bestille-role"),
+    OPPRETT_ROLE("opprett-role"),
     HENT_ROLE("hent-role"),
     ;
 

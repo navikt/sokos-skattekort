@@ -4,6 +4,7 @@ import java.time.Year
 
 import kotlinx.serialization.Serializable
 
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
@@ -12,8 +13,10 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.dto.validTilleggsopplysningList
 import no.nav.sokos.skattekort.dto.validTrekkodeList
@@ -30,9 +33,15 @@ import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
 
+val logger = KotlinLogging.logger { }
+
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1/person") {
         post("hent-skattekort") {
+            val token =
+                call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
+                    ?: throw Error("Could not get token from request header")
+            logger.info(marker = TEAM_LOGS_MARKER) { "Mottok request for hent-skattekort med token: $token" }
             call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }

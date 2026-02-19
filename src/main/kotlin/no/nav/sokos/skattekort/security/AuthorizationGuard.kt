@@ -5,6 +5,8 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+
 const val JWT_CLAIM_NAVIDENT = "NAVident"
 const val JWT_CLAIM_ROLES = "roles"
 const val JWT_CLAIM_SCOPES = "scp"
@@ -29,6 +31,7 @@ object AuthorizationGuard {
      */
     fun ApplicationCall.getCallingSystem(): String {
         val principal = principal<JWTPrincipal>() ?: return "Unknown"
+        logger.info(marker = TEAM_LOGS_MARKER) { "Extracting calling system from JWT for principal: ${principal.payload}" }
         val azpName =
             principal.payload.getClaim("azp_name")?.asString()
                 ?: principal.payload.getClaim("client_id")?.asString()

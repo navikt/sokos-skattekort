@@ -52,7 +52,6 @@ private val logger = KotlinLogging.logger {}
 fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
     val applicationState = ApplicationState()
     applicationLifecycleConfig(applicationState)
-
     commonConfig()
 
     PropertiesConfig.initEnvConfig(applicationConfig)

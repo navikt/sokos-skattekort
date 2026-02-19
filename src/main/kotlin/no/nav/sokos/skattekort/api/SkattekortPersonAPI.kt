@@ -4,9 +4,7 @@ import java.time.Year
 
 import kotlinx.serialization.Serializable
 
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 import io.ktor.server.request.receive
@@ -15,7 +13,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
-import no.nav.sokos.skattekort.api.SkattekortPersonAPI.authorizeAndGetOptionalSaksbehandler
 import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
 import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.dto.validTilleggsopplysningList
@@ -27,14 +24,18 @@ import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidAar
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidForsystem
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
-import no.nav.sokos.skattekort.security.AuthToken.getNAVIdentFromToken
+import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
+import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.security.Scope
 
 fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1/person") {
         post("hent-skattekort") {
+            call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
-            val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             call.respond(
                 skattekortPersonService
                     .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
@@ -42,14 +43,14 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
         }
 
         post("opprett") {
+            call.requirePermission(Scope.OPPRETT_SCOPE, Role.OPPRETT_ROLE)
             val request = call.receive<OpprettSkattekortRequest>()
-            val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
-            val id =
-                skattekortPersonService.opprettSkattekort(
-                    request.fnr,
-                    request.skattekort,
-                    saksbehandler,
-                )
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
+            skattekortPersonService.opprettSkattekort(
+                request.fnr,
+                request.skattekort,
+                saksbehandler,
+            )
             call.respond(HttpStatusCode.Created)
         }
     }
@@ -58,8 +59,9 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
 fun Route.deprecatedSkattekortPersonApi(skattekortPersonService: SkattekortPersonService) {
     route("/api/v1") {
         post("hent-skattekort") {
+            call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
             val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
-            val saksbehandler = authorizeAndGetOptionalSaksbehandler(call)
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             call.respond(
                 skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
             )
@@ -129,17 +131,6 @@ fun RequestValidationConfig.requestValidationOpprettSkattekortRequest() {
 
             else -> ValidationResult.Valid
         }
-    }
-}
-
-object SkattekortPersonAPI {
-    fun authorizeAndGetOptionalSaksbehandler(call: ApplicationCall): Saksbehandler? {
-        val authToken =
-            call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
-                ?: return null
-        // Sjekk rolle for å kunne opprette skattekort i produksjon
-        val navIdent = getNAVIdentFromToken(authToken)
-        return navIdent?.let { Saksbehandler(it) }
     }
 }
 

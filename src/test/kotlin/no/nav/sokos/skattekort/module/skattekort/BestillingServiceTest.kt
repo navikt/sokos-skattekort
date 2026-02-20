@@ -24,7 +24,6 @@ import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -123,119 +122,6 @@ class BestillingServiceTest :
                             it.level shouldBe Level.ERROR
                             it.message shouldContain "Fant ikke person for fnr"
                             it.markerList.shouldContain(TEAM_LOGS_MARKER)
-                        }
-                    }
-                }
-            }
-        }
-
-        test("Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
-            coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
-                toBestillSkattekortResponse(
-                    """
-                    {
-                      "dialogreferanse": "first-dialog-ref",
-                      "bestillingsreferanse": "first-bestillings-ref"
-                    }
-                    """.trimIndent(),
-                ) andThen
-                toBestillSkattekortResponse(
-                    """
-                    {
-                      "dialogreferanse": "second-dialog-ref",
-                      "bestillingsreferanse": "second-bestillings-ref"
-                    }
-                    """.trimIndent(),
-                )
-            databaseHas(
-                aPerson(1L),
-                afoedselsnummer(personId = 1L, fnr = "01010100001"),
-                aPerson(2L),
-                afoedselsnummer(personId = 2L, fnr = "02020200002"),
-                aPerson(3L),
-                afoedselsnummer(personId = 3L, fnr = "03030300003"),
-                aBestilling(1L, "01010100001", 2025, null),
-                aBestilling(2L, "02020200002", 2026, null),
-                aBestilling(3L, "03030300003", 2026, null),
-            )
-
-            withConstantNow(LocalDateTime.parse("2025-12-14T00:00:00")) {
-                // Kaller to ganger for å sjekke at den ikke plukker opp 2026 på andre kall
-                bestillingService.opprettBestillingsbatch()
-                bestillingService.opprettBestillingsbatch()
-
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-
-                assertSoftly("Før 15. desember") {
-                    batches shouldNotBeNull {
-                        size shouldBe 1
-                        first() shouldNotBeNull {
-                            status shouldBe BestillingBatchStatus.Ny.value
-                            bestillingsreferanse shouldBe "first-bestillings-ref"
-                            dataSendt shouldNotBeNull {
-                                shouldContain("01010100001")
-                                shouldNotContain("02020200002")
-                                shouldNotContain("03030300003")
-                            }
-                        }
-                    }
-
-                    bestillings shouldNotBeNull {
-                        size shouldBe 3
-                        forOne {
-                            it.id shouldNotBeNull { id shouldBe 1L }
-                            it.inntektsaar shouldBe 2025
-                            it.bestillingsbatchId shouldBe batches.first().id
-                        }
-                        forExactly(2) {
-                            it.inntektsaar shouldBe 2026
-                            it.bestillingsbatchId shouldBe null
-                        }
-                    }
-                }
-            }
-            withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
-                bestillingService.opprettBestillingsbatch()
-
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-
-                assertSoftly("Etter 15.desember") {
-                    batches shouldNotBeNull {
-                        size shouldBe 2
-                        first() shouldNotBeNull {
-                            id shouldNotBeNull { id shouldBe 1L }
-                            status shouldBe BestillingBatchStatus.Ny.value
-                            bestillingsreferanse shouldBe "first-bestillings-ref"
-                            dataSendt shouldNotBeNull {
-                                shouldNotContain("01010100001")
-                                shouldNotContain("02020200002")
-                                shouldNotContain("03030300003")
-                            }
-                        }
-                        last() shouldNotBeNull {
-                            id shouldNotBeNull { id shouldBe 2L }
-                            status shouldBe BestillingBatchStatus.Ny.value
-                            bestillingsreferanse shouldBe "second-bestillings-ref"
-                            dataSendt shouldNotBeNull {
-                                shouldNotContain("01010100001")
-                                shouldContain("02020200002")
-                                shouldContain("03030300003")
-                            }
-                        }
-                    }
-
-                    bestillings shouldNotBeNull {
-                        size shouldBe 3
-                        forOne {
-                            it.id shouldNotBeNull { id shouldBe 1L }
-                            it.inntektsaar shouldBe 2025
-                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 1L }
-                        }
-                        forExactly(2) {
-                            it.inntektsaar shouldBe 2026
-                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 2L }
                         }
                     }
                 }

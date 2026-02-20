@@ -1,20 +1,16 @@
 package no.nav.sokos.skattekort.module.skattekort
 
 import java.sql.BatchUpdateException
-import java.time.LocalDateTime.now
 import javax.sql.DataSource
 
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Month
-import kotlinx.datetime.toKotlinLocalDateTime
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 import org.postgresql.util.PSQLException
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
@@ -34,98 +30,22 @@ import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillOppdateringRequest
-import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillSkattekortRequest
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+
+private val logger = KotlinLogging.logger {}
 
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
     private val featureToggles: UnleashIntegration,
 ) {
-    private val logger = KotlinLogging.logger {}
-    private val applicationProperties = PropertiesConfig.getApplicationProperties()
-
-    fun opprettBestillingsbatch() {
-        if (featureToggles.isBestillingerEnabled()) {
-            dataSource.transaction { tx ->
-                if (BestillingBatchRepository.getUnprocessedBestillingsBatches(tx).size > 10) {
-                    logger.warn("Oppretter ikke ny bestillingsbatch fordi for mange ubehandlede allerede ligger i kø")
-                } else {
-                    val now = now().toKotlinLocalDateTime()
-                    val bestillings: List<Bestilling> =
-                        BestillingRepository.getBestillingsKandidaterForBatch(
-                            tx,
-                            maxYear =
-                                if (now.day >= 15 && now.month == Month.DECEMBER) {
-                                    now.year + 1
-                                } else {
-                                    now.year
-                                },
-                        )
-                    if (bestillings.isEmpty()) {
-                        logger.info("Ingen bestillinger å sende")
-                    } else {
-                        val request = bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
-
-                        fun auditLogBestillingFeilet() {
-                            dataSource.transaction { errorTx ->
-                                AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillings.map { it.personId }, "Oppretting av bestilling feilet")
-                            }
-                        }
-
-                        runBlocking {
-                            try {
-                                val response = skatteetatenClient.bestillSkattekort(request)
-                                logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                                val bestillingsbatchId =
-                                    BestillingBatchRepository.insertBestillingsBatch(
-                                        tx,
-                                        bestillingsreferanse = response.bestillingsreferanse,
-                                        request = request,
-                                    )
-                                logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
-                                AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillings.map { it.personId }, "Bestilling sendt")
-                                BestillingRepository.updateBestillingsWithBatchId(
-                                    tx,
-                                    bestillings.map { it.id!!.id },
-                                    bestillingsbatchId,
-                                )
-                            } catch (e: BatchUpdateException) {
-                                logger.error(marker = TEAM_LOGS_MARKER, e) { "Oppretting av bestillingsbatch feilet: ${e.message}" }
-                                logger.error("Oppretting av bestillingsbatch feilet, detaljer er logget til secure log")
-                                auditLogBestillingFeilet()
-                                throw e
-                            } catch (ex: PSQLException) {
-                                if ((ex.message?.contains("could not serialize access due to read/write dependencies") ?: false)) {
-                                    // En annen transaksjon forsøkte å aksessere samme rader, forsøk igjen senere
-                                } else {
-                                    auditLogBestillingFeilet()
-                                    logger.error(ex) { "Oppretting av bestillingsbatch feilet: ${ex.message}" }
-                                }
-                                throw ex
-                            } catch (cnpe: CallNotPermittedException) {
-                                // Her venter vi med å bestille fordi vi tror det er et forbigående problem med kommunikasjon mot skatteetaten
-                                throw cnpe
-                            } catch (ex: Exception) {
-                                auditLogBestillingFeilet()
-                                logger.error(ex) { "Oppretting av bestillingsbatch feilet: ${ex.message}" }
-                                throw ex
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            logger.debug("Bestillinger er disablet")
-        }
-    }
-
     @OptIn(ExperimentalTime::class)
     fun hentSkattekort() {
         /* denne er med vilje ikke underlagt feature switch-styring for å unngå at en sendt bestilling
         ikke timer ut mens feature-toggelen er slått av
          */
+
         dataSource
             .transaction { tx ->
                 BestillingBatchRepository.getUnprocessedBestillingsBatches(tx)

@@ -1,30 +1,29 @@
 package no.nav.sokos.skattekort.module.skattekort
 
-import java.time.LocalDateTime.now
-
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.Month
-import kotlinx.datetime.toKotlinLocalDateTime
+import java.time.LocalDateTime
+import java.time.Month
 
 object ReglerForInntektsaar {
     fun lovligeInntektsAarAaBestilleFraSkatteetaten(): List<Short> {
-        val now = now().toKotlinLocalDateTime()
+        val now = LocalDateTime.now()
         val min = if (now.month <= Month.JUNE) now.year - 1 else now.year
-        return (min..maxInntektsaar(now)).map { it.toShort() }.toList()
+        return (min..maxInntektsaar()).map { it.toShort() }.toList()
     }
 
-    fun inntektsaarAaBestille(): List<Short> = lovligeInntektsAarAaBestilleFraSkatteetaten().filter { it >= now().year }
+    fun inntektsaarAaBestille(): List<Short> = lovligeInntektsAarAaBestilleFraSkatteetaten().filter { it >= LocalDateTime.now().year }
 
     fun alleLovligeInntektsaarAaHenteSkattekortFor(): List<Short> {
-        val now = now().toKotlinLocalDateTime()
+        val now = LocalDateTime.now()
         val min = now.year - 1
-        return (min..maxInntektsaar(now)).map { it.toShort() }.toList()
+        return (min..maxInntektsaar()).map { it.toShort() }.toList()
     }
 
-    private fun maxInntektsaar(now: LocalDateTime): Short =
-        if (now.day >= 15 && now.month == Month.DECEMBER) {
+    fun maxInntektsaar(): Short {
+        val now = LocalDateTime.now()
+        return if (now.dayOfMonth >= 15 && now.month == Month.DECEMBER) {
             (now.year + 1).toShort()
         } else {
             now.year.toShort()
         }
+    }
 }

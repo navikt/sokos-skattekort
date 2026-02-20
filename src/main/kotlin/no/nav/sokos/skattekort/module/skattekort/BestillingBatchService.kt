@@ -36,7 +36,12 @@ class BestillingBatchService(
 
             val (request, response) =
                 runBlocking {
-                    val request = bestillSkattekortRequest(bestillingList.firstOrNull()!!.inntektsaar, bestillingList.map { it.fnr }, PropertiesConfig.getApplicationProperties().bestillingOrgnr)
+                    val request =
+                        bestillSkattekortRequest(
+                            inntektsaar = bestillingList.firstOrNull()!!.inntektsaar,
+                            fnr = bestillingList.map { it.fnr }.distinct(),
+                            bestillingOrgnr = PropertiesConfig.getApplicationProperties().bestillingOrgnr,
+                        )
                     Pair(request, skatteetatenClient.bestillSkattekort(request))
                 }
 

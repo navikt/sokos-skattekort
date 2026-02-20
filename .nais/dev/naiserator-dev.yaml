@@ -83,17 +83,13 @@ spec:
           permissions:
             scopes:
               - "hent-scope"
-        - application: testnav-dolly-proxy-trygdeetaten
+        - application: testnav-dolly-proxy
           cluster: dev-fss
           namespace: dolly
           permissions:
             roles:
               - "opprett-role"
               - "hent-role"
-        # Det MÅ gis tilgang til testnav-dolly-proxy for at testnav-dolly-proxy-trygdeetaten kan hente data fra sokos-skattekort.
-        - application: testnav-dolly-proxy
-          cluster: dev-fss
-          namespace: dolly
     outbound:
       rules:
         - application: logging

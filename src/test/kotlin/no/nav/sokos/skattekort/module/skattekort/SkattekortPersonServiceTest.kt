@@ -1,9 +1,7 @@
 package no.nav.sokos.skattekort.module.skattekort
 
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
@@ -35,7 +33,7 @@ class SkattekortPersonServiceTest :
         }
 
         test("hentSingleSkattekortForEachYear should return the latest skattekort for each year") {
-            withConstantNow(java.time.LocalDateTime.parse("2021-12-24T00:00:00")) {
+            withConstantNow(LocalDate.parse("2021-12-24").atStartOfDay()) {
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, "01410100001"),
@@ -111,10 +109,10 @@ class SkattekortPersonServiceTest :
 fun aSkattekort(
     id: Long,
     personId: Long,
-    inntektsaar: Int = now().year,
-    opprettet: LocalDateTime = now(),
+    inntektsaar: Int = LocalDate.now().year,
+    opprettet: LocalDateTime = LocalDateTime.now(),
     identifikator: String = "1",
-    utstedtDato: LocalDate = now().date,
+    utstedtDato: LocalDate = LocalDate.now(),
     resultatForSkattekort: ResultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
 ) = aDbSkattekort(
     id = id,
@@ -125,8 +123,3 @@ fun aSkattekort(
     opprettet = opprettet.toString(),
     resultatForSkattekort = resultatForSkattekort,
 )
-
-fun now() =
-    kotlin.time.Clock.System
-        .now()
-        .toLocalDateTime(TimeZone.currentSystemDefault())

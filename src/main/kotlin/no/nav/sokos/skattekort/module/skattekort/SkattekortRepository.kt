@@ -117,7 +117,7 @@ object SkattekortRepository {
         adminRole: Boolean,
     ): List<Skattekort> {
         val hentFor = if (inntektsaar != null) listOf(inntektsaar) else alleLovligeInntektsaarAaHenteSkattekortFor()
-        val inParams = hentFor.mapIndexed { idx, _ -> ":inntektsaar$idx" }.joinToString(", ")
+        val inParams = List(hentFor.size) { idx -> ":inntektsaar$idx" }.joinToString(", ")
         val paramMap = hentFor.mapIndexed { idx, value -> "inntektsaar$idx" to value }.toMap() + ("personId" to personId.value)
 
         return tx.list(

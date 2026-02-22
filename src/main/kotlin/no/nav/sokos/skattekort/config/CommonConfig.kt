@@ -29,9 +29,9 @@ import mu.KotlinLogging
 import org.slf4j.MarkerFactory
 import org.slf4j.event.Level
 
-import no.nav.sokos.skattekort.api.requestValidationOpprettSkattekortRequest
-import no.nav.sokos.skattekort.api.requestValidationSkattekortConfig
-import no.nav.sokos.skattekort.api.requestValidationSkattekortRequest
+import no.nav.sokos.skattekort.api.model.requestValidationOpprettSkattekortRequest
+import no.nav.sokos.skattekort.api.model.requestValidationSkattekortConfig
+import no.nav.sokos.skattekort.api.model.requestValidationSkattekortRequest
 import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.security.TokenUtils
 

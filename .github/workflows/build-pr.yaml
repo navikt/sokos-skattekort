@@ -19,6 +19,10 @@ on:
       - '.github/workflows/squawk-db-migration-lint.yaml'
       - '.github/workflows/unleash.yaml'
       - '.github/dependabot.yaml'
+      - '.nais/**'
+
+env:
+  TZ: Europe/Oslo
 
 jobs:
   build-and-test:

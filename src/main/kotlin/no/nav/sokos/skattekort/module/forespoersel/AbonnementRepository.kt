@@ -83,7 +83,6 @@ object AbonnementRepository {
                 ),
             ),
             { row ->
-                println()
                 Pair(Forsystem.fromValue(row.string("forsystem")), Personidentifikator(row.string("fnr")))
             },
         )

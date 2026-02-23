@@ -60,10 +60,11 @@ class BestillingService(
                                 logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
                                 when (response.status) {
                                     ResponseStatus.FORESPOERSEL_OK.name -> {
-                                        response.arbeidsgiver!!.first().arbeidstaker.forEach { arbeidstaker ->
+                                        response.arbeidsgiver?.first()?.arbeidstaker?.forEach { arbeidstaker ->
                                             handleNyttSkattekort(tx, arbeidstaker, bestillingsbatch.bestillingsreferanse)
                                             BestillingRepository.deleteProcessedBestilling(tx, batchId, arbeidstaker.arbeidstakeridentifikator)
                                         }
+
                                         val personer: List<PersonId> = BestillingRepository.hentResterendeBestillinger(tx, batchId)
                                         AuditRepository.insertBatch(
                                             tx = tx,

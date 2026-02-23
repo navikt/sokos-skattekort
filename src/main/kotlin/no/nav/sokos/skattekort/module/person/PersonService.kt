@@ -12,7 +12,6 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
-import no.nav.sokos.skattekort.util.SQLUtils.withTx
 
 private const val CHUNKED_SIZE = 1000
 
@@ -22,15 +21,6 @@ class PersonService(
     private val dataSource: DataSource,
     private val pdlClientService: PdlClientService,
 ) {
-    fun getPersonList(
-        count: Int = 30,
-        startId: String? = null,
-        tx: TransactionalSession? = null,
-    ): List<Person> =
-        dataSource.withTx(tx) { session ->
-            PersonRepository.getAllPersonById(session, count, startId)
-        }
-
     fun findPersonIdOrCreatePersonByFnr(
         fnr: Personidentifikator,
         informasjon: String,

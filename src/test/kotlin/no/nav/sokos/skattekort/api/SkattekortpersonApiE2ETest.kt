@@ -23,7 +23,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import org.slf4j.LoggerFactory
 
-import no.nav.sokos.skattekort.api.skattekortpersonapi.v1.SkattekortPersonRequest
+import no.nav.sokos.skattekort.api.model.SkattekortPersonRequest
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener

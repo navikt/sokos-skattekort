@@ -42,9 +42,6 @@ class IdentifikatorEndringServiceTest :
 
         test("processIdentifikatorEndring oppdater person med ny folkeregisteridentifikator") {
             DbListener.loadDataSet("database/person/persondata.sql")
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.getAllPersonById(tx, 20, null).size shouldBe 10
-            }
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
             wiremockPDLStub(pdlResponse)
@@ -68,9 +65,6 @@ class IdentifikatorEndringServiceTest :
 
         test("processIdentifikatorEndring oppdater person med ny folkeregisteridentifikator (KORRIGERT)") {
             DbListener.loadDataSet("database/person/persondata.sql")
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.getAllPersonById(tx, 20, null).size shouldBe 10
-            }
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
             wiremockPDLStub(pdlResponse)
@@ -97,9 +91,6 @@ class IdentifikatorEndringServiceTest :
 
         test("processIdentifikatorEndring ignorer med andre opplysningstype") {
             DbListener.loadDataSet("database/person/persondata.sql")
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.getAllPersonById(tx, 20, null).size shouldBe 10
-            }
 
             val hendelse =
                 getPersonHendelseMockData().copy(
@@ -115,9 +106,6 @@ class IdentifikatorEndringServiceTest :
 
         test("processIdentifikatorEndring ignorer med ingen historiske identer funnet fra PDL") {
             DbListener.loadDataSet("database/person/persondata.sql")
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.getAllPersonById(tx, 20, null).size shouldBe 10
-            }
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkUtenHistoriskResponse.json")
             wiremockPDLStub(pdlResponse)
@@ -133,9 +121,6 @@ class IdentifikatorEndringServiceTest :
 
         test("processIdentifikatorEndring ignorer med folkeregisteridentifikator ikke er FOLKEREGISTERIDENTIFIKATOR_V1") {
             DbListener.loadDataSet("database/person/persondata.sql")
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.getAllPersonById(tx, 20, null).size shouldBe 10
-            }
 
             val hendelse =
                 getPersonHendelseMockData().copy(

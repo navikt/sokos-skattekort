@@ -105,7 +105,7 @@ class BestillingBatchServiceTest :
                     BestillingBatch::dataSendt,
                 )
                 batches.first { it.id?.id == 1L }.dataSendt shouldNotBeNull {
-                    this shouldContain "01010100003"
+                    this shouldContain "01010100001"
                     this shouldNotContain "02020200002"
                     this shouldNotContain "03030300003"
                 }

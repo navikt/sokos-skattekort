@@ -26,6 +26,7 @@ import io.ktor.http.isSuccess
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 
 private val logger = KotlinLogging.logger {}
 
@@ -66,10 +67,10 @@ class MaskinportenTokenClient(
         return if (response.status.isSuccess()) {
             AccessToken(response.body<TokenResponse>())
         } else {
-            logger.error("Kunne ikke hente accessToken, se sikker log for meldingen som string")
-            val feilmelding = response.body<TokenError>()
-            logger.error("Feil fra tokenprovider, Feilmelding: $feilmelding")
-            throw Exception("Feil fra tokenprovider, Feilmelding: $feilmelding")
+            logger.error("Kunne ikke hente accessToken, se security log for meldingen som string")
+            val feilmelding = "Feil fra tokenprovider, Feilmelding: ${response.body<TokenError>()}"
+            logger.error(TEAM_LOGS_MARKER) { feilmelding }
+            throw AuthenticationException(feilmelding)
         }
     }
 

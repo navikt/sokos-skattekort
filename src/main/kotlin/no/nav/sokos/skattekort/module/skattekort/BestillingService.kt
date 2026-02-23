@@ -38,14 +38,13 @@ import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.bestillSkattekortR
 import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
+private val logger = KotlinLogging.logger {}
+
 class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
     private val featureToggles: UnleashIntegration,
 ) {
-    private val logger = KotlinLogging.logger {}
-    private val applicationProperties = PropertiesConfig.getApplicationProperties()
-
     fun opprettBestillingsbatch() {
         if (featureToggles.isBestillingerEnabled()) {
             dataSource.transaction { tx ->
@@ -66,7 +65,7 @@ class BestillingService(
                     if (bestillings.isEmpty()) {
                         logger.info("Ingen bestillinger å sende")
                     } else {
-                        val request = bestillSkattekortRequest(bestillings.firstOrNull()!!.inntektsaar, bestillings.map { it.fnr }, applicationProperties.bestillingOrgnr)
+                        val request = bestillSkattekortRequest(bestillings.first().inntektsaar, bestillings.map { it.fnr }, PropertiesConfig.getApplicationProperties().bestillingOrgnr)
 
                         fun auditLogBestillingFeilet() {
                             dataSource.transaction { errorTx ->
@@ -140,10 +139,11 @@ class BestillingService(
                                 logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
                                 when (response.status) {
                                     ResponseStatus.FORESPOERSEL_OK.name -> {
-                                        response.arbeidsgiver!!.first().arbeidstaker.forEach { arbeidstaker ->
+                                        response.arbeidsgiver?.first()?.arbeidstaker?.forEach { arbeidstaker ->
                                             handleNyttSkattekort(tx, arbeidstaker, bestillingsbatch.bestillingsreferanse)
                                             BestillingRepository.deleteProcessedBestilling(tx, batchId, arbeidstaker.arbeidstakeridentifikator)
                                         }
+
                                         val personer: List<PersonId> = BestillingRepository.hentResterendeBestillinger(tx, batchId)
                                         AuditRepository.insertBatch(
                                             tx = tx,

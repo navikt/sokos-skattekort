@@ -19,6 +19,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 
+import no.nav.sokos.skattekort.api.model.ForespoerselRequest
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener

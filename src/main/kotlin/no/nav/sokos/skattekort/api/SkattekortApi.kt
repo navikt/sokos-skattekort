@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.api
 
-import kotlinx.serialization.Serializable
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -10,9 +8,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.model.ForespoerselRequest
+import no.nav.sokos.skattekort.api.model.StatusResponse
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
@@ -57,15 +56,3 @@ fun Route.skattekortApi(
         }
     }
 }
-
-@Serializable
-data class StatusResponse(
-    val status: Status,
-)
-
-@Serializable
-data class ForespoerselRequest(
-    val personIdent: String,
-    val aar: Int,
-    val forsystem: String,
-)

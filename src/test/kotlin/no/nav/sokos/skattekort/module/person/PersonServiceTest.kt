@@ -1,8 +1,5 @@
 package no.nav.sokos.skattekort.module.person
 
-import java.time.LocalDate
-
-import kotlinx.datetime.toJavaLocalDate
 import kotlinx.serialization.json.Json
 
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
@@ -46,21 +43,6 @@ class PersonServiceTest :
             result.size shouldBe 0
         }
 
-        test("getPersonList skal returnere en liste med personer") {
-            personService.getPersonList().isEmpty() shouldBe true
-
-            DbListener.loadDataSet("database/person/persondata.sql")
-            val personList = personService.getPersonList()
-            personList.size shouldBe 10
-            personList.forEach { person ->
-                person.id shouldNotBe null
-                person.flagget shouldBe false
-                person.foedselsnummer.personId shouldBe person.id
-                person.foedselsnummer.gjelderFom.toJavaLocalDate() shouldBe LocalDate.now()
-                person.foedselsnummer.fnr.value.length shouldBe 11
-            }
-        }
-
         test("findOrCreatePersonByFnr skal returnere en person som er registrert") {
             val fnr = "10101000010"
             DbListener.loadDataSet("database/person/persondata.sql")
@@ -75,9 +57,6 @@ class PersonServiceTest :
                         )
                 personId shouldNotBe null
                 opprettet shouldBe false
-
-                val personList = personService.getPersonList(tx = tx)
-                personList.size shouldBe 10
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, personId)
                 auditList.size shouldBe 1
@@ -100,9 +79,6 @@ class PersonServiceTest :
                         )
                 personId shouldNotBe null
                 opprettet shouldBe true
-
-                val personList = personService.getPersonList(tx = tx)
-                personList.size shouldBe 11
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, personId)
                 auditList.size shouldBe 1
@@ -133,11 +109,6 @@ class PersonServiceTest :
 
             result.size shouldBe 1
             result[fnrList[0]] shouldNotBe null
-
-            DbListener.dataSource.transaction { tx ->
-                val personList = personService.getPersonList(tx = tx)
-                personList.size shouldBe 11
-            }
         }
 
         test("getPersonIdAndCheckFoedselsnumreIsUpdated skal oppdatere foedselsnummer når PDL returnerer ny ident") {
@@ -190,11 +161,6 @@ class PersonServiceTest :
             result.size shouldBe 2
             result[existingFnr] shouldNotBe null
             result[newFnr] shouldNotBe null
-
-            DbListener.dataSource.transaction { tx ->
-                val personList = personService.getPersonList(tx = tx)
-                personList.size shouldBe 11
-            }
         }
 
         test("getPersonIdAndCheckFoedselsnumreIsUpdated skal returnere null for fnr som ikke fins i PDL") {

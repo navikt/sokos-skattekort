@@ -29,7 +29,7 @@ object BestillingBatchRepository {
     fun insertBestillingsBatch(
         tx: TransactionalSession,
         bestillingsreferanse: String,
-        request: BestillSkattekortRequest,
+        dataSendt: String,
     ): Long =
         tx.updateAndReturnGeneratedKey(
             queryOf(
@@ -39,7 +39,7 @@ object BestillingBatchRepository {
                 """.trimMargin(),
                 mapOf(
                     "bestillingsreferanse" to bestillingsreferanse,
-                    "dataSendt" to Json.encodeToString(request),
+                    "dataSendt" to dataSendt,
                 ),
             ),
         ) ?: error("Failed to insert bestillingsbatch")

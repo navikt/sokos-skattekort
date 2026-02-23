@@ -23,7 +23,7 @@ object BestillingRepository {
 
     fun getBestillingsKandidaterForBatch(
         tx: TransactionalSession,
-        maxYear: Int,
+        maxYear: Short,
     ): List<Bestilling> =
         tx.list(
             queryOf(

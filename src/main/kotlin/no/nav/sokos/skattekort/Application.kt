@@ -33,6 +33,7 @@ import no.nav.sokos.skattekort.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.skattekort.BestillingBatchService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.status.StatusService
@@ -101,6 +102,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
         provide(UtsendingService::class)
+        provide(BestillingBatchService::class)
         provide(BestillingService::class)
         provide(SkatteetatenClient::class)
         provide(SkattekortPersonService::class)
@@ -128,6 +130,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
+        val bestillingBatchService: BestillingBatchService by dependencies
         val utsendingService: UtsendingService by dependencies
         val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceScheduler)
         val metricsService: MetricsService by dependencies
@@ -136,6 +139,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         JobTaskConfig
             .scheduler(
                 bestillingService,
+                bestillingBatchService,
                 utsendingService,
                 scheduledTaskService,
                 metricsService,

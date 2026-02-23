@@ -7,7 +7,10 @@ import kotlin.time.Instant
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
@@ -67,9 +70,13 @@ class BestillingBatchServiceTest :
                     BestillingBatch::dataSendt,
                     BestillingBatch::type,
                 )
+                batches.first().dataSendt shouldNotBeNull {
+                    this shouldContain "01010100001"
+                    this shouldNotContain "02020200002"
+                    this shouldNotContain "03030300003"
+                }
 
                 bestillings.size shouldBe 3
-
                 bestillings.shouldContainAllIgnoringFields(
                     listOf(
                         bestilling(1L, "01010100001", 2025, batchId = 1L),
@@ -97,6 +104,16 @@ class BestillingBatchServiceTest :
                     BestillingBatch::id,
                     BestillingBatch::dataSendt,
                 )
+                batches.first { it.id?.id == 1L }.dataSendt shouldNotBeNull {
+                    this shouldContain "01010100003"
+                    this shouldNotContain "02020200002"
+                    this shouldNotContain "03030300003"
+                }
+                batches.first { it.id?.id == 2L }.dataSendt shouldNotBeNull {
+                    this shouldNotContain "01010100001"
+                    this shouldContain "02020200002"
+                    this shouldContain "03030300003"
+                }
 
                 bestillings.size shouldBe 3
                 bestillings.shouldContainAllIgnoringFields(

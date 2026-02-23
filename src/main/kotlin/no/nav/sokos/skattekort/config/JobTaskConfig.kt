@@ -14,6 +14,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.module.skattekort.BestillingBatchService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
@@ -31,6 +32,7 @@ object JobTaskConfig {
 
     fun scheduler(
         bestillingService: BestillingService,
+        bestillingBatchService: BestillingBatchService,
         utsendingService: UtsendingService,
         scheduledTaskService: ScheduledTaskService,
         metricsService: MetricsService,
@@ -43,7 +45,7 @@ object JobTaskConfig {
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
-                recurringBestillingManagementBatchTask(bestillingService, scheduledTaskService),
+                recurringBestillingManagementBatchTask(bestillingService, bestillingBatchService, scheduledTaskService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringFetchMetricsTask(metricsService, scheduledTaskService),
@@ -52,6 +54,7 @@ object JobTaskConfig {
 
     fun recurringBestillingManagementBatchTask(
         bestillingService: BestillingService,
+        bestillingBatchService: BestillingBatchService,
         scheduledTaskService: ScheduledTaskService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
@@ -64,16 +67,13 @@ object JobTaskConfig {
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
                     withTracerId {
-                        try {
-                            showLog(showLogLocalTime, instance, context)
-                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
-                            bestillingService.hentSkattekort()
-                            bestillingService.opprettBestillingsbatch()
-                            bestillingService.opprettBestillingsbatch()
-                        } catch (e: Exception) {
-                            // Spis exception for å ha kontroll over logging
-                        }
+                        showLog(showLogLocalTime, instance, context)
+                        val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                        scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
+
+                        bestillingBatchService.opprettBestillingsbatch()
+                        // TODO: Bør vente litt før vi kalle hentSkattekort
+                        bestillingService.hentSkattekort()
                     }
                 }
             }

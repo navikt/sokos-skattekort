@@ -11,40 +11,6 @@ import kotliquery.queryOf
 import no.nav.sokos.skattekort.util.SQLUtils.advisoryKeysFromString
 
 object PersonRepository {
-    fun getAllPersonById(
-        tx: TransactionalSession,
-        count: Int,
-        startId: String?,
-    ): List<Person> {
-        val where =
-            listOfNotNull(
-                startId?.let { "p.id > :startId" },
-            ).joinToString(" AND ").takeIf { it.isNotEmpty() }?.let { " WHERE $it" } ?: ""
-        return tx.list(
-            queryOf(
-                """
-                    |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
-                    |FROM personer p 
-                    |LEFT JOIN LATERAL (
-                    |   SELECT id, gjelder_fom, fnr
-                    |   FROM foedselsnumre
-                    |   WHERE person_id = p.id
-                    |   ORDER BY gjelder_fom DESC, id DESC
-                    |   LIMIT 1
-                    |) pf ON TRUE
-                    |$where 
-                    |ORDER BY p.id ASC 
-                    |LIMIT :count
-                """.trimMargin(),
-                listOfNotNull(
-                    "count" to count + 1,
-                    startId?.let { "startid" to it },
-                ).toMap(),
-            ),
-            extractor = mapToPerson,
-        )
-    }
-
     fun findPersonIdByFnr(
         tx: TransactionalSession,
         fnr: Personidentifikator,

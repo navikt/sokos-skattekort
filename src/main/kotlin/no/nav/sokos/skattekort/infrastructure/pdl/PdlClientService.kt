@@ -32,7 +32,7 @@ class PdlClientService(
 
         val accessToken = azuredTokenClient.getSystemToken()
 
-        logger.info { "Henter identer fra PDL" }
+        logger.debug { "Henter identer fra PDL" }
         val response =
             httpClient.post("$pdlUrl/graphql") {
                 header(HttpHeaders.Authorization, "Bearer $accessToken")

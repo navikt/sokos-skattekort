@@ -2,21 +2,22 @@ package no.nav.sokos.skattekort.module.skattekort
 
 import java.time.LocalDateTime
 
-import io.kotest.assertions.assertSoftly
+import kotlin.time.Instant
+
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
-import io.kotest.inspectors.forExactly
-import io.kotest.inspectors.forOne
-import io.kotest.matchers.collections.shouldNotContain
-import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.module.skattekort.BestillingBatchStatus.Ny
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 class BestillingBatchServiceTest :
@@ -35,22 +36,7 @@ class BestillingBatchServiceTest :
 
         test("Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
             coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
-                toBestillSkattekortResponse(
-                    """
-                    {
-                      "dialogreferanse": "first-dialog-ref",
-                      "bestillingsreferanse": "first-bestillings-ref"
-                    }
-                    """.trimIndent(),
-                ) andThen
-                toBestillSkattekortResponse(
-                    """
-                    {
-                      "dialogreferanse": "second-dialog-ref",
-                      "bestillingsreferanse": "second-bestillings-ref"
-                    }
-                    """.trimIndent(),
-                )
+                ok("ref1") andThen ok("ref2")
             databaseHas(
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
@@ -71,33 +57,28 @@ class BestillingBatchServiceTest :
                 val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
-                assertSoftly("Før 15. desember") {
-                    batches shouldNotBeNull {
-                        size shouldBe 1
-                        first() shouldNotBeNull {
-                            status shouldBe BestillingBatchStatus.Ny.value
-                            bestillingsreferanse shouldBe "first-bestillings-ref"
-                            dataSendt shouldNotBeNull {
-                                shouldContain("01010100001")
-                                shouldNotContain("02020200002")
-                                shouldNotContain("03030300003")
-                            }
-                        }
-                    }
+                batches.size shouldBe 1
+                batches.shouldContainAllIgnoringFields(
+                    listOf(
+                        batch(id = 1L, status = Ny, type = "oppdatering", bestillingsreferanse = "ref1"),
+                    ),
+                    BestillingBatch::oppdatert,
+                    BestillingBatch::opprettet,
+                    BestillingBatch::dataSendt,
+                    BestillingBatch::type,
+                )
 
-                    bestillings shouldNotBeNull {
-                        size shouldBe 3
-                        forOne {
-                            it.id shouldNotBeNull { id shouldBe 1L }
-                            it.inntektsaar shouldBe 2025
-                            it.bestillingsbatchId shouldBe batches.first().id
-                        }
-                        forExactly(2) {
-                            it.inntektsaar shouldBe 2026
-                            it.bestillingsbatchId shouldBe null
-                        }
-                    }
-                }
+                bestillings.size shouldBe 3
+
+                bestillings.shouldContainAllIgnoringFields(
+                    listOf(
+                        bestilling(1L, "01010100001", 2025, batchId = 1L),
+                        bestilling(2L, "02020200002", 2026, batchId = null),
+                        bestilling(3L, "03030300003", 2026, batchId = null),
+                    ),
+                    Bestilling::oppdatert,
+                    Bestilling::id,
+                )
             }
             withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
                 bestillingBatchService.opprettBestillingsbatch()
@@ -105,44 +86,63 @@ class BestillingBatchServiceTest :
                 val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
-                assertSoftly("Etter 15.desember") {
-                    batches shouldNotBeNull {
-                        size shouldBe 2
-                        first() shouldNotBeNull {
-                            id shouldNotBeNull { id shouldBe 1L }
-                            status shouldBe BestillingBatchStatus.Ny.value
-                            bestillingsreferanse shouldBe "first-bestillings-ref"
-                            dataSendt shouldNotBeNull {
-                                shouldNotContain("01010100001")
-                                shouldNotContain("02020200002")
-                                shouldNotContain("03030300003")
-                            }
-                        }
-                        last() shouldNotBeNull {
-                            id shouldNotBeNull { id shouldBe 2L }
-                            status shouldBe BestillingBatchStatus.Ny.value
-                            bestillingsreferanse shouldBe "second-bestillings-ref"
-                            dataSendt shouldNotBeNull {
-                                shouldNotContain("01010100001")
-                                shouldContain("02020200002")
-                                shouldContain("03030300003")
-                            }
-                        }
-                    }
+                batches.size shouldBe 2
+                batches.shouldContainAllIgnoringFields(
+                    listOf(
+                        batch(id = 1L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref1"),
+                        batch(id = 2L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref2"),
+                    ),
+                    BestillingBatch::oppdatert,
+                    BestillingBatch::opprettet,
+                    BestillingBatch::id,
+                    BestillingBatch::dataSendt,
+                )
 
-                    bestillings shouldNotBeNull {
-                        size shouldBe 3
-                        forOne {
-                            it.id shouldNotBeNull { id shouldBe 1L }
-                            it.inntektsaar shouldBe 2025
-                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 1L }
-                        }
-                        forExactly(2) {
-                            it.inntektsaar shouldBe 2026
-                            it.bestillingsbatchId shouldNotBeNull { id shouldBe 2L }
-                        }
-                    }
-                }
+                bestillings.size shouldBe 3
+                bestillings.shouldContainAllIgnoringFields(
+                    listOf(
+                        bestilling(pid = 1L, fnr = "01010100001", year = 2025, batchId = 1L),
+                        bestilling(pid = 2L, fnr = "02020200002", year = 2026, batchId = 2L),
+                        bestilling(pid = 3L, fnr = "03030300003", year = 2026, batchId = 2L),
+                    ),
+                    Bestilling::oppdatert,
+                    Bestilling::id,
+                )
             }
         }
     })
+
+const val BESTILLING = "BESTILLING"
+
+private fun bestilling(
+    pid: Long,
+    fnr: String,
+    year: Int,
+    batchId: Long?,
+): Bestilling = Bestilling(personId = PersonId(pid), fnr = Personidentifikator(fnr), inntektsaar = year, bestillingsbatchId = batchId?.let(::BestillingsbatchId))
+
+private fun batch(
+    id: Long,
+    status: BestillingBatchStatus,
+    type: String,
+    bestillingsreferanse: String,
+): BestillingBatch =
+    BestillingBatch(
+        id = BestillingsbatchId(id),
+        status = status.value,
+        type = type,
+        bestillingsreferanse = bestillingsreferanse,
+        oppdatert = Instant.DISTANT_PAST,
+        opprettet = Instant.DISTANT_PAST,
+        dataSendt = "",
+    )
+
+private fun ok(ref: String): BestillSkattekortResponse =
+    toBestillSkattekortResponse(
+        """
+        {
+          "dialogreferanse": "any-dialog-ref",
+          "bestillingsreferanse": "$ref"
+        }
+        """.trimIndent(),
+    )

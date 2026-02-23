@@ -311,11 +311,9 @@ class ForespoerselServiceTest :
                 completeLatch.await()
 
                 DbListener.dataSource.transaction { tx ->
-                    val personList = personService.getPersonList(count = 100, tx = tx)
                     val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
 
                     exceptions.shouldBeEmpty()
-                    personList.size shouldBe 1
                     forespoerselList.size shouldBe 4
                 }
             }

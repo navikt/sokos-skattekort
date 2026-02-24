@@ -20,6 +20,7 @@ enum class AuditTag(
     UTSENDING_FEILET("UTSENDING_FEILET"),
     UTSENDING_OK("UTSENDING_OK"),
     UVENTET_PERSON("UVENTET_PERSON"),
+    MANUELL("MANUELL"), // For manuell databasepatching
     ;
 
     companion object {

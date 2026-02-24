@@ -6,11 +6,10 @@ import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.routing
 
 import no.nav.sokos.skattekort.api.skattekortApi
-import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
-import no.nav.sokos.skattekort.module.status.StatusService
+import no.nav.sokos.skattekort.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.skattekort.SkattekortService
+import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
 fun Application.routingConfig(
     applicationState: ApplicationState,
@@ -21,11 +20,10 @@ fun Application.routingConfig(
         swaggerApi()
         authenticate(azureAdProperties.providerName) {
             val forespoerselService: ForespoerselService by dependencies
-            val skattekortPersonService: SkattekortPersonService by dependencies
+            val skattekortService: SkattekortService by dependencies
             val statusService: StatusService by dependencies
 
-            skattekortApi(forespoerselService, statusService)
-            skattekortPersonApi(skattekortPersonService)
+            skattekortApi(forespoerselService, statusService, skattekortService)
         }
     }
 }

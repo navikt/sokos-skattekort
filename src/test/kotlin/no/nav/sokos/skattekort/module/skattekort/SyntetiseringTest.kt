@@ -12,6 +12,15 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.skattekort.Frikort
+import no.nav.sokos.skattekort.skattekort.Prosentkort
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.Skattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortId
+import no.nav.sokos.skattekort.skattekort.Syntetisering
+import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.skattekort.Trekkode
 
 @OptIn(ExperimentalTime::class)
 class SyntetiseringTest :
@@ -26,7 +35,14 @@ class SyntetiseringTest :
                     inntektsaar = 2025,
                     kilde = "BOGUS",
                 )
-            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
             assertSoftly {
                 resultat shouldNotBeNull {
                     first.forskuddstrekkList shouldContainExactly
@@ -58,7 +74,14 @@ class SyntetiseringTest :
                     kilde = "BOGUS",
                     tilleggsopplysningList = listOf(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD),
                 )
-            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
             assertSoftly {
                 resultat shouldNotBeNull {
                     first.forskuddstrekkList shouldContainExactly
@@ -90,7 +113,14 @@ class SyntetiseringTest :
                     kilde = "BOGUS",
                     tilleggsopplysningList = listOf(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD),
                 )
-            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
             assertSoftly {
                 resultat shouldNotBeNull {
                     first.forskuddstrekkList shouldContainExactly
@@ -138,7 +168,14 @@ class SyntetiseringTest :
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
                 )
-            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
             assertSoftly {
                 resultat.shouldBeNull()
             }
@@ -165,7 +202,14 @@ class SyntetiseringTest :
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
                 )
-            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
             assertSoftly {
                 resultat shouldNotBeNull {
                     first.forskuddstrekkList shouldContainAll
@@ -204,7 +248,14 @@ class SyntetiseringTest :
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
                 )
-            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
             assertSoftly {
                 resultat shouldNotBeNull {
                     first.forskuddstrekkList shouldContainAll
@@ -247,7 +298,14 @@ class SyntetiseringTest :
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
                 )
-            val resultat: Pair<Skattekort, String>? = Syntetisering.evtSyntetiserSkattekort(skattekort = sk, id = SkattekortId(1))
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
             assertSoftly {
                 resultat shouldNotBeNull {
                     first.forskuddstrekkList shouldContainAll

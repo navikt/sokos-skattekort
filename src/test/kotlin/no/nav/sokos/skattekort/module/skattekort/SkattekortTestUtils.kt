@@ -7,12 +7,24 @@ import java.nio.file.Paths
 
 import kotlinx.serialization.json.Json
 
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiver
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiveridentifikator
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekktabell
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekktabell
+import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.skattekort.Frikort
+import no.nav.sokos.skattekort.skattekort.Prosentkort
+import no.nav.sokos.skattekort.skattekort.ResponseStatus
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.Tabellkort
+import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.utils.TestUtils.runThisSql
 
 fun aForskuddstrekk(
@@ -58,14 +70,14 @@ fun aSkdForskuddstrekk(
     trekkprosent: Double? = null,
     tabellNummer: String? = null,
     frikortbeloep: Int? = null,
-): no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk =
-    no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk(
+): no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk =
+    Forskuddstrekk(
         trekkode = trekkode.value,
         trekktabell = tabellNummer?.let { Trekktabell(it, BigDecimal(trekkprosent!!).setScale(2, RoundingMode.HALF_UP), BigDecimal(12).setScale(1, RoundingMode.HALF_UP)) },
         trekkprosent = trekkprosent?.let { Trekkprosent(BigDecimal(it).setScale(2, RoundingMode.HALF_UP), null) },
         frikort =
             frikortbeloep?.let {
-                no.nav.sokos.skattekort.skatteetaten.hentskattekort
+                no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort
                     .Frikort(BigDecimal(frikortbeloep).setScale(2, RoundingMode.HALF_UP))
             },
     )
@@ -73,7 +85,7 @@ fun aSkdForskuddstrekk(
 fun aSkattekort(
     utstedtDato: String,
     identifikator: Long,
-    forskuddstrekk: List<no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk>,
+    forskuddstrekk: List<Forskuddstrekk>,
 ): Skattekort =
     Skattekort(
         utstedtDato = utstedtDato,
@@ -104,9 +116,9 @@ fun aHentSkattekortResponse(
         status = response.name,
         arbeidsgiver =
             listOf(
-                no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiver(
+                Arbeidsgiver(
                     arbeidsgiveridentifikator =
-                        no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiveridentifikator(
+                        Arbeidsgiveridentifikator(
                             organisasjonsnummer = "312978083",
                         ),
                     arbeidstaker = arbeidstakere.toList(),
@@ -197,7 +209,7 @@ fun aDbForskuddstrekk(
 
 fun toBestillSkattekortResponse(json: String) =
     Json.decodeFromString(
-        no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
+        BestillSkattekortResponse
             .serializer(),
         json,
     )

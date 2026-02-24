@@ -9,10 +9,13 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
+import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortService
+import no.nav.sokos.skattekort.skattekort.Trekkode
+import no.nav.sokos.skattekort.util.audit.AuditLogger
 
 class SkattekortPersonServiceTest :
     FunSpec({
@@ -20,8 +23,8 @@ class SkattekortPersonServiceTest :
 
         val mockAuditLogger: AuditLogger = mockk<AuditLogger>()
 
-        val skattekortPersonService: SkattekortPersonService by lazy {
-            SkattekortPersonService(
+        val skattekortService: SkattekortService by lazy {
+            SkattekortService(
                 dataSource = DbListener.dataSource,
                 personService =
                     PersonService(
@@ -51,12 +54,12 @@ class SkattekortPersonServiceTest :
                     aDbForskuddstrekk(3L, 9L, ForskuddstrekkType.FRIKORT.type, Trekkode.PENSJON_FRA_NAV, frikortbeløp = null),
                 )
 
-                val skattekort = skattekortPersonService.hentSkattekortPerson("01410100001")
+                val skattekort = skattekortService.getSkattekort("01410100001")
                 println("skattekort = $skattekort")
                 skattekort shouldNotBeNull {
                     size shouldBe 9
                 }
-                val onlyLastSkattekort = skattekortPersonService.hentSingleSkattekortForEachYear("01410100001")
+                val onlyLastSkattekort = skattekortService.getSingleSkattekortForEachYear("01410100001")
                 onlyLastSkattekort shouldNotBeNull {
                     size shouldBe 3
                     first() shouldNotBeNull {

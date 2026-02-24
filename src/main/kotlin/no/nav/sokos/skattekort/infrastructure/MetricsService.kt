@@ -3,11 +3,11 @@ package no.nav.sokos.skattekort.infrastructure
 import javax.sql.DataSource
 
 import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
-import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
-import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class MetricsService(

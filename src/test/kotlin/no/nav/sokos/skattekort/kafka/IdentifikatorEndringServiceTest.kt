@@ -16,7 +16,12 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.skattekort.BestillingRepository
+import no.nav.sokos.skattekort.person.kafka.EndringstypeDTO
+import no.nav.sokos.skattekort.person.kafka.FOLKEREGISTERIDENTIFIKATOR
+import no.nav.sokos.skattekort.person.kafka.FolkeregisteridentifikatorDTO
+import no.nav.sokos.skattekort.person.kafka.IdentifikatorEndringService
+import no.nav.sokos.skattekort.person.kafka.PersonHendelseDTO
+import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 

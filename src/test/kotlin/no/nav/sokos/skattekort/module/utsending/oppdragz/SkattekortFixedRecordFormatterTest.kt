@@ -9,11 +9,13 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.serialization.kotlinx.json.DefaultJson
 
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.module.skattekort.Skattekort
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
+import no.nav.sokos.skattekort.skattekort.Frikort
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.Skattekort
+import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 private val json =
@@ -68,8 +70,7 @@ class SkattekortFixedRecordFormatterTest :
                     opprettet = Instant.parse("2020-08-30T18:43:00.50Z"),
                     forskuddstrekkList =
                         listOf(
-                            no.nav.sokos.skattekort.module.skattekort
-                                .Frikort(no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV, 7890),
+                            Frikort(Trekkode.LOENN_FRA_NAV, 7890),
                         ),
                     tilleggsopplysningList = listOf(),
                 )

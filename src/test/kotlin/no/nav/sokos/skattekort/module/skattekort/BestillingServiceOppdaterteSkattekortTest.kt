@@ -11,12 +11,19 @@ import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.skattekort.ResponseStatus
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.skattekort.Skattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
+import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 class BestillingServiceOppdaterteSkattekortTest :

@@ -23,14 +23,14 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import org.slf4j.LoggerFactory
 
-import no.nav.sokos.skattekort.api.model.SkattekortPersonRequest
+import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
-import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.authServer
@@ -55,7 +55,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 val fnr = "1"
-                val request = SkattekortPersonRequest(fnr = fnr, inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = fnr, inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -80,7 +80,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 val fnr = "a2345678901"
-                val request = SkattekortPersonRequest(fnr = fnr, inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = fnr, inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -105,7 +105,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 val fnr = "01010112345"
-                val request = SkattekortPersonRequest(fnr = fnr, inntektsaar = 20522)
+                val request = HentSkattekortRequest(fnr = fnr, inntektsaar = 20522)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -136,7 +136,7 @@ class SkattekortpersonApiE2ETest :
                 auditLogger.addAppender(auditLogAdditions)
 
                 try {
-                    val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
+                    val request = HentSkattekortRequest(fnr = "01010112345", inntektsaar = 2025)
                     val response =
                         client.post(HENT_SKATTEKORT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -164,7 +164,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val request = SkattekortPersonRequest(fnr = "02020212345", inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = "02020212345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -184,7 +184,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -198,7 +198,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -213,7 +213,7 @@ class SkattekortpersonApiE2ETest :
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = null)
+                val request = HentSkattekortRequest(fnr = "01010112345", inntektsaar = null)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -227,7 +227,7 @@ class SkattekortpersonApiE2ETest :
         test("Auth: token uten navident blir ikke avvist når man søker opp fiktive fnr") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-                val request = SkattekortPersonRequest(fnr = "01510112345", inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = "01510112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -245,7 +245,7 @@ class SkattekortpersonApiE2ETest :
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 val tokenWithBogusIssuer = authServer?.issueToken(issuerId = "bogus")?.serialize()
 
-                val request = SkattekortPersonRequest(fnr = "01010112345", inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = "01010112345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -256,7 +256,7 @@ class SkattekortpersonApiE2ETest :
         }
         test("person ikke funnet returnerer 200 med melding") {
             TestUtils.withFullTestApplication {
-                val request = SkattekortPersonRequest(fnr = "99999999999", inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = "99999999999", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
@@ -274,7 +274,7 @@ class SkattekortpersonApiE2ETest :
         test("skattekort ikke funnet returnerer 200 med melding") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_uten_skattekort.sql")
-                val request = SkattekortPersonRequest(fnr = "03030312345", inntektsaar = 2025)
+                val request = HentSkattekortRequest(fnr = "03030312345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)

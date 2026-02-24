@@ -5,7 +5,6 @@ import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.DbListener.dataSource
-import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.skattekort.aBestilling
 import no.nav.sokos.skattekort.module.skattekort.aBestillingsBatch
 import no.nav.sokos.skattekort.module.skattekort.aDbSkattekort
@@ -13,6 +12,7 @@ import no.nav.sokos.skattekort.module.skattekort.aPerson
 import no.nav.sokos.skattekort.module.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.module.skattekort.anUtsending
 import no.nav.sokos.skattekort.module.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekort.Status
 
 class StatusServiceTest :
     FunSpec(

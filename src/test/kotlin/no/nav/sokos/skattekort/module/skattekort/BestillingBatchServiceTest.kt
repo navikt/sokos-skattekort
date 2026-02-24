@@ -15,12 +15,19 @@ import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.skattekort.BestillingBatchStatus.Ny
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
-import no.nav.sokos.skattekort.skatteetaten.bestillskattekort.BestillSkattekortResponse
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchService
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus.Ny
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId
+import no.nav.sokos.skattekort.skattekorthenting.Bestilling
+import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 class BestillingBatchServiceTest :
@@ -136,7 +143,16 @@ private fun bestilling(
     fnr: String,
     year: Int,
     batchId: Long?,
-): Bestilling = Bestilling(personId = PersonId(pid), fnr = Personidentifikator(fnr), inntektsaar = year, bestillingsbatchId = batchId?.let(::BestillingsbatchId))
+): Bestilling =
+    Bestilling(
+        personId = PersonId(pid),
+        fnr = Personidentifikator(fnr),
+        inntektsaar = year,
+        bestillingsbatchId =
+            batchId?.let(
+                ::BestillingsbatchId,
+            ),
+    )
 
 private fun batch(
     id: Long,

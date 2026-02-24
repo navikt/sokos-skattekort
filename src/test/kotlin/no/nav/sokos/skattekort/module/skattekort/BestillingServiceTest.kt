@@ -33,6 +33,13 @@ import org.slf4j.LoggerFactory
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiver
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiveridentifikator
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkprosent
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.module.person.Audit
@@ -42,26 +49,36 @@ import no.nav.sokos.skattekort.module.person.Person
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeSkattekort
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.IkkeTrekkplikt
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_BIARBEIDSGIVER
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.LOENN_FRA_NAV
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.PENSJON_FRA_NAV
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
-import no.nav.sokos.skattekort.module.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
 import no.nav.sokos.skattekort.module.utsending.Utsending
 import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidstaker
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Forskuddstrekk
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.HentSkattekortResponse
-import no.nav.sokos.skattekort.skatteetaten.hentskattekort.Trekkprosent
+import no.nav.sokos.skattekort.skattekort.Prosentkort
+import no.nav.sokos.skattekort.skattekort.ResponseStatus
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeSkattekort
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeTrekkplikt
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
+import no.nav.sokos.skattekort.skattekort.Skattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortId
+import no.nav.sokos.skattekort.skattekort.SkattekortKilde
+import no.nav.sokos.skattekort.skattekort.SkattekortRepository
+import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.skattekort.Trekkode.LOENN_FRA_BIARBEIDSGIVER
+import no.nav.sokos.skattekort.skattekort.Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER
+import no.nav.sokos.skattekort.skattekort.Trekkode.LOENN_FRA_NAV
+import no.nav.sokos.skattekort.skattekort.Trekkode.PENSJON
+import no.nav.sokos.skattekort.skattekort.Trekkode.PENSJON_FRA_NAV
+import no.nav.sokos.skattekort.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
+import no.nav.sokos.skattekort.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
+import no.nav.sokos.skattekort.skattekort.UgyldigOrganisasjonsnummerException
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
+import no.nav.sokos.skattekort.skattekorthenting.Bestilling
+import no.nav.sokos.skattekort.skattekorthenting.BestillingId
+import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
+import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
@@ -619,9 +636,9 @@ class BestillingServiceTest :
                     status = "FORESPOERSEL_OK",
                     arbeidsgiver =
                         listOf(
-                            no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiver(
+                            Arbeidsgiver(
                                 arbeidsgiveridentifikator =
-                                    no.nav.sokos.skattekort.skatteetaten.hentskattekort.Arbeidsgiveridentifikator(
+                                    Arbeidsgiveridentifikator(
                                         organisasjonsnummer = "666",
                                     ),
                                 arbeidstaker =
@@ -1119,7 +1136,7 @@ fun aSkattekortFor(
     fnr = fnr,
     inntektsaar = 2025,
     skattekort =
-        no.nav.sokos.skattekort.skatteetaten.hentskattekort.Skattekort(
+        no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort(
             utstedtDato = "2025-11-01",
             skattekortidentifikator = id,
             forskuddstrekk =

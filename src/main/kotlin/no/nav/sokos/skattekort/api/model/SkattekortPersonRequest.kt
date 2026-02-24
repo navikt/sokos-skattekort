@@ -13,6 +13,7 @@ import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isVal
 data class SkattekortPersonRequest(
     val fnr: String,
     val inntektsaar: Short? = null,
+    val hentAlle: Boolean = false,
 )
 
 fun RequestValidationConfig.requestValidationSkattekortRequest() {

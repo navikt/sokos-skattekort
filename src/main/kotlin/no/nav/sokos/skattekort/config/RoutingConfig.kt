@@ -5,7 +5,6 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.routing
 
-import no.nav.sokos.skattekort.api.deprecatedSkattekortPersonApi
 import no.nav.sokos.skattekort.api.skattekortApi
 import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
@@ -27,7 +26,6 @@ fun Application.routingConfig(
 
             skattekortApi(forespoerselService, statusService)
             skattekortPersonApi(skattekortPersonService)
-            deprecatedSkattekortPersonApi(skattekortPersonService)
         }
     }
 }

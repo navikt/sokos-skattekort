@@ -67,13 +67,17 @@ object JobTaskConfig {
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
                     withTracerId {
-                        showLog(showLogLocalTime, instance, context)
-                        val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                        scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
+                        try {
+                            showLog(showLogLocalTime, instance, context)
+                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
 
-                        bestillingBatchService.opprettBestillingsbatch()
-                        // TODO: Bør vente litt før vi kalle hentSkattekort
-                        bestillingService.hentSkattekort()
+                            bestillingBatchService.opprettBestillingsbatch()
+                            // TODO: Bør vente litt før vi kalle hentSkattekort
+                            bestillingService.hentSkattekort()
+                        } catch (e: Exception) {
+                            // Spis exception for å unngå spurious logging
+                        }
                     }
                 }
             }

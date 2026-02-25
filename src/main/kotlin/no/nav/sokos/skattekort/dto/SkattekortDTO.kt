@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
-import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skattekort.Frikort
 import no.nav.sokos.skattekort.skattekort.Prosentkort

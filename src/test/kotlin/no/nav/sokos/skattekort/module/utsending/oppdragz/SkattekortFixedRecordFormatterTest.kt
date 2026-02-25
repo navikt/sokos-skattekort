@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.utsending.oppdragz
+package no.nav.sokos.skattekort.utsending.oppdragz
 
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -11,12 +11,13 @@ import io.ktor.serialization.kotlinx.json.DefaultJson
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
-import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.skattekort.Frikort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.Skattekort
 import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
+import no.nav.sokos.skattekort.utsending.oppdragz.SkattekortFixedRecordFormatter
 
 private val json =
     Json(DefaultJson) {

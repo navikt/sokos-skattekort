@@ -15,18 +15,18 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.module.person.AuditRepository
-import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.utsending.Utsending
-import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
+import no.nav.sokos.skattekort.person.AuditRepository
+import no.nav.sokos.skattekort.person.AuditTag
+import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utsending.Utsending
+import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
 private const val DELIMITER = ";"
 private val logger = KotlinLogging.logger { }

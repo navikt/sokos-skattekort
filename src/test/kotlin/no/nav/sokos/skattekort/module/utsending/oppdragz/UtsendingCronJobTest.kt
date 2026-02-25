@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.utsending.oppdragz
+package no.nav.sokos.skattekort.utsending.oppdragz
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
@@ -11,11 +11,11 @@ import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.module.person.Audit
-import no.nav.sokos.skattekort.module.person.AuditService
-import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.utsending.UtsendingService
+import no.nav.sokos.skattekort.person.Audit
+import no.nav.sokos.skattekort.person.AuditService
+import no.nav.sokos.skattekort.person.AuditTag
+import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.utsending.UtsendingService
 
 class UtsendingCronJobTest :
     FunSpec(

@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort
 
+import javax.sql.DataSource
+
 import kotlinx.coroutines.runBlocking
 
 import com.ibm.mq.jakarta.jms.MQQueue
@@ -40,6 +42,7 @@ import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchService
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
+import no.nav.sokos.skattekort.skattekortkonvertering.KonverteringService
 import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 import no.nav.sokos.skattekort.utsending.UtsendingService
@@ -132,19 +135,22 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val bestillingService: BestillingService by dependencies
         val bestillingBatchService: BestillingBatchService by dependencies
         val utsendingService: UtsendingService by dependencies
+        val konverteringService: KonverteringService by dependencies
         val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceScheduler)
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
+        val dataSource: DataSource by dependencies
 
         JobTaskConfig
             .scheduler(
-                bestillingService,
-                bestillingBatchService,
-                utsendingService,
-                scheduledTaskService,
-                metricsService,
-                forespoerselService,
-                DatabaseConfig.dataSourceScheduler,
+                bestillingService = bestillingService,
+                bestillingBatchService = bestillingBatchService,
+                utsendingService = utsendingService,
+                konverteringService = konverteringService,
+                scheduledTaskService = scheduledTaskService,
+                metricsService = metricsService,
+                forespoerselService = forespoerselService,
+                dataSource = dataSource,
             ).start()
     }
 

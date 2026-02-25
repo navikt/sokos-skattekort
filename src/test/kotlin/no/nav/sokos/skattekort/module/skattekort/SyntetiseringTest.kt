@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.skattekort
+package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
 
@@ -11,7 +11,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 
-import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skattekort.Frikort
 import no.nav.sokos.skattekort.skattekort.Prosentkort

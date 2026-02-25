@@ -3,8 +3,8 @@ package no.nav.sokos.skattekort.utsending
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.forespoersel.Forsystem
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortId
 
 object UtsendingRepository {

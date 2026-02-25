@@ -1,18 +1,19 @@
-package no.nav.sokos.skattekort.module.status
+package no.nav.sokos.skattekort.status
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.DbListener.dataSource
-import no.nav.sokos.skattekort.module.skattekort.aBestilling
-import no.nav.sokos.skattekort.module.skattekort.aBestillingsBatch
-import no.nav.sokos.skattekort.module.skattekort.aDbSkattekort
-import no.nav.sokos.skattekort.module.skattekort.aPerson
-import no.nav.sokos.skattekort.module.skattekort.afoedselsnummer
-import no.nav.sokos.skattekort.module.skattekort.anUtsending
-import no.nav.sokos.skattekort.module.skattekort.databaseHas
 import no.nav.sokos.skattekort.skattekort.Status
+import no.nav.sokos.skattekort.skattekort.aBestilling
+import no.nav.sokos.skattekort.skattekort.aBestillingsBatch
+import no.nav.sokos.skattekort.skattekort.aDbSkattekort
+import no.nav.sokos.skattekort.skattekort.aPerson
+import no.nav.sokos.skattekort.skattekort.afoedselsnummer
+import no.nav.sokos.skattekort.skattekort.anUtsending
+import no.nav.sokos.skattekort.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
 class StatusServiceTest :
     FunSpec(

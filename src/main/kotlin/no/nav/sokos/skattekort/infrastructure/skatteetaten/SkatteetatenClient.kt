@@ -18,22 +18,18 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics
-import no.nav.sokos.skattekort.infrastructure.Metrics.counter
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortRequest
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
 
 class SkatteetatenClient(
     private val maskinportenTokenClient: MaskinportenTokenClient,
-    private val client: HttpClient
+    private val client: HttpClient,
 ) {
     private val skatteetatenUrl = PropertiesConfig.getSkatteetatenProperties().skatteetatenApiUrl
 
@@ -56,9 +52,7 @@ class SkatteetatenClient(
                 response.body<BestillSkattekortResponse>()
             }.invoke()
 
-    suspend fun hentSkattekort(
-        bestillingsreferanse: String,
-    ): HentSkattekortResponse? {
+    suspend fun hentSkattekort(bestillingsreferanse: String): HentSkattekortResponse? {
         return circuitBreaker
             .decorateSuspendFunction {
                 val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
@@ -77,7 +71,7 @@ class SkatteetatenClient(
                 if (!response.status.isSuccess()) {
                     throw RuntimeException("Feil ved henting av skattekort: ${response.status.value} - ${response.bodyAsText()}")
                 }
-                
+
                 response.body<HentSkattekortResponse>()
             }.invoke()
     }

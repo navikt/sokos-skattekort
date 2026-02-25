@@ -55,7 +55,8 @@ class UnleashIntegration(
                     .instanceId(appProperties.podName)
                     .unleashAPI(unleashProps.unleashAPI + "/api/")
                     .apiKey(unleashProps.apiKey)
-                    .environment(unleashProps.environment)
+                    // TODO
+//                    .environment(unleashProps.environment)
                     .synchronousFetchOnInitialisation(true)
                     .subscriber(
                         object : UnleashSubscriber {

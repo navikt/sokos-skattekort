@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.skattekort
+package no.nav.sokos.skattekort.skattekort
 
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -10,7 +10,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortService

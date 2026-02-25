@@ -9,7 +9,6 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortRequest
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.*
 
 object BestillingBatchRepository {
     fun list(tx: TransactionalSession): List<BestillingBatch> =
@@ -55,12 +54,15 @@ object BestillingBatchRepository {
                 mapOf(
                     "bestillingsreferanse" to bestillingsreferanse,
                     "dataSendt" to Json.encodeToString(request),
-                    "type" to OPPDATERING,
+                    "type" to BestillingsbatchType.OPPDATERING,
                 ),
             ),
         ) ?: error("Failed to insert bestillingsbatch")
 
-    fun getUnprocessedBestillingsbatchList(tx: TransactionalSession, type: BestillingsbatchType): List<BestillingBatch> =
+    fun getUnprocessedBestillingsbatchList(
+        tx: TransactionalSession,
+        type: BestillingsbatchType,
+    ): List<BestillingBatch> =
         tx.list(
             queryOf(
                 """
@@ -73,10 +75,9 @@ object BestillingBatchRepository {
                     "type" to type.name,
                 ),
             ),
-            
             extractor = mapToBestillingBatch,
         )
-    
+
     fun findById(
         tx: TransactionalSession,
         bestillingsbatchId: Long,

@@ -1,11 +1,12 @@
 package no.nav.sokos.skattekort.skattekort
 
 import kotlinx.datetime.toJavaLocalDate
+
 import kotliquery.Query
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
+
 import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.*
 import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor
 
 object SkattekortRepository {
@@ -45,7 +46,7 @@ object SkattekortRepository {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
-                                "type" to FRIKORT.type,
+                                "type" to Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT.type,
                                 "frikort_beloep" to forskuddstrekk.frikortBeloep,
                                 "tabell_nummer" to null,
                                 "prosentsats" to null,
@@ -57,7 +58,7 @@ object SkattekortRepository {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
-                                "type" to PROSENTKORT.type,
+                                "type" to Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT.type,
                                 "frikort_beloep" to null,
                                 "tabell_nummer" to null,
                                 "prosentsats" to forskuddstrekk.prosentSats,
@@ -69,7 +70,7 @@ object SkattekortRepository {
                             mapOf(
                                 "skattekortId" to id,
                                 "trekk_kode" to forskuddstrekk.trekkode.value,
-                                "type" to TABELLKORT.type,
+                                "type" to Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT.type,
                                 "frikort_beloep" to null,
                                 "tabell_nummer" to forskuddstrekk.tabellNummer,
                                 "prosentsats" to forskuddstrekk.prosentSats,

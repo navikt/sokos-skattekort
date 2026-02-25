@@ -10,13 +10,13 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
-import no.nav.sokos.skattekort.module.person.AuditRepository
-import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.Foedselsnummer
-import no.nav.sokos.skattekort.module.person.FoedselsnummerRepository
-import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.person.AuditRepository
+import no.nav.sokos.skattekort.person.AuditTag
+import no.nav.sokos.skattekort.person.Foedselsnummer
+import no.nav.sokos.skattekort.person.FoedselsnummerRepository
+import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction

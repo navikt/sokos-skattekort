@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort
 
 import kotlinx.serialization.Serializable
 
-import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.person.Personidentifikator
 
 // Data classes

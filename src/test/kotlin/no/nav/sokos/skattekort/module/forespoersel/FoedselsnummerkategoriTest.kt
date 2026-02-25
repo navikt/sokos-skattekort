@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.forespoersel
+package no.nav.sokos.skattekort.forespoersel
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue

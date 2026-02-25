@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.skattekort
+package no.nav.sokos.skattekort.skattekort
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldBe
 import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 

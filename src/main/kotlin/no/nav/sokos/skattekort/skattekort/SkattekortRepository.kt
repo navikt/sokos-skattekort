@@ -1,32 +1,18 @@
 package no.nav.sokos.skattekort.skattekort
 
 import kotlinx.datetime.toJavaLocalDate
-
 import kotliquery.Query
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-
-import no.nav.sokos.skattekort.module.person.AuditRepository
-import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT
-import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT
-import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT
+import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.*
 import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor
 
 object SkattekortRepository {
     fun insert(
         tx: TransactionalSession,
         skattekort: Skattekort,
-        batchId: String? = null,
     ): Long {
-        AuditRepository.insert(
-            tx,
-            AuditTag.SKATTEKORTINFORMASJON_MOTTATT,
-            skattekort.personId,
-            "Lagret skattekort ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar} ${if (batchId != null) "fra bestillingsbatch $batchId" else "som er opprettet manuelt"}",
-        )
         val id =
             tx.updateAndReturnGeneratedKey(
                 Query(

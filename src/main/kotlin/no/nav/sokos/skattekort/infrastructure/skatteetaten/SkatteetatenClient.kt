@@ -33,8 +33,7 @@ import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
 
 class SkatteetatenClient(
     private val maskinportenTokenClient: MaskinportenTokenClient,
-    private val client: HttpClient,
-    private val featureToggles: UnleashIntegration,
+    private val client: HttpClient
 ) {
     private val skatteetatenUrl = PropertiesConfig.getSkatteetatenProperties().skatteetatenApiUrl
 
@@ -58,7 +57,6 @@ class SkatteetatenClient(
             }.invoke()
 
     suspend fun hentSkattekort(
-        tx: TransactionalSession?,
         bestillingsreferanse: String,
     ): HentSkattekortResponse? {
         return circuitBreaker
@@ -71,38 +69,20 @@ class SkatteetatenClient(
                         accept(ContentType.Application.Json)
                         expectSuccess = false
                     }
-                hentBestillingReturkode.labelValues(response.status.description).inc()
 
                 if (response.status == HttpStatusCode.NoContent || response.status == HttpStatusCode.ServiceUnavailable) {
-                    hentBestillingFeilet.labelValues(bestillingsreferanse).inc()
                     return@decorateSuspendFunction null
                 }
 
                 if (!response.status.isSuccess()) {
                     throw RuntimeException("Feil ved henting av skattekort: ${response.status.value} - ${response.bodyAsText()}")
                 }
-                if (featureToggles.isLagreMottatteBestillingerEnabled()) {
-                    if (tx == null) error("Kan ikke lagre mottatte data i tekstformat uten tilgang til en transaksjon")
-                    BestillingBatchRepository.insertMottatteData(tx, bestillingsreferanse, response.bodyAsText())
-                }
-
+                
                 response.body<HentSkattekortResponse>()
             }.invoke()
     }
 
     companion object {
-        val hentBestillingFeilet =
-            counter(
-                name = "hent_bestilling_feilet_total",
-                helpText = "Kunne ikke hente svar på bestilling",
-                labelNames = "bestillingsreferanse",
-            )
-        val hentBestillingReturkode =
-            counter(
-                name = "hent_bestilling_total",
-                helpText = "Returkode på henting av bestilling",
-                labelNames = "returkode",
-            )
         val circuitBreaker =
             Metrics.circuitBreakerRegistry.circuitBreaker(
                 "${METRICS_NAMESPACE}_skatteetatenClientCircuitBreaker",

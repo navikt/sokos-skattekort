@@ -15,7 +15,7 @@ plugins {
     id("org.jetbrains.kotlinx.kover") version "0.9.7"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "8.8.1"
-    id("org.openapi.generator") version "7.19.0"
+    id("org.openapi.generator") version "7.20.0"
 
     application
 }
@@ -33,7 +33,7 @@ repositories {
 val resilience4jVersion = "2.3.0"
 val ktorVersion = "3.4.0"
 val nimbusVersion = "10.7"
-val logbackVersion = "1.5.31"
+val logbackVersion = "1.5.32"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.3"
 val dbSchedulerVersion = "16.7.1"

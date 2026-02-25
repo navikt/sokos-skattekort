@@ -159,7 +159,7 @@ class BestillingServiceTest :
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
@@ -207,7 +207,7 @@ class BestillingServiceTest :
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
@@ -235,7 +235,7 @@ class BestillingServiceTest :
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
@@ -260,7 +260,7 @@ class BestillingServiceTest :
                 aBestilling(1L, "01010112345", 2025, 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
 
@@ -317,7 +317,7 @@ class BestillingServiceTest :
                 aBestilling(1L, "23456789012", 2025, 2L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatchesFirstRun: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekortFirstRun: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
@@ -374,7 +374,7 @@ class BestillingServiceTest :
                 aBestilling(1L, "01010112345", 2025, 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
 
@@ -432,7 +432,7 @@ class BestillingServiceTest :
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
@@ -529,8 +529,8 @@ class BestillingServiceTest :
                 aBestilling(4L, "04040400004", 2025, null),
             )
 
-            bestillingService.hentSkattekort()
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
@@ -577,7 +577,7 @@ class BestillingServiceTest :
                 aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
@@ -661,7 +661,7 @@ class BestillingServiceTest :
             )
 
             shouldThrow<UgyldigOrganisasjonsnummerException> {
-                bestillingService.hentSkattekort()
+                bestillingService.hentSvarPaaAlleBatcher()
             }
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
@@ -716,7 +716,7 @@ class BestillingServiceTest :
                 aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 2L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> =
@@ -793,7 +793,7 @@ class BestillingServiceTest :
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> =
@@ -868,7 +868,7 @@ class BestillingServiceTest :
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val skattekort: List<Skattekort> =
@@ -913,7 +913,7 @@ class BestillingServiceTest :
         test("plukker ikke opp batch med status FEILET, gjør ingenting og trenger ikke mer data") {
             databaseHas(aBestillingsBatch(id = 1L, ref = "some-ref", status = "FEILET"))
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches = tx(BestillingBatchRepository::list)
             val auditAfter = tx { AuditRepository.getAuditByPersonId(it, PersonId(1L)) }
@@ -943,7 +943,7 @@ class BestillingServiceTest :
             )
 
             shouldThrow<RuntimeException> {
-                bestillingService.hentSkattekort()
+                bestillingService.hentSvarPaaAlleBatcher()
             }
 
             val updatedBatches = tx(BestillingBatchRepository::list)
@@ -994,7 +994,7 @@ class BestillingServiceTest :
                 aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             val bestillingsAfter: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
@@ -1073,7 +1073,7 @@ class BestillingServiceTest :
                 afoedselsnummer(personId = 1L, fnr = fnr),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             val updatedBatches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
             var skattekort: List<Skattekort> =
@@ -1111,7 +1111,7 @@ class BestillingServiceTest :
                 aBestillingsBatch(id = 2L, ref = "ref1", status = "NY"),
             )
 
-            bestillingService.hentSkattekort()
+            bestillingService.hentSvarPaaAlleBatcher()
 
             skattekort = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
             utsendinger = tx(UtsendingRepository::getAllUtsendinger)

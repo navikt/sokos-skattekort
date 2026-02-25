@@ -17,6 +17,7 @@ import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
+import no.nav.sokos.skattekort.skattekortkonvertering.KonverteringService
 import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 import no.nav.sokos.skattekort.utsending.UtsendingService
 
@@ -56,6 +57,7 @@ object JobTaskConfig {
         bestillingService: BestillingService,
         bestillingBatchService: BestillingBatchService,
         scheduledTaskService: ScheduledTaskService,
+        konverteringService: KonverteringService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
@@ -71,9 +73,12 @@ object JobTaskConfig {
                         val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                         scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
 
-                        bestillingBatchService.opprettBestillingsbatch()
+                        bestillingService.hentSvarPaaAlleBatcher()
+                        // Kanskje dele opp senere
+                        konverteringService.processRawSkattekort()
+
+                        bestillingBatchService.bestillSkattekort()
                         // TODO: Bør vente litt før vi kalle hentSkattekort
-                        bestillingService.hentSkattekort()
                     }
                 }
             }
@@ -120,12 +125,12 @@ object JobTaskConfig {
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
                     withTracerId {
-                        try {
+                        runCatching {
                             showLog(showLogLocalTime, instance, context)
                             val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                             scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
-                            bestillingService.hentOppdaterteSkattekort()
-                        } catch (e: Exception) {
+                            bestillingService.hentSvarPaaBestillingsbatchForOppdaterteSkattekort()
+                        }.onFailure { _ ->
                             // Spis exception for å ta kontroll over logging
                         }
                     }

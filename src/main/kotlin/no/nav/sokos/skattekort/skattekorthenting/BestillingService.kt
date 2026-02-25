@@ -40,13 +40,16 @@ class BestillingService(
     private val bestillingBatchService: BestillingBatchService,
 ) {
     @OptIn(ExperimentalTime::class)
-    fun hentSkattekort() {
+    fun hentSvarPaaAlleBatcher() {
         /* denne er med vilje ikke underlagt feature switch-styring for å unngå at en sendt bestilling
         ikke timer ut mens feature-toggelen er slått av
          */
         dataSource.transaction { tx -> BestillingBatchRepository.getUnprocessedBestillingsBatches(tx) }.forEach(::hentEnBatch)
     }
 
+    /**
+     *
+     */
     fun hentEnBatch(bestillingsbatch: BestillingBatch) {
         dataSource.transaction { tx ->
             val batchId = bestillingsbatch.id!!.id
@@ -62,7 +65,7 @@ class BestillingService(
                     when (response.status) {
                         ResponseStatus.FORESPOERSEL_OK.name -> {
                             response.arbeidsgiver?.first()?.arbeidstaker?.forEach { arbeidstaker ->
-                                ventLitt(tx, arbeidstaker)
+                                finnerPaaMetodenavnSenere(tx, arbeidstaker)
                                 BestillingRepository.deleteProcessedBestilling(tx, batchId, arbeidstaker.arbeidstakeridentifikator)
                             }
 
@@ -168,23 +171,16 @@ class BestillingService(
         }
     }
 
-    fun hentOppdaterteSkattekort() {
-        if (featureToggles.isOppdateringEnabled()) {
-            dataSource.transaction { tx ->
-                val oppdateringsbatch = BestillingBatchRepository.getUnprocessedOppdateringsBatch(tx)
-                if (oppdateringsbatch != null) {
-                    haandterOppdateringsbestilling(tx, oppdateringsbatch)
-                } else {
-                    // Fant ikke noen eksisterende batch, gå og lag ny
-                    bestillingBatchService.bestillOppdateringer(tx)
-                }
-            }
-        } else {
-            logger.debug("Bestillinger er disablet")
-        }
-    }
-
-    private fun ventLitt(
+    /**
+     * Sjekker at person finnes, hvis ikke logges feil i securelog
+     * Lagrer skattekortdata og auditlogger hvis det er IkkeSkattekort, IkkeTrekkplikt, SkattekortopplysningerOK
+     *
+     * Oppretter ny bestilling for nytt fnr hvis det er UtgaattDnummerSkattekortForFoedselsnummerErLevert
+     * Tar ikke vare på skattekort fordi vi er usikre på hvilket skattekort dette er.
+     *
+     * Kaster exception hvis det er UgyldigOrganisasjonsnummer eller UgyldigFoedselsEllerDnummer
+     */
+    private fun finnerPaaMetodenavnSenere(
         tx: TransactionalSession,
         arbeidstaker: Arbeidstaker,
     ) {
@@ -224,10 +220,10 @@ class BestillingService(
         }
     }
 
-    private fun haandterOppdateringsbestilling(
-        tx: TransactionalSession,
-        oppdateringsbatch: BestillingBatch,
-    ): Any {
+    fun hentSvarPaaBestillingsbatchForOppdaterteSkattekort() {
+    }
+
+    private fun bestillOppdateringer(oppdateringsbatch: BestillingBatch) {
         val batchId = oppdateringsbatch.id!!.id
         logger.info("Henter oppdaterte skattekort for ${oppdateringsbatch.bestillingsreferanse}")
         return runBlocking {

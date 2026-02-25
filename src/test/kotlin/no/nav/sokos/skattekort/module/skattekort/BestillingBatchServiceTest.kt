@@ -61,8 +61,8 @@ class BestillingBatchServiceTest :
 
             withConstantNow(LocalDateTime.parse("2025-12-14T00:00:00")) {
                 // Kaller to ganger for å sjekke at den ikke plukker opp 2026 på andre kall
-                bestillingBatchService.opprettBestillingsbatch()
-                bestillingBatchService.opprettBestillingsbatch()
+                bestillingBatchService.bestillSkattekort()
+                bestillingBatchService.bestillSkattekort()
 
                 val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
@@ -95,7 +95,7 @@ class BestillingBatchServiceTest :
                 )
             }
             withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
-                bestillingBatchService.opprettBestillingsbatch()
+                bestillingBatchService.bestillSkattekort()
 
                 val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
                 val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)

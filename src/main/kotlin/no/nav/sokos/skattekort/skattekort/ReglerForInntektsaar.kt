@@ -4,26 +4,26 @@ import java.time.LocalDateTime
 import java.time.Month
 
 object ReglerForInntektsaar {
-    fun lovligeInntektsAarAaBestilleFraSkatteetaten(): List<Short> {
+    fun lovligeInntektsAarAaBestilleFraSkatteetaten(): List<Int> {
         val now = LocalDateTime.now()
         val min = if (now.month <= Month.JUNE) now.year - 1 else now.year
-        return (min..maxInntektsaar()).map { it.toShort() }.toList()
+        return (min..maxInntektsaar()).map { it }.toList()
     }
 
-    fun inntektsaarAaBestille(): List<Short> = lovligeInntektsAarAaBestilleFraSkatteetaten().filter { it >= LocalDateTime.now().year }
+    fun inntektsaarAaBestille(): List<Int> = lovligeInntektsAarAaBestilleFraSkatteetaten().filter { it >= LocalDateTime.now().year }
 
-    fun alleLovligeInntektsaarAaHenteSkattekortFor(): List<Short> {
+    fun alleLovligeInntektsaarAaHenteSkattekortFor(): List<Int> {
         val now = LocalDateTime.now()
         val min = now.year - 1
-        return (min..maxInntektsaar()).map { it.toShort() }.toList()
+        return (min..maxInntektsaar()).toList()
     }
 
-    fun maxInntektsaar(): Short {
+    fun maxInntektsaar(): Int {
         val now = LocalDateTime.now()
         return if (now.dayOfMonth >= 15 && now.month == Month.DECEMBER) {
-            (now.year + 1).toShort()
+            (now.year + 1)
         } else {
-            now.year.toShort()
+            now.year
         }
     }
 }

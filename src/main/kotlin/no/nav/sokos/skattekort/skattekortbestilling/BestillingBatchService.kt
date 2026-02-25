@@ -7,7 +7,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
-import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
@@ -31,7 +30,7 @@ class BestillingBatchService(
     private val skatteetatenClient: SkatteetatenClient,
     private val featureToggles: UnleashIntegration,
 ) {
-    fun opprettBestillingsbatch() {
+    fun bestillSkattekort() {
         featureToggles.takeIf { it.isBestillingerEnabled() } ?: return
         val bestillingList: MutableList<Bestilling> = mutableListOf()
 
@@ -64,48 +63,55 @@ class BestillingBatchService(
                 is BatchUpdateException -> {
                     logger.error(marker = TEAM_LOGS_MARKER, exception) { "Oppretting av bestillingsbatch feilet: ${exception.message}" }
                     logger.error("Oppretting av bestillingsbatch feilet, detaljer er logget til secure log")
-                    auditLogBestillingFeilet(bestillingList)
+                    dataSource.transaction { errorTx ->
+                        AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillingList.map { it.personId }, "Oppretting av bestilling feilet")
+                    }
                 }
 
                 else -> {
-                    auditLogBestillingFeilet(bestillingList)
+                    dataSource.transaction { errorTx ->
+                        AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillingList.map { it.personId }, "Oppretting av bestilling feilet")
+                    }
                     logger.error(exception) { "Oppretting av bestillingsbatch feilet: ${exception.message}" }
                 }
             }
         }
     }
 
-    fun bestillOppdateringer(tx: TransactionalSession) {
-        runBlocking {
-            try {
-                ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { request ->
-                    val response = skatteetatenClient.bestillSkattekort(request)
-                    logger.info("Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten")
+    fun bestillOppdaterteSkattekort() {
+        featureToggles.takeIf { it.isOppdateringEnabled() } ?: return
+        runCatching {
+            dataSource.transaction { tx ->
+                BestillingBatchRepository.getUnprocessedOppdateringsBatch(tx) ?: return@transaction
+
+                // Bør vi stresse med å hente oppdateringer på skattekort for neste år allerede 15.desember?
+                ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->
+                    val response =
+                        runBlocking {
+                            skatteetatenClient.bestillSkattekort(oppdateringsrequest)
+                        }
+                    logger.info("Bestillingsbatch for henting av oppdaterte skattekort ${response.bestillingsreferanse} mottatt av Skatteetaten")
                     val bestillingsbatchId =
                         BestillingBatchRepository.insertOppdateringsBatch(
                             tx,
                             bestillingsreferanse = response.bestillingsreferanse,
-                            request = request,
+                            request = oppdateringsrequest,
                         )
-                    logger.info("Bestillingsbatch $bestillingsbatchId opprettet")
+                    logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
                 }
-            } catch (e: BatchUpdateException) {
-                logger.error(marker = TEAM_LOGS_MARKER, e) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${e.message}" }
-                logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til secure log")
-                throw e
-            } catch (cnpe: CallNotPermittedException) {
-                // Her venter vi med å bestille fordi vi tror det er et forbigående problem med kommunikasjon mot skatteetaten
-                throw cnpe
-            } catch (ex: Exception) {
-                logger.error(ex) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${ex.message}" }
-                throw ex
             }
-        }
-    }
+        }.onFailure { exception ->
+            when (exception) {
+                is BatchUpdateException -> {
+                    logger.error(marker = TEAM_LOGS_MARKER, exception) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${exception.message}" }
+                    logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til secure log")
+                }
 
-    private fun auditLogBestillingFeilet(bestillingList: List<Bestilling>) {
-        dataSource.transaction { errorTx ->
-            AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillingList.map { it.personId }, "Oppretting av bestilling feilet")
+                is CallNotPermittedException -> return
+                else -> {
+                    logger.error(exception) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${exception.message}" }
+                }
+            }
         }
     }
 }

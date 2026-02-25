@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidPersonIdent
 @Serializable
 data class HentSkattekortRequest(
     val fnr: String,
-    val inntektsaar: Short? = null,
+    val inntektsaar: Int? = null,
     val hentAlle: Boolean = false,
 )
 

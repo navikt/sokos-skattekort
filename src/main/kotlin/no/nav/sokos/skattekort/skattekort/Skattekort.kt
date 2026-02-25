@@ -16,6 +16,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.module.person.PersonId
+import no.nav.sokos.skattekort.person.PersonId
 
 enum class ResultatForSkattekort(
     val value: String,

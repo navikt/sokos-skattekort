@@ -11,18 +11,20 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeid
 class SkattekortDataRepository {
     fun insert(
         tx: TransactionalSession,
-        arbeidstaker: Arbeidstaker,
-        bestillingsbatchId: Long,
+        dataMottatt: String,
+        inntektsaar: Int,
+        fnr: String,
     ) {
         tx.update(
             queryOf(
                 """
-                INSERT INTO skattekort_data (arbeidstaker, bestillingsbatch_id) 
-                VALUES (:arbeidstaker, :bestillingsbatchId)
+                INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr)
+                VALUES (:dataMottatt, :inntektsaar, :fnr)
                 """.trimIndent(),
                 mapOf(
-                    "arbeidstaker" to Json.encodeToString(arbeidstaker),
-                    "bestillingsbatchId" to bestillingsbatchId,
+                    "dataMottatt" to dataMottatt,
+                    "inntektsaar" to inntektsaar,
+                    "fnr" to fnr,
                 ),
             ),
         )

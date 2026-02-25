@@ -75,7 +75,7 @@ class BestillingBatchService(
         }
     }
 
-    private fun bestillOppdateringer(tx: TransactionalSession) {
+    fun bestillOppdateringer(tx: TransactionalSession) {
         runBlocking {
             try {
                 ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { request ->

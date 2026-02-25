@@ -2,7 +2,7 @@ package no.nav.sokos.skattekort.forespoersel
 
 import kotlinx.serialization.Serializable
 
-import no.nav.sokos.skattekort.module.person.Person
+import no.nav.sokos.skattekort.person.Person
 
 data class Abonnement(
     val id: AbonnementId? = null,

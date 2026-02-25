@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.skattekort
+package no.nav.sokos.skattekort.skattekort
 
 import java.time.LocalDateTime
 
@@ -13,9 +13,9 @@ import io.mockk.mockk
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skattekort.Skattekort
@@ -23,6 +23,7 @@ import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
@@ -60,7 +61,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                         afoedselsnummer(3L, "03030300003"),
                     )
 
-                    bestillingService.hentOppdaterteSkattekort()
+                    bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
@@ -107,7 +108,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                         afoedselsnummer(3L, "03030300003"),
                     )
 
-                    bestillingService.hentOppdaterteSkattekort()
+                    bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
@@ -132,7 +133,7 @@ class BestillingServiceOppdaterteSkattekortTest :
 
             test("Når vi gjør et kall med batcher i databasen skal det hentes skattekort") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                    coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                         aHentSkattekortResponse(
                             aSkattekortFor("01010100001", 10001),
                         )
@@ -146,7 +147,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
-                    bestillingService.hentOppdaterteSkattekort()
+                    bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
                     val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = false) }
@@ -176,7 +177,7 @@ class BestillingServiceOppdaterteSkattekortTest :
 
             test("Logger som feil for ukjente personer fra henting av skattekort") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                    coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                         aHentSkattekortResponse(
                             aSkattekortFor("0101010000X", 10007),
                         )
@@ -190,7 +191,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
-                    bestillingService.hentOppdaterteSkattekort()
+                    bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
                     val person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("0101010000X")) }
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
@@ -211,7 +212,7 @@ class BestillingServiceOppdaterteSkattekortTest :
 
             test("Henting av oppdaterte skattekort uten oppdateringer skal fungere") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                    coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.INGEN_ENDRINGER)
                     databaseHas(
                         aPerson(1L),
@@ -223,7 +224,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
-                    bestillingService.hentOppdaterteSkattekort()
+                    bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 
@@ -242,7 +243,7 @@ class BestillingServiceOppdaterteSkattekortTest :
 
             test("Henting av oppdaterte skattekort med ugyldig inntektsår skal feile") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                    coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
+                    coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.UGYLDIG_INNTEKTSAAR)
                     databaseHas(
                         aPerson(1L),
@@ -254,7 +255,7 @@ class BestillingServiceOppdaterteSkattekortTest :
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
-                    bestillingService.hentOppdaterteSkattekort()
+                    bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
 

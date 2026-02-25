@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.forespoersel
+package no.nav.sokos.skattekort.forespoersel
 
 import java.time.LocalDateTime
 
@@ -16,7 +16,7 @@ import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 

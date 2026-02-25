@@ -25,7 +25,7 @@ object Metrics {
             .help(helpText)
             .withoutExemplars()
             .register(prometheusMeterRegistry.prometheusRegistry)
-    
+
     fun gauge(
         name: String,
         helpText: String,

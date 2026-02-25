@@ -37,5 +37,4 @@ object SkattekortDataRepository {
                 row.string("data_mottatt")
             },
         )
-
 }

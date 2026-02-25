@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.skattekort
+package no.nav.sokos.skattekort.skattekort
 
 import kotlinx.serialization.json.Json
 
@@ -18,10 +18,9 @@ import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.bestillSkattekortRequest
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
@@ -53,7 +52,7 @@ class SkatteetatenClientTest :
         test("should handle ugyldig inntektsaar") {
             val skatteetatenClient = setupClient(readFile("/skatteetaten/hentSkattekort/ugyldig_inntektsaar.json"))
 
-            val response = skatteetatenClient.hentSkattekort(null, "BR1234")
+            val response = skatteetatenClient.hentSkattekort("BR1234")
 
             response shouldNotBeNull {
                 status shouldBe ResponseStatus.UGYLDIG_INNTEKTSAAR.name
@@ -64,7 +63,7 @@ class SkatteetatenClientTest :
         test("should handle skattekortopplysningerOK") {
             val skatteetatenClient = setupClient(readFile("/skatteetaten/hentSkattekort/skattekortopplysningerOK.json"))
 
-            val response = skatteetatenClient.hentSkattekort(null, "BR1234")
+            val response = skatteetatenClient.hentSkattekort("BR1234")
 
             response shouldNotBeNull {
                 status shouldBe ResponseStatus.FORESPOERSEL_OK.name
@@ -126,6 +125,6 @@ fun setupClient(jsonFile: String): SkatteetatenClient {
         mockk<MaskinportenTokenClient> {
             coEvery { getAccessToken() } returns "token"
         }
-    val skatteetatenClient = SkatteetatenClient(mockTokenClient, clientWithMockReply, UnleashIntegration())
+    val skatteetatenClient = SkatteetatenClient(mockTokenClient, clientWithMockReply)
     return skatteetatenClient
 }

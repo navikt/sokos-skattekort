@@ -82,7 +82,7 @@ class BestillingBatchService(
         featureToggles.takeIf { it.isOppdateringEnabled() } ?: return
         runCatching {
             dataSource.transaction { tx ->
-                BestillingBatchRepository.getUnprocessedOppdateringsBatch(tx) ?: return@transaction
+                if (BestillingBatchRepository.getUnprocessedBestillingsbatchList(tx, BestillingsbatchType.OPPDATERING).isEmpty()) return@transaction
 
                 // Bør vi stresse med å hente oppdateringer på skattekort for neste år allerede 15.desember?
                 ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->

@@ -33,19 +33,19 @@ object AuditRepository {
         informasjon: String,
         brukerId: String? = null,
     ) = tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
-            """
-            INSERT INTO person_audit(person_id, tag, bruker_id, informasjon)
-            VALUES (:person_id, :tag, :brukerId, :informasjon)
-            """.trimIndent(),
-            personIds.map { personId ->
-                mapOf(
-                    "person_id" to personId.value,
-                    "tag" to tag.name,
-                    "brukerId" to (brukerId ?: AUDIT_SYSTEM),
-                    "informasjon" to informasjon,
-                )
-            },
-        )
+        """
+        INSERT INTO person_audit(person_id, tag, bruker_id, informasjon)
+        VALUES (:person_id, :tag, :brukerId, :informasjon)
+        """.trimIndent(),
+        personIds.map { personId ->
+            mapOf(
+                "person_id" to personId.value,
+                "tag" to tag.name,
+                "brukerId" to (brukerId ?: AUDIT_SYSTEM),
+                "informasjon" to informasjon,
+            )
+        },
+    )
 
     fun getAuditByPersonId(
         tx: TransactionalSession,

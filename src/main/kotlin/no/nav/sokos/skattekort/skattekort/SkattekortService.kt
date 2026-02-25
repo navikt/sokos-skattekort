@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
-import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori.*
+import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori.GYLDIGE
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
@@ -102,7 +102,7 @@ class SkattekortService(
             val id = SkattekortId(SkattekortRepository.insert(tx, skattekort))
 
             Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, _) ->
-                SkattekortRepository.insert(tx, syntetisertSkattekort, "manuelt syntetisk")
+                SkattekortRepository.insert(tx, syntetisertSkattekort)
             }
         }
     }

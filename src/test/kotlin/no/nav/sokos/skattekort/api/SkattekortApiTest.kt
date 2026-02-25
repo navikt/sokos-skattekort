@@ -21,11 +21,11 @@ import io.ktor.http.HttpStatusCode
 
 import no.nav.sokos.skattekort.api.model.ForespoerselRequest
 import no.nav.sokos.skattekort.config.ApiError
+import no.nav.sokos.skattekort.forespoersel.ForespoerselRepository
+import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent

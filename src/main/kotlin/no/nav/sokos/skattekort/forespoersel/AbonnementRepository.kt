@@ -8,11 +8,11 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
-import no.nav.sokos.skattekort.module.person.Foedselsnummer
-import no.nav.sokos.skattekort.module.person.FoedselsnummerId
-import no.nav.sokos.skattekort.module.person.Person
-import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.person.Foedselsnummer
+import no.nav.sokos.skattekort.person.FoedselsnummerId
+import no.nav.sokos.skattekort.person.Person
+import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.person.Personidentifikator
 
 object AbonnementRepository {
     fun insert(

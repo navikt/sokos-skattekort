@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.person
+package no.nav.sokos.skattekort.person
 
 import kotlinx.serialization.json.Json
 

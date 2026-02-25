@@ -1,16 +1,19 @@
 package no.nav.sokos.skattekort.skattekortkonvertering
 
 import javax.sql.DataSource
+
 import kotlin.time.ExperimentalTime
 import kotlinx.serialization.json.Json
+
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
+
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
-import no.nav.sokos.skattekort.person.*
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.Skattekort

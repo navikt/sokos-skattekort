@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
 
 import kotliquery.Row
 
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.forespoersel.Forsystem
+import no.nav.sokos.skattekort.person.Personidentifikator
 
 data class Utsending
     @OptIn(ExperimentalTime::class)

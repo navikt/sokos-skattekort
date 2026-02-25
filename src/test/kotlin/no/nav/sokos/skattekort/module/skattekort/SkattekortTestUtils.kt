@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.skattekort
+package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -7,16 +7,15 @@ import java.nio.file.Paths
 
 import kotlinx.serialization.json.Json
 
+import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiver
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiveridentifikator
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkprosent
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekktabell
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.skattekort.Frikort
 import no.nav.sokos.skattekort.skattekort.Prosentkort
@@ -71,7 +70,7 @@ fun aSkdForskuddstrekk(
     tabellNummer: String? = null,
     frikortbeloep: Int? = null,
 ): no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk =
-    Forskuddstrekk(
+    no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk(
         trekkode = trekkode.value,
         trekktabell = tabellNummer?.let { Trekktabell(it, BigDecimal(trekkprosent!!).setScale(2, RoundingMode.HALF_UP), BigDecimal(12).setScale(1, RoundingMode.HALF_UP)) },
         trekkprosent = trekkprosent?.let { Trekkprosent(BigDecimal(it).setScale(2, RoundingMode.HALF_UP), null) },
@@ -85,7 +84,7 @@ fun aSkdForskuddstrekk(
 fun aSkattekort(
     utstedtDato: String,
     identifikator: Long,
-    forskuddstrekk: List<Forskuddstrekk>,
+    forskuddstrekk: List<no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk>,
 ): Skattekort =
     Skattekort(
         utstedtDato = utstedtDato,

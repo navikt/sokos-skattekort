@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.forespoersel
+package no.nav.sokos.skattekort.forespoersel
 
 import java.time.LocalDateTime
 
@@ -17,18 +17,18 @@ import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.module.person.AuditRepository
-import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.module.person.Personidentifikator
-import no.nav.sokos.skattekort.module.utsending.Utsending
-import no.nav.sokos.skattekort.module.utsending.UtsendingId
-import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
+import no.nav.sokos.skattekort.person.AuditRepository
+import no.nav.sokos.skattekort.person.AuditTag
+import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utsending.Utsending
+import no.nav.sokos.skattekort.utsending.UtsendingId
+import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
 @OptIn(ExperimentalTime::class)
 class ForespoerselServiceTest :

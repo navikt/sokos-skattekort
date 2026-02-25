@@ -78,20 +78,21 @@ object BestillingRepository {
     fun deleteProcessedBestillingBatch(
         tx: TransactionalSession,
         fnrList: List<String>,
-        batchId: Long
+        batchId: Long,
     ) = tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
         """
-            DELETE FROM bestillinger
-                WHERE bestillingsbatch_id = :bestillingsbatchId
-                AND fnr = :fnr
-            """.trimIndent(),
+        DELETE FROM bestillinger
+            WHERE bestillingsbatch_id = :bestillingsbatchId
+            AND fnr = :fnr
+        """.trimIndent(),
         fnrList.map { fnr ->
             mapOf(
                 "bestillingsbatchId" to batchId,
-                "fnr" to fnr
+                "fnr" to fnr,
             )
         },
     )
+
     fun retryUnprocessedBestillings(
         tx: TransactionalSession,
         batch: Long,

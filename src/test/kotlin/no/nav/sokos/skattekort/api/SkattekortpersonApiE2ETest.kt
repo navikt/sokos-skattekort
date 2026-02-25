@@ -21,14 +21,15 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import org.apache.hc.core5.http.message.MessageSupport.header
 import org.slf4j.LoggerFactory
 
 import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.Personidentifikator
+import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.util.SQLUtils.transaction

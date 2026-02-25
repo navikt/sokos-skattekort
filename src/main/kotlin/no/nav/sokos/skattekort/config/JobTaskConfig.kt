@@ -77,12 +77,10 @@ object JobTaskConfig {
                             scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
 
                             bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
-                            bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
                             // Kanskje dele opp senere
                             konverteringService.processSkattekortData()
 
                             bestillingBatchService.bestillSkattekort()
-                            bestillingBatchService.bestillOppdaterteSkattekort()
                         }.onFailure { _ ->
                             // Spis exception for å unngå spurious logging
                         }

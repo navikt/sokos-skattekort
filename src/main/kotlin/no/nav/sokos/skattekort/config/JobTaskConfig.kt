@@ -11,8 +11,8 @@ import com.github.kagkarlsson.scheduler.task.helper.RecurringTask
 import com.github.kagkarlsson.scheduler.task.helper.Tasks
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
 import mu.KotlinLogging
-
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
+
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchService
@@ -35,6 +35,7 @@ object JobTaskConfig {
         bestillingService: BestillingService,
         bestillingBatchService: BestillingBatchService,
         utsendingService: UtsendingService,
+        konverteringService: KonverteringService,
         scheduledTaskService: ScheduledTaskService,
         metricsService: MetricsService,
         forespoerselService: ForespoerselService,
@@ -46,7 +47,7 @@ object JobTaskConfig {
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
-                recurringBestillingManagementBatchTask(bestillingService, bestillingBatchService, scheduledTaskService),
+                recurringBestillingManagementBatchTask(bestillingService, bestillingBatchService, scheduledTaskService, konverteringService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
                 recurringFetchMetricsTask(metricsService, scheduledTaskService),
@@ -69,16 +70,20 @@ object JobTaskConfig {
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
                     withTracerId {
-                        showLog(showLogLocalTime, instance, context)
-                        val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                        scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
+                        runCatching {
+                            showLog(showLogLocalTime, instance, context)
+                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
 
-                        bestillingService.hentSvarPaaAlleBatcher()
-                        // Kanskje dele opp senere
-                        konverteringService.processRawSkattekort()
+                            bestillingService.hentBestillingsbatcher()
+                            // Kanskje dele opp senere
+                            konverteringService.processSkattekortData()
 
-                        bestillingBatchService.bestillSkattekort()
-                        // TODO: Bør vente litt før vi kalle hentSkattekort
+                            bestillingBatchService.bestillSkattekort()
+                            // TODO: Bør vente litt før vi kalle hentSkattekort
+                        }.onFailure { _ ->
+                            // Spis exception for å unngå spurious logging
+                        }
                     }
                 }
             }

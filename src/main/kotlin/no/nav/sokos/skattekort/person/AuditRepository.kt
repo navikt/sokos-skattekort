@@ -32,8 +32,7 @@ object AuditRepository {
         personIds: List<PersonId>,
         informasjon: String,
         brukerId: String? = null,
-    ) = if (personIds.size > 0) {
-        tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+    ) = tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
             """
             INSERT INTO person_audit(person_id, tag, bruker_id, informasjon)
             VALUES (:person_id, :tag, :brukerId, :informasjon)
@@ -47,9 +46,6 @@ object AuditRepository {
                 )
             },
         )
-    } else {
-        // Do nothing
-    }
 
     fun getAuditByPersonId(
         tx: TransactionalSession,

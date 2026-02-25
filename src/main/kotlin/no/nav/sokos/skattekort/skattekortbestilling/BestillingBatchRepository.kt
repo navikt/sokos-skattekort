@@ -9,10 +9,7 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortRequest
-
-private const val OPPDATERING = "OPPDATERING"
-
-private const val BESTILLING = "BESTILLING"
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.*
 
 object BestillingBatchRepository {
     fun list(tx: TransactionalSession): List<BestillingBatch> =
@@ -63,33 +60,23 @@ object BestillingBatchRepository {
             ),
         ) ?: error("Failed to insert bestillingsbatch")
 
-    fun getUnprocessedBestillingsBatches(tx: TransactionalSession): List<BestillingBatch> =
+    fun getUnprocessedBestillingsbatchList(tx: TransactionalSession, type: BestillingsbatchType): List<BestillingBatch> =
         tx.list(
             queryOf(
                 """
                     |SELECT * 
                     |FROM bestillingsbatcher
-                    |WHERE status = 'NY' AND type = '$BESTILLING'
+                    |WHERE status = 'NY' AND type = :type
                     |ORDER BY oppdatert ASC
                 """.trimMargin(),
+                mapOf(
+                    "type" to type.name,
+                ),
             ),
+            
             extractor = mapToBestillingBatch,
         )
-
-    fun getUnprocessedOppdateringsBatch(tx: TransactionalSession): BestillingBatch? =
-        tx.single(
-            queryOf(
-                """
-                    |SELECT * 
-                    |FROM bestillingsbatcher
-                    |WHERE status = 'NY' AND type = '$OPPDATERING'
-                    |ORDER BY oppdatert ASC
-                    |LIMIT 1
-                """.trimMargin(),
-            ),
-            extractor = mapToBestillingBatch,
-        )
-
+    
     fun findById(
         tx: TransactionalSession,
         bestillingsbatchId: Long,
@@ -126,9 +113,9 @@ object BestillingBatchRepository {
         )
     }
 
-    fun insertMottatteData(
+    fun updateBestillingsbatchWithMottatteData(
         tx: TransactionalSession,
-        bestillingsreferanse: String,
+        batchId: Long,
         content: String,
     ) {
         tx.run(
@@ -136,10 +123,10 @@ object BestillingBatchRepository {
                 """
                     |UPDATE bestillingsbatcher
                     |SET data_mottatt = :content, oppdatert = NOW()
-                    |WHERE bestillingsreferanse = :ref
+                    |WHERE id = :id
                 """.trimMargin(),
                 mapOf(
-                    "ref" to bestillingsreferanse,
+                    "id" to batchId,
                     "content" to content,
                 ),
             ).asExecute,

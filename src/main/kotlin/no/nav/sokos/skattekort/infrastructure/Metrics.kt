@@ -25,20 +25,7 @@ object Metrics {
             .help(helpText)
             .withoutExemplars()
             .register(prometheusMeterRegistry.prometheusRegistry)
-
-    fun counter(
-        name: String,
-        helpText: String,
-        labelNames: String,
-    ): Counter =
-        Counter
-            .builder()
-            .labelNames(labelNames)
-            .name("${METRICS_NAMESPACE}_$name")
-            .help(helpText)
-            .withoutExemplars()
-            .register(prometheusMeterRegistry.prometheusRegistry)
-
+    
     fun gauge(
         name: String,
         helpText: String,

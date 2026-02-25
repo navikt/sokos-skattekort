@@ -24,7 +24,7 @@ object BestillingRepository {
 
     fun getBestillingsKandidaterForBatch(
         tx: TransactionalSession,
-        maxYear: Short,
+        maxYear: Int,
     ): List<Bestilling> =
         tx.list(
             queryOf(

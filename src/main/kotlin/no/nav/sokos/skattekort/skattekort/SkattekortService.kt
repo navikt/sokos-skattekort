@@ -30,13 +30,13 @@ class SkattekortService(
 ) {
     fun getSingleSkattekortForEachYear(
         fnr: String,
-        inntektsaar: Short? = null,
+        inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
     ) = getSkattekort(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
 
     fun getSkattekort(
         fnr: String,
-        inntektsaar: Short? = null,
+        inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
     ): List<SkattekortDTO> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
@@ -55,7 +55,7 @@ class SkattekortService(
                     .findAllByPersonId(
                         tx,
                         person.id!!,
-                        inntektsaar?.toInt(),
+                        inntektsaar,
                         adminRole = false,
                     ).map(::SkattekortDTO)
             }.toList()

@@ -12,7 +12,7 @@ object SkattekortValidator {
         return aar in (currentYear - 1)..currentYear
     }
 
-    fun isValidInntektsaar(aar: Short): Boolean = aar in ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor()
+    fun isValidInntektsaar(aar: Int): Boolean = aar in ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor()
 
     fun isValidForsystem(forsystem: String): Boolean {
         val gyldigForSystem = Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }

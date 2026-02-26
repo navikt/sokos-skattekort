@@ -28,11 +28,10 @@ private val logger = KotlinLogging.logger {}
 
 class KonverteringService(
     private val dataSource: DataSource,
-    private val skattekortDataRepository: SkattekortDataRepository,
 ) {
     fun processSkattekortData() {
         dataSource.transaction { tx ->
-            val skattekortData = skattekortDataRepository.getUnprocessedSkattekortData(tx).map { Json.decodeFromString<Arbeidstaker>(it) }
+            val skattekortData = SkattekortDataRepository.getUnprocessedSkattekortData(tx).map { Json.decodeFromString<Arbeidstaker>(it) }
             skattekortData.forEach { arbeidstaker ->
                 val personId =
                     PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: this.run {

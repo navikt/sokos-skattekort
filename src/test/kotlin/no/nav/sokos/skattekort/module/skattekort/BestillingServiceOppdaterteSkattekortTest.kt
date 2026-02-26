@@ -5,21 +5,15 @@ import java.time.LocalDateTime
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
-import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.infrastructure.DbListener
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.module.person.Audit
-import no.nav.sokos.skattekort.module.person.AuditRepository
-import no.nav.sokos.skattekort.module.person.AuditTag
-import no.nav.sokos.skattekort.module.person.Person
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonRepository
-import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
@@ -31,13 +25,10 @@ class BestillingServiceOppdaterteSkattekortTest :
             extensions(DbListener)
 
             val skatteetatenClient = mockk<SkatteetatenClient>()
-            val personService = PersonService(DbListener.dataSource)
-
             val bestillingService: BestillingService by lazy {
                 BestillingService(
                     dataSource = DbListener.dataSource,
                     skatteetatenClient = skatteetatenClient,
-                    personService = personService,
                     featureToggles = UnleashIntegration(),
                 )
             }
@@ -54,9 +45,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                             """.trimIndent(),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                     )
 
                     bestillingService.hentOppdaterteSkattekort()
@@ -98,9 +92,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                             ),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                     )
 
                     bestillingService.hentOppdaterteSkattekort()
@@ -133,9 +130,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                             aSkattekortFor("01010100001", 10001),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
@@ -167,28 +167,29 @@ class BestillingServiceOppdaterteSkattekortTest :
                 }
             }
 
-            test("Vi skal tolerere å få skattekort for ukjente personer") {
+            test("Logger som feil for ukjente personer fra henting av skattekort") {
                 withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
                     coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(
                             aSkattekortFor("0101010000X", 10007),
                         )
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
                     bestillingService.hentOppdaterteSkattekort()
 
-                    val person: Person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("0101010000X")) }!!
-
+                    val person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("0101010000X")) }
                     val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
-                    val skattekort: List<Skattekort> = tx { SkattekortRepository.findAllByPersonId(it, person.id!!, 2025, adminRole = false) }
-                    val auditLog: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, person.id!!) }
 
                     assertSoftly {
+                        person shouldBe null
                         batches shouldNotBeNull {
                             size shouldBe 1
                             first() shouldNotBeNull {
@@ -196,38 +197,6 @@ class BestillingServiceOppdaterteSkattekortTest :
                                 type shouldBe "OPPDATERING"
                                 bestillingsreferanse shouldBe "REF0001"
                             }
-                        }
-                        skattekort shouldNotBeNull {
-                            size shouldBe 1
-                            first() shouldNotBeNull {
-                                identifikator shouldBe "10007"
-                                resultatForSkattekort shouldBe SkattekortopplysningerOK
-                                forskuddstrekkList shouldNotBeNull {
-                                    size shouldBe 2
-                                }
-                            }
-                        }
-                        auditLog shouldNotBeNull {
-                            shouldContainAllIgnoringFields(
-                                listOf(
-                                    Audit(
-                                        personId = person.id!!,
-                                        brukerId = "",
-                                        tag = AuditTag.INVALID_FNR,
-                                        informasjon = "",
-                                    ),
-                                    Audit(
-                                        personId = person.id,
-                                        brukerId = "",
-                                        tag = AuditTag.UVENTET_PERSON,
-                                        informasjon = "",
-                                    ),
-                                ),
-                                Audit::id,
-                                Audit::opprettet,
-                                Audit::brukerId,
-                                Audit::informasjon,
-                            )
                         }
                     }
                 }
@@ -238,9 +207,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                     coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.INGEN_ENDRINGER)
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 
@@ -266,9 +238,12 @@ class BestillingServiceOppdaterteSkattekortTest :
                     coEvery { skatteetatenClient.hentSkattekort(any(), any()) } returns
                         aHentSkattekortResponse(response = ResponseStatus.UGYLDIG_INNTEKTSAAR)
                     databaseHas(
-                        aPerson(1L, "01010100001"),
-                        aPerson(2L, "02020200002"),
-                        aPerson(3L, "03030300003"),
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aPerson(2L),
+                        afoedselsnummer(2L, "02020200002"),
+                        aPerson(3L),
+                        afoedselsnummer(3L, "03030300003"),
                         aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
                     )
 

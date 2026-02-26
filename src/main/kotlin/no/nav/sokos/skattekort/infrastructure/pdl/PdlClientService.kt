@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.pdl
+package no.nav.sokos.skattekort.infrastructure.pdl
 
 import com.expediagroup.graphql.client.types.GraphQLClientError
 import io.ktor.client.HttpClient
@@ -23,7 +23,7 @@ private val logger = KotlinLogging.logger {}
 private const val BEHANDLINGSKATALOGNUMMER = "B749"
 
 class PdlClientService(
-    private val client: HttpClient,
+    private val httpClient: HttpClient,
     @Named("pdlUrl") private val pdlUrl: String,
     @Named("pdlAzuredTokenClient") private val azuredTokenClient: AzuredTokenClient,
 ) {
@@ -32,9 +32,9 @@ class PdlClientService(
 
         val accessToken = azuredTokenClient.getSystemToken()
 
-        logger.info { "Henter identer fra PDL" }
+        logger.debug { "Henter identer fra PDL" }
         val response =
-            client.post("$pdlUrl/graphql") {
+            httpClient.post("$pdlUrl/graphql") {
                 header(HttpHeaders.Authorization, "Bearer $accessToken")
                 header("behandlingsnummer", BEHANDLINGSKATALOGNUMMER)
                 contentType(ContentType.Application.Json)

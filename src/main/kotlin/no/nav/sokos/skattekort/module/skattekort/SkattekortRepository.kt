@@ -12,18 +12,19 @@ import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT
+import no.nav.sokos.skattekort.module.skattekort.ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor
 
 object SkattekortRepository {
     fun insert(
         tx: TransactionalSession,
         skattekort: Skattekort,
-        batchId: String,
+        batchId: String? = null,
     ): Long {
         AuditRepository.insert(
             tx,
             AuditTag.SKATTEKORTINFORMASJON_MOTTATT,
             skattekort.personId,
-            "Lagret skattekortresultat ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar} fra bestillingsbatch $batchId",
+            "Lagret skattekort ${skattekort.resultatForSkattekort} for ${skattekort.inntektsaar} ${if (batchId != null) "fra bestillingsbatch $batchId" else "som er opprettet manuelt"}",
         )
         val id =
             tx.updateAndReturnGeneratedKey(
@@ -112,26 +113,28 @@ object SkattekortRepository {
     fun findAllByPersonId(
         tx: TransactionalSession,
         personId: PersonId,
-        inntektsaar: Int,
+        inntektsaar: Int?,
         adminRole: Boolean,
-    ): List<Skattekort> =
-        tx.list(
+    ): List<Skattekort> {
+        val hentFor = if (inntektsaar != null) listOf(inntektsaar) else alleLovligeInntektsaarAaHenteSkattekortFor()
+        val inParams = List(hentFor.size) { idx -> ":inntektsaar$idx" }.joinToString(", ")
+        val paramMap = hentFor.mapIndexed { idx, value -> "inntektsaar$idx" to value }.toMap() + ("personId" to personId.value)
+
+        return tx.list(
             queryOf(
                 """
                 SELECT * FROM skattekort 
-                WHERE person_id = :personId AND inntektsaar = :inntektsaar
+                WHERE person_id = :personId AND inntektsaar IN ($inParams)
                 ORDER BY opprettet DESC, id DESC
                 """.trimIndent(),
-                mapOf(
-                    "personId" to personId.value,
-                    "inntektsaar" to inntektsaar,
-                ),
+                paramMap,
             ),
             extractor = { row ->
                 val id = SkattekortId(row.long("id"))
                 Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id, adminRole = adminRole), findAllTilleggsopplysningBySkattekortId(tx, id, adminRole))
             },
         )
+    }
 
     fun findAllForskuddstrekkBySkattekortId(
         tx: TransactionalSession,

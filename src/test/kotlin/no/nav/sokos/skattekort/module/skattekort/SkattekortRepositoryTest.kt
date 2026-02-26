@@ -5,7 +5,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotliquery.TransactionalSession
 
-import no.nav.sokos.skattekort.infrastructure.DbListener
+import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
@@ -17,7 +17,8 @@ class SkattekortRepositoryTest :
 
         test("Hent riktig skattekort når det finnes mange") {
             databaseHas(
-                aPerson(1L, "12345678901"),
+                aPerson(1L),
+                afoedselsnummer(1L, "01010112345"),
                 aDbSkattekort(
                     id = 6986540,
                     personId = 1,
@@ -81,7 +82,8 @@ class SkattekortRepositoryTest :
         }
         test("Hent riktig skattekort når to skattekort har samme opprettet-tidspunkt") {
             databaseHas(
-                aPerson(1L, "12345678901"),
+                aPerson(1L),
+                afoedselsnummer(1L, "01010112345"),
                 aDbSkattekort(
                     id = 10015752,
                     personId = 1,

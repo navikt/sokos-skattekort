@@ -25,7 +25,6 @@ import no.nav.sokos.skattekort.module.person.Personidentifikator
 import no.nav.sokos.skattekort.module.skattekort.Skattekort
 import no.nav.sokos.skattekort.module.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.module.utsending.oppdragz.SkattekortFixedRecordFormatter
-import no.nav.sokos.skattekort.module.utsending.oppdragz.Skattekortmelding
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class UtsendingService(
@@ -93,8 +92,6 @@ class UtsendingService(
                                         Forsystem.MANUELL -> {
                                             UtsendingRepository.delete(tx, utsending.id!!)
                                         }
-
-                                        Forsystem.DARE_POC -> Unit
                                     }
                                 }
                             }
@@ -123,8 +120,7 @@ class UtsendingService(
             val person = PersonRepository.findPersonByFnr(tx, fnr)
             personId = person?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
             val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
-            val skattekortmelding = Skattekortmelding(skattekort, fnr.value)
-            val copybook = SkattekortFixedRecordFormatter(skattekortmelding, inntektsaar.toString()).format()
+            val copybook = SkattekortFixedRecordFormatter(skattekort, fnr.value).format()
 
             if (featureToggles.isBevisForSendingEnabled()) {
                 UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, fnr, copybook)

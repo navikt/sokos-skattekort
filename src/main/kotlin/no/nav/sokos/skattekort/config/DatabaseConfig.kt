@@ -19,11 +19,14 @@ object DatabaseConfig {
         HikariDataSource(initHikariConfig())
     }
 
-    val dataSourceReadCommit: DataSource by lazy {
+    val dataSourceScheduler: DataSource by lazy {
         HikariDataSource(
             initHikariConfig(
-                poolname = "postgres-read-commited-pool",
-            ),
+                poolname = "postgres-scheduler-pool",
+            ).apply {
+                maximumPoolSize = 30
+                minimumIdle = 5
+            },
         )
     }
 
@@ -32,7 +35,6 @@ object DatabaseConfig {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     (dataSource as HikariDataSource).close()
-                    (dataSourceReadCommit as HikariDataSource).close()
                 },
             )
         }
@@ -59,8 +61,10 @@ object DatabaseConfig {
             maximumPoolSize = 15
             minimumIdle = 1
             isAutoCommit = false
-            connectionTimeout = Duration.ofSeconds(10).toMillis()
-            initializationFailTimeout = Duration.ofMinutes(5).toMillis()
+            connectionTimeout = Duration.ofSeconds(30).toMillis()
+            initializationFailTimeout = Duration.ofMinutes(10).toMillis()
+            idleTimeout = Duration.ofMinutes(10).toMillis()
+            maxLifetime = Duration.ofMinutes(30).toMillis()
 
             when {
                 !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {

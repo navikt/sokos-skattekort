@@ -21,23 +21,32 @@ class UnleashIntegration(
     private val unleashProps = PropertiesConfig.getUnleashProperties()
 
     // Kill switcher:
-    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled", true)
+    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled")
 
-    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled", true)
+    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled")
 
-    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled", true)
+    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled")
 
-    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled", true)
+    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled")
 
-    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled", true)
+    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled")
 
-    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.lagre-mottatte-bestillinger.enabled", false)
+    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.lagre-mottatte-bestillinger.enabled")
 
-    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled", true)
+    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled")
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST) {
-            unleashClient = FakeUnleash().also { it.disable("sokos-skattekort.lagre-mottatte-bestillinger.enabled") }
+            unleashClient =
+                FakeUnleash().also { fakeUnleash ->
+                    fakeUnleash.enable("sokos-skattekort.forespoersel-listener.enabled")
+                    fakeUnleash.enable("sokos-skattekort.utsendinger.enabled")
+                    fakeUnleash.enable("sokos-skattekort.bestillinger.enabled")
+                    fakeUnleash.enable("sokos-skattekort.oppdateringer.enabled")
+                    fakeUnleash.enable("sokos-skattekort.bevisforsending.enabled")
+                    fakeUnleash.enable("sokos-skattekort.forespoerselinput.enabled")
+                    fakeUnleash.disable("sokos-skattekort.lagre-mottatte-bestillinger.enabled")
+                }
         } else {
             val config =
                 UnleashConfig

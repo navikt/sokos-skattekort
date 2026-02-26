@@ -2,8 +2,6 @@ package no.nav.sokos.skattekort.config
 
 import java.net.ProxySelector
 
-import kotlinx.serialization.json.Json
-
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.plugins.HttpRequestRetry
@@ -17,7 +15,7 @@ private val logger = KotlinLogging.logger {}
 
 fun createHttpClient(): HttpClient =
     HttpClient(Apache5) {
-        expectSuccess = true
+        expectSuccess = false
         engine {
             socketTimeout = 30_000
             connectTimeout = 30_000
@@ -29,12 +27,7 @@ fun createHttpClient(): HttpClient =
 
         install(ContentNegotiation) {
             json(
-                Json {
-                    prettyPrint = true
-                    ignoreUnknownKeys = true
-                    encodeDefaults = true
-                    explicitNulls = false
-                },
+                jsonConfig,
             )
         }
 

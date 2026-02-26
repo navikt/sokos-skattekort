@@ -2,20 +2,17 @@ package no.nav.sokos.skattekort.module.forespoersel
 
 import kotlinx.datetime.LocalDate
 
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger { }
-
 enum class Foedselsnummerkategori(
     val value: String,
     val erGyldig: (String) -> Boolean,
+    val kanBestilleSkattekort: (String) -> Boolean,
 ) {
-    GYLDIGE("GYLDIGE", ::gyldigFnrEllerDnrRegel),
-    TENOR("TENOR", ::tenorRegel),
-    ALLE("ALLE", ::lengdeOgTallRegel),
+    GYLDIGE(value = "GYLDIGE", erGyldig = ::erGyldigFnrEllerDnr, kanBestilleSkattekort = ::erGyldigFnrEllerDnr),
+    KUNSTIGE_FNR(value = "KUNSTIGE_FNR", erGyldig = ::erDollyfnr or ::erTenorFnr, kanBestilleSkattekort = ::erTenorFnr),
+    ALLE(value = "ALLE", erGyldig = ::lengdeOgTallRegel, kanBestilleSkattekort = ::lengdeOgTallRegel),
 }
 
-fun gyldigFnrEllerDnrRegel(fnr: String): Boolean =
+fun erGyldigFnrEllerDnr(fnr: String): Boolean =
     (
         lengdeOgTallRegel(fnr) &&
             (
@@ -24,7 +21,14 @@ fun gyldigFnrEllerDnrRegel(fnr: String): Boolean =
             )
     )
 
-fun tenorRegel(fnr: String): Boolean =
+fun erDollyfnr(fnr: String): Boolean =
+    (
+        lengdeOgTallRegel(fnr) &&
+            isDateParseable(fnr, monthOffset = 40) ||
+            isDateParseable(fnr, dayOffset = 40, monthOffset = 40)
+    )
+
+fun erTenorFnr(fnr: String): Boolean =
     (
         lengdeOgTallRegel(fnr) &&
             isDateParseable(fnr, monthOffset = 80) ||
@@ -32,6 +36,11 @@ fun tenorRegel(fnr: String): Boolean =
     )
 
 fun lengdeOgTallRegel(fnr: String): Boolean = (Regex("^[0-9]{11}$").matches(fnr))
+
+infix fun ((String) -> Boolean).or(other: (String) -> Boolean): (String) -> Boolean =
+    { s ->
+        this(s) || other(s)
+    }
 
 private fun isDateParseable(
     fnr: String,

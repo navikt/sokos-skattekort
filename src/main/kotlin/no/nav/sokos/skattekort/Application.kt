@@ -26,17 +26,18 @@ import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.module.person.PersonService
+import no.nav.sokos.skattekort.module.skattekort.BestillingBatchService
 import no.nav.sokos.skattekort.module.skattekort.BestillingService
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.module.status.StatusService
 import no.nav.sokos.skattekort.module.utsending.UtsendingService
-import no.nav.sokos.skattekort.mq.JmsProducerService
-import no.nav.sokos.skattekort.pdl.PdlClientService
 import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
@@ -52,7 +53,6 @@ private val logger = KotlinLogging.logger {}
 fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
     val applicationState = ApplicationState()
     applicationLifecycleConfig(applicationState)
-
     commonConfig()
 
     PropertiesConfig.initEnvConfig(applicationConfig)
@@ -70,11 +70,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { PropertiesConfig.getUnleashProperties() }
         provide { PropertiesConfig.getApplicationProperties() }
         provide(MaskinportenTokenClient::class)
-        provide(JmsProducerService::class)
         provide(AuditLogger::class)
 
         provide { MQConfig.connectionFactory }
-        provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
         provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
@@ -82,28 +80,35 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             MQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
         }
         provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
-            MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort).apply {
-                messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
-            }
+            val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+            queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
+            queue
         }
         provide<Queue>(name = "leveransekoeOppdragZSkattekortStor") {
             val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
+        provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
         provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
+        }
+        provide<String>(name = "tilgangsmaskinUrl") { PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinUrl }
+        provide<AzuredTokenClient>(name = "tilgangsmaksinAzuredTokenClient") {
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinScope)
         }
         provide(StatusService::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
         provide(UtsendingService::class)
+        provide(BestillingBatchService::class)
         provide(BestillingService::class)
         provide(SkatteetatenClient::class)
         provide(SkattekortPersonService::class)
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
+        provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
         provide<UnleashIntegration> {
@@ -125,19 +130,21 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
+        val bestillingBatchService: BestillingBatchService by dependencies
         val utsendingService: UtsendingService by dependencies
-        val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceReadCommit)
+        val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceScheduler)
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
 
         JobTaskConfig
             .scheduler(
                 bestillingService,
+                bestillingBatchService,
                 utsendingService,
                 scheduledTaskService,
                 metricsService,
                 forespoerselService,
-                DatabaseConfig.dataSourceReadCommit,
+                DatabaseConfig.dataSourceScheduler,
             ).start()
     }
 

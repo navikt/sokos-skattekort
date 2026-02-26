@@ -50,16 +50,56 @@ spec:
       rules:
         - application: azure-token-generator
           namespace: nais
+          permissions:
+            scopes:
+              - "bestille-scope"
+              - "hent-scope"
+              - "status-scope"
+              - "opprett-scope"
+            roles:
+              - "bestille-role"
+              - "hent-role"
         - application: sokos-up-skattekort-ssr
+          permissions:
+            scopes:
+              - "hent-scope"
         - application: sokos-utbetalingsportalen
-        - application: saas-proxy
-          namespace: teamcrm
+          permissions:
+            scopes:
+              - "bestille-scope"
+              - "status-scope"
+        - application: sokos-dare-poc
+          permissions:
+            roles:
+              - "hent-role"
+              - "bestille-role"
         - application: saas-proxy
           namespace: platforce
+          permissions:
+            scopes:
+              - "hent-scope"
+        - application: saas-proxy
+          namespace: teamcrm
+          permissions:
+            scopes:
+              - "hent-scope"
+        - application: testnav-dolly-proxy-trygdeetaten
+          cluster: dev-fss
+          namespace: dolly
+          permissions:
+            roles:
+              - "opprett-role"
+              - "hent-role"
+        # Det MÅ gis tilgang til testnav-dolly-proxy for at testnav-dolly-proxy-trygdeetaten kan hente data fra sokos-skattekort.
+        - application: testnav-dolly-proxy
+          cluster: dev-fss
+          namespace: dolly
     outbound:
       rules:
         - application: logging
           namespace: nais-system
+        - application: populasjonstilgangskontroll
+          namespace: tilgangsmaskin
       external:
         - host: mqls02.preprod.local
           ports:

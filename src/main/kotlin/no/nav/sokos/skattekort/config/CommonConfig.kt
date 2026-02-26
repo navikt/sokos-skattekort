@@ -28,15 +28,25 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import mu.KotlinLogging
 import org.slf4j.MarkerFactory
 import org.slf4j.event.Level
-import tools.jackson.databind.DeserializationFeature
-import tools.jackson.dataformat.xml.XmlMapper
 
+import no.nav.sokos.skattekort.api.model.requestValidationOpprettSkattekortRequest
+import no.nav.sokos.skattekort.api.model.requestValidationSkattekortConfig
+import no.nav.sokos.skattekort.api.model.requestValidationSkattekortRequest
 import no.nav.sokos.skattekort.infrastructure.Metrics
+import no.nav.sokos.skattekort.security.TokenUtils
 
 val TEAM_LOGS_MARKER = MarkerFactory.getMarker("TEAM_LOGS")
 private const val X_KALLENDE_SYSTEM = "x-kallende-system"
 
 private val logger = KotlinLogging.logger {}
+
+val jsonConfig =
+    Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
 
 fun Application.commonConfig() {
     install(CallLogging) {
@@ -46,22 +56,18 @@ fun Application.commonConfig() {
         filter { call -> call.request.path().startsWith("/api") }
         disableDefaultColors()
     }
-    install(ContentNegotiation) {
-        json(
-            Json {
-                prettyPrint = true
-                ignoreUnknownKeys = true
-                encodeDefaults = true
-                explicitNulls = false
-            },
-        )
-    }
     install(StatusPages) {
         statusPageConfig()
+    }
+    install(ContentNegotiation) {
+        json(
+            jsonConfig,
+        )
     }
     install(RequestValidation) {
         requestValidationSkattekortConfig()
         requestValidationSkattekortRequest()
+        requestValidationOpprettSkattekortRequest()
     }
     install(MicrometerMetrics) {
         registry = Metrics.prometheusMeterRegistry
@@ -75,13 +81,6 @@ fun Application.commonConfig() {
             )
     }
 }
-
-val xmlMapper: XmlMapper =
-    XmlMapper
-        .builder()
-        .findAndAddModules()
-        .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .build()
 
 fun Routing.internalNaisRoutes(
     applicationState: ApplicationState,
@@ -115,16 +114,26 @@ fun Routing.internalNaisRoutes(
     }
 }
 
+/**
+ * Extract calling system name from JWT token for MDC logging.
+ * NOTE: This runs BEFORE authentication, so we must manually decode the token.
+ * For endpoint-level usage AFTER authentication, use AuthorizationGuard.getCallingSystem() instead.
+ *
+ * Uses azp_name (authorized party name) or client_id as fallback.
+ * Strips namespace/cluster prefix (e.g., "cluster:namespace:app" -> "app").
+ */
 private fun ApplicationCall.extractCallingSystemFromJwtToken(): String {
     val token = request.header(HttpHeaders.Authorization)?.removePrefix("Bearer ")
-    return token?.let {
-        runCatching {
-            JWT.decode(it)
-        }.onFailure {
-            logger.warn("Failed to decode token: ", it)
-        }.getOrNull()
-            ?.let { it.claims["azp_name"]?.asString() ?: it.claims["client_id"]?.asString() }
-            ?.split(":")
-            ?.last()
-    } ?: "Ukjent"
+    val azpNameOrClientId =
+        token?.let { tokenString ->
+            runCatching {
+                JWT.decode(tokenString)
+            }.onFailure { error ->
+                logger.warn("Failed to decode token: ", error)
+            }.getOrNull()
+                ?.let { decodedJWT ->
+                    decodedJWT.claims["azp_name"]?.asString() ?: decodedJWT.claims["client_id"]?.asString()
+                }
+        }
+    return TokenUtils.extractApplicationName(azpNameOrClientId)
 }

@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.skatteetaten
 
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.custom
+import io.github.resilience4j.kotlin.circuitbreaker.decorateSuspendFunction
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess
@@ -17,6 +19,8 @@ import io.ktor.http.isSuccess
 import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
+import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.module.skattekort.BestillingBatchRepository
@@ -32,51 +36,56 @@ class SkatteetatenClient(
 ) {
     private val skatteetatenUrl = PropertiesConfig.getSkatteetatenProperties().skatteetatenApiUrl
 
-    suspend fun bestillSkattekort(request: BestillSkattekortRequest): BestillSkattekortResponse {
-        val url = "$skatteetatenUrl/api/forskudd/bestillSkattekort/"
+    suspend fun bestillSkattekort(request: BestillSkattekortRequest): BestillSkattekortResponse =
+        circuitBreaker
+            .decorateSuspendFunction {
+                val url = "$skatteetatenUrl/api/forskudd/bestillSkattekort/"
 
-        val response: HttpResponse =
-            client.post(url) {
-                contentType(ContentType.Application.Json)
-                bearerAuth(maskinportenTokenClient.getAccessToken())
-                setBody(request)
-            }
+                val response: HttpResponse =
+                    client.post(url) {
+                        contentType(ContentType.Application.Json)
+                        bearerAuth(maskinportenTokenClient.getAccessToken())
+                        setBody(request)
+                    }
 
-        if (!response.status.isSuccess()) {
-            throw RuntimeException("Feil ved bestilling av skattekort: ${response.status.value} - ${response.bodyAsText()}")
-        }
+                if (!response.status.isSuccess()) {
+                    throw RuntimeException("Feil ved bestilling av skattekort: ${response.status.value} - ${response.bodyAsText()}")
+                }
 
-        return response.body<BestillSkattekortResponse>()
-    }
+                response.body<BestillSkattekortResponse>()
+            }.invoke()
 
     suspend fun hentSkattekort(
         tx: TransactionalSession?,
         bestillingsreferanse: String,
     ): HentSkattekortResponse? {
-        val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
+        return circuitBreaker
+            .decorateSuspendFunction {
+                val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
 
-        val response =
-            client.get(url) {
-                bearerAuth(maskinportenTokenClient.getAccessToken())
-                accept(ContentType.Application.Json)
-                expectSuccess = false
-            }
-        hentBestillingReturkode.labelValues(response.status.description).inc()
+                val response =
+                    client.get(url) {
+                        bearerAuth(maskinportenTokenClient.getAccessToken())
+                        accept(ContentType.Application.Json)
+                        expectSuccess = false
+                    }
+                hentBestillingReturkode.labelValues(response.status.description).inc()
 
-        if (response.status == HttpStatusCode.NoContent) {
-            hentBestillingFeilet.labelValues(bestillingsreferanse).inc()
-            return null
-        }
+                if (response.status == HttpStatusCode.NoContent || response.status == HttpStatusCode.ServiceUnavailable) {
+                    hentBestillingFeilet.labelValues(bestillingsreferanse).inc()
+                    return@decorateSuspendFunction null
+                }
 
-        if (!response.status.isSuccess()) {
-            throw RuntimeException("Feil ved henting av skattekort: ${response.status.value} - ${response.bodyAsText()}")
-        }
-        if (featureToggles.isLagreMottatteBestillingerEnabled()) {
-            if (tx == null) error("Kan ikke lagre mottatte data i tekstformat uten tilgang til en transaksjon")
-            BestillingBatchRepository.insertMottatteData(tx, bestillingsreferanse, response.bodyAsText())
-        }
+                if (!response.status.isSuccess()) {
+                    throw RuntimeException("Feil ved henting av skattekort: ${response.status.value} - ${response.bodyAsText()}")
+                }
+                if (featureToggles.isLagreMottatteBestillingerEnabled()) {
+                    if (tx == null) error("Kan ikke lagre mottatte data i tekstformat uten tilgang til en transaksjon")
+                    BestillingBatchRepository.insertMottatteData(tx, bestillingsreferanse, response.bodyAsText())
+                }
 
-        return response.body<HentSkattekortResponse>()
+                response.body<HentSkattekortResponse>()
+            }.invoke()
     }
 
     companion object {
@@ -91,6 +100,16 @@ class SkatteetatenClient(
                 name = "hent_bestilling_total",
                 helpText = "Returkode på henting av bestilling",
                 labelNames = "returkode",
+            )
+        val circuitBreaker =
+            Metrics.circuitBreakerRegistry.circuitBreaker(
+                "${METRICS_NAMESPACE}_skatteetatenClientCircuitBreaker",
+                custom()
+                    .failureRateThreshold(10f)
+                    .slidingWindowSize(10)
+                    .waitDurationInOpenState(java.time.Duration.ofMinutes(5))
+                    .permittedNumberOfCallsInHalfOpenState(1)
+                    .build(),
             )
     }
 }

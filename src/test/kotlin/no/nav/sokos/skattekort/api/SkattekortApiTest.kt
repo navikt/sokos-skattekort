@@ -19,20 +19,22 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 
+import no.nav.sokos.skattekort.api.model.ForespoerselRequest
 import no.nav.sokos.skattekort.config.ApiError
-import no.nav.sokos.skattekort.infrastructure.DbListener
-import no.nav.sokos.skattekort.infrastructure.MQListener
+import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
 import no.nav.sokos.skattekort.module.forespoersel.Forsystem
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils
-import no.nav.sokos.skattekort.utils.TestUtils.tokenWithNavIdent
+import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
 import no.nav.sokos.skattekort.utils.validationReport
 
 @OptIn(ExperimentalTime::class)
 class SkattekortApiTest :
     FunSpec({
-        extensions(DbListener, MQListener)
+        extensions(DbListener, MQListener, WiremockListener)
 
         val validator =
             OpenApiInteractionValidator
@@ -44,12 +46,15 @@ class SkattekortApiTest :
         test("bestille skattekort skal returnere 201 Created") {
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                val fnr = "01010112345"
+                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
+
                 TestUtils.withFullTestApplication {
-                    val request = ForespoerselRequest(personIdent = listOf("12345678901"), aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
+                    val request = ForespoerselRequest(personIdent = fnr, aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
                     val response =
                         client.post("$BASE_PATH/bestille") {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
-                            header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                            header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
                     val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
@@ -67,11 +72,11 @@ class SkattekortApiTest :
         test("bestille skattekort skal returnere 400 Ugyldig request med feil personIdent") {
             TestUtils.withFullTestApplication {
 
-                val request = ForespoerselRequest(personIdent = listOf("1234567"), aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
+                val request = ForespoerselRequest(personIdent = "1234567", aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -96,11 +101,11 @@ class SkattekortApiTest :
             TestUtils.withFullTestApplication {
                 val inntekstaar = Year.now().minusYears(2).value
 
-                val request = ForespoerselRequest(personIdent = listOf("12345678901"), aar = inntekstaar, forsystem = Forsystem.MANUELL.value)
+                val request = ForespoerselRequest(personIdent = "01010112345", aar = inntekstaar, forsystem = Forsystem.MANUELL.value)
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -123,11 +128,11 @@ class SkattekortApiTest :
 
         test("bestille skattekort skal returnere 400 Ugyldig request med feil forsystem") {
             TestUtils.withFullTestApplication {
-                val request = ForespoerselRequest(personIdent = listOf("12345678901"), aar = inntektsaar, forsystem = "")
+                val request = ForespoerselRequest(personIdent = "01010112345", aar = inntektsaar, forsystem = "")
                 val response =
                     client.post("$BASE_PATH/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $tokenWithNavIdent")
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
@@ -139,7 +144,7 @@ class SkattekortApiTest :
                 val apiError = response.body<ApiError>()
                 apiError.error shouldBe HttpStatusCode.BadRequest.description
                 apiError.status shouldBe HttpStatusCode.BadRequest.value
-                apiError.message shouldBe "forsystem er ugyldig. Gyldige verdier er: OS, MANUELL, DARE_POC"
+                apiError.message shouldBe "forsystem er ugyldig. Gyldige verdier er: OS, MANUELL"
                 apiError.path shouldBe "$BASE_PATH/bestille"
 
                 DbListener.dataSource.transaction { tx ->

@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.api
 
-import kotlinx.serialization.Serializable
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -10,13 +8,17 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.model.ForespoerselRequest
+import no.nav.sokos.skattekort.api.model.StatusResponse
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselInput
 import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.module.skattekort.Status
 import no.nav.sokos.skattekort.module.status.StatusService
-import no.nav.sokos.skattekort.security.AuthToken.getSaksbehandler
+import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
+import no.nav.sokos.skattekort.security.Role
+import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.security.Scope
 
 private val logger = KotlinLogging.logger { }
 
@@ -28,44 +30,29 @@ fun Route.skattekortApi(
 ) {
     route(BASE_PATH) {
         post("bestille") {
+            call.requirePermission(requiredScope = Scope.BESTILLE_SCOPE, requiredRole = Role.BESTILLE_ROLE)
             val request = call.receive<ForespoerselRequest>()
-            val saksbehandler = getSaksbehandler(call)
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Mottatt forespørsel: $request" }
+            logger.info(marker = TEAM_LOGS_MARKER) {
+                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler?.ident}"
+            }
 
-            val forespoerselInput =
-                ForespoerselInput(
-                    forsystem = Forsystem.fromValue(request.forsystem),
-                    inntektsaar = request.aar,
-                    fnrList = request.personIdent,
-                )
-            forespoerselService.taImotForespoersel(forespoerselInput, saksbehandler)
+            val message = "${request.forsystem};${request.aar};${request.personIdent}"
+            forespoerselService.taImotForespoersel(message, saksbehandler)
             call.respond(HttpStatusCode.Created)
         }
-    }
-
-    route(BASE_PATH) {
         post("status") {
+            call.requireScope(Scope.STATUS_SCOPE)
             val request = call.receive<ForespoerselRequest>()
-            val saksbehandler = getSaksbehandler(call)
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
 
-            logger.info(marker = TEAM_LOGS_MARKER) { "skattekortApi (${saksbehandler.ident}) - Ber om status på forespørsel: $request" }
-
+            logger.info(marker = TEAM_LOGS_MARKER) {
+                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler?.ident}"
+            }
             call.respond(
-                StatusResponse(statusService.statusForespoeresel(request.personIdent.first(), request.aar, request.forsystem)),
+                StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem)),
             )
         }
     }
 }
-
-@Serializable
-data class StatusResponse(
-    val status: Status,
-)
-
-@Serializable
-data class ForespoerselRequest(
-    val personIdent: List<String>,
-    val aar: Int,
-    val forsystem: String,
-)

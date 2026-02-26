@@ -4,15 +4,18 @@ import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
 import com.expediagroup.graphql.plugin.gradle.tasks.GraphQLGenerateClientTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-    kotlin("jvm") version "2.3.0"
-    kotlin("plugin.serialization") version "2.3.0"
+    kotlin("jvm") version "2.3.10"
+    kotlin("plugin.serialization") version "2.3.10"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
-    id("org.jetbrains.kotlinx.kover") version "0.9.4"
+    id("org.jetbrains.kotlinx.kover") version "0.9.7"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "8.8.1"
+    id("org.openapi.generator") version "7.20.0"
 
     application
 }
@@ -27,28 +30,28 @@ repositories {
     maven { url = uri("https://packages.confluent.io/maven/") }
 }
 
-val ktorVersion = "3.3.3"
+val resilience4jVersion = "2.3.0"
+val ktorVersion = "3.4.0"
 val nimbusVersion = "10.7"
-val logbackVersion = "1.5.24"
+val logbackVersion = "1.5.32"
 val logstashVersion = "9.0"
-val micrometerVersion = "1.16.1"
-val dbSchedulerVersion = "16.7.0"
+val micrometerVersion = "1.16.3"
+val dbSchedulerVersion = "16.7.1"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
-val kotestVersion = "6.0.7"
-val kotlinxSerializationVersion = "1.9.0"
+val kotestVersion = "6.1.3"
+val kotlinxSerializationVersion = "1.10.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
-val jacksonVersion = "3.0.3"
 val mockOAuth2ServerVersion = "3.0.1"
-val mockkVersion = "1.14.7"
+val mockkVersion = "1.14.9"
 val hikariVersion = "7.0.2"
-val kotliqueryVersion = "1.9.1"
+val kotliqueryVersion = "2.0.2"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "11.20.1"
-val postgresVersion = "42.7.8"
-val activemqVersion = "2.44.0"
-val ibmmqVersion = "9.4.4.1"
-val opentelemetryVersion = "2.23.0-alpha"
+val flywayVersion = "12.0.1"
+val postgresVersion = "42.7.10"
+val activemqVersion = "2.51.0"
+val ibmmqVersion = "9.4.5.0"
+val opentelemetryVersion = "2.25.0-alpha"
 val swaggerRequestValidatorVersion = "2.46.0"
 val kafkaClientsVersion = "8.1.1-ce"
 val avroVersion = "1.12.1"
@@ -56,7 +59,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "11.2.1"
+val unleashedVersion = "12.1.1"
 
 dependencies {
 
@@ -80,7 +83,7 @@ dependencies {
     // Database
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation("no.nav:kotliquery:$kotliqueryVersion")
 
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     runtimeOnly("org.flywaydb:flyway-database-postgresql:$flywayVersion")
@@ -90,13 +93,13 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
 
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation("tools.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
-
     // Monitorering
     implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
     implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:$resilience4jVersion")
+    implementation("io.github.resilience4j:resilience4j-kotlin:$resilience4jVersion")
+    implementation("io.github.resilience4j:resilience4j-micrometer:$resilience4jVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
@@ -111,9 +114,6 @@ dependencies {
     implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
     implementation("org.apache.avro:avro:$avroVersion")
     implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
-
-    // Cruft in need of refactoring - caused by copypaste from os-eskatt, should be rewritten once we have tests in place
-    implementation("org.apache.commons:commons-lang3:3.20.0")
 
     // Scheduler
     implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
@@ -136,7 +136,6 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("net.bytebuddy:byte-buddy:1.18.3") // TEMP: Needed for mockk 1.14.6 with java25. Remove when Mockk is updated and bytebuddy is no longer needed.
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
@@ -153,7 +152,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.10.2")
+                useTarget("at.yawk.lz4:lz4-java:1.10.3")
                 because("Prefer the patched fork for vulnerability fix")
             }
         }
@@ -185,15 +184,18 @@ kotlin {
 tasks {
     named("runKtlintCheckOverMainSourceSet").configure {
         dependsOn("graphqlGenerateClient")
+        dependsOn("openApiGenerate")
     }
 
     named("runKtlintFormatOverMainSourceSet").configure {
         dependsOn("graphqlGenerateClient")
+        dependsOn("openApiGenerate")
     }
 
     withType<KotlinCompile>().configureEach {
         dependsOn("ktlintFormat")
         dependsOn("graphqlGenerateClient")
+        dependsOn("openApiGenerate")
     }
 
     withType<KoverReport>().configureEach {
@@ -217,6 +219,31 @@ tasks {
         serializer = GraphQLSerializer.KOTLINX
     }
 
+    withType<GenerateTask>().configureEach {
+        generatorName.set("kotlin")
+        inputSpec.set("$rootDir/src/main/resources/tilgangsmaskinen/openapi.json")
+        outputDir.set("${layout.buildDirectory.get()}/generated")
+        modelPackage.set("no.nav.tilgangsmaskinen")
+        generateApiTests.set(false)
+        generateModelTests.set(false)
+        configOptions.set(
+            mapOf(
+                "library" to "jvm-ktor",
+                "serializationLibrary" to "kotlinx_serialization",
+            ),
+        )
+        globalProperties.set(
+            mapOf(
+                "models" to "",
+            ),
+        )
+        typeMappings.set(
+            mapOf(
+                "URI" to "kotlin.String",
+            ),
+        )
+    }
+
     withType<Test>().configureEach {
         useJUnitPlatform()
 
@@ -230,10 +257,6 @@ tasks {
         reports.forEach { report -> report.required.value(false) }
 
         finalizedBy(koverHtmlReport)
-    }
-
-    withType<Wrapper> {
-        gradleVersion = "9.2.1"
     }
 
     ("build") {

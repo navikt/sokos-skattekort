@@ -51,7 +51,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24864999049",
@@ -105,7 +105,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10860599207",
@@ -134,7 +134,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28929998997",
@@ -163,7 +163,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01880399566",
@@ -192,7 +192,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14830498126",
@@ -221,7 +221,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15920099367",
@@ -250,7 +250,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04820797677",
@@ -279,7 +279,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22890297343",
@@ -311,7 +311,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19850398766",
@@ -340,7 +340,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16810299642",
@@ -358,7 +358,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03929999753",
@@ -387,7 +387,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28894999812",
@@ -412,7 +412,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11859699644",
@@ -455,7 +455,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14859898638",
@@ -498,7 +498,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07847599035",
@@ -540,7 +540,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11860398097",
@@ -569,7 +569,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15910498204",
@@ -598,7 +598,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24860698966",
@@ -627,7 +627,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06870399047",
@@ -669,7 +669,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03910498427",
@@ -712,7 +712,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26880097015",
@@ -741,7 +741,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10840297697",
@@ -770,7 +770,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07885099569",
@@ -789,7 +789,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22860698564",
@@ -821,7 +821,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18830099073",
@@ -850,7 +850,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31920599276",
@@ -879,7 +879,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18870098754",
@@ -908,7 +908,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13914799419",
@@ -933,7 +933,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04875299099",
@@ -958,7 +958,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27840199520",
@@ -987,7 +987,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16810299219",
@@ -1016,7 +1016,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24813948091",
@@ -1058,7 +1058,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09810798294",
@@ -1101,7 +1101,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11830598725",
@@ -1130,7 +1130,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09830098671",
@@ -1159,7 +1159,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14910498194",
@@ -1188,7 +1188,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27847498949",
@@ -1206,7 +1206,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30859999014",
@@ -1235,7 +1235,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21900298398",
@@ -1264,7 +1264,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17860197529",
@@ -1293,7 +1293,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20914695016",
@@ -1347,7 +1347,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09910497658",
@@ -1389,7 +1389,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12880299474",
@@ -1432,7 +1432,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05890698761",
@@ -1461,7 +1461,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14905597443",
@@ -1480,7 +1480,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31900699711",
@@ -1526,7 +1526,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30900399568",
@@ -1555,7 +1555,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06920198471",
@@ -1584,7 +1584,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16900599149",
@@ -1613,7 +1613,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04884799479",
@@ -1638,7 +1638,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28904999255",
@@ -1692,7 +1692,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22900398348",
@@ -1721,7 +1721,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07850199307",
@@ -1750,7 +1750,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23874599379",
@@ -1805,7 +1805,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03890299503",
@@ -1834,7 +1834,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26830199844",
@@ -1863,7 +1863,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09890699763",
@@ -1906,7 +1906,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25850597696",
@@ -1935,7 +1935,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16875199289",
@@ -1989,7 +1989,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17890698549",
@@ -2018,7 +2018,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24819398220",
@@ -2061,7 +2061,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17860396939",
@@ -2090,7 +2090,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17824699062",
@@ -2115,7 +2115,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29855398344",
@@ -2123,7 +2123,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09810798537",
@@ -2152,7 +2152,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18860698184",
@@ -2181,7 +2181,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14820198264",
@@ -2210,7 +2210,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10810399649",
@@ -2239,7 +2239,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11840697861",
@@ -2268,7 +2268,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31850699723",
@@ -2297,7 +2297,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28870699796",
@@ -2326,7 +2326,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12849697682",
@@ -2369,7 +2369,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25890197844",
@@ -2398,7 +2398,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05860098786",
@@ -2427,7 +2427,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30909999355",
@@ -2456,7 +2456,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11850397556",
@@ -2485,7 +2485,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23899999606",
@@ -2528,7 +2528,7 @@
             "kildeskattPaaLoenn",
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11850197786",
@@ -2570,7 +2570,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04810099742",
@@ -2599,7 +2599,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21840599822",
@@ -2628,7 +2628,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14920198555",
@@ -2657,7 +2657,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09820099041",
@@ -2686,7 +2686,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17844799225",
@@ -2711,7 +2711,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09920599084",
@@ -2740,7 +2740,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31880197889",
@@ -2769,7 +2769,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13810498964",
@@ -2798,7 +2798,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14869999351",
@@ -2827,7 +2827,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02820698390",
@@ -2856,7 +2856,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02899997290",
@@ -2885,7 +2885,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19810599793",
@@ -2914,7 +2914,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12860497172",
@@ -2957,7 +2957,7 @@
             "kildeskattPaaLoenn",
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24915097681",
@@ -3011,7 +3011,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24820598632",
@@ -3040,7 +3040,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19884899527",
@@ -3065,7 +3065,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18850099649",
@@ -3108,7 +3108,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23920598056",
@@ -3137,7 +3137,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12890597678",
@@ -3166,7 +3166,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14820699204",
@@ -3195,7 +3195,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13834998860",
@@ -3220,7 +3220,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16860299198",
@@ -3249,7 +3249,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29910599974",
@@ -3281,7 +3281,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11840799893",
@@ -3310,7 +3310,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22820097886",
@@ -3339,7 +3339,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17820297903",
@@ -3368,7 +3368,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15850098414",
@@ -3397,7 +3397,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27900099598",
@@ -3426,7 +3426,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12929999280",
@@ -3455,7 +3455,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09850097949",
@@ -3484,7 +3484,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30919997849",
@@ -3513,7 +3513,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12850099977",
@@ -3542,7 +3542,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17830498133",
@@ -3571,7 +3571,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12869998166",
@@ -3600,7 +3600,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25900198585",
@@ -3629,7 +3629,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27830498961",
@@ -3658,7 +3658,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28900099608",
@@ -3687,7 +3687,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16890098685",
@@ -3716,7 +3716,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19902549865",
@@ -3770,7 +3770,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21908899455",
@@ -3812,7 +3812,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27850099842",
@@ -3859,7 +3859,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03810497261",
@@ -3888,7 +3888,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29880299660",
@@ -3917,7 +3917,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07825298252",
@@ -3972,7 +3972,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07900197718",
@@ -4001,7 +4001,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11900499142",
@@ -4030,7 +4030,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12929998144",
@@ -4059,12 +4059,12 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31818599415",
           "resultatForSkattekort": "ikkeSkattekort",
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08860699754",
@@ -4093,7 +4093,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31850599974",
@@ -4122,7 +4122,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07830699583",
@@ -4151,7 +4151,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08850498939",
@@ -4180,7 +4180,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06820299238",
@@ -4209,7 +4209,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16820198828",
@@ -4238,7 +4238,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26850298385",
@@ -4267,7 +4267,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13820499748",
@@ -4310,7 +4310,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02870199069",
@@ -4339,7 +4339,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14860298164",
@@ -4368,7 +4368,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23820197755",
@@ -4397,7 +4397,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12840297746",
@@ -4426,7 +4426,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17910298674",
@@ -4458,7 +4458,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04910299137",
@@ -4487,7 +4487,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27910699917",
@@ -4516,7 +4516,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16850598529",
@@ -4545,7 +4545,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31889997012",
@@ -4574,7 +4574,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25900399734",
@@ -4603,7 +4603,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24839899846",
@@ -4646,7 +4646,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29860597622",
@@ -4675,7 +4675,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05890599372",
@@ -4704,7 +4704,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28860198675",
@@ -4733,7 +4733,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29810397983",
@@ -4765,7 +4765,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22880698978",
@@ -4812,7 +4812,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27890398990",
@@ -4841,7 +4841,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17880096966",
@@ -4887,7 +4887,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03890298205",
@@ -4916,7 +4916,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02850499627",
@@ -4958,7 +4958,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14900297379",
@@ -4987,7 +4987,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06840798419",
@@ -5016,7 +5016,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28870697866",
@@ -5045,7 +5045,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18840199408",
@@ -5074,7 +5074,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01820499960",
@@ -5103,7 +5103,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28890398334",
@@ -5132,7 +5132,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23869697753",
@@ -5174,7 +5174,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14870699426",
@@ -5203,7 +5203,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12829097506",
@@ -5246,7 +5246,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13810498107",
@@ -5275,7 +5275,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05890099620",
@@ -5304,7 +5304,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05880299400",
@@ -5333,7 +5333,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26900297156",
@@ -5362,7 +5362,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19869698671",
@@ -5404,7 +5404,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30860099264",
@@ -5436,7 +5436,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16870597049",
@@ -5465,7 +5465,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04840599030",
@@ -5494,7 +5494,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17840197700",
@@ -5523,7 +5523,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26920397904",
@@ -5552,7 +5552,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16880499614",
@@ -5581,7 +5581,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29920498130",
@@ -5610,7 +5610,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03920497038",
@@ -5639,7 +5639,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18896498858",
@@ -5682,7 +5682,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11880599226",
@@ -5711,7 +5711,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12899899251",
@@ -5754,7 +5754,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21830199435",
@@ -5799,7 +5799,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11910699921",
@@ -5828,7 +5828,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21880598837",
@@ -5857,7 +5857,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14880398327",
@@ -5886,7 +5886,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04900198332",
@@ -5915,7 +5915,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "67853500256",
@@ -5940,7 +5940,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11870398672",
@@ -5983,7 +5983,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19860599158",
@@ -6012,7 +6012,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23897093588",
@@ -6059,7 +6059,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16879996353",
@@ -6088,7 +6088,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30860598627",
@@ -6117,7 +6117,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10850299930",
@@ -6146,7 +6146,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30850498373",
@@ -6175,7 +6175,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24847996168",
@@ -6218,7 +6218,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11884799270",
@@ -6272,7 +6272,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21850099313",
@@ -6301,7 +6301,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10920699478",
@@ -6330,7 +6330,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24859997836",
@@ -6359,7 +6359,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07909799869",
@@ -6402,7 +6402,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18850398050",
@@ -6431,7 +6431,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17920198562",
@@ -6460,7 +6460,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02836498650",
@@ -6503,7 +6503,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11810498805",
@@ -6532,7 +6532,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13870098930",
@@ -6577,7 +6577,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26869999643",
@@ -6624,7 +6624,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15830299936",
@@ -6653,7 +6653,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18870396887",
@@ -6682,7 +6682,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13810198901",
@@ -6711,7 +6711,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30830098905",
@@ -6740,7 +6740,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22929699037",
@@ -6787,7 +6787,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08820197446",
@@ -6816,12 +6816,12 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01918598738",
           "resultatForSkattekort": "ikkeSkattekort",
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16850697403",
@@ -6850,7 +6850,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19882947648",
@@ -6892,7 +6892,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13860198538",
@@ -6921,7 +6921,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02859997573",
@@ -6950,7 +6950,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16894698865",
@@ -6975,7 +6975,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06880097073",
@@ -7018,7 +7018,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30925199032",
@@ -7072,7 +7072,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25825099673",
@@ -7097,7 +7097,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03840099783",
@@ -7126,7 +7126,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27900699331",
@@ -7155,7 +7155,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31885099648",
@@ -7174,7 +7174,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29864499978",
@@ -7199,7 +7199,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21810499750",
@@ -7231,7 +7231,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24919998799",
@@ -7260,7 +7260,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29890098159",
@@ -7289,7 +7289,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22810299596",
@@ -7318,7 +7318,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12899999272",
@@ -7347,7 +7347,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10830798132",
@@ -7389,12 +7389,12 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01840398389",
           "resultatForSkattekort": "ikkeSkattekort",
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13920399856",
@@ -7423,7 +7423,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18840799847",
@@ -7452,7 +7452,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17875398709",
@@ -7477,7 +7477,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16850396586",
@@ -7506,7 +7506,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17890699251",
@@ -7535,7 +7535,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19875298685",
@@ -7560,7 +7560,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06919899245",
@@ -7603,7 +7603,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25880698128",
@@ -7645,7 +7645,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26810499574",
@@ -7674,7 +7674,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17850499411",
@@ -7703,7 +7703,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08860198623",
@@ -7732,7 +7732,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19910698888",
@@ -7774,7 +7774,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20890099182",
@@ -7803,7 +7803,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23860398389",
@@ -7832,7 +7832,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20910199979",
@@ -7861,7 +7861,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19880697733",
@@ -7890,7 +7890,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08870498757",
@@ -7919,7 +7919,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07840798296",
@@ -7948,7 +7948,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15860496981",
@@ -7977,7 +7977,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14919999188",
@@ -8019,7 +8019,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25919899096",
@@ -8062,7 +8062,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26910099549",
@@ -8091,7 +8091,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09900299718",
@@ -8120,7 +8120,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12830398803",
@@ -8149,7 +8149,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26869998779",
@@ -8178,7 +8178,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15880097358",
@@ -8207,7 +8207,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07920399740",
@@ -8236,7 +8236,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26820498770",
@@ -8265,7 +8265,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16890497512",
@@ -8297,7 +8297,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12830499537",
@@ -8326,7 +8326,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29890299812",
@@ -8355,7 +8355,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22900499071",
@@ -8384,7 +8384,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04850198859",
@@ -8413,7 +8413,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18860699482",
@@ -8442,7 +8442,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13820398690",
@@ -8471,7 +8471,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04850097882",
@@ -8500,7 +8500,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25870499909",
@@ -8529,7 +8529,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21869699362",
@@ -8572,7 +8572,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23870299222",
@@ -8601,7 +8601,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18910498564",
@@ -8630,7 +8630,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20900399163",
@@ -8659,7 +8659,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27816995464",
@@ -8701,7 +8701,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05860097801",
@@ -8733,7 +8733,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26900099710",
@@ -8762,7 +8762,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10829996974",
@@ -8807,7 +8807,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21830598968",
@@ -8836,7 +8836,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06810299590",
@@ -8865,7 +8865,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31830097727",
@@ -8894,7 +8894,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17840099962",
@@ -8923,7 +8923,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17810499109",
@@ -8952,7 +8952,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03850399645",
@@ -8981,7 +8981,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06910397034",
@@ -9013,7 +9013,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12870397303",
@@ -9042,7 +9042,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12850197715",
@@ -9071,7 +9071,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18840297256",
@@ -9100,7 +9100,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19900698111",
@@ -9129,7 +9129,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01830598754",
@@ -9158,7 +9158,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29810099699",
@@ -9187,7 +9187,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02884799905",
@@ -9241,7 +9241,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09830498564",
@@ -9283,7 +9283,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02830198981",
@@ -9312,7 +9312,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16880098776",
@@ -9341,7 +9341,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07900099031",
@@ -9373,7 +9373,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09880299538",
@@ -9402,7 +9402,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03856693049",
@@ -9445,7 +9445,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26910499512",
@@ -9474,7 +9474,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03899998609",
@@ -9503,7 +9503,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17830199055",
@@ -9532,7 +9532,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20857597940",
@@ -9575,7 +9575,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19906899763",
@@ -9618,7 +9618,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22830099291",
@@ -9647,7 +9647,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03830798683",
@@ -9676,7 +9676,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12910497594",
@@ -9705,7 +9705,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22884797865",
@@ -9724,7 +9724,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19829997528",
@@ -9766,7 +9766,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23820798201",
@@ -9795,7 +9795,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17840399591",
@@ -9824,7 +9824,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14890299009",
@@ -9853,7 +9853,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27820698822",
@@ -9882,7 +9882,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08850199850",
@@ -9924,7 +9924,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05910198523",
@@ -9953,7 +9953,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29850398303",
@@ -9982,7 +9982,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01920098475",
@@ -10000,7 +10000,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05830495713",
@@ -10029,7 +10029,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21910699145",
@@ -10058,7 +10058,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09854398617",
@@ -10077,7 +10077,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09900698655",
@@ -10106,7 +10106,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01810796290",
@@ -10135,7 +10135,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21820797288",
@@ -10164,7 +10164,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06920299952",
@@ -10193,7 +10193,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20880298683",
@@ -10222,7 +10222,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31880499257",
@@ -10251,7 +10251,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28920098551",
@@ -10280,7 +10280,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21830097594",
@@ -10309,7 +10309,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06820599371",
@@ -10338,7 +10338,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28810599997",
@@ -10367,7 +10367,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29850299429",
@@ -10396,7 +10396,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09830598666",
@@ -10425,7 +10425,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10915099241",
@@ -10480,7 +10480,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21860098781",
@@ -10509,7 +10509,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04829898344",
@@ -10551,7 +10551,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23820098870",
@@ -10580,7 +10580,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26850399432",
@@ -10609,7 +10609,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06840699615",
@@ -10638,7 +10638,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22909998569",
@@ -10667,7 +10667,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21909998600",
@@ -10696,7 +10696,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29870599380",
@@ -10725,7 +10725,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25820199815",
@@ -10754,7 +10754,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13860599648",
@@ -10783,7 +10783,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19830599773",
@@ -10812,7 +10812,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08880098935",
@@ -10841,7 +10841,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25910199954",
@@ -10884,7 +10884,7 @@
             "kildeskattPaaLoenn",
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09909998651",
@@ -10913,7 +10913,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09880498514",
@@ -10942,7 +10942,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23820599225",
@@ -10971,7 +10971,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05850298728",
@@ -11013,7 +11013,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16810199893",
@@ -11042,7 +11042,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24834899805",
@@ -11097,7 +11097,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21880299244",
@@ -11126,7 +11126,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13830197340",
@@ -11168,7 +11168,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31879998401",
@@ -11197,7 +11197,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03810099703",
@@ -11226,7 +11226,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24880699578",
@@ -11255,7 +11255,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22880399385",
@@ -11284,7 +11284,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22888298324",
@@ -11326,7 +11326,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23840398056",
@@ -11355,7 +11355,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12860699468",
@@ -11384,7 +11384,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28879999288",
@@ -11413,7 +11413,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04890698994",
@@ -11445,7 +11445,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21880699560",
@@ -11474,7 +11474,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09870497730",
@@ -11503,7 +11503,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27899996262",
@@ -11546,7 +11546,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24830297371",
@@ -11575,7 +11575,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17870398344",
@@ -11604,7 +11604,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24880199664",
@@ -11646,7 +11646,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04870297047",
@@ -11675,7 +11675,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24900597726",
@@ -11704,7 +11704,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17905396544",
@@ -11732,7 +11732,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20920499830",
@@ -11761,7 +11761,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07919999114",
@@ -11804,7 +11804,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04880498962",
@@ -11833,7 +11833,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19810198926",
@@ -11862,7 +11862,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08830599844",
@@ -11891,7 +11891,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27850298829",
@@ -11920,7 +11920,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27840798904",
@@ -11949,7 +11949,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03850498600",
@@ -11978,7 +11978,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20830098349",
@@ -12007,7 +12007,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19910398744",
@@ -12036,7 +12036,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09830798274",
@@ -12065,7 +12065,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09859999880",
@@ -12094,7 +12094,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10870296954",
@@ -12123,7 +12123,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05870099721",
@@ -12152,7 +12152,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16810598216",
@@ -12181,7 +12181,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17850199892",
@@ -12210,7 +12210,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21840299284",
@@ -12239,7 +12239,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03890497887",
@@ -12268,7 +12268,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20824999466",
@@ -12293,7 +12293,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08860298806",
@@ -12322,7 +12322,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23874899674",
@@ -12377,7 +12377,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10850199243",
@@ -12406,7 +12406,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05830396677",
@@ -12435,7 +12435,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30909698932",
@@ -12478,7 +12478,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12860399596",
@@ -12507,7 +12507,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06880498930",
@@ -12536,7 +12536,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10840499206",
@@ -12565,7 +12565,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05869998798",
@@ -12594,7 +12594,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24890097975",
@@ -12623,7 +12623,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23919897783",
@@ -12666,7 +12666,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02900699657",
@@ -12714,7 +12714,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08810599864",
@@ -12756,7 +12756,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27894998666",
@@ -12813,7 +12813,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27880398496",
@@ -12842,7 +12842,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25929999420",
@@ -12871,7 +12871,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31880398019",
@@ -12900,7 +12900,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01854898538",
@@ -12955,7 +12955,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24850099835",
@@ -12984,7 +12984,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20920298096",
@@ -13013,7 +13013,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06910599834",
@@ -13042,7 +13042,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05920698346",
@@ -13071,7 +13071,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03910598014",
@@ -13100,7 +13100,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09870597832",
@@ -13129,7 +13129,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15859997632",
@@ -13158,7 +13158,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27834499334",
@@ -13183,7 +13183,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31834897000",
@@ -13237,7 +13237,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29910699642",
@@ -13266,7 +13266,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06859899852",
@@ -13309,7 +13309,7 @@
             "kildeskattPaaLoenn",
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21914995865",
@@ -13328,7 +13328,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01820398803",
@@ -13371,7 +13371,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16810699101",
@@ -13400,7 +13400,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24900299865",
@@ -13429,7 +13429,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11870299526",
@@ -13458,7 +13458,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02894498806",
@@ -13483,7 +13483,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04825194636",
@@ -13537,7 +13537,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30850099193",
@@ -13566,7 +13566,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02830698038",
@@ -13595,7 +13595,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03900199197",
@@ -13637,7 +13637,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11860399476",
@@ -13666,7 +13666,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10910297908",
@@ -13695,7 +13695,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06810599705",
@@ -13724,7 +13724,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24810699619",
@@ -13753,7 +13753,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09840098904",
@@ -13782,7 +13782,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15899999018",
@@ -13811,7 +13811,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19850097324",
@@ -13854,7 +13854,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26830599575",
@@ -13883,7 +13883,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01900399665",
@@ -13912,7 +13912,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10830598443",
@@ -13941,7 +13941,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10839698912",
@@ -13984,7 +13984,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15820098797",
@@ -14013,7 +14013,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05820699000",
@@ -14042,7 +14042,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08915199012",
@@ -14097,7 +14097,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13920298537",
@@ -14126,7 +14126,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23835098044",
@@ -14151,7 +14151,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26854497889",
@@ -14205,7 +14205,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27920098865",
@@ -14234,7 +14234,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11920497979",
@@ -14263,7 +14263,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11839899515",
@@ -14305,7 +14305,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10860499024",
@@ -14334,7 +14334,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29850097648",
@@ -14363,7 +14363,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03810698844",
@@ -14392,7 +14392,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12840199302",
@@ -14424,7 +14424,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02900299330",
@@ -14453,7 +14453,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07890096209",
@@ -14482,7 +14482,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29840199094",
@@ -14511,7 +14511,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06870298909",
@@ -14540,7 +14540,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19915999827",
@@ -14583,7 +14583,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19819999891",
@@ -14625,7 +14625,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18890298423",
@@ -14654,7 +14654,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23830498591",
@@ -14683,7 +14683,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12850398389",
@@ -14725,7 +14725,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25829997048",
@@ -14767,7 +14767,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11889998883",
@@ -14799,7 +14799,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09850398019",
@@ -14842,7 +14842,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15929998666",
@@ -14884,7 +14884,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26890599434",
@@ -14913,7 +14913,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12840498733",
@@ -14942,7 +14942,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18900298613",
@@ -14971,7 +14971,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10820499064",
@@ -15000,7 +15000,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18850098855",
@@ -15029,7 +15029,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30900098126",
@@ -15058,7 +15058,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13889997472",
@@ -15087,7 +15087,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01819899998",
@@ -15134,7 +15134,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29860299923",
@@ -15177,7 +15177,7 @@
             "kildeskattPaaLoenn",
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16880098857",
@@ -15224,7 +15224,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31900099544",
@@ -15253,7 +15253,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22884899897",
@@ -15307,7 +15307,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09840698081",
@@ -15336,7 +15336,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11910299524",
@@ -15365,7 +15365,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03810498055",
@@ -15394,7 +15394,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05830598881",
@@ -15423,7 +15423,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31870299578",
@@ -15452,7 +15452,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13890099542",
@@ -15484,7 +15484,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23880399667",
@@ -15513,7 +15513,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27924699243",
@@ -15568,7 +15568,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26869897611",
@@ -15610,7 +15610,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28820498072",
@@ -15639,7 +15639,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18870298958",
@@ -15668,7 +15668,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24860297694",
@@ -15697,7 +15697,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14850598046",
@@ -15729,7 +15729,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15850499958",
@@ -15758,7 +15758,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05870098423",
@@ -15787,7 +15787,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07810599825",
@@ -15816,7 +15816,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07920597690",
@@ -15845,7 +15845,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25813849650",
@@ -15899,7 +15899,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17880599321",
@@ -15928,7 +15928,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11840699600",
@@ -15957,7 +15957,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23810299959",
@@ -15986,7 +15986,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28919598338",
@@ -16029,7 +16029,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20920399496",
@@ -16072,7 +16072,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02880599294",
@@ -16101,7 +16101,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13850098365",
@@ -16130,7 +16130,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17859998666",
@@ -16159,7 +16159,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20920099948",
@@ -16188,7 +16188,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01910298255",
@@ -16217,7 +16217,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13927498647",
@@ -16265,7 +16265,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30900598706",
@@ -16294,7 +16294,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27873949266",
@@ -16348,7 +16348,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06890199842",
@@ -16377,7 +16377,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01810197230",
@@ -16406,7 +16406,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04814699922",
@@ -16425,7 +16425,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08880398807",
@@ -16454,7 +16454,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12820099735",
@@ -16483,7 +16483,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08830198572",
@@ -16512,7 +16512,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16820398002",
@@ -16541,12 +16541,12 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08918096796",
           "resultatForSkattekort": "ikkeSkattekort",
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28910598394",
@@ -16575,7 +16575,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18810598375",
@@ -16604,7 +16604,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08910498674",
@@ -16633,7 +16633,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19900297354",
@@ -16662,7 +16662,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23876697092",
@@ -16705,7 +16705,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05850698025",
@@ -16734,7 +16734,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08929997213",
@@ -16763,7 +16763,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01810199403",
@@ -16792,7 +16792,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20920699368",
@@ -16821,7 +16821,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04870397734",
@@ -16850,7 +16850,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05900699079",
@@ -16879,7 +16879,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24929998002",
@@ -16908,7 +16908,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18880399590",
@@ -16937,7 +16937,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03890498328",
@@ -16966,7 +16966,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06910498868",
@@ -16995,7 +16995,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08889998785",
@@ -17038,7 +17038,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03879998033",
@@ -17067,7 +17067,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20910597931",
@@ -17096,7 +17096,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27859997762",
@@ -17125,7 +17125,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06850296594",
@@ -17154,7 +17154,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06920399620",
@@ -17186,7 +17186,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24910598690",
@@ -17215,7 +17215,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31830498837",
@@ -17244,7 +17244,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13869999312",
@@ -17262,7 +17262,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08840799604",
@@ -17291,7 +17291,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12810299515",
@@ -17320,7 +17320,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06900298755",
@@ -17349,7 +17349,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19850499147",
@@ -17378,7 +17378,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26869997470",
@@ -17407,7 +17407,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29870299409",
@@ -17436,7 +17436,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10920199211",
@@ -17465,7 +17465,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08820499086",
@@ -17494,7 +17494,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30910199192",
@@ -17523,7 +17523,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22920499647",
@@ -17566,7 +17566,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28910398514",
@@ -17595,7 +17595,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05890199137",
@@ -17624,7 +17624,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16860299783",
@@ -17653,7 +17653,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12895299748",
@@ -17672,7 +17672,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21879999224",
@@ -17701,7 +17701,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16830099771",
@@ -17743,7 +17743,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26810398417",
@@ -17772,7 +17772,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31830797087",
@@ -17801,7 +17801,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18870599532",
@@ -17830,7 +17830,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22820198771",
@@ -17859,7 +17859,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17860399733",
@@ -17902,7 +17902,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24920498902",
@@ -17931,12 +17931,12 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19910298057",
           "resultatForSkattekort": "ikkeSkattekort",
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03919998384",
@@ -17965,7 +17965,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05830498860",
@@ -18008,7 +18008,7 @@
             "kildeskattPaaLoenn",
             "kildeskattPaaPensjon"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17830598901",
@@ -18040,7 +18040,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26910198857",
@@ -18069,7 +18069,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06825099822",
@@ -18123,7 +18123,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11824498484",
@@ -18142,7 +18142,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29889699769",
@@ -18184,7 +18184,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17860698226",
@@ -18213,7 +18213,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23880599275",
@@ -18242,7 +18242,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03822947440",
@@ -18296,7 +18296,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26819699398",
@@ -18339,7 +18339,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "31920298500",
@@ -18368,7 +18368,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09840299225",
@@ -18397,7 +18397,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06810598830",
@@ -18426,7 +18426,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12850297493",
@@ -18455,7 +18455,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06810198433",
@@ -18484,7 +18484,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21880199223",
@@ -18513,7 +18513,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04880499675",
@@ -18542,7 +18542,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14910698207",
@@ -18571,7 +18571,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22925799983",
@@ -18613,7 +18613,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07850299913",
@@ -18642,7 +18642,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04860398023",
@@ -18671,7 +18671,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08910397193",
@@ -18700,7 +18700,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19910499044",
@@ -18743,7 +18743,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21923547255",
@@ -18768,7 +18768,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23860199645",
@@ -18797,7 +18797,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25920699505",
@@ -18826,7 +18826,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15810297945",
@@ -18855,7 +18855,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17840199045",
@@ -18884,7 +18884,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29894899245",
@@ -18927,7 +18927,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26910299076",
@@ -18956,7 +18956,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17810298626",
@@ -18985,7 +18985,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28840599371",
@@ -19028,7 +19028,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23850399182",
@@ -19057,7 +19057,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20880498372",
@@ -19086,7 +19086,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19880098279",
@@ -19115,7 +19115,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19815199246",
@@ -19169,7 +19169,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27850499301",
@@ -19198,7 +19198,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23874999261",
@@ -19243,7 +19243,7 @@
           "tilleggsopplysning": [
             "oppholdPaaSvalbard"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10910398631",
@@ -19286,7 +19286,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12860297564",
@@ -19315,7 +19315,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16910599058",
@@ -19344,7 +19344,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19840596535",
@@ -19373,7 +19373,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11880099746",
@@ -19402,7 +19402,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05910499884",
@@ -19431,7 +19431,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21830698040",
@@ -19460,7 +19460,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27850396162",
@@ -19489,7 +19489,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06830699463",
@@ -19518,7 +19518,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20900698675",
@@ -19547,7 +19547,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27860698388",
@@ -19590,7 +19590,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18844098444",
@@ -19632,7 +19632,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19910098287",
@@ -19661,7 +19661,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02850298710",
@@ -19690,7 +19690,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "19840798588",
@@ -19719,7 +19719,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24900699405",
@@ -19748,7 +19748,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04900199630",
@@ -19777,7 +19777,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02900299926",
@@ -19806,7 +19806,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07900397830",
@@ -19835,7 +19835,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30910099848",
@@ -19867,7 +19867,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13840599900",
@@ -19896,7 +19896,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21810799037",
@@ -19925,7 +19925,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "08840499651",
@@ -19954,7 +19954,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09920198993",
@@ -19983,7 +19983,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05850197832",
@@ -20029,7 +20029,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16850398759",
@@ -20058,7 +20058,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13830099683",
@@ -20087,7 +20087,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20840799906",
@@ -20116,7 +20116,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13910197732",
@@ -20145,7 +20145,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02880599456",
@@ -20174,7 +20174,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13900298980",
@@ -20203,7 +20203,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28890398172",
@@ -20232,7 +20232,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02920599101",
@@ -20261,7 +20261,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23910498983",
@@ -20290,7 +20290,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09880298663",
@@ -20319,7 +20319,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30910197777",
@@ -20348,7 +20348,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12820199675",
@@ -20377,7 +20377,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04890697343",
@@ -20420,7 +20420,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29830199185",
@@ -20449,7 +20449,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05900698870",
@@ -20478,7 +20478,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10910697205",
@@ -20507,7 +20507,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09850399740",
@@ -20536,7 +20536,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30870297951",
@@ -20565,7 +20565,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16830299703",
@@ -20594,7 +20594,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23850099391",
@@ -20623,7 +20623,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12840199736",
@@ -20652,7 +20652,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "60879100278",
@@ -20695,7 +20695,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03880299947",
@@ -20724,7 +20724,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20860599016",
@@ -20753,7 +20753,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13896895456",
@@ -20796,7 +20796,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10810399215",
@@ -20825,7 +20825,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12820699902",
@@ -20854,7 +20854,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05860698368",
@@ -20883,7 +20883,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11910299796",
@@ -20912,7 +20912,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04860699708",
@@ -20941,7 +20941,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27840098716",
@@ -20970,7 +20970,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04820399523",
@@ -21017,7 +21017,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01880698725",
@@ -21046,7 +21046,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04920199882",
@@ -21075,7 +21075,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "28860096724",
@@ -21104,7 +21104,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "15850099984",
@@ -21133,7 +21133,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "27900098966",
@@ -21165,7 +21165,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17929999932",
@@ -21194,7 +21194,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "16880395258",
@@ -21223,7 +21223,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07879197087",
@@ -21266,7 +21266,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "09840398452",
@@ -21295,7 +21295,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04860399836",
@@ -21324,7 +21324,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03920297349",
@@ -21353,7 +21353,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04860199632",
@@ -21382,7 +21382,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29850399016",
@@ -21411,7 +21411,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "29810098552",
@@ -21440,7 +21440,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24860299433",
@@ -21469,7 +21469,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21889999990",
@@ -21498,7 +21498,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "10894699200",
@@ -21552,7 +21552,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "04870699889",
@@ -21581,7 +21581,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30810799230",
@@ -21610,7 +21610,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22850399577",
@@ -21639,7 +21639,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12860099452",
@@ -21668,7 +21668,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "01850298439",
@@ -21697,7 +21697,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21920399344",
@@ -21726,7 +21726,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "06830799050",
@@ -21755,7 +21755,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05910599986",
@@ -21784,7 +21784,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23929999029",
@@ -21813,7 +21813,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21830598887",
@@ -21842,7 +21842,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12920396508",
@@ -21871,7 +21871,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03918397476",
@@ -21914,7 +21914,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24840799529",
@@ -21943,7 +21943,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "17810598174",
@@ -21972,7 +21972,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "20886096276",
@@ -22015,7 +22015,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18860498304",
@@ -22058,7 +22058,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "22900597596",
@@ -22087,7 +22087,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "24849799068",
@@ -22130,7 +22130,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "11869899595",
@@ -22177,7 +22177,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07870499501",
@@ -22209,7 +22209,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "14885099360",
@@ -22228,7 +22228,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "03820799568",
@@ -22257,7 +22257,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02820799014",
@@ -22286,7 +22286,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18840398141",
@@ -22315,7 +22315,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "12920399817",
@@ -22344,7 +22344,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "13899898235",
@@ -22387,7 +22387,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "23880499688",
@@ -22419,7 +22419,7 @@
           "tilleggsopplysning": [
             "oppholdITiltakssone"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26910199136",
@@ -22448,7 +22448,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "30850098057",
@@ -22477,7 +22477,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "26900296958",
@@ -22506,7 +22506,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "07850698850",
@@ -22535,7 +22535,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "05897098239",
@@ -22577,7 +22577,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "18909997204",
@@ -22606,7 +22606,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "21890297738",
@@ -22648,7 +22648,7 @@
           "tilleggsopplysning": [
             "kildeskattPaaLoenn"
           ],
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "25920699696",
@@ -22677,7 +22677,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         },
         {
           "arbeidstakeridentifikator": "02860199311",
@@ -22706,7 +22706,7 @@
               }
             ]
           },
-          "inntektsaar": "2025"
+          "inntektsaar": 2025
         }
       ]
     }

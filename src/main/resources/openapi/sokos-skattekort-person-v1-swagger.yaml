@@ -8,22 +8,24 @@ info:
     name: PO Utbetaling
     email: okonomi@nav.no
     url: https://nav-it.slack.com/archives/CKZADNFBP
-
+servers:
+  - url: /api/v1/person
 tags:
   - name: skattekort
     description: Skattekort informasjon
 
 paths:
-  /api/v1/hent-skattekort:
+  /hent-skattekort:
     post:
       tags:
         - skattekort
       summary: Hente skattekort for person
-      description: Returnerer skattekort for person
+      description: Returnerer siste skattekort for hvert inntektsår
       operationId: hentSkattekortPerson
 
       requestBody:
-        description: fnr og inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år
+        description: fnr er påkrevd. Inntektåret må være gjeldende år +/- 1 år hvis det er oppgitt.
+          Neste år kan kun benyttes fra og med 15. desember.
         content:
           application/json:
             schema:
@@ -38,7 +40,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Arbeidstaker'
+                  $ref: '#/components/schemas/SkattekortDTO'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -56,134 +58,166 @@ paths:
 
       security:
         - Bearer: [ ]
+  
+  /opprett:
+    post:
+      tags:
+        - skattekort
+      summary: Opprett fiktivt skattekort
+      description: Oppretter fiktivt skattekort for person og inntektsår
+      operationId: opprettSkattekort
+      responses:
+        201:
+          description: OK - Skattekort er lagret
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        description: fnr, inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år.
 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpprettSkattekortRequest'
+        required: true
+      security:
+        - Bearer: [ ]
 components:
   schemas:
-
     SkattekortPersonRequest:
       type: object
       properties:
         fnr:
           type: string
           nullable: false
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
         inntektsaar:
           type: integer
           format: int16
-          nullable: false
-
-    Arbeidstaker:
+          nullable: true
+          example: 2026
+          minimum: 2025
+          maximum: 3000
+        hentAlle:
+          type: boolean
+          nullable: true
+          description: Hent alle skattekort
+    OpprettSkattekortRequest:
       type: object
       properties:
-        inntektsaar:
-          type: integer
-          format: int64
-        arbeidstakeridentifikator:
+        fnr:
           type: string
-        resultatPaaForespoersel:
-          $ref: '#/components/schemas/Resultatstatus'
+          nullable: false
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
         skattekort:
-          $ref: '#/components/schemas/Skattekort'
-        tilleggsopplysning:
-          $ref: '#/components/schemas/Tilleggsopplysning'
-
-    Resultatstatus:
-      type: string
-      enum:
-        - ikkeSkattekort
-        - ikkeTrekkplikt
-        - skattekortopplysningerOK
-        - ugyldigOrganisasjonsnummer
-        - ugyldigFoedselsEllerDnummer
-        - utgaattDnummerSkattekortForFoedselsnummerErLevert
-
-    Skattekort:
+          $ref: '#/components/schemas/SkattekortDTO'
+    SkattekortDTO:
       type: object
-      nullable: true
       properties:
         utstedtDato:
           type: string
           format: date
           nullable: true
-        skattekortidentifikator:
+        inntektsaar:
           type: integer
-          format: int64
-          nullable: true
-        forskuddstrekk:
+          format: year
+          example: 2026
+          minimum: 2025
+          maximum: 3000
+        resultatForSkattekort:
+          type: string
+          description: Result for skattekort
+          enum:
+            - skattekortopplysningerOK
+            - ikkeSkattekort
+            - ikkeTrekkplikt
+        forskuddstrekkList:
           type: array
           items:
-            $ref: '#/components/schemas/Forskuddstrekk'
-
-    Tilleggsopplysning:
-      type: string
-      items:
-        enum:
-          - oppholdPaaSvalbard
-          - kildeskattpensjonist
-          - oppholdITiltakssone
-          - kildeskattPaaLoenn
-
-    Forskuddstrekk:
-      type: object
-      anyOf:
-        - $ref: '#/components/schemas/Frikort'
-        - $ref: '#/components/schemas/Trekktabell'
-        - $ref: '#/components/schemas/Trekkprosent'
-      discriminator:
-        propertyName: type
-        mapping:
-          Frikort: '#/components/schemas/Frikort'
-          Trekktabell: '#/components/schemas/Trekktabell'
-          Trekkprosent: '#/components/schemas/Trekkprosent'
-
-    Frikort:
-      type: object
+            $ref: '#/components/schemas/ForskuddstrekkDTO'
+        tilleggsopplysningList:
+          type: array
+          items:
+            type: string
+            enum:
+              - oppholdPaaSvalbard
+              - kildeskattPaaPensjon
+              - oppholdITiltakssone
       required:
-        - type
+        - inntektsaar
+        - forskuddstrekkList
+
+    ForskuddstrekkDTO:
+      type: object
       properties:
         trekkode:
           type: string
-        frikortbeloep:
+          enum:
+            - loennFraNAV
+            - pensjonFraNAV
+            - ufoeretrygdFraNAV
+        frikort:
+          $ref: '#/components/schemas/FrikortDTO'
+        prosentkort:
+          $ref: '#/components/schemas/ProsentkortDTO'
+        trekktabell:
+          $ref: '#/components/schemas/TabellkortDTO'
+      required:
+        - trekkode
+
+    FrikortDTO:
+      type: object
+      properties:
+        frikortBeloep:
+          type: integer
+          nullable: true
+
+    ProsentkortDTO:
+      type: object
+      properties:
+        prosentSats:
+          type: number
+          format: double
+        antallMndForTrekk:
           type: number
           format: double
           nullable: true
-        type:
-          type: string
-
-    Trekktabell:
-      type: object
       required:
-        - type
-      properties:
-        trekkode:
-          type: string
-        tabellnummer:
-          type: string
-        prosentsats:
-          type: number
-          format: double
-        antallMaanederForTrekk:
-          type: number
-          format: double
-        type:
-          type: string
+        - prosentSats
 
-    Trekkprosent:
+    TabellkortDTO:
       type: object
-      required:
-        - type
       properties:
-        trekkode:
+        tabell:
           type: string
-        prosentsats:
+        prosentSats:
           type: number
           format: double
-        antallMaanederForTrekk:
+        antallMndForTrekk:
           type: number
           format: double
-          nullable: true
-        type:
-          type: string
-
+      required:
+        - tabell
+        - prosentSats
+        - antallMndForTrekk
+    
     ApiError:
       type: object
       required:

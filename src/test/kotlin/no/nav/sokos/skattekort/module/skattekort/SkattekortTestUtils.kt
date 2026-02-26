@@ -84,7 +84,7 @@ fun aSkattekort(
 fun anArbeidstaker(
     resultat: ResultatForSkattekort,
     fnr: String,
-    inntektsaar: String,
+    inntektsaar: Int,
     tilleggsopplysninger: List<Tilleggsopplysning>? = null,
     skattekort: Skattekort? = null,
 ): Arbeidstaker =
@@ -120,12 +120,15 @@ fun databaseHas(vararg strings: String) {
     runThisSql(strings.joinToString("\n"))
 }
 
-fun aPerson(
+fun aPerson(personId: Long) =
+    """
+        INSERT INTO personer(id) VALUES ($personId);            
+    """
+
+fun afoedselsnummer(
     personId: Long,
     fnr: String,
 ) = """
-        INSERT INTO personer(id) VALUES ($personId);
-            
         INSERT INTO foedselsnumre(person_id, fnr)
             VALUES ($personId, '$fnr');
     """
@@ -157,7 +160,7 @@ fun anAbonnement(
     forsystem: Forsystem = Forsystem.OPPDRAGSSYSTEMET,
 ) = """
     INSERT INTO forespoersler(id, data_mottatt, forsystem)
-                    VALUES ($forespoerselId, '', '${forsystem.value}');
+        SELECT $forespoerselId, '${forsystem.value}:$inntektsaar:' || fnr, '${forsystem.value}' FROM foedselsnumre WHERE person_id = $personId;
     
     INSERT INTO abonnementer(forespoersel_id, person_id, inntektsaar)
                     VALUES ($forespoerselId, $personId, $inntektsaar);
@@ -176,6 +179,20 @@ fun aDbSkattekort(
 ) = """
     INSERT INTO skattekort (id, person_id, utstedt_dato, identifikator, inntektsaar, kilde, opprettet, resultatForSkattekort, generert_fra)
     VALUES ($id, $personId, '$utstedtDato', '$identifikator', $inntektsaar, '$kilde', '$opprettet', '${resultatForSkattekort.value}', $generertFra);
+    """.trimIndent()
+
+fun aDbForskuddstrekk(
+    id: Long,
+    skattekortId: Long,
+    type: String,
+    trekkode: Trekkode,
+    prosentSats: Double? = null,
+    antMndForTrekk: Double? = null,
+    tabellNummer: String? = null,
+    frikortbeløp: Int? = null,
+) = """
+    INSERT INTO forskuddstrekk (id, skattekort_id, type, trekk_kode, prosentsats, antall_mnd_for_trekk, tabell_nummer, frikort_beloep)
+    VALUES ($id, $skattekortId, '$type', '${trekkode.value}', ${prosentSats ?: "NULL"}, ${antMndForTrekk ?: "NULL"}, ${tabellNummer?.let { "'$it'" } ?: "NULL"}, ${frikortbeløp ?: "NULL"});
     """.trimIndent()
 
 fun toBestillSkattekortResponse(json: String) =

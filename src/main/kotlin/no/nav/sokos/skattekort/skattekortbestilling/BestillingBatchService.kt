@@ -51,7 +51,7 @@ class BestillingBatchService(
 
             dataSource.transaction { tx ->
                 logger.info { "Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten" }
-                val bestillingsbatchId = BestillingBatchRepository.insertBestillingsBatch(tx, bestillingsreferanse = response.bestillingsreferanse, dataSendt = Json.encodeToString(request))
+                val bestillingsbatchId = BestillingBatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(request), BestillingsbatchType.BESTILLING)
 
                 logger.info { "Bestillingsbatch $bestillingsbatchId opprettet" }
                 AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillingList.map { it.personId }, "Bestilling sendt")
@@ -91,12 +91,7 @@ class BestillingBatchService(
                             skatteetatenClient.bestillSkattekort(oppdateringsrequest)
                         }
                     logger.info("Bestillingsbatch for henting av oppdaterte skattekort ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                    val bestillingsbatchId =
-                        BestillingBatchRepository.insertOppdateringsBatch(
-                            tx,
-                            bestillingsreferanse = response.bestillingsreferanse,
-                            dataSendt = Json.encodeToString(oppdateringsrequest),
-                        )
+                    val bestillingsbatchId = BestillingBatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(oppdateringsrequest), BestillingsbatchType.OPPDATERING)
                     logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
                 }
             }

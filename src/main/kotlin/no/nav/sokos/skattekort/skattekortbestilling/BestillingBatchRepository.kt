@@ -2,13 +2,10 @@ package no.nav.sokos.skattekort.skattekortbestilling
 
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
-import kotlinx.serialization.json.Json
 
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortRequest
 
 object BestillingBatchRepository {
     fun list(tx: TransactionalSession): List<BestillingBatch> =
@@ -43,7 +40,7 @@ object BestillingBatchRepository {
     fun insertOppdateringsBatch(
         tx: TransactionalSession,
         bestillingsreferanse: String,
-        request: BestillSkattekortRequest,
+        dataSendt: String,
     ): Long =
         tx.updateAndReturnGeneratedKey(
             queryOf(
@@ -53,8 +50,8 @@ object BestillingBatchRepository {
                 """.trimMargin(),
                 mapOf(
                     "bestillingsreferanse" to bestillingsreferanse,
-                    "dataSendt" to Json.encodeToString(request),
-                    "type" to BestillingsbatchType.OPPDATERING,
+                    "dataSendt" to dataSendt,
+                    "type" to BestillingsbatchType.OPPDATERING.name,
                 ),
             ),
         ) ?: error("Failed to insert bestillingsbatch")

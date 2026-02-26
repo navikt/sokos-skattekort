@@ -95,7 +95,7 @@ class BestillingBatchService(
                         BestillingBatchRepository.insertOppdateringsBatch(
                             tx,
                             bestillingsreferanse = response.bestillingsreferanse,
-                            request = oppdateringsrequest,
+                            dataSendt = Json.encodeToString(oppdateringsrequest),
                         )
                     logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
                 }

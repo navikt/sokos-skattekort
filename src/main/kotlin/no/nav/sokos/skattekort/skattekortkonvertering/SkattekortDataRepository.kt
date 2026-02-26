@@ -1,14 +1,12 @@
 package no.nav.sokos.skattekort.skattekortkonvertering
 
-import kotlinx.serialization.json.Json
-
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 object SkattekortDataRepository {
     fun insert(
         tx: TransactionalSession,
-        dataMottatt: Json,
+        dataMottatt: String,
         inntektsaar: Int,
         fnr: String,
     ) {

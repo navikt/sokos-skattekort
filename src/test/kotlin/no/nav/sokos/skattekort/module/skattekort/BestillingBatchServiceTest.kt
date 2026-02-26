@@ -2,8 +2,6 @@ package no.nav.sokos.skattekort.skattekort
 
 import java.time.LocalDateTime
 
-import kotlin.time.Instant
-
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
@@ -16,14 +14,14 @@ import io.mockk.mockk
 
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.module.skattekort.aBatch
+import no.nav.sokos.skattekort.module.skattekort.okBestillSkattekortResponse
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchService
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus.Ny
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
@@ -46,7 +44,8 @@ class BestillingBatchServiceTest :
 
         test("Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
             coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
-                ok("ref1") andThen ok("ref2")
+                okBestillSkattekortResponse("ref1") andThen
+                okBestillSkattekortResponse("ref2")
             databaseHas(
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
@@ -70,7 +69,7 @@ class BestillingBatchServiceTest :
                 batches.size shouldBe 1
                 batches.shouldContainAllIgnoringFields(
                     listOf(
-                        batch(id = 1L, status = Ny, type = "oppdatering", bestillingsreferanse = "ref1"),
+                        aBatch(id = 1L, status = Ny, type = "oppdatering", bestillingsreferanse = "ref1"),
                     ),
                     BestillingBatch::oppdatert,
                     BestillingBatch::opprettet,
@@ -103,8 +102,8 @@ class BestillingBatchServiceTest :
                 batches.size shouldBe 2
                 batches.shouldContainAllIgnoringFields(
                     listOf(
-                        batch(id = 1L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref1"),
-                        batch(id = 2L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref2"),
+                        aBatch(id = 1L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref1"),
+                        aBatch(id = 2L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref2"),
                     ),
                     BestillingBatch::oppdatert,
                     BestillingBatch::opprettet,
@@ -152,30 +151,4 @@ private fun bestilling(
             batchId?.let(
                 ::BestillingsbatchId,
             ),
-    )
-
-private fun batch(
-    id: Long,
-    status: BestillingBatchStatus,
-    type: String,
-    bestillingsreferanse: String,
-): BestillingBatch =
-    BestillingBatch(
-        id = BestillingsbatchId(id),
-        status = status.value,
-        type = type,
-        bestillingsreferanse = bestillingsreferanse,
-        oppdatert = Instant.DISTANT_PAST,
-        opprettet = Instant.DISTANT_PAST,
-        dataSendt = "",
-    )
-
-private fun ok(ref: String): BestillSkattekortResponse =
-    toBestillSkattekortResponse(
-        """
-        {
-          "dialogreferanse": "any-dialog-ref",
-          "bestillingsreferanse": "$ref"
-        }
-        """.trimIndent(),
     )

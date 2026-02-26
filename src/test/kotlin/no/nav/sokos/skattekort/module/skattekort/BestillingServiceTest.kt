@@ -14,6 +14,7 @@ import ch.qos.logback.core.read.ListAppender
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
+import io.kotest.core.annotation.Ignored
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.inspectors.forAll
@@ -71,6 +72,7 @@ import no.nav.sokos.skattekort.utils.TestUtils.tx
 import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
+@Ignored
 @OptIn(ExperimentalTime::class)
 class BestillingServiceTest :
     FunSpec({

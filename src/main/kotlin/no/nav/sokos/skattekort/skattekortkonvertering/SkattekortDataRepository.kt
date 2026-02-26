@@ -1,12 +1,14 @@
 package no.nav.sokos.skattekort.skattekortkonvertering
 
+import kotlinx.serialization.json.Json
+
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 object SkattekortDataRepository {
     fun insert(
         tx: TransactionalSession,
-        dataMottatt: String,
+        dataMottatt: Json,
         inntektsaar: Int,
         fnr: String,
     ) {
@@ -14,7 +16,7 @@ object SkattekortDataRepository {
             queryOf(
                 """
                 INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr)
-                VALUES (:dataMottatt, :inntektsaar, :fnr)
+                VALUES ((CAST (:dataMottatt AS JSON)), :inntektsaar, :fnr)
                 """.trimIndent(),
                 mapOf(
                     "dataMottatt" to dataMottatt,

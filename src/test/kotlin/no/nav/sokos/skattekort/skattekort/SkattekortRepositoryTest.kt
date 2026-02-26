@@ -7,7 +7,6 @@ import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class SkattekortRepositoryTest :

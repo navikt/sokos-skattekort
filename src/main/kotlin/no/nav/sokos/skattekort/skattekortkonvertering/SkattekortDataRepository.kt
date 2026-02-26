@@ -25,16 +25,34 @@ object SkattekortDataRepository {
         )
     }
 
-    fun getUnprocessedSkattekortData(tx: TransactionalSession): List<String> =
+    fun updateSkattekortId(
+        tx: TransactionalSession,
+        id: Long,
+        skattekortId: Long,
+    ) {
+        tx.update(
+            queryOf(
+                """
+                UPDATE skattekort_data SET skattekort_id = :skattekortId WHERE id = :id
+                """.trimIndent(),
+                mapOf(
+                    "skattekortId" to skattekortId,
+                    "id" to id,
+                ),
+            ),
+        )
+    }
+
+    fun getUnprocessedSkattekortData(tx: TransactionalSession): List<Pair<Long, String>> =
         tx.list(
             queryOf(
                 """
-                SELECT data_mottatt FROM skattekort_data 
+                SELECT id, data_mottatt FROM skattekort_data 
                 WHERE skattekort_id is null
                 """.trimIndent(),
             ),
             extractor = { row ->
-                row.string("data_mottatt")
+                Pair(row.long("id"), row.string("data_mottatt"))
             },
         )
 }

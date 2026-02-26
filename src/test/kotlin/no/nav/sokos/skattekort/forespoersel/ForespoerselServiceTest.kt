@@ -1,6 +1,8 @@
 package no.nav.sokos.skattekort.forespoersel
 
 import java.time.LocalDateTime
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 
 import kotlin.time.ExperimentalTime
 
@@ -273,9 +275,9 @@ class ForespoerselServiceTest :
                 WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
 
                 val message = "OS;2025;01010112345"
-                val startLatch = java.util.concurrent.CountDownLatch(1)
-                val completeLatch = java.util.concurrent.CountDownLatch(2)
-                val exceptions = java.util.concurrent.ConcurrentHashMap<String, Exception>()
+                val startLatch = CountDownLatch(1)
+                val completeLatch = CountDownLatch(2)
+                val exceptions = ConcurrentHashMap<String, Exception>()
 
                 val thread1 =
                     Thread {

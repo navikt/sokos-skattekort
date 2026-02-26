@@ -12,9 +12,6 @@ import io.mockk.mockk
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
-import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.skattekort.SkattekortService
-import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.util.audit.AuditLogger
 
 class SkattekortPersonServiceTest :

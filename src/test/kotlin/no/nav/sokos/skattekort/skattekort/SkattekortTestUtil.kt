@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.module.skattekort
+package no.nav.sokos.skattekort.skattekort
 
 import kotlin.time.Instant
 
@@ -6,7 +6,6 @@ import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
-import no.nav.sokos.skattekort.skattekort.toBestillSkattekortResponse
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId

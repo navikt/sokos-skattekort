@@ -16,14 +16,6 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSk
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkprosent
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekktabell
-import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
-import no.nav.sokos.skattekort.skattekort.Frikort
-import no.nav.sokos.skattekort.skattekort.Prosentkort
-import no.nav.sokos.skattekort.skattekort.ResponseStatus
-import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.skattekort.Tabellkort
-import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
-import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.utils.TestUtils.runThisSql
 
 fun aForskuddstrekk(

@@ -5,6 +5,7 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 
 import ch.qos.logback.classic.Level
@@ -49,16 +50,6 @@ import no.nav.sokos.skattekort.person.Person
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.Personidentifikator
-import no.nav.sokos.skattekort.skattekort.Prosentkort
-import no.nav.sokos.skattekort.skattekort.ResponseStatus
-import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.skattekort.Skattekort
-import no.nav.sokos.skattekort.skattekort.SkattekortId
-import no.nav.sokos.skattekort.skattekort.SkattekortKilde
-import no.nav.sokos.skattekort.skattekort.SkattekortRepository
-import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
-import no.nav.sokos.skattekort.skattekort.Trekkode
-import no.nav.sokos.skattekort.skattekort.UgyldigOrganisasjonsnummerException
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
@@ -265,7 +256,13 @@ class BestillingServiceTest :
                         withClue("Should return forskuddstrekk from response") {
                             forskuddstrekkList shouldContainExactly
                                 listOf(
-                                    aForskuddstrekk("Tabellkort", Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, tabellNummer = "8140", prosentSats = 43.0, antMndForTrekk = 10.5),
+                                    aForskuddstrekk(
+                                        "Tabellkort",
+                                        Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER,
+                                        tabellNummer = "8140",
+                                        prosentSats = 43.0,
+                                        antMndForTrekk = 10.5,
+                                    ),
                                     aForskuddstrekk("Prosentkort", Trekkode.LOENN_FRA_BIARBEIDSGIVER, prosentSats = 43.0, antMndForTrekk = null),
                                     aForskuddstrekk("Prosentkort", Trekkode.LOENN_FRA_NAV, prosentSats = 43.0, antMndForTrekk = null),
                                     aForskuddstrekk("Prosentkort", Trekkode.UFOERETRYGD_FRA_NAV, prosentSats = 43.0, antMndForTrekk = null),
@@ -809,7 +806,7 @@ class BestillingServiceTest :
                             resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK
                             kilde shouldBe SkattekortKilde.SKATTEETATEN.value
                             identifikator shouldBe "10001"
-                            utstedtDato shouldBe kotlinx.datetime.LocalDate.parse("2025-11-01")
+                            utstedtDato shouldBe LocalDate.parse("2025-11-01")
                             withClue("Should contain the received forskuddstrekk unchanged") {
                                 forskuddstrekkList shouldContainAll
                                     listOf(

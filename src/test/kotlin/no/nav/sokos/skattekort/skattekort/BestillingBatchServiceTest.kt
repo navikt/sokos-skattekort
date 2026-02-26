@@ -15,8 +15,6 @@ import io.mockk.mockk
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.module.skattekort.aBatch
-import no.nav.sokos.skattekort.module.skattekort.okBestillSkattekortResponse
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch

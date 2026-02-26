@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.kafka
+package no.nav.sokos.skattekort.person.kafka
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
@@ -16,11 +16,6 @@ import no.nav.sokos.skattekort.person.Person
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
-import no.nav.sokos.skattekort.person.kafka.EndringstypeDTO
-import no.nav.sokos.skattekort.person.kafka.FOLKEREGISTERIDENTIFIKATOR
-import no.nav.sokos.skattekort.person.kafka.FolkeregisteridentifikatorDTO
-import no.nav.sokos.skattekort.person.kafka.IdentifikatorEndringService
-import no.nav.sokos.skattekort.person.kafka.PersonHendelseDTO
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.readFile

@@ -52,12 +52,12 @@ class SkattekortApiTest :
                 TestUtils.withFullTestApplication {
                     val request = ForespoerselRequest(personIdent = fnr, aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
                     val response =
-                        client.post("$BASE_PATH/bestille") {
+                        client.post("$BASE_PATH_SKATTEKORT/bestille") {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
                             header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
                         }
-                    val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
+                    val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH_SKATTEKORT/bestille", Json.encodeToString(request))
 
                     validationReport.hasErrors() shouldBe false
                     response.status shouldBe HttpStatusCode.Created
@@ -74,13 +74,13 @@ class SkattekortApiTest :
 
                 val request = ForespoerselRequest(personIdent = "1234567", aar = inntektsaar, forsystem = Forsystem.MANUELL.value)
                 val response =
-                    client.post("$BASE_PATH/bestille") {
+                    client.post("$BASE_PATH_SKATTEKORT/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
-                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
+                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH_SKATTEKORT/bestille", Json.encodeToString(request))
 
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -89,7 +89,7 @@ class SkattekortApiTest :
                 apiError.error shouldBe HttpStatusCode.BadRequest.description
                 apiError.status shouldBe HttpStatusCode.BadRequest.value
                 apiError.message shouldBe "personIdent er ugyldig. Tillatt format er 11 siffer"
-                apiError.path shouldBe "$BASE_PATH/bestille"
+                apiError.path shouldBe "$BASE_PATH_SKATTEKORT/bestille"
 
                 DbListener.dataSource.transaction { tx ->
                     ForespoerselRepository.getAllForespoersel(tx) shouldBe emptyList()
@@ -103,13 +103,13 @@ class SkattekortApiTest :
 
                 val request = ForespoerselRequest(personIdent = "01010112345", aar = inntekstaar, forsystem = Forsystem.MANUELL.value)
                 val response =
-                    client.post("$BASE_PATH/bestille") {
+                    client.post("$BASE_PATH_SKATTEKORT/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
-                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
+                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH_SKATTEKORT/bestille", Json.encodeToString(request))
 
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -118,7 +118,7 @@ class SkattekortApiTest :
                 apiError.error shouldBe HttpStatusCode.BadRequest.description
                 apiError.status shouldBe HttpStatusCode.BadRequest.value
                 apiError.message shouldBe "Gyldig årstall er mellom ${Year.now().minusYears(1)} og inneværende år"
-                apiError.path shouldBe "$BASE_PATH/bestille"
+                apiError.path shouldBe "$BASE_PATH_SKATTEKORT/bestille"
 
                 DbListener.dataSource.transaction { tx ->
                     ForespoerselRepository.getAllForespoersel(tx) shouldBe emptyList()
@@ -130,13 +130,13 @@ class SkattekortApiTest :
             TestUtils.withFullTestApplication {
                 val request = ForespoerselRequest(personIdent = "01010112345", aar = inntektsaar, forsystem = "")
                 val response =
-                    client.post("$BASE_PATH/bestille") {
+                    client.post("$BASE_PATH_SKATTEKORT/bestille") {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
 
-                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH/bestille", Json.encodeToString(request))
+                val validationReport = response.validationReport(validator, HttpMethod.Post, "$BASE_PATH_SKATTEKORT/bestille", Json.encodeToString(request))
 
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.BadRequest
@@ -145,7 +145,7 @@ class SkattekortApiTest :
                 apiError.error shouldBe HttpStatusCode.BadRequest.description
                 apiError.status shouldBe HttpStatusCode.BadRequest.value
                 apiError.message shouldBe "forsystem er ugyldig. Gyldige verdier er: OS, MANUELL"
-                apiError.path shouldBe "$BASE_PATH/bestille"
+                apiError.path shouldBe "$BASE_PATH_SKATTEKORT/bestille"
 
                 DbListener.dataSource.transaction { tx ->
                     ForespoerselRepository.getAllForespoersel(tx) shouldBe emptyList()

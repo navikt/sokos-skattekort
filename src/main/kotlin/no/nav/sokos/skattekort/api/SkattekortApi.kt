@@ -25,14 +25,15 @@ import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
 private val logger = KotlinLogging.logger { }
 
-const val BASE_PATH = "/api/v1/skattekort"
+const val BASE_PATH_SKATTEKORT = "/api/v1/skattekort"
+const val BASE_PATH_PERSON = "/api/v1/person"
 
 fun Route.skattekortApi(
     forespoerselService: ForespoerselService,
     statusService: StatusService,
     skattekortService: SkattekortService,
 ) {
-    route("/api/v1/person") {
+    route(BASE_PATH_PERSON) {
         post("hent-skattekort") {
             call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
             val hentSkattekortRequest: HentSkattekortRequest = call.receive()
@@ -58,7 +59,7 @@ fun Route.skattekortApi(
         }
     }
 
-    route(BASE_PATH) {
+    route(BASE_PATH_SKATTEKORT) {
         post("bestille") {
             call.requirePermission(requiredScope = Scope.BESTILLE_SCOPE, requiredRole = Role.BESTILLE_ROLE)
             val request = call.receive<ForespoerselRequest>()

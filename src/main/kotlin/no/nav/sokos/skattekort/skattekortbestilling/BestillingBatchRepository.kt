@@ -19,28 +19,11 @@ object BestillingBatchRepository {
             extractor = mapToBestillingBatch,
         )
 
-    fun insertBestillingsBatch(
+    fun insert(
         tx: TransactionalSession,
         bestillingsreferanse: String,
         dataSendt: String,
-    ): Long =
-        tx.updateAndReturnGeneratedKey(
-            queryOf(
-                """
-                    |INSERT INTO bestillingsbatcher (bestillingsreferanse, data_sendt) 
-                    |VALUES (:bestillingsreferanse, (CAST (:dataSendt AS JSON)))
-                """.trimMargin(),
-                mapOf(
-                    "bestillingsreferanse" to bestillingsreferanse,
-                    "dataSendt" to dataSendt,
-                ),
-            ),
-        ) ?: error("Failed to insert bestillingsbatch")
-
-    fun insertOppdateringsBatch(
-        tx: TransactionalSession,
-        bestillingsreferanse: String,
-        dataSendt: String,
+        type: BestillingsbatchType,
     ): Long =
         tx.updateAndReturnGeneratedKey(
             queryOf(
@@ -51,7 +34,7 @@ object BestillingBatchRepository {
                 mapOf(
                     "bestillingsreferanse" to bestillingsreferanse,
                     "dataSendt" to dataSendt,
-                    "type" to BestillingsbatchType.OPPDATERING.name,
+                    "type" to type.name,
                 ),
             ),
         ) ?: error("Failed to insert bestillingsbatch")

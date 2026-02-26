@@ -107,6 +107,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(UtsendingService::class)
         provide(BestillingBatchService::class)
         provide(BestillingService::class)
+        provide(KonverteringService::class)
         provide(SkatteetatenClient::class)
         provide(SkattekortService::class)
         provide(KafkaConsumerService::class)

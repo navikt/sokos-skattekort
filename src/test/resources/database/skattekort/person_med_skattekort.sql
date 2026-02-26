@@ -62,10 +62,10 @@ VALUES (1, 1, 'kildeskattPaaLoenn'),
 SELECT setval('skattekort_tilleggsopplysning_id_seq', (SELECT coalesce(max(id), 0) FROM skattekort_tilleggsopplysning) + 1, false);
 
 -- Rå skattekortdata (slik mottatt fra ekstern kilde)
-INSERT INTO skattekort_data (id, person_id, inntektsaar, data_mottatt, opprettet)
-VALUES (1, 1, 2025, '{"identifikator":"SKK-P1-2025-A","kilde":"skatt"}', now() - interval '2 days'),
-       (2, 1, 2024, '{"identifikator":"SKK-P1-2024-A","kilde":"skatt"}', now() - interval '370 days'),
-       (3, 2, 2025, '{"identifikator":"SKK-P2-2025-S","kilde":"syntetisert"}', now() - interval '1 day'),
-       (4, 3, 2025, '{"identifikator":"SKK-P3-2025-M","kilde":"manuelt"}', now() - interval '1 hour');
+INSERT INTO skattekort_data (id, skattekort_id, fnr, inntektsaar, data_mottatt, opprettet)
+VALUES (1, 1, '01010112345', 2025, '{"identifikator":"SKK-P1-2025-A","kilde":"skatt"}', now() - interval '2 days'),
+       (2, 2, '01010112345', 2024, '{"identifikator":"SKK-P1-2024-A","kilde":"skatt"}', now() - interval '370 days'),
+       (3, 3, '02020212345', 2025, '{"identifikator":"SKK-P2-2025-S","kilde":"syntetisert"}', now() - interval '1 day'),
+       (4, 4, '03020212345', 2025, '{"identifikator":"SKK-P3-2025-M","kilde":"manuelt"}', now() - interval '1 hour');
 
 SELECT setval('skattekort_data_id_seq', (SELECT coalesce(max(id), 0) FROM skattekort_data) + 1, false);

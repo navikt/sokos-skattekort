@@ -59,7 +59,7 @@ spec:
             roles:
               - "bestille-role"
               - "hent-role"
-        - application: sokos-up-skattekort-ssr
+        - application: sokos-up-skattekort
           permissions:
             scopes:
               - "hent-scope"

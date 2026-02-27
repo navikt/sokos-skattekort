@@ -32,7 +32,7 @@ repositories {
 
 val resilience4jVersion = "2.3.0"
 val ktorVersion = "3.4.0"
-val nimbusVersion = "10.7"
+val nimbusVersion = "10.8"
 val logbackVersion = "1.5.32"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.3"
@@ -59,7 +59,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "8.8.1"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "12.1.1"
+val unleashedVersion = "12.1.2"
 
 dependencies {
 

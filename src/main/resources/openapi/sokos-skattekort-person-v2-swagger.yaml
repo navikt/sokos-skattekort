@@ -1,0 +1,267 @@
+openapi: '3.0.3'
+
+info:
+  version: 2.0.0
+  title: sokos-skattekort API
+  description: API-tjeneste for å hente ut skattekort på person for gjeldende år +/- 1 år som får ytelser i NAV
+  contact:
+    name: PO Utbetaling
+    email: okonomi@nav.no
+    url: https://nav-it.slack.com/archives/CKZADNFBP
+servers:
+  - url: /api/v2/person
+tags:
+  - name: skattekort
+    description: Skattekort informasjon
+
+paths:
+  /hent-skattekort:
+    post:
+      tags:
+        - skattekort
+      summary: Hente skattekort for person
+      description: Returnerer siste skattekort for hvert inntektsår
+      operationId: hentSkattekortPerson
+
+      requestBody:
+        description: fnr er påkrevd. Inntektåret må være gjeldende år +/- 1 år hvis det er oppgitt.
+          Neste år kan kun benyttes fra og med 15. desember.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkattekortPersonRequest'
+        required: true
+
+      responses:
+        200:
+          description: OK - Hvis skattekort ikke finnes, returneres tom liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkattekortDTO'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+  
+  /opprett:
+    post:
+      tags:
+        - skattekort
+      summary: Opprett fiktivt skattekort
+      description: Oppretter fiktivt skattekort for person og inntektsår
+      operationId: opprettSkattekort
+      responses:
+        201:
+          description: OK - Skattekort er lagret
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        description: fnr, inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år.
+
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpprettSkattekortRequest'
+        required: true
+      security:
+        - Bearer: [ ]
+components:
+  schemas:
+    SkattekortPersonRequest:
+      type: object
+      properties:
+        fnr:
+          type: string
+          nullable: false
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+        inntektsaar:
+          type: integer
+          format: int16
+          nullable: true
+          example: 2026
+          minimum: 2025
+          maximum: 3000
+        hentAlle:
+          type: boolean
+          nullable: true
+          description: Hent alle skattekort
+    OpprettSkattekortRequest:
+      type: object
+      properties:
+        fnr:
+          type: string
+          nullable: false
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+        skattekort:
+          $ref: '#/components/schemas/SkattekortDTO'
+    SkattekortDTO:
+      type: object
+      properties:
+        forskuddstrekkList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForskuddstrekkDTO'
+        id: 
+          type: number
+        identifikator:
+          type: string
+        inntektsaar:
+          type: integer
+          format: year
+          example: 2026
+          minimum: 2025
+          maximum: 3000
+        kilde: 
+          type: string
+        opprettet:
+          type: string
+        resultatForSkattekort:
+          type: string
+          description: Resultat for skattekort
+          enum:
+            - skattekortopplysningerOK
+            - ikkeSkattekort
+            - ikkeTrekkplikt
+        tilleggsopplysningList:
+          type: array
+          items:
+            type: string
+            enum:
+              - oppholdPaaSvalbard
+              - kildeskattPaaPensjon
+              - oppholdITiltakssone
+        utstedtDato:
+          type: string
+          format: date
+          nullable: true
+      required:
+        - inntektsaar
+        - forskuddstrekkList
+
+    ForskuddstrekkDTO:
+      type: object
+      properties:
+        trekkode:
+          type: string
+          enum:
+            - loennFraNAV
+            - pensjonFraNAV
+            - ufoeretrygdFraNAV
+        frikort:
+          $ref: '#/components/schemas/FrikortDTO'
+        prosentkort:
+          $ref: '#/components/schemas/ProsentkortDTO'
+        trekktabell:
+          $ref: '#/components/schemas/TabellkortDTO'
+      required:
+        - trekkode
+
+    FrikortDTO:
+      type: object
+      properties:
+        frikortBeloep:
+          type: integer
+          nullable: true
+
+    ProsentkortDTO:
+      type: object
+      properties:
+        prosentSats:
+          type: number
+          format: double
+        antallMndForTrekk:
+          type: number
+          format: double
+          nullable: true
+      required:
+        - prosentSats
+
+    TabellkortDTO:
+      type: object
+      properties:
+        tabell:
+          type: string
+        prosentSats:
+          type: number
+          format: double
+        antallMndForTrekk:
+          type: number
+          format: double
+      required:
+        - tabell
+        - prosentSats
+        - antallMndForTrekk
+    
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Tidspunkt feilen oppsto
+        status:
+          type: integer
+          example: 4xx
+          description: HTTP status kode
+        error:
+          type: string
+          example: Error type
+          description: En kort, lesbar oppsummering av problemet
+        message:
+          type: string
+          example: Error message, invalid value
+          description: En lesbar forklaring som er spesifikk for denne forekomsten av problemet
+        path:
+          type: string
+          example: /api/v1/skattekort
+          description: Endepunktet hvor feilen oppstå
+
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: |-
+        OIDC-token (JWT via OAuth2.0).<br> 
+          Følgende format må brukes i input-feltet "Value" under: <strong>\"Bearer {token}\"</strong>.<br> 
+          Eksempel på verdi i input-felt: <strong>Bearer eYdmifml0ejugm</strong>
+      name: Authorization
+      in: header

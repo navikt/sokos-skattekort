@@ -36,12 +36,41 @@ class SkattekortPersonService(
         fnr: String,
         inntektsaar: Short? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<SkattekortDTO> {
+    ): List<no.nav.sokos.skattekort.dto.v2.SkattekortDTO> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
 
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
         if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
             requireNotNull(inntektsaar) { "Må oppgi inntektsår ved oppslag på reelle fnr" }
+            requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
+            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
+        }
+
+        return dataSource
+            .transaction { tx ->
+                val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
+                SkattekortRepository
+                    .findAllByPersonId(
+                        tx,
+                        person.id!!,
+                        inntektsaar?.toInt(),
+                        adminRole = false,
+                    ).map {
+                        no.nav.sokos.skattekort.dto.v2
+                            .SkattekortDTO(it)
+                    }
+            }.toList()
+    }
+
+    fun hentSkattekortPersonV2(
+        fnr: String,
+        inntektsaar: Short? = null,
+        saksbehandler: Saksbehandler? = null,
+    ): List<SkattekortDTO> {
+        logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
+
+        // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
+        if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
         }

@@ -46,4 +46,37 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             call.respond(HttpStatusCode.Created)
         }
     }
+    route("/api/v2/person") {
+        post("hent-skattekort") {
+            call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
+            val skattekortPersonRequest: SkattekortPersonRequest = call.receive()
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
+            if (skattekortPersonRequest.hentAlle) {
+                call.respond(
+                    skattekortPersonService.hentSkattekortPersonV2(
+                        skattekortPersonRequest.fnr,
+                        skattekortPersonRequest.inntektsaar,
+                        saksbehandler,
+                    ),
+                )
+            } else {
+                call.respond(
+                    skattekortPersonService
+                        .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                )
+            }
+        }
+
+        post("opprett") {
+            call.requirePermission(Scope.OPPRETT_SCOPE, Role.OPPRETT_ROLE)
+            val request = call.receive<OpprettSkattekortRequest>()
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
+            skattekortPersonService.opprettSkattekort(
+                request.fnr,
+                request.skattekort,
+                saksbehandler,
+            )
+            call.respond(HttpStatusCode.Created)
+        }
+    }
 }

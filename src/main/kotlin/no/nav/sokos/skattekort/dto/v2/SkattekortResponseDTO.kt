@@ -64,7 +64,7 @@ data class SkattekortResponseDTO(
         id = skattekort.id?.value ?: throw IllegalStateException("Skattekort fra databasen mangler id"),
         identifikator = skattekort.identifikator,
         inntektsaar = skattekort.inntektsaar,
-        kilde = SkattekortKilde.valueOf(skattekort.kilde),
+        kilde = SkattekortKilde.fromValue(skattekort.kilde),
         opprettet = skattekort.opprettet,
         resultatForSkattekort = skattekort.resultatForSkattekort.value,
         tilleggsopplysningList = skattekort.tilleggsopplysningList.map { it.value },

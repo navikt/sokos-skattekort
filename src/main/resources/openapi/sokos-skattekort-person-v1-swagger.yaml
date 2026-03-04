@@ -84,8 +84,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
       requestBody:
-        description: fnr, inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år.
-
+        description: fnr, inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år. Neste år kan kun benyttes fra og med 15. desember.
         content:
           application/json:
             schema:
@@ -160,6 +159,7 @@ components:
               - oppholdPaaSvalbard
               - kildeskattPaaPensjon
               - oppholdITiltakssone
+          nullable: true
       required:
         - inntektsaar
         - forskuddstrekkList

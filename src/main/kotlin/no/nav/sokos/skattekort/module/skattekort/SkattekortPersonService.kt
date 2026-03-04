@@ -12,6 +12,7 @@ import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.dto.SkattekortDTO
+import no.nav.sokos.skattekort.dto.v2.SkattekortResponseDTO
 import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
@@ -36,7 +37,7 @@ class SkattekortPersonService(
         fnr: String,
         inntektsaar: Short? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<no.nav.sokos.skattekort.dto.v2.SkattekortDTO> {
+    ): List<SkattekortDTO> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
 
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
@@ -56,8 +57,7 @@ class SkattekortPersonService(
                         inntektsaar?.toInt(),
                         adminRole = false,
                     ).map {
-                        no.nav.sokos.skattekort.dto.v2
-                            .SkattekortDTO(it)
+                        SkattekortDTO(it)
                     }
             }.toList()
     }
@@ -66,7 +66,7 @@ class SkattekortPersonService(
         fnr: String,
         inntektsaar: Short? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<SkattekortDTO> {
+    ): List<SkattekortResponseDTO> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
 
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
@@ -84,7 +84,7 @@ class SkattekortPersonService(
                         person.id!!,
                         inntektsaar?.toInt(),
                         adminRole = false,
-                    ).map(::SkattekortDTO)
+                    ).map(::SkattekortResponseDTO)
             }.toList()
     }
 

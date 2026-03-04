@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.skattekort
+package no.nav.sokos.skattekort.skattekortbestilling
 
 enum class Status {
     IKKE_FORESPURT,

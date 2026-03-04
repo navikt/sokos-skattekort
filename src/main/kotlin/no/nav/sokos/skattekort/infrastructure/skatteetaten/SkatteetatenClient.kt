@@ -18,8 +18,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.server.plugins.di.annotations.Named
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortRequest
@@ -28,18 +28,17 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSk
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 class SkatteetatenClient(
+    private val httpClient: HttpClient,
+    @Named("skatteetatenUrl") private val skatteetatenUrl: String,
     private val maskinportenTokenClient: MaskinportenTokenClient,
-    private val client: HttpClient,
 ) {
-    private val skatteetatenUrl = PropertiesConfig.getSkatteetatenProperties().skatteetatenApiUrl
-
     suspend fun bestillSkattekort(request: BestillSkattekortRequest): BestillSkattekortResponse =
         circuitBreaker
             .decorateSuspendFunction {
                 val url = "$skatteetatenUrl/api/forskudd/bestillSkattekort/"
 
                 val response: HttpResponse =
-                    client.post(url) {
+                    httpClient.post(url) {
                         contentType(ContentType.Application.Json)
                         bearerAuth(maskinportenTokenClient.getAccessToken())
                         setBody(request)
@@ -58,7 +57,7 @@ class SkatteetatenClient(
                 val url = "$skatteetatenUrl/api/forskudd/skattekortTilArbeidsgiver/svar/$bestillingsreferanse"
 
                 val response =
-                    client.get(url) {
+                    httpClient.get(url) {
                         bearerAuth(maskinportenTokenClient.getAccessToken())
                         accept(ContentType.Application.Json)
                         expectSuccess = false

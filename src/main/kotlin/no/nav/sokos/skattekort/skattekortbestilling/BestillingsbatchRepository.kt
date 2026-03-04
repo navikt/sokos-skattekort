@@ -7,18 +7,7 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
-object BestillingBatchRepository {
-    fun list(tx: TransactionalSession): List<BestillingBatch> =
-        tx.list(
-            queryOf(
-                """
-                    |SELECT * 
-                    |FROM bestillingsbatcher
-                """.trimMargin(),
-            ),
-            extractor = mapToBestillingBatch,
-        )
-
+object BestillingsbatchRepository {
     fun insert(
         tx: TransactionalSession,
         bestillingsreferanse: String,
@@ -39,29 +28,29 @@ object BestillingBatchRepository {
             ),
         ) ?: error("Failed to insert bestillingsbatch")
 
-    fun getUnprocessedBestillingsbatchList(
+    fun getAllUnprocessedBestillingsbatch(
         tx: TransactionalSession,
         type: BestillingsbatchType,
-    ): List<BestillingBatch> =
+    ): List<Bestillingsbatch> =
         tx.list(
             queryOf(
                 """
                     |SELECT * 
                     |FROM bestillingsbatcher
-                    |WHERE status = 'NY' AND type = :type
+                    |WHERE status IN ('NY', 'RETRY') AND type = :type
                     |ORDER BY oppdatert ASC
                 """.trimMargin(),
                 mapOf(
                     "type" to type.name,
                 ),
             ),
-            extractor = mapToBestillingBatch,
+            extractor = mapToBestillingsbatch,
         )
 
     fun findById(
         tx: TransactionalSession,
         bestillingsbatchId: Long,
-    ): BestillingBatch? =
+    ): Bestillingsbatch? =
         tx.single(
             queryOf(
                 """
@@ -71,13 +60,13 @@ object BestillingBatchRepository {
                 """.trimMargin(),
                 mapOf("id" to bestillingsbatchId),
             ),
-            extractor = mapToBestillingBatch,
+            extractor = mapToBestillingsbatch,
         )
 
     fun markAs(
         tx: TransactionalSession,
         bestillingsbatchId: Long,
-        status: BestillingBatchStatus,
+        status: BestillingsbatchStatus,
     ) {
         tx.run(
             queryOf(
@@ -97,29 +86,29 @@ object BestillingBatchRepository {
     fun updateBestillingsbatchWithMottatteData(
         tx: TransactionalSession,
         batchId: Long,
-        content: String,
+        dataMottatt: String,
     ) {
         tx.run(
             queryOf(
                 """
                     |UPDATE bestillingsbatcher
-                    |SET data_mottatt = :content, oppdatert = NOW()
+                    |SET data_mottatt = :dataMottatt, oppdatert = NOW()
                     |WHERE id = :id
                 """.trimMargin(),
                 mapOf(
                     "id" to batchId,
-                    "content" to content,
+                    "dataMottatt" to dataMottatt,
                 ),
             ).asExecute,
         )
     }
 
     @OptIn(ExperimentalTime::class)
-    private val mapToBestillingBatch: (Row) -> BestillingBatch = { row ->
-        BestillingBatch(
+    val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
+        Bestillingsbatch(
             id = BestillingsbatchId(row.long("id")),
             status = row.string("status"),
-            type = row.string("type"),
+            type = BestillingsbatchType.valueOf(row.string("type")),
             bestillingsreferanse = row.string("bestillingsreferanse"),
             dataSendt = row.string("data_sendt"),
             oppdatert = row.instant("oppdatert").toKotlinInstant(),

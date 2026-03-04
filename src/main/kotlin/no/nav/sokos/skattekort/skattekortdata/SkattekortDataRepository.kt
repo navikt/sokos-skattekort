@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.skattekortkonvertering
+package no.nav.sokos.skattekort.skattekortdata
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf

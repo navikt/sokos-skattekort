@@ -9,7 +9,7 @@ import no.nav.sokos.skattekort.person.Person
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
-import no.nav.sokos.skattekort.skattekort.Status
+import no.nav.sokos.skattekort.skattekortbestilling.Status
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -44,12 +44,12 @@ class StatusService(
 
             val batch =
                 dataSource.transaction { tx ->
-                    BestillingBatchRepository.findById(tx, bestilling.bestillingsbatchId.id)
+                    BestillingsbatchRepository.findById(tx, bestilling.bestillingsbatchId.id)
                 }
 
-            if (batch?.status == BestillingBatchStatus.Ny.value) {
+            if (batch?.status == BestillingsbatchStatus.NY.value) {
                 return Status.BESTILT
-            } else if (batch?.status == BestillingBatchStatus.Feilet.value) {
+            } else if (batch?.status == BestillingsbatchStatus.FEILET.value) {
                 return Status.FEILET_I_BESTILLING
             }
         }

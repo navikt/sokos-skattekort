@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.skattekort
+package no.nav.sokos.skattekort.skattekortbestilling
 
 import java.time.LocalDateTime
 
@@ -13,12 +13,15 @@ import io.mockk.mockk
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
+import no.nav.sokos.skattekort.skattekort.ResponseStatus
+import no.nav.sokos.skattekort.skattekort.aBestillingsBatch
+import no.nav.sokos.skattekort.skattekort.aHentSkattekortResponse
+import no.nav.sokos.skattekort.skattekort.aPerson
+import no.nav.sokos.skattekort.skattekort.afoedselsnummer
+import no.nav.sokos.skattekort.skattekort.databaseHas
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
-import no.nav.sokos.skattekort.utils.TestUtils.tx
+import no.nav.sokos.skattekort.utils.DBTestUtils
+import no.nav.sokos.skattekort.utils.TestUtils
 
 class BestillingServiceOppdaterteSkattekortTest :
     FunSpec(
@@ -190,13 +193,13 @@ class BestillingServiceOppdaterteSkattekortTest :
 
                     bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
-                    val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+                    val batches: List<Bestillingsbatch> = TestUtils.tx(DBTestUtils::getAllBestillingsbatch)
 
                     assertSoftly {
                         batches shouldNotBeNull {
                             size shouldBe 1
                             first() shouldNotBeNull {
-                                status shouldBe BestillingBatchStatus.Ferdig.value
+                                status shouldBe BestillingsbatchStatus.FERDIG.value
                                 type shouldBe "OPPDATERING"
                                 bestillingsreferanse shouldBe "REF0001"
                             }
@@ -221,13 +224,13 @@ class BestillingServiceOppdaterteSkattekortTest :
 
                     bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
 
-                    val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+                    val batches: List<Bestillingsbatch> = TestUtils.tx(DBTestUtils::getAllBestillingsbatch)
 
                     assertSoftly {
                         batches shouldNotBeNull {
                             size shouldBe 1
                             first() shouldNotBeNull {
-                                status shouldBe BestillingBatchStatus.Feilet.value
+                                status shouldBe BestillingsbatchStatus.FEILET.value
                                 type shouldBe "OPPDATERING"
                                 bestillingsreferanse shouldBe "REF0001"
                             }

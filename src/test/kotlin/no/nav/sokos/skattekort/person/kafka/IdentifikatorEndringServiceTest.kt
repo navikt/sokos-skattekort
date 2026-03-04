@@ -16,8 +16,8 @@ import no.nav.sokos.skattekort.person.Person
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
-import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 class IdentifikatorEndringServiceTest :
@@ -58,7 +58,7 @@ class IdentifikatorEndringServiceTest :
                 withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
                 auditMatcher(auditList[1], person)
 
-                val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                val bestillingList = DBTestUtils.getAllBestilling(tx)
                 withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
             }
         }
@@ -84,7 +84,7 @@ class IdentifikatorEndringServiceTest :
                 withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
                 auditMatcher(auditList[1], person)
 
-                val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                val bestillingList = DBTestUtils.getAllBestilling(tx)
                 withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
             }
         }

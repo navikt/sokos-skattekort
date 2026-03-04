@@ -27,9 +27,9 @@ import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.ApiTestUtils.validationReport
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
-import no.nav.sokos.skattekort.utils.validationReport
 
 @OptIn(ExperimentalTime::class)
 class SkattekortApiTest :

@@ -33,12 +33,12 @@ import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.ApiTestUtils.validationReport
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.authServer
 import no.nav.sokos.skattekort.utils.TestUtils.m2mTokenWithNavIdent
 import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
-import no.nav.sokos.skattekort.utils.validationReport
 
 private const val HENT_SKATTEKORT_URL = "/api/v1/person/hent-skattekort"
 private const val OPPRETT_URL = "/api/v1/person/opprett"

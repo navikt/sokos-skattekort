@@ -70,7 +70,7 @@ class ForespoerselService(
                 }
             }
         }.onFailure { exception ->
-            logger.error { "Feil ved mottak av forespørsel på skattekort, sjekk feilmeldingen i team logs." }
+            logger.error { "Feil ved mottak av forespørsel på skattekort, sjekk feilmeldingen i TEAM LOGS." }
             logger.error(marker = TEAM_LOGS_MARKER, exception) { "Feil ved mottak av forespørsel på skattekort: $message" }
             throw exception
         }
@@ -205,16 +205,16 @@ class ForespoerselService(
                             break@retry
                         } catch (e: NumberFormatException) {
                             logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
-                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
                             break@retry
                         } catch (e: AssertionError) {
                             logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
-                            logger.error("Ugyldig fødselsnummer funnet under import, logget i secure log")
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
                             break@retry
                         }
                     } catch (e: BatchUpdateException) {
                         logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
-                        logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til secure log")
+                        logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til TEAM LOGS")
                         i++
                     } catch (e: Exception) {
                         logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)

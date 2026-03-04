@@ -234,6 +234,11 @@ enum class SkattekortKilde(
     SKATTEETATEN(value = "skatteetaten"),
     SYNTETISERT(value = "syntetisert"),
     MANUELL(value = "manuell"),
+    ;
+
+    companion object {
+        fun fromValue(kode: String): SkattekortKilde = SkattekortKilde.entries.find { it.value == kode } ?: error("Ukjent kilde: $kode")
+    }
 }
 
 enum class Trekkode(

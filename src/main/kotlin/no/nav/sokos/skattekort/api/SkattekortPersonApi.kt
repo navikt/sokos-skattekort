@@ -62,7 +62,7 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             } else {
                 call.respond(
                     skattekortPersonService
-                        .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                        .hentSingleSkattekortForEachYearV2(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
                 )
             }
         }

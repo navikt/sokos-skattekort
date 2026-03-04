@@ -33,6 +33,12 @@ class SkattekortPersonService(
         saksbehandler: Saksbehandler? = null,
     ) = hentSkattekortPerson(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
 
+    fun hentSingleSkattekortForEachYearV2(
+        fnr: String,
+        inntektsaar: Short? = null,
+        saksbehandler: Saksbehandler? = null,
+    ) = hentSkattekortPersonV2(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
+
     fun hentSkattekortPerson(
         fnr: String,
         inntektsaar: Short? = null,

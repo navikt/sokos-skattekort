@@ -12,15 +12,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 
 import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
-import no.nav.sokos.skattekort.skattekort.Frikort
-import no.nav.sokos.skattekort.skattekort.Prosentkort
-import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.skattekort.Skattekort
-import no.nav.sokos.skattekort.skattekort.SkattekortId
-import no.nav.sokos.skattekort.skattekort.Syntetisering
-import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
-import no.nav.sokos.skattekort.skattekort.Trekkode
 
 @OptIn(ExperimentalTime::class)
 class SyntetiseringTest :

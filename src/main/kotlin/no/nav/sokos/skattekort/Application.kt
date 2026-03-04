@@ -39,10 +39,10 @@ import no.nav.sokos.skattekort.person.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skattekort.SkattekortService
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchService
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
+import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
-import no.nav.sokos.skattekort.skattekortkonvertering.KonverteringService
 import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 import no.nav.sokos.skattekort.utsending.UtsendingService
@@ -100,14 +100,15 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<AzuredTokenClient>(name = "tilgangsmaksinAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinScope)
         }
+        provide<String>(name = "skatteetatenUrl") { PropertiesConfig.getSkatteetatenProperties().skatteetatenUrl }
         provide(StatusService::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
         provide(UtsendingService::class)
-        provide(BestillingBatchService::class)
+        provide(BestillingsbatchService::class)
         provide(BestillingService::class)
-        provide(KonverteringService::class)
+        provide(SkattekortDataService::class)
         provide(SkatteetatenClient::class)
         provide(SkattekortService::class)
         provide(KafkaConsumerService::class)
@@ -134,9 +135,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
-        val bestillingBatchService: BestillingBatchService by dependencies
+        val bestillingsbatchService: BestillingsbatchService by dependencies
         val utsendingService: UtsendingService by dependencies
-        val konverteringService: KonverteringService by dependencies
+        val skattekortdataService: SkattekortDataService by dependencies
         val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceScheduler)
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
@@ -145,9 +146,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         JobTaskConfig
             .scheduler(
                 bestillingService = bestillingService,
-                bestillingBatchService = bestillingBatchService,
+                bestillingsbatchService = bestillingsbatchService,
                 utsendingService = utsendingService,
-                konverteringService = konverteringService,
+                skattekortdataService = skattekortdataService,
                 scheduledTaskService = scheduledTaskService,
                 metricsService = metricsService,
                 forespoerselService = forespoerselService,

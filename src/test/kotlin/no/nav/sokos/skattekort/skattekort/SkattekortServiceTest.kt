@@ -14,7 +14,7 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
 import no.nav.sokos.skattekort.util.audit.AuditLogger
 
-class SkattekortPersonServiceTest :
+class SkattekortServiceTest :
     FunSpec({
         extensions(DbListener)
 

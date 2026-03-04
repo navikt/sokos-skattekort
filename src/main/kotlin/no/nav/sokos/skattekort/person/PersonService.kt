@@ -95,7 +95,7 @@ class PersonService(
                         }
                     } else {
                         logger.error(marker = TEAM_LOGS_MARKER) { "Ingen person funnet i PDL for fnr: $fnr" }
-                        logger.error { "Ingen person funnet i PDL, sjekk Team Logs" }
+                        logger.error { "Ingen person funnet i PDL, sjekk TEAM LOGS" }
                         foedselsnumreWithPersonIdMap.remove(fnr)
                     }
                 }

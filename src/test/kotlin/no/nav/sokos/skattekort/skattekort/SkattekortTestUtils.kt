@@ -5,10 +5,13 @@ import java.math.RoundingMode
 import java.nio.file.Files
 import java.nio.file.Paths
 
+import kotlin.time.Instant
 import kotlinx.serialization.json.Json
 
+import io.kotest.matchers.collections.shouldContainAllIgnoringFields
+import io.kotest.matchers.shouldBe
+
 import no.nav.sokos.skattekort.forespoersel.Forsystem
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiver
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiveridentifikator
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
@@ -16,6 +19,9 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSk
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkprosent
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekktabell
+import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsbatch
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.utils.TestUtils.runThisSql
 
 fun aForskuddstrekk(
@@ -156,6 +162,12 @@ fun aBestilling(
                     VALUES ($personId, '$fnr', $inntektsaar, $batchId);
     """.trimIndent()
 
+fun aSkattekortData(dataMottatt: String) =
+    """
+    INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr)
+                 VALUES ((CAST (:dataMottatt AS JSON)), :inntektsaar, :fnr)
+    """.trimIndent()
+
 fun anAbonnement(
     forespoerselId: Long,
     personId: Long,
@@ -198,13 +210,6 @@ fun aDbForskuddstrekk(
     VALUES ($id, $skattekortId, '$type', '${trekkode.value}', ${prosentSats ?: "NULL"}, ${antMndForTrekk ?: "NULL"}, ${tabellNummer?.let { "'$it'" } ?: "NULL"}, ${frikortbeløp ?: "NULL"});
     """.trimIndent()
 
-fun toBestillSkattekortResponse(json: String) =
-    Json.decodeFromString(
-        BestillSkattekortResponse
-            .serializer(),
-        json,
-    )
-
 fun anUtsending(
     fnr: String,
     inntektsaar: Int,
@@ -213,3 +218,30 @@ fun anUtsending(
     INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
     VALUES ('$fnr', $inntektsaar, '$forsystem');
     """.trimIndent()
+
+fun aBatch(
+    id: Long,
+    status: BestillingsbatchStatus,
+    type: String,
+    bestillingsreferanse: String,
+): Bestillingsbatch =
+    Bestillingsbatch(
+        id = BestillingsbatchId(id),
+        status = status.value,
+        type = type,
+        bestillingsreferanse = bestillingsreferanse,
+        oppdatert = Instant.DISTANT_PAST,
+        opprettet = Instant.DISTANT_PAST,
+        dataSendt = "",
+    )
+
+fun List<Bestillingsbatch>.shouldBeFunctionallyEquivalentTo(expected: List<Bestillingsbatch>) {
+    this.size shouldBe expected.size
+    expected.shouldContainAllIgnoringFields(
+        expected,
+        Bestillingsbatch::oppdatert,
+        Bestillingsbatch::opprettet,
+        Bestillingsbatch::id,
+        Bestillingsbatch::dataSendt,
+    )
+}

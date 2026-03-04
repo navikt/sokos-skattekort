@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.skattekort
+package no.nav.sokos.skattekort.infrastructure.skatteetaten
 
 import kotlinx.serialization.json.Json
 
@@ -18,10 +18,13 @@ import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.mockk
 
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.bestillSkattekortRequest
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
+import no.nav.sokos.skattekort.skattekort.ResponseStatus
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 class SkatteetatenClientTest :
@@ -122,6 +125,11 @@ fun setupClient(jsonFile: String): SkatteetatenClient {
         mockk<MaskinportenTokenClient> {
             coEvery { getAccessToken() } returns "token"
         }
-    val skatteetatenClient = SkatteetatenClient(mockTokenClient, clientWithMockReply)
+    val skatteetatenClient =
+        SkatteetatenClient(
+            clientWithMockReply,
+            PropertiesConfig.getSkatteetatenProperties().skatteetatenUrl,
+            mockTokenClient,
+        )
     return skatteetatenClient
 }

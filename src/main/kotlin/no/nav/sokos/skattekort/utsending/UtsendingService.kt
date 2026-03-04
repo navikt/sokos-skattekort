@@ -69,12 +69,12 @@ class UtsendingService(
                                                 utsendingOppdragzCounter.inc()
                                             } catch (e: BatchUpdateException) {
                                                 logger.error(marker = TEAM_LOGS_MARKER, e) { "Feil under sending til oppdragz: ${e.message}" }
-                                                logger.error("Feil under sending til oppdragz, detaljer er logget til secure log")
+                                                logger.error("Feil under sending til oppdragz, detaljer er logget til TEAM LOGS")
                                                 dataSource.transaction { errorTx ->
                                                     PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
                                                         AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
                                                     }
-                                                    UtsendingRepository.increaseFailCount(errorTx, utsending.id, "SQL-feil, feil er logget til secure log")
+                                                    UtsendingRepository.increaseFailCount(errorTx, utsending.id, "SQL-feil, feil er logget til TEAM LOGS")
                                                     feiledeUtsendingerOppdragzCounter.inc()
                                                 }
                                             } catch (e: Exception) {

@@ -32,7 +32,7 @@ class SkattekortService(
         fnr: String,
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
-    ) = getSkattekort(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
+    ): List<SkattekortDTO> = getSkattekort(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
 
     fun getSkattekort(
         fnr: String,

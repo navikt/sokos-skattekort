@@ -26,8 +26,8 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
-import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingId
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
@@ -68,7 +68,7 @@ class ForespoerselServiceTest :
 
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 1
-                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
                     bestillingList.size shouldBe 1
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -87,7 +87,7 @@ class ForespoerselServiceTest :
                 DbListener.dataSource.transaction { tx ->
                     val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
-                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     assertSoftly {
                         forespoerselList shouldNotBeNull {
@@ -132,7 +132,7 @@ class ForespoerselServiceTest :
                     abonnementList.first().inntektsaar shouldBe 2025
                     abonnementList[1].inntektsaar shouldBe 2026
 
-                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
                     bestillingList.size shouldBe 2
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -155,7 +155,7 @@ class ForespoerselServiceTest :
 
                 val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                 abonnementList.size shouldBe 1
-                val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                val bestillingList = DBTestUtils.getAllBestilling(tx)
                 bestillingList.size shouldBe 1
                 val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                 utsendingList.size shouldBe 0
@@ -181,7 +181,7 @@ class ForespoerselServiceTest :
                     forespoerselList.size shouldBe 2
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 2
-                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
                     bestillingList.size shouldBe 1
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -206,7 +206,7 @@ class ForespoerselServiceTest :
                     forespoerselList.size shouldBe 2
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 2
-                    val bestillingList = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
                     bestillingList.size shouldBe 1
                     val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
                     utsendingList.size shouldBe 0
@@ -248,7 +248,7 @@ class ForespoerselServiceTest :
 
             forespoerselService.cronForespoerselInput()
             DbListener.dataSource.transaction { tx ->
-                val bestillinger = BestillingRepository.getBestillingsKandidaterForBatch(tx)
+                val bestillinger = DBTestUtils.getAllBestilling(tx)
 
                 assertSoftly {
                     bestillinger shouldNotBeNull {

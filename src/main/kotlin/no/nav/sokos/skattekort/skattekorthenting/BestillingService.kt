@@ -24,11 +24,11 @@ import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.UgyldigOrganisasjonsnummerException
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchRepository
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.BESTILLING
-import no.nav.sokos.skattekort.skattekortkonvertering.SkattekortDataRepository
+import no.nav.sokos.skattekort.skattekortdata.SkattekortDataRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}
@@ -40,10 +40,11 @@ class BestillingService(
 ) {
     @OptIn(ExperimentalTime::class)
     fun hentBestillingsbatcher(type: BestillingsbatchType) {
-        /* denne er med vilje ikke underlagt feature switch-styring for å unngå at en sendt bestilling
-        ikke timer ut mens feature-toggelen er slått av
+        /***
+         * denne er med vilje ikke underlagt feature switch-styring for å unngå at en sendt bestilling
+         * ikke timer ut mens feature-toggelen er slått av
          */
-        dataSource.transaction { tx -> BestillingBatchRepository.getUnprocessedBestillingsbatchList(tx, type) }.forEach { batch ->
+        dataSource.transaction { tx -> BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, type) }.forEach { batch ->
             val batchId = batch.id!!.id
             runCatching {
                 logger.info("Henter skattekort for ${batch.bestillingsreferanse}")
@@ -60,11 +61,10 @@ class BestillingService(
                 when (exception) {
                     is CallNotPermittedException -> return@onFailure
                     else -> {
-                        logger.error(marker = TEAM_LOGS_MARKER, exception) { "Henting av skattekort for batch $batchId feilet: ${exception.message}" }
-                        logger.error("Henting av skattekort for batch $batchId feilet")
+                        logger.error(marker = TEAM_LOGS_MARKER, exception) { "Henting av skattekort for batch $batchId feilet. ${exception.message}" }
+                        logger.error("Henting av skattekort for batch $batchId feilet, sjekk TEAM LOGS for detaljer")
                         dataSource.transaction { errorTx ->
-                            BestillingBatchRepository.markAs(errorTx, batchId, BestillingBatchStatus.Feilet)
-                            if (exception is UgyldigOrganisasjonsnummerException) BestillingRepository.retryUnprocessedBestillings(errorTx, batchId)
+                            BestillingsbatchRepository.markAs(errorTx, batchId, BestillingsbatchStatus.FEILET)
                             AuditRepository.insertBatch(
                                 errorTx,
                                 AuditTag.HENTING_AV_SKATTEKORT_FEILET,
@@ -85,18 +85,23 @@ class BestillingService(
     ) {
         dataSource.transaction { tx ->
             if (featureToggles.isLagreMottatteBestillingerEnabled()) {
-                BestillingBatchRepository.updateBestillingsbatchWithMottatteData(tx, batchId, Json.encodeToString(response))
+                BestillingsbatchRepository.updateBestillingsbatchWithMottatteData(tx, batchId, Json.encodeToString(response))
             }
             when (response.status) {
                 ResponseStatus.FORESPOERSEL_OK.name -> {
                     val arbeidstakerList = response.arbeidsgiver?.first()?.arbeidstaker ?: emptyList()
                     arbeidstakerList.forEach { arbeidstaker ->
-                        handleResultatForSkattekort(tx, arbeidstaker)
+                        val personId =
+                            PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {
+                                logger.error(marker = TEAM_LOGS_MARKER) { "Fant ikke person for fnr ${arbeidstaker.arbeidstakeridentifikator}" }
+                                logger.error { "Fant ikke person, sjekk TEAM_LOGS for detaljer" }
+                                return@forEach
+                            }
+                        handleResultatForSkattekort(tx, arbeidstaker, personId)
                     }
-                    if (type == BESTILLING) {
-                        bestillingerMottattCounter.inc(arbeidstakerList.size.toLong())
-                        BestillingRepository.deleteProcessedBestillingBatch(tx, arbeidstakerList.map { it.arbeidstakeridentifikator }, batchId)
 
+                    if (type == BESTILLING) {
+                        BestillingRepository.deleteProcessedBestillingBatch(tx, arbeidstakerList.map { it.arbeidstakeridentifikator }, batchId)
                         val personer: List<PersonId> = BestillingRepository.hentResterendeBestillinger(tx, batchId)
                         if (personer.isNotEmpty()) {
                             AuditRepository.insertBatch(
@@ -106,23 +111,23 @@ class BestillingService(
                                 informasjon = "Bestilling var etterlatt etter mottak av data i batch $batchId",
                             )
                         }
-                        BestillingRepository.retryUnprocessedBestillings(tx, batchId)
-                        BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
-                        logger.info("Bestillingsbatch $batchId ferdig behandlet med mottatte brukere")
+                        bestillingerMottattCounter.inc(arbeidstakerList.size.toLong())
                     } else {
                         oppdateringerMottattCounter.inc(arbeidstakerList.size.toLong())
                     }
+                    BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.FERDIG)
+                    logger.info("Bestillingsbatch $batchId ferdig behandlet med mottatte brukere")
                 }
 
                 ResponseStatus.INGEN_ENDRINGER.name -> {
-                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Ferdig)
+                    BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.FERDIG)
                     logger.info("Ingen oppdaterte skattekort på batch $batchId")
                 }
 
                 else -> {
                     logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
                     logger.error(TEAM_LOGS_MARKER) { "Batchhenting av skattekort avvist av Skatteetaten: $response" }
-                    BestillingBatchRepository.markAs(tx, batchId, BestillingBatchStatus.Feilet)
+                    BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.FEILET)
                     AuditRepository.insertBatch(
                         tx,
                         AuditTag.HENTING_AV_SKATTEKORT_FEILET,
@@ -138,12 +143,8 @@ class BestillingService(
     private fun handleResultatForSkattekort(
         tx: TransactionalSession,
         arbeidstaker: Arbeidstaker,
+        personId: PersonId,
     ) {
-        val personId =
-            PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {
-                logger.error(marker = TEAM_LOGS_MARKER) { "Fant ikke person for fnr ${arbeidstaker.arbeidstakeridentifikator}" }
-                return
-            }
         val inntektsaar = arbeidstaker.inntektsaar
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
             ResultatForSkattekort.IkkeSkattekort, ResultatForSkattekort.IkkeTrekkplikt, ResultatForSkattekort.SkattekortopplysningerOK -> {
@@ -165,6 +166,7 @@ class BestillingService(
             ResultatForSkattekort.UgyldigFoedselsEllerDnummer -> {
                 PersonRepository.flaggPerson(tx, personId)
                 SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator)
+                AuditRepository.insert(tx, AuditTag.INVALID_FNR, personId, "Tilbakemelding fra Skatteetaten om UgyldigFoedselsEllerDnummer")
             }
         }
     }

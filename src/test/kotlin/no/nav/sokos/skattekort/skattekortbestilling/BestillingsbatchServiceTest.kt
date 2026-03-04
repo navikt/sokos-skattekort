@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.skattekort
+package no.nav.sokos.skattekort.skattekortbestilling
 
 import java.time.LocalDateTime
 
@@ -14,26 +14,27 @@ import io.mockk.mockk
 
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClientTestUtils.okBestillSkattekortResponse
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatch
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchRepository
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchService
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingBatchStatus.Ny
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId
+import no.nav.sokos.skattekort.skattekort.aBestilling
+import no.nav.sokos.skattekort.skattekort.aPerson
+import no.nav.sokos.skattekort.skattekort.afoedselsnummer
+import no.nav.sokos.skattekort.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
-import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
+import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
-class BestillingBatchServiceTest :
+class BestillingsbatchServiceTest :
     FunSpec({
         extensions(DbListener)
 
         val skatteetatenClient = mockk<SkatteetatenClient>()
 
-        val bestillingBatchService: BestillingBatchService by lazy {
-            BestillingBatchService(
+        val bestillingsbatchService: BestillingsbatchService by lazy {
+            BestillingsbatchService(
                 dataSource = DbListener.dataSource,
                 skatteetatenClient = skatteetatenClient,
                 featureToggles = UnleashIntegration(),
@@ -41,9 +42,6 @@ class BestillingBatchServiceTest :
         }
 
         test("Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
-            coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
-                okBestillSkattekortResponse("ref1") andThen
-                okBestillSkattekortResponse("ref2")
             databaseHas(
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
@@ -56,23 +54,28 @@ class BestillingBatchServiceTest :
                 aBestilling(3L, "03030300003", 2026, null),
             )
 
+            coEvery { skatteetatenClient.bestillSkattekort(any()) } returns
+                okBestillSkattekortResponse("ref1") andThen
+                okBestillSkattekortResponse("ref2")
+
             withConstantNow(LocalDateTime.parse("2025-12-14T00:00:00")) {
                 // Kaller to ganger for å sjekke at den ikke plukker opp 2026 på andre kall
-                bestillingBatchService.bestillSkattekort()
-                bestillingBatchService.bestillSkattekort()
+                bestillingsbatchService.bestillSkattekort()
+                bestillingsbatchService.bestillSkattekort()
 
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+                val bestillings: List<Bestilling> = tx(DBTestUtils::getAllBestilling)
+                val batches: List<Bestillingsbatch> = tx(DBTestUtils::getAllBestillingsbatch)
 
                 batches.size shouldBe 1
                 batches.shouldContainAllIgnoringFields(
                     listOf(
-                        aBatch(id = 1L, status = Ny, type = "oppdatering", bestillingsreferanse = "ref1"),
+                        no.nav.sokos.skattekort.skattekort
+                            .aBatch(id = 1L, status = NY, type = "oppdatering", bestillingsreferanse = "ref1"),
                     ),
-                    BestillingBatch::oppdatert,
-                    BestillingBatch::opprettet,
-                    BestillingBatch::dataSendt,
-                    BestillingBatch::type,
+                    Bestillingsbatch::oppdatert,
+                    Bestillingsbatch::opprettet,
+                    Bestillingsbatch::dataSendt,
+                    Bestillingsbatch::type,
                 )
                 batches.first().dataSendt shouldNotBeNull {
                     this shouldContain "01010100001"
@@ -92,21 +95,23 @@ class BestillingBatchServiceTest :
                 )
             }
             withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
-                bestillingBatchService.bestillSkattekort()
+                bestillingsbatchService.bestillSkattekort()
 
-                val bestillings: List<Bestilling> = tx(BestillingRepository::getBestillingsKandidaterForBatch)
-                val batches: List<BestillingBatch> = tx(BestillingBatchRepository::list)
+                val bestillings: List<Bestilling> = tx(DBTestUtils::getAllBestilling)
+                val batches: List<Bestillingsbatch> = tx(DBTestUtils::getAllBestillingsbatch)
 
                 batches.size shouldBe 2
                 batches.shouldContainAllIgnoringFields(
                     listOf(
-                        aBatch(id = 1L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref1"),
-                        aBatch(id = 2L, status = Ny, type = BESTILLING, bestillingsreferanse = "ref2"),
+                        no.nav.sokos.skattekort.skattekort
+                            .aBatch(id = 1L, status = NY, type = BESTILLING, bestillingsreferanse = "ref1"),
+                        no.nav.sokos.skattekort.skattekort
+                            .aBatch(id = 2L, status = NY, type = BESTILLING, bestillingsreferanse = "ref2"),
                     ),
-                    BestillingBatch::oppdatert,
-                    BestillingBatch::opprettet,
-                    BestillingBatch::id,
-                    BestillingBatch::dataSendt,
+                    Bestillingsbatch::oppdatert,
+                    Bestillingsbatch::opprettet,
+                    Bestillingsbatch::id,
+                    Bestillingsbatch::dataSendt,
                 )
                 batches.first { it.id?.id == 1L }.dataSendt shouldNotBeNull {
                     this shouldContain "01010100001"
@@ -132,8 +137,6 @@ class BestillingBatchServiceTest :
             }
         }
     })
-
-const val BESTILLING = "BESTILLING"
 
 private fun bestilling(
     pid: Long,

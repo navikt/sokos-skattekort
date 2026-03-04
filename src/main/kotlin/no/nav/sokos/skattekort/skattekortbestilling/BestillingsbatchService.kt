@@ -25,7 +25,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}
 
-class BestillingBatchService(
+class BestillingsbatchService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
     private val featureToggles: UnleashIntegration,
@@ -35,7 +35,7 @@ class BestillingBatchService(
         val bestillingList: MutableList<Bestilling> = mutableListOf()
 
         runCatching {
-            bestillingList.addAll(dataSource.transaction { tx -> BestillingRepository.getBestillingsKandidaterForBatch(tx, maxYear = maxInntektsaar()) })
+            bestillingList.addAll(dataSource.transaction { tx -> BestillingRepository.getAllBestilling(tx, maxYear = maxInntektsaar()) })
             bestillingList.ifEmpty { return }
 
             val (request, response) =
@@ -51,7 +51,7 @@ class BestillingBatchService(
 
             dataSource.transaction { tx ->
                 logger.info { "Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten" }
-                val bestillingsbatchId = BestillingBatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(request), BestillingsbatchType.BESTILLING)
+                val bestillingsbatchId = BestillingsbatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(request), BestillingsbatchType.BESTILLING)
 
                 logger.info { "Bestillingsbatch $bestillingsbatchId opprettet" }
                 AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillingList.map { it.personId }, "Bestilling sendt")
@@ -62,7 +62,7 @@ class BestillingBatchService(
                 is CallNotPermittedException -> return
                 is BatchUpdateException -> {
                     logger.error(marker = TEAM_LOGS_MARKER, exception) { "Oppretting av bestillingsbatch feilet: ${exception.message}" }
-                    logger.error("Oppretting av bestillingsbatch feilet, detaljer er logget til secure log")
+                    logger.error("Oppretting av bestillingsbatch feilet, detaljer er logget til TEAM LOGS")
                     dataSource.transaction { errorTx ->
                         AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillingList.map { it.personId }, "Oppretting av bestilling feilet")
                     }
@@ -82,7 +82,7 @@ class BestillingBatchService(
         featureToggles.takeIf { it.isOppdateringEnabled() } ?: return
         runCatching {
             dataSource.transaction { tx ->
-                if (BestillingBatchRepository.getUnprocessedBestillingsbatchList(tx, BestillingsbatchType.OPPDATERING).isEmpty()) return@transaction
+                if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isEmpty()) return@transaction
 
                 // Bør vi stresse med å hente oppdateringer på skattekort for neste år allerede 15.desember?
                 ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->
@@ -91,7 +91,7 @@ class BestillingBatchService(
                             skatteetatenClient.bestillSkattekort(oppdateringsrequest)
                         }
                     logger.info("Bestillingsbatch for henting av oppdaterte skattekort ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                    val bestillingsbatchId = BestillingBatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(oppdateringsrequest), BestillingsbatchType.OPPDATERING)
+                    val bestillingsbatchId = BestillingsbatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(oppdateringsrequest), BestillingsbatchType.OPPDATERING)
                     logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
                 }
             }
@@ -99,7 +99,7 @@ class BestillingBatchService(
             when (exception) {
                 is BatchUpdateException -> {
                     logger.error(marker = TEAM_LOGS_MARKER, exception) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${exception.message}" }
-                    logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til secure log")
+                    logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til TEAM LOGS")
                 }
 
                 is CallNotPermittedException -> return

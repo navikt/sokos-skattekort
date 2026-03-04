@@ -35,7 +35,7 @@ object TraceUtils {
                 result
             } catch (e: BatchUpdateException) {
                 logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception caught in traceutils: ${e.message}" }
-                span.setStatus(StatusCode.ERROR, "BatchUpdateException, details in secure log")
+                span.setStatus(StatusCode.ERROR, "BatchUpdateException, details in TEAM LOGS")
                 span.recordException(e)
                 throw e
             } catch (e: Exception) {

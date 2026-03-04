@@ -12,17 +12,7 @@ import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId
 
 object BestillingRepository {
-    fun getBestillingsKandidaterForBatch(tx: TransactionalSession): List<Bestilling> =
-        tx.list(
-            queryOf(
-                """
-                SELECT * FROM bestillinger
-                """.trimIndent(),
-            ),
-            extractor = mapToBestilling,
-        )
-
-    fun getBestillingsKandidaterForBatch(
+    fun getAllBestilling(
         tx: TransactionalSession,
         maxYear: Int,
     ): List<Bestilling> =
@@ -185,7 +175,7 @@ object BestillingRepository {
         )
 
     @OptIn(ExperimentalTime::class)
-    private val mapToBestilling: (Row) -> Bestilling = { row ->
+    val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(
             id = BestillingId(row.long("id")),
             personId = PersonId(row.long("person_id")),

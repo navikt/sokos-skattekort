@@ -40,7 +40,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SkattekortDTO'
+                  $ref: '#/components/schemas/SkattekortResponseDTO'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -84,8 +84,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
       requestBody:
-        description: fnr, inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år.
-
+        description: fnr, inntektsaar er påkrevd. Inntektåret må være gjeldende år +/- 1 år. Neste år kan kun benyttes fra og med 15. desember.
         content:
           application/json:
             schema:
@@ -131,6 +130,42 @@ components:
     SkattekortDTO:
       type: object
       properties:
+        utstedtDato:
+          type: string
+          format: date
+          nullable: true
+        inntektsaar:
+          type: integer
+          format: year
+          example: 2026
+          minimum: 2025
+          maximum: 3000
+        resultatForSkattekort:
+          type: string
+          description: Result for skattekort
+          enum:
+            - skattekortopplysningerOK
+            - ikkeSkattekort
+            - ikkeTrekkplikt
+        forskuddstrekkList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForskuddstrekkDTO'
+        tilleggsopplysningList:
+          type: array
+          items:
+            type: string
+            enum:
+              - oppholdPaaSvalbard
+              - kildeskattPaaPensjon
+              - oppholdITiltakssone
+      required:
+        - inntektsaar
+        - forskuddstrekkList
+
+    SkattekortResponseDTO:
+      type: object
+      properties:
         forskuddstrekkList:
           type: array
           items:
@@ -142,9 +177,6 @@ components:
         inntektsaar:
           type: integer
           format: year
-          example: 2026
-          minimum: 2025
-          maximum: 3000
         kilde: 
           type: string
         opprettet:
@@ -164,14 +196,11 @@ components:
               - oppholdPaaSvalbard
               - kildeskattPaaPensjon
               - oppholdITiltakssone
+            nullable: true
         utstedtDato:
           type: string
           format: date
           nullable: true
-      required:
-        - inntektsaar
-        - forskuddstrekkList
-
     ForskuddstrekkDTO:
       type: object
       properties:

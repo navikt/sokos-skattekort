@@ -1,7 +1,7 @@
 openapi: '3.0.3'
 
 info:
-  version: 1.0.0
+  version: 2.0.0
   title: sokos-skattekort API
   description: API-tjeneste for å hente ut skattekort på person for gjeldende år +/- 1 år som får ytelser i NAV
   contact:
@@ -9,7 +9,7 @@ info:
     email: okonomi@nav.no
     url: https://nav-it.slack.com/archives/CKZADNFBP
 servers:
-  - url: /api/v1/person
+  - url: /api/v2/person
 tags:
   - name: skattekort
     description: Skattekort informasjon
@@ -40,7 +40,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SkattekortDTO'
+                  $ref: '#/components/schemas/SkattekortResponseDTO'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -159,11 +159,48 @@ components:
               - oppholdPaaSvalbard
               - kildeskattPaaPensjon
               - oppholdITiltakssone
-          nullable: true
       required:
         - inntektsaar
         - forskuddstrekkList
 
+    SkattekortResponseDTO:
+      type: object
+      properties:
+        forskuddstrekkList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForskuddstrekkDTO'
+        id: 
+          type: number
+        identifikator:
+          type: string
+        inntektsaar:
+          type: integer
+          format: year
+        kilde: 
+          type: string
+        opprettet:
+          type: string
+        resultatForSkattekort:
+          type: string
+          description: Resultat for skattekort
+          enum:
+            - skattekortopplysningerOK
+            - ikkeSkattekort
+            - ikkeTrekkplikt
+        tilleggsopplysningList:
+          type: array
+          items:
+            type: string
+            enum:
+              - oppholdPaaSvalbard
+              - kildeskattPaaPensjon
+              - oppholdITiltakssone
+            nullable: true
+        utstedtDato:
+          type: string
+          format: date
+          nullable: true
     ForskuddstrekkDTO:
       type: object
       properties:

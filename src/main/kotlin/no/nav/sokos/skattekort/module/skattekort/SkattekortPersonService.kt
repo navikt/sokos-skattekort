@@ -36,12 +36,11 @@ class SkattekortPersonService(
         fnr: String,
         inntektsaar: Short? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<SkattekortDTO> {
+    ): List<Skattekort> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
 
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
         if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
-            requireNotNull(inntektsaar) { "Må oppgi inntektsår ved oppslag på reelle fnr" }
             requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
         }
@@ -55,7 +54,7 @@ class SkattekortPersonService(
                         person.id!!,
                         inntektsaar?.toInt(),
                         adminRole = false,
-                    ).map(::SkattekortDTO)
+                    )
             }.toList()
     }
 

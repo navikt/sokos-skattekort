@@ -1,16 +1,19 @@
 package no.nav.sokos.skattekort.module.skattekort
 
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
+import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.listener.DbListener
+import no.nav.sokos.skattekort.module.person.PersonId
 import no.nav.sokos.skattekort.module.person.PersonService
 import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
 
@@ -57,51 +60,33 @@ class SkattekortPersonServiceTest :
                     size shouldBe 9
                 }
                 val onlyLastSkattekort = skattekortPersonService.hentSingleSkattekortForEachYear("01410100001")
-                onlyLastSkattekort shouldNotBeNull {
-                    size shouldBe 3
-                    first() shouldNotBeNull {
-                        inntektsaar shouldBe 2022
-                        resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
-                        forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 1
-                            first() shouldNotBeNull {
-                                trekkode shouldBe Trekkode.PENSJON_FRA_NAV.value
-                                frikort shouldNotBeNull {
-                                    frikortBeloep shouldBe null
-                                }
-                            }
-                        }
-                    }
-                    get(1) shouldNotBeNull {
-                        inntektsaar shouldBe 2021
-                        resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
-                        forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 1
-                            first() shouldNotBeNull {
-
-                                trekkode shouldBe Trekkode.UFOERETRYGD_FRA_NAV.value
-                                prosentkort shouldNotBeNull {
-                                    prosentSats shouldBe 81.28
-                                }
-                            }
-                        }
-                    }
-                    last() shouldNotBeNull {
-                        inntektsaar shouldBe 2020
-                        resultatForSkattekort shouldBe ResultatForSkattekort.SkattekortopplysningerOK.value
-                        forskuddstrekkList shouldNotBeNull {
-                            size shouldBe 1
-                            first() shouldNotBeNull {
-                                trekkode shouldBe Trekkode.LOENN_FRA_NAV.value
-                                trekktabell shouldNotBeNull {
-                                    tabell shouldBe "8765"
-                                    prosentSats shouldBe 13.37
-                                    antallMndForTrekk shouldBe 4.0
-                                }
-                            }
-                        }
-                    }
-                }
+                onlyLastSkattekort shouldBeFunctionallyEquivalentTo
+                    listOf(
+                        aDomainSkattekort(
+                            inntektsaar = 2022,
+                            resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+                            forskuddstrekk = Frikort(trekkode = Trekkode.PENSJON_FRA_NAV, frikortBeloep = null),
+                            personId = 1L,
+                        ),
+                        aDomainSkattekort(
+                            inntektsaar = 2021,
+                            resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+                            forskuddstrekk = Prosentkort(trekkode = Trekkode.UFOERETRYGD_FRA_NAV, prosentSats = BigDecimal.valueOf(81.28)),
+                            personId = 1L,
+                        ),
+                        aDomainSkattekort(
+                            inntektsaar = 2020,
+                            resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+                            forskuddstrekk =
+                                Tabellkort(
+                                    trekkode = Trekkode.LOENN_FRA_NAV,
+                                    tabellNummer = "8765",
+                                    prosentSats = BigDecimal.valueOf(13.37),
+                                    antallMndForTrekk = BigDecimal.valueOf(4.0),
+                                ),
+                            personId = 1L,
+                        ),
+                    )
             }
         }
     })
@@ -123,3 +108,32 @@ fun aSkattekort(
     opprettet = opprettet.toString(),
     resultatForSkattekort = resultatForSkattekort,
 )
+
+fun aDomainSkattekort(
+    inntektsaar: Int,
+    resultatForSkattekort: ResultatForSkattekort,
+    forskuddstrekk: Forskuddstrekk,
+    personId: Long,
+) = Skattekort(
+    inntektsaar = inntektsaar,
+    resultatForSkattekort = resultatForSkattekort,
+    forskuddstrekkList = listOf(forskuddstrekk),
+    personId = PersonId(personId),
+    identifikator = "01410100001",
+    utstedtDato = kotlinx.datetime.LocalDate.parse("2021-01-01"),
+    kilde = "foo",
+)
+
+infix fun List<Skattekort>.shouldBeFunctionallyEquivalentTo(expected: List<Skattekort>) {
+    this.shouldContainAllIgnoringFields(
+        expected,
+        Skattekort::id,
+        Skattekort::generertFra,
+        Skattekort::utstedtDato,
+        Skattekort::identifikator,
+        Skattekort::kilde,
+        Skattekort::opprettet,
+        Skattekort::tilleggsopplysningList,
+    )
+//    this.size shouldBe expected.size
+}

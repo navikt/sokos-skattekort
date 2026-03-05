@@ -9,6 +9,8 @@ import io.ktor.server.routing.route
 
 import no.nav.sokos.skattekort.api.model.OpprettSkattekortRequest
 import no.nav.sokos.skattekort.api.model.SkattekortPersonRequest
+import no.nav.sokos.skattekort.dto.SkattekortDTO
+import no.nav.sokos.skattekort.dto.v2.SkattekortResponseDTO
 import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
@@ -24,12 +26,15 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             if (skattekortPersonRequest.hentAlle) {
                 call.respond(
-                    skattekortPersonService.hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                    skattekortPersonService
+                        .hentSkattekortPerson(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler)
+                        .map(::SkattekortDTO),
                 )
             } else {
                 call.respond(
                     skattekortPersonService
-                        .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                        .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler)
+                        .map(::SkattekortDTO),
                 )
             }
         }
@@ -53,16 +58,18 @@ fun Route.skattekortPersonApi(skattekortPersonService: SkattekortPersonService) 
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             if (skattekortPersonRequest.hentAlle) {
                 call.respond(
-                    skattekortPersonService.hentSkattekortPersonV2(
-                        skattekortPersonRequest.fnr,
-                        skattekortPersonRequest.inntektsaar,
-                        saksbehandler,
-                    ),
+                    skattekortPersonService
+                        .hentSkattekortPerson(
+                            skattekortPersonRequest.fnr,
+                            skattekortPersonRequest.inntektsaar,
+                            saksbehandler,
+                        ).map(::SkattekortResponseDTO),
                 )
             } else {
                 call.respond(
                     skattekortPersonService
-                        .hentSingleSkattekortForEachYearV2(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler),
+                        .hentSingleSkattekortForEachYear(skattekortPersonRequest.fnr, skattekortPersonRequest.inntektsaar, saksbehandler)
+                        .map(::SkattekortResponseDTO),
                 )
             }
         }

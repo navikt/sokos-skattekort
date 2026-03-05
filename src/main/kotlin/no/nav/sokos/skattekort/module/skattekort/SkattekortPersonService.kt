@@ -12,7 +12,6 @@ import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.dto.SkattekortDTO
-import no.nav.sokos.skattekort.dto.v2.SkattekortResponseDTO
 import no.nav.sokos.skattekort.module.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.module.person.PersonRepository
 import no.nav.sokos.skattekort.module.person.PersonService
@@ -33,46 +32,11 @@ class SkattekortPersonService(
         saksbehandler: Saksbehandler? = null,
     ) = hentSkattekortPerson(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
 
-    fun hentSingleSkattekortForEachYearV2(
-        fnr: String,
-        inntektsaar: Short? = null,
-        saksbehandler: Saksbehandler? = null,
-    ) = hentSkattekortPersonV2(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
-
     fun hentSkattekortPerson(
         fnr: String,
         inntektsaar: Short? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<SkattekortDTO> {
-        logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
-
-        // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
-        if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
-            requireNotNull(inntektsaar) { "Må oppgi inntektsår ved oppslag på reelle fnr" }
-            requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
-            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
-        }
-
-        return dataSource
-            .transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
-                SkattekortRepository
-                    .findAllByPersonId(
-                        tx,
-                        person.id!!,
-                        inntektsaar?.toInt(),
-                        adminRole = false,
-                    ).map {
-                        SkattekortDTO(it)
-                    }
-            }.toList()
-    }
-
-    fun hentSkattekortPersonV2(
-        fnr: String,
-        inntektsaar: Short? = null,
-        saksbehandler: Saksbehandler? = null,
-    ): List<SkattekortResponseDTO> {
+    ): List<Skattekort> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
 
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
@@ -90,7 +54,7 @@ class SkattekortPersonService(
                         person.id!!,
                         inntektsaar?.toInt(),
                         adminRole = false,
-                    ).map(::SkattekortResponseDTO)
+                    )
             }.toList()
     }
 

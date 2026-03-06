@@ -77,7 +77,7 @@ object BestillingsbatchRepository {
                 """.trimMargin(),
                 mapOf(
                     "id" to bestillingsbatchId,
-                    "status" to status.value,
+                    "status" to status.name,
                 ),
             ).asExecute,
         )
@@ -107,7 +107,7 @@ object BestillingsbatchRepository {
     val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
         Bestillingsbatch(
             id = BestillingsbatchId(row.long("id")),
-            status = row.string("status"),
+            status = BestillingsbatchStatus.valueOf(row.string("status")),
             type = BestillingsbatchType.valueOf(row.string("type")),
             bestillingsreferanse = row.string("bestillingsreferanse"),
             dataSendt = row.string("data_sendt"),

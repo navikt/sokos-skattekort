@@ -20,7 +20,7 @@ object SkatteetatenClientTestUtils {
         """
         {
           "dialogreferanse": "any-dialog-ref",
-          "bestillingsreferanse": "${'$'}ref"
+          "bestillingsreferanse": "$ref"
         }    
         """.trimIndent().toBestillSkattekortResponse()
 

@@ -8,7 +8,7 @@ data class Bestillingsbatch
     @OptIn(ExperimentalTime::class)
     constructor(
         val id: BestillingsbatchId? = null,
-        val status: String,
+        val status: BestillingsbatchStatus,
         val type: BestillingsbatchType,
         val bestillingsreferanse: String,
         val oppdatert: Instant,
@@ -22,10 +22,8 @@ value class BestillingsbatchId(
     val id: Long,
 )
 
-enum class BestillingsbatchStatus(
-    val value: String,
-) {
-    NY(value = "NY"),
-    FERDIG(value = "FERDIG"),
-    FEILET(value = "FEILET"),
+enum class BestillingsbatchStatus {
+    NY,
+    FERDIG,
+    FEILET,
 }

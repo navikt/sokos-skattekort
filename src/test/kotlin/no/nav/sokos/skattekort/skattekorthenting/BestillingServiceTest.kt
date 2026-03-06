@@ -44,7 +44,7 @@ import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekort.aBestilling
-import no.nav.sokos.skattekort.skattekort.aBestillingsBatch
+import no.nav.sokos.skattekort.skattekort.aBestillingsbatch
 import no.nav.sokos.skattekort.skattekort.aHentSkattekortResponse
 import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
@@ -52,8 +52,11 @@ import no.nav.sokos.skattekort.skattekort.anAbonnement
 import no.nav.sokos.skattekort.skattekort.anArbeidstaker
 import no.nav.sokos.skattekort.skattekort.databaseHas
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsbatch
-import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.FEILET
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.FERDIG
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.OPPDATERING
 import no.nav.sokos.skattekort.skattekortdata.SkattekortDataRepository
 import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.tx
@@ -89,7 +92,7 @@ class BestillingServiceTest :
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1, "ref1", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1, "ref1", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
@@ -106,7 +109,7 @@ class BestillingServiceTest :
                 bestilingsbatchList shouldNotBeNull {
                     size shouldBe 1
                     first() shouldNotBeNull {
-                        status shouldBe BestillingsbatchStatus.FERDIG.value
+                        status shouldBe FERDIG
                     }
                 }
                 skattekortDataList.size shouldBe 1
@@ -127,10 +130,10 @@ class BestillingServiceTest :
                     afoedselsnummer(personId = 2L, fnr = "02020200002"),
                     aPerson(3L),
                     afoedselsnummer(personId = 3L, fnr = "03030300003"),
-                    aBestillingsBatch(1L, "REF0001", "NY", "OPPDATERING"),
+                    aBestillingsbatch(1L, "REF0001", NY, OPPDATERING),
                 )
 
-                bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
+                bestillingService.hentBestillingsbatcher(OPPDATERING)
 
                 val person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("0101010000X")) }
                 val bestillingsbatchList = tx(DBTestUtils::getAllBestillingsbatch)
@@ -140,8 +143,8 @@ class BestillingServiceTest :
                     bestillingsbatchList shouldNotBeNull {
                         size shouldBe 1
                         first() shouldNotBeNull {
-                            status shouldBe BestillingsbatchStatus.FERDIG.value
-                            type shouldBe "OPPDATERING"
+                            status shouldBe FERDIG
+                            type shouldBe OPPDATERING
                             bestillingsreferanse shouldBe "REF0001"
                         }
                     }
@@ -164,7 +167,7 @@ class BestillingServiceTest :
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1, "ref1", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1, "ref1", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
@@ -175,7 +178,7 @@ class BestillingServiceTest :
                 bestillingsbatchList shouldNotBeNull {
                     size shouldBe 1
                     first() shouldNotBeNull {
-                        status shouldBe BestillingsbatchStatus.FERDIG.value
+                        status shouldBe FERDIG
                     }
                 }
             }
@@ -191,7 +194,7 @@ class BestillingServiceTest :
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1, "ref1", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1, "ref1", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
@@ -203,7 +206,7 @@ class BestillingServiceTest :
                 updatedBatches shouldNotBeNull {
                     size shouldBe 1
                     first() shouldNotBeNull {
-                        status shouldBe BestillingsbatchStatus.FEILET.value
+                        status shouldBe FEILET
                     }
                 }
             }
@@ -233,8 +236,8 @@ class BestillingServiceTest :
                 anAbonnement(2L, personId = 2L, inntektsaar = 2025),
                 anAbonnement(3L, personId = 3L, inntektsaar = 2025),
                 anAbonnement(4L, personId = 4L, inntektsaar = 2025),
-                aBestillingsBatch(1, "ref1", BestillingsbatchStatus.NY.value),
-                aBestillingsBatch(2, "ref2", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1, "ref1", NY),
+                aBestillingsbatch(2, "ref2", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
                 aBestilling(2L, "02020200002", 2025, 2L),
                 aBestilling(3L, "02020200003", 2025, 2L), // NB: også batch 2
@@ -252,11 +255,11 @@ class BestillingServiceTest :
                     size shouldBe 2
                     forOne {
                         it.id!!.id shouldBe 1L
-                        it.status shouldBe BestillingsbatchStatus.FERDIG.value
+                        it.status shouldBe FERDIG
                     }
                     forOne {
                         it.id!!.id shouldBe 2L
-                        it.status shouldBe BestillingsbatchStatus.FERDIG.value
+                        it.status shouldBe FERDIG
                     }
                 }
                 skattekortDataList.size shouldBe 3
@@ -264,7 +267,7 @@ class BestillingServiceTest :
         }
 
         test("plukker ikke opp batch med status FEILET, gjør ingenting og trenger ikke mer data") {
-            databaseHas(aBestillingsBatch(id = 1L, ref = "some-ref", status = "FEILET"))
+            databaseHas(aBestillingsbatch(id = 1L, ref = "some-ref", status = FEILET))
 
             bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
 
@@ -274,7 +277,7 @@ class BestillingServiceTest :
             assertSoftly {
                 bestillingsbatchList shouldNotBeNull {
                     size shouldBe 1
-                    forExactly(1) { it.status shouldBe "FEILET" }
+                    forExactly(1) { it.status shouldBe FEILET }
                 }
                 auditAfter shouldBe emptyList()
             }
@@ -288,7 +291,7 @@ class BestillingServiceTest :
                 afoedselsnummer(personId = 2L, fnr = "02020200002"),
                 aPerson(3L),
                 afoedselsnummer(personId = 3L, fnr = "03030300003"),
-                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestillingsbatch(id = 1L, ref = "ref1", status = NY),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
                 aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 1L),
                 aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2025, batchId = 1L),
@@ -306,7 +309,7 @@ class BestillingServiceTest :
             assertSoftly {
                 withClue("Should mark batch as FEILET") {
                     bestillingsbatchList shouldNotBeNull {
-                        first().status shouldBe BestillingsbatchStatus.FEILET.value
+                        first().status shouldBe FEILET
                     }
                 }
 
@@ -356,8 +359,8 @@ class BestillingServiceTest :
                 afoedselsnummer(personId = 2L, fnr = "02020200002"),
                 aPerson(3L),
                 afoedselsnummer(personId = 3L, fnr = "03030300003"),
-                aBestillingsBatch(id = 1L, ref = "ref1", status = "FEILET"),
-                aBestillingsBatch(id = 2L, ref = "ref2", status = "NY"),
+                aBestillingsbatch(id = 1L, ref = "ref1", status = FEILET),
+                aBestillingsbatch(id = 2L, ref = "ref2", status = NY),
                 aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 1L),
                 aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2025, batchId = 2L),
             )
@@ -375,8 +378,8 @@ class BestillingServiceTest :
                 }
 
                 updatedBatches shouldNotBeNull {
-                    first().status shouldBe BestillingsbatchStatus.FEILET.value
-                    last().status shouldBe BestillingsbatchStatus.FERDIG.value
+                    first().status shouldBe FEILET
+                    last().status shouldBe FERDIG
                 }
                 person shouldNotBeNull {
                     flagget shouldBe false
@@ -400,7 +403,7 @@ class BestillingServiceTest :
                 aPerson(personId = 1L),
                 afoedselsnummer(personId = 1L, fnr = dnr),
                 anAbonnement(forespoerselId = 1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(id = 1L, ref = "ref1", status = "NY"),
+                aBestillingsbatch(id = 1L, ref = "ref1", status = NY),
                 aBestilling(personId = 1L, fnr = dnr, inntektsaar = 2025, batchId = 1L),
                 // Oppdatert foedselsnummer
                 afoedselsnummer(personId = 1L, fnr = fnr),
@@ -411,7 +414,7 @@ class BestillingServiceTest :
             var bestillingListAfter = tx(DBTestUtils::getAllBestilling)
 
             assertSoftly {
-                bestillingsbatchList.count { it.status == BestillingsbatchStatus.FERDIG.value } shouldBe 1
+                bestillingsbatchList.count { it.status == FERDIG } shouldBe 1
                 bestillingListAfter shouldNotBeNull {
                     size shouldBe 1
                     first() shouldNotBeNull {
@@ -438,7 +441,7 @@ class BestillingServiceTest :
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1L, "ref1", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1L, "ref1", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
@@ -451,7 +454,7 @@ class BestillingServiceTest :
             assertSoftly {
                 bestillingsbatchList shouldNotBeNull {
                     size shouldBe 1
-                    first().status shouldBe BestillingsbatchStatus.FEILET.value
+                    first().status shouldBe FEILET
                 }
 
                 audit shouldNotBeNull {
@@ -491,7 +494,7 @@ class BestillingServiceTest :
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1L, "ref1", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1L, "ref1", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
@@ -506,7 +509,7 @@ class BestillingServiceTest :
             assertSoftly {
                 bestillingsbatchList shouldNotBeNull {
                     size shouldBe 1
-                    first().status shouldBe BestillingsbatchStatus.FERDIG.value
+                    first().status shouldBe FERDIG
                 }
 
                 audit shouldNotBeNull {
@@ -539,7 +542,7 @@ class BestillingServiceTest :
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1, "ref1", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1, "ref1", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
@@ -554,7 +557,7 @@ class BestillingServiceTest :
             assertSoftly {
                 bestillingsbatchList shouldNotBeNull {
                     size shouldBe 1
-                    first().status shouldBe BestillingsbatchStatus.NY.value
+                    first().status shouldBe NY
                 }
                 auditAfter shouldBe emptyList()
                 bestillingListAfter shouldNotBeNull {
@@ -569,7 +572,7 @@ class BestillingServiceTest :
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
                 anAbonnement(1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsBatch(1, "ref1", BestillingsbatchStatus.NY.value),
+                aBestillingsbatch(1, "ref1", NY),
                 aBestilling(1L, "01010100001", 2025, 1L),
             )
 
@@ -584,7 +587,7 @@ class BestillingServiceTest :
             assertSoftly {
                 bestillingsbatchList shouldNotBeNull {
                     size shouldBe 1
-                    first().status shouldBe BestillingsbatchStatus.NY.value
+                    first().status shouldBe NY
                 }
                 auditAfter shouldBe emptyList()
             }

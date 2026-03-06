@@ -23,12 +23,12 @@ import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.skattekort.UgyldigOrganisasjonsnummerException
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.BESTILLING
 import no.nav.sokos.skattekort.skattekortdata.SkattekortDataRepository
+import no.nav.sokos.skattekort.skattekorthenting.UgyldigOrganisasjonsnummerException
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}

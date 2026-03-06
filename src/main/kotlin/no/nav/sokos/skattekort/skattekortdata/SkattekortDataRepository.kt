@@ -9,8 +9,8 @@ object SkattekortDataRepository {
         dataMottatt: String,
         inntektsaar: Int,
         fnr: String,
-    ) {
-        tx.update(
+    ): Long? =
+        tx.run(
             queryOf(
                 """
                 INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr)
@@ -21,9 +21,8 @@ object SkattekortDataRepository {
                     "inntektsaar" to inntektsaar,
                     "fnr" to fnr,
                 ),
-            ),
+            ).asUpdateAndReturnGeneratedKey,
         )
-    }
 
     fun updateSkattekortId(
         tx: TransactionalSession,

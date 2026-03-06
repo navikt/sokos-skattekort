@@ -22,10 +22,11 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkt
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsbatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.utils.TestUtils.runThisSql
 
 fun aForskuddstrekk(
-    type: String,
+    type: Forskuddstrekk,
     trekkode: Trekkode,
     prosentSats: Double? = null,
     antMndForTrekk: Double? = null,
@@ -33,7 +34,7 @@ fun aForskuddstrekk(
     frikortbeløp: Int? = null,
 ): Forskuddstrekk =
     when (type) {
-        Prosentkort::class.simpleName -> {
+        is Prosentkort -> {
             Prosentkort(
                 trekkode,
                 BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
@@ -41,7 +42,7 @@ fun aForskuddstrekk(
             )
         }
 
-        Tabellkort::class.simpleName -> {
+        is Tabellkort -> {
             Tabellkort(
                 trekkode,
                 tabellNummer!!,
@@ -50,15 +51,11 @@ fun aForskuddstrekk(
             )
         }
 
-        Frikort::class.simpleName -> {
+        is Frikort -> {
             Frikort(
                 trekkode,
                 frikortbeløp,
             )
-        }
-
-        else -> {
-            error("Ukjent forskuddstrekk-type: $type")
         }
     }
 
@@ -142,14 +139,14 @@ fun afoedselsnummer(
             VALUES ($personId, '$fnr');
     """
 
-fun aBestillingsBatch(
+fun aBestillingsbatch(
     id: Long,
     ref: String,
-    status: String,
-    type: String = "BESTILLING",
+    status: BestillingsbatchStatus,
+    type: BestillingsbatchType = BestillingsbatchType.BESTILLING,
 ) = """
         INSERT INTO bestillingsbatcher (id, bestillingsreferanse, data_sendt, status, type)
-            VALUES ($id, '$ref', '{}', '$status', '$type');
+            VALUES ($id, '$ref', '{}', '$status', '${type.name}');
     """
 
 fun aBestilling(
@@ -222,12 +219,12 @@ fun anUtsending(
 fun aBatch(
     id: Long,
     status: BestillingsbatchStatus,
-    type: String,
+    type: BestillingsbatchType,
     bestillingsreferanse: String,
 ): Bestillingsbatch =
     Bestillingsbatch(
         id = BestillingsbatchId(id),
-        status = status.value,
+        status = status,
         type = type,
         bestillingsreferanse = bestillingsreferanse,
         oppdatert = Instant.DISTANT_PAST,
@@ -245,3 +242,5 @@ fun List<Bestillingsbatch>.shouldBeFunctionallyEquivalentTo(expected: List<Besti
         Bestillingsbatch::dataSendt,
     )
 }
+
+fun Double.withScale() = this.toBigDecimal().setScale(2, RoundingMode.HALF_UP)

@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.skattekortbestilling
 
 import java.time.LocalDateTime
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
@@ -18,11 +19,15 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClientTes
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
+import no.nav.sokos.skattekort.skattekort.aBatch
 import no.nav.sokos.skattekort.skattekort.aBestilling
 import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekort.shouldBeFunctionallyEquivalentTo
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.BESTILLING
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.OPPDATERING
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.tx
@@ -41,7 +46,7 @@ class BestillingsbatchServiceTest :
             )
         }
 
-        test("Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
+        test("bestillSkattekort - Hvis det er bestillinger for neste år, ikke plukk opp før 15.12.") {
             databaseHas(
                 aPerson(1L),
                 afoedselsnummer(personId = 1L, fnr = "01010100001"),
@@ -68,14 +73,10 @@ class BestillingsbatchServiceTest :
 
                 batches.size shouldBe 1
                 batches.shouldContainAllIgnoringFields(
-                    listOf(
-                        no.nav.sokos.skattekort.skattekort
-                            .aBatch(id = 1L, status = NY, type = "oppdatering", bestillingsreferanse = "ref1"),
-                    ),
+                    listOf(aBatch(id = 1L, status = NY, type = BESTILLING, bestillingsreferanse = "ref1")),
                     Bestillingsbatch::oppdatert,
                     Bestillingsbatch::opprettet,
                     Bestillingsbatch::dataSendt,
-                    Bestillingsbatch::type,
                 )
                 batches.first().dataSendt shouldNotBeNull {
                     this shouldContain "01010100001"
@@ -86,14 +87,30 @@ class BestillingsbatchServiceTest :
                 bestillings.size shouldBe 3
                 bestillings.shouldContainAllIgnoringFields(
                     listOf(
-                        bestilling(1L, "01010100001", 2025, batchId = 1L),
-                        bestilling(2L, "02020200002", 2026, batchId = null),
-                        bestilling(3L, "03030300003", 2026, batchId = null),
+                        Bestilling(
+                            personId = PersonId(1L),
+                            fnr = Personidentifikator("01010100001"),
+                            inntektsaar = 2025,
+                            bestillingsbatchId = BestillingsbatchId(1L),
+                        ),
+                        Bestilling(
+                            personId = PersonId(2L),
+                            fnr = Personidentifikator("02020200002"),
+                            inntektsaar = 2026,
+                            bestillingsbatchId = null,
+                        ),
+                        Bestilling(
+                            personId = PersonId(3L),
+                            fnr = Personidentifikator("03030300003"),
+                            inntektsaar = 2026,
+                            bestillingsbatchId = null,
+                        ),
                     ),
                     Bestilling::oppdatert,
                     Bestilling::id,
                 )
             }
+
             withConstantNow(LocalDateTime.parse("2025-12-15T00:00:00")) {
                 bestillingsbatchService.bestillSkattekort()
 
@@ -127,29 +144,91 @@ class BestillingsbatchServiceTest :
                 bestillings.size shouldBe 3
                 bestillings.shouldContainAllIgnoringFields(
                     listOf(
-                        bestilling(pid = 1L, fnr = "01010100001", year = 2025, batchId = 1L),
-                        bestilling(pid = 2L, fnr = "02020200002", year = 2026, batchId = 2L),
-                        bestilling(pid = 3L, fnr = "03030300003", year = 2026, batchId = 2L),
+                        Bestilling(
+                            personId = PersonId(1L),
+                            fnr = Personidentifikator("01010100001"),
+                            inntektsaar = 2025,
+                            bestillingsbatchId = BestillingsbatchId(1L),
+                        ),
+                        Bestilling(
+                            personId = PersonId(2L),
+                            fnr = Personidentifikator("02020200002"),
+                            inntektsaar = 2026,
+                            bestillingsbatchId = BestillingsbatchId(2L),
+                        ),
+                        Bestilling(
+                            personId = PersonId(3L),
+                            fnr = Personidentifikator("03030300003"),
+                            inntektsaar = 2026,
+                            bestillingsbatchId = BestillingsbatchId(2L),
+                        ),
                     ),
                     Bestilling::oppdatert,
                     Bestilling::id,
                 )
             }
         }
-    })
 
-private fun bestilling(
-    pid: Long,
-    fnr: String,
-    year: Int,
-    batchId: Long?,
-): Bestilling =
-    Bestilling(
-        personId = PersonId(pid),
-        fnr = Personidentifikator(fnr),
-        inntektsaar = year,
-        bestillingsbatchId =
-            batchId?.let(
-                ::BestillingsbatchId,
-            ),
-    )
+        test("bestillOppdaterteSkattekort - Når vi gjør et kall med tom database i midten av året skal det opprettes én batch") {
+            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                coEvery { skatteetatenClient.bestillSkattekort(any()) } returns okBestillSkattekortResponse("some-bestillings-ref")
+                databaseHas(
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
+                    aPerson(2L),
+                    afoedselsnummer(2L, "02020200002"),
+                    aPerson(3L),
+                    afoedselsnummer(3L, "03030300003"),
+                )
+
+                bestillingsbatchService.bestillOppdaterteSkattekort()
+
+                val batches: List<Bestillingsbatch> = tx(DBTestUtils::getAllBestillingsbatch)
+
+                batches.shouldBeFunctionallyEquivalentTo(
+                    listOf(
+                        aBatch(id = 1L, bestillingsreferanse = "some-bestillings-ref", status = NY, type = OPPDATERING),
+                    ),
+                )
+            }
+        }
+
+        test("bestillOppdaterteSkattekort - Når vi gjør et kall med tom database i slutten av desember skal det opprettes to batcher") {
+            withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                coEvery { skatteetatenClient.bestillSkattekort(any()) } returnsMany
+                    listOf(
+                        okBestillSkattekortResponse("some-bestillings-ref1"),
+                        okBestillSkattekortResponse("some-bestillings-ref2"),
+                    )
+                databaseHas(
+                    aPerson(1L),
+                    afoedselsnummer(1L, "01010100001"),
+                    aPerson(2L),
+                    afoedselsnummer(2L, "02020200002"),
+                    aPerson(3L),
+                    afoedselsnummer(3L, "03030300003"),
+                )
+
+                bestillingsbatchService.bestillOppdaterteSkattekort()
+
+                val batches: List<Bestillingsbatch> = tx(DBTestUtils::getAllBestillingsbatch)
+
+                assertSoftly {
+                    batches shouldNotBeNull {
+                        size shouldBe 2
+                        first() shouldNotBeNull {
+                            status shouldBe NY
+
+                            type shouldBe OPPDATERING
+                            bestillingsreferanse shouldBe "some-bestillings-ref1"
+                        }
+                        elementAt(1) shouldNotBeNull {
+                            status shouldBe NY
+                            type shouldBe OPPDATERING
+                            bestillingsreferanse shouldBe "some-bestillings-ref2"
+                        }
+                    }
+                }
+            }
+        }
+    })

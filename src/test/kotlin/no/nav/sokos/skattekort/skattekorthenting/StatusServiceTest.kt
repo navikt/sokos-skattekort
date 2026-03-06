@@ -6,12 +6,14 @@ import io.kotest.matchers.shouldBe
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.DbListener.dataSource
 import no.nav.sokos.skattekort.skattekort.aBestilling
-import no.nav.sokos.skattekort.skattekort.aBestillingsBatch
+import no.nav.sokos.skattekort.skattekort.aBestillingsbatch
 import no.nav.sokos.skattekort.skattekort.aDbSkattekort
 import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.anUtsending
 import no.nav.sokos.skattekort.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.BESTILLING
 import no.nav.sokos.skattekort.skattekortbestilling.Status
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
@@ -65,7 +67,7 @@ class StatusServiceTest :
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, "01010100001"),
-                    aBestillingsBatch(1L, ref = "1234", status = "NY", type = "BESTILLING"),
+                    aBestillingsbatch(1L, ref = "1234", status = NY, type = BESTILLING),
                     aBestilling(1L, "01010100001", 2025, 1L),
                 )
 

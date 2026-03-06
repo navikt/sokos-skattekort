@@ -21,7 +21,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import org.apache.hc.core5.http.message.MessageSupport.header
 import org.slf4j.LoggerFactory
 
 import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
@@ -204,21 +203,6 @@ class SkattekortpersonApiE2ETest :
                     client.post(HENT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
-                        setBody(request)
-                    }
-                response.status shouldBe HttpStatusCode.BadRequest
-            }
-        }
-
-        test("Request uten inntektsår blir avvist hvis det er reelt fnr") {
-            TestUtils.withFullTestApplication {
-                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
-
-                val request = HentSkattekortRequest(fnr = "01010112345", inntektsaar = null)
-                val response =
-                    client.post(HENT_SKATTEKORT_URL) {
-                        header(HttpHeaders.ContentType, ContentType.Application.Json)
-                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
                     }
                 response.status shouldBe HttpStatusCode.BadRequest

@@ -12,4 +12,8 @@ fun Routing.swaggerApi() {
         path = "api/v1/person/docs",
         swaggerFile = "openapi/sokos-skattekort-person-v1-swagger.yaml",
     )
+    swaggerUI(
+        path = "api/v2/person/docs",
+        swaggerFile = "openapi/sokos-skattekort-person-v2-swagger.yaml",
+    )
 }

@@ -68,6 +68,7 @@ spec:
             scopes:
               - "bestille-scope"
               - "status-scope"
+              - "hent-scope"
         - application: sokos-dare-poc
           permissions:
             roles:

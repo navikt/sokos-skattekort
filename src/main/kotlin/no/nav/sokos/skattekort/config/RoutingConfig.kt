@@ -6,6 +6,7 @@ import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.routing.routing
 
 import no.nav.sokos.skattekort.api.skattekortApi
+import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
@@ -23,7 +24,8 @@ fun Application.routingConfig(
             val skattekortService: SkattekortService by dependencies
             val statusService: StatusService by dependencies
 
-            skattekortApi(forespoerselService, statusService, skattekortService)
+            skattekortApi(forespoerselService, statusService)
+            skattekortPersonApi(skattekortService)
         }
     }
 }

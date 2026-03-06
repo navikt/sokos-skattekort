@@ -17,6 +17,8 @@ import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.skattekort.Skattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
@@ -32,18 +34,17 @@ class SkattekortService(
         fnr: String,
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<SkattekortDTO> = getSkattekort(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
+    ): List<Skattekort> = getSkattekort(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
 
     fun getSkattekort(
         fnr: String,
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<SkattekortDTO> {
+    ): List<Skattekort> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
 
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
-        if (GYLDIGE.erGyldig(fnr)) {
-            requireNotNull(inntektsaar) { "Må oppgi inntektsår ved oppslag på reelle fnr" }
+        if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
         }
@@ -57,7 +58,7 @@ class SkattekortService(
                         person.id!!,
                         inntektsaar,
                         adminRole = false,
-                    ).map(::SkattekortDTO)
+                    )
             }.toList()
     }
 

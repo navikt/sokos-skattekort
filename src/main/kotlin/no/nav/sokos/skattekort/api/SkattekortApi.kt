@@ -9,8 +9,6 @@ import io.ktor.server.routing.route
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.ForespoerselRequest
-import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
-import no.nav.sokos.skattekort.api.model.OpprettSkattekortRequest
 import no.nav.sokos.skattekort.api.model.StatusResponse
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
@@ -20,45 +18,16 @@ import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
-import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
 private val logger = KotlinLogging.logger { }
 
 const val BASE_PATH_SKATTEKORT = "/api/v1/skattekort"
-const val BASE_PATH_PERSON = "/api/v1/person"
 
 fun Route.skattekortApi(
     forespoerselService: ForespoerselService,
     statusService: StatusService,
-    skattekortService: SkattekortService,
 ) {
-    route(BASE_PATH_PERSON) {
-        post("hent-skattekort") {
-            call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
-            val hentSkattekortRequest: HentSkattekortRequest = call.receive()
-            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            if (hentSkattekortRequest.hentAlle) {
-                call.respond(
-                    skattekortService.getSkattekort(hentSkattekortRequest.fnr, hentSkattekortRequest.inntektsaar, saksbehandler),
-                )
-            } else {
-                call.respond(
-                    skattekortService
-                        .getSingleSkattekortForEachYear(hentSkattekortRequest.fnr, hentSkattekortRequest.inntektsaar, saksbehandler),
-                )
-            }
-        }
-
-        post("opprett") {
-            call.requirePermission(Scope.OPPRETT_SCOPE, Role.OPPRETT_ROLE)
-            val request = call.receive<OpprettSkattekortRequest>()
-            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            skattekortService.createSkattekort(request.fnr, request.skattekort, saksbehandler)
-            call.respond(HttpStatusCode.Created)
-        }
-    }
-
     route(BASE_PATH_SKATTEKORT) {
         post("bestille") {
             call.requirePermission(requiredScope = Scope.BESTILLE_SCOPE, requiredRole = Role.BESTILLE_ROLE)

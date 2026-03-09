@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort
 
+import javax.sql.DataSource
+
 import kotlinx.coroutines.runBlocking
 
 import com.ibm.mq.jakarta.jms.MQQueue
@@ -12,7 +14,6 @@ import io.ktor.server.plugins.di.dependencies
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.audit.AuditLogger
 import no.nav.sokos.skattekort.config.ApplicationState
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.JobTaskConfig
@@ -24,25 +25,27 @@ import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
+import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
+import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.scheduler.ScheduledTaskService
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
-import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
-import no.nav.sokos.skattekort.kafka.KafkaConsumerService
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselListener
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.person.PersonService
-import no.nav.sokos.skattekort.module.skattekort.BestillingBatchService
-import no.nav.sokos.skattekort.module.skattekort.BestillingService
-import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonService
-import no.nav.sokos.skattekort.module.status.StatusService
-import no.nav.sokos.skattekort.module.utsending.UtsendingService
-import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
+import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.person.kafka.IdentifikatorEndringService
+import no.nav.sokos.skattekort.person.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
-import no.nav.sokos.skattekort.skatteetaten.SkatteetatenClient
+import no.nav.sokos.skattekort.skattekort.SkattekortService
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
+import no.nav.sokos.skattekort.skattekortbestilling.StatusService
+import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
+import no.nav.sokos.skattekort.skattekorthenting.BestillingService
+import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.util.launchBackgroundTask
+import no.nav.sokos.skattekort.utsending.UtsendingService
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -97,15 +100,17 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide<AzuredTokenClient>(name = "tilgangsmaksinAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinScope)
         }
+        provide<String>(name = "skatteetatenUrl") { PropertiesConfig.getSkatteetatenProperties().skatteetatenUrl }
         provide(StatusService::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
         provide(ForespoerselListener::class)
         provide(UtsendingService::class)
-        provide(BestillingBatchService::class)
+        provide(BestillingsbatchService::class)
         provide(BestillingService::class)
+        provide(SkattekortDataService::class)
         provide(SkatteetatenClient::class)
-        provide(SkattekortPersonService::class)
+        provide(SkattekortService::class)
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
         provide(TilgangsmaskinClientService::class)
@@ -130,21 +135,24 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
-        val bestillingBatchService: BestillingBatchService by dependencies
+        val bestillingsbatchService: BestillingsbatchService by dependencies
         val utsendingService: UtsendingService by dependencies
+        val skattekortdataService: SkattekortDataService by dependencies
         val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceScheduler)
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
+        val dataSource: DataSource by dependencies
 
         JobTaskConfig
             .scheduler(
-                bestillingService,
-                bestillingBatchService,
-                utsendingService,
-                scheduledTaskService,
-                metricsService,
-                forespoerselService,
-                DatabaseConfig.dataSourceScheduler,
+                bestillingService = bestillingService,
+                bestillingsbatchService = bestillingsbatchService,
+                utsendingService = utsendingService,
+                skattekortdataService = skattekortdataService,
+                scheduledTaskService = scheduledTaskService,
+                metricsService = metricsService,
+                forespoerselService = forespoerselService,
+                dataSource = dataSource,
             ).start()
     }
 

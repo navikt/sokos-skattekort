@@ -34,7 +34,7 @@ object KafkaListener : BeforeSpecListener {
     fun getKakfaConfig() = KafkaConfig()
 
     fun createKafkaTopic(vararg topics: String) {
-        val newTopics = topics.map { topic -> NewTopic(topic, 1, 1.toShort()) }
+        val newTopics = topics.map { topic -> NewTopic(topic, 1, 1) }
         adminClient.createTopics(newTopics)
     }
 

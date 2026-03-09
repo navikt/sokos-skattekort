@@ -11,24 +11,24 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.api.model.ForespoerselRequest
 import no.nav.sokos.skattekort.api.model.StatusResponse
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.status.StatusService
+import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
+import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
 private val logger = KotlinLogging.logger { }
 
-const val BASE_PATH = "/api/v1/skattekort"
+const val BASE_PATH_SKATTEKORT = "/api/v1/skattekort"
 
 fun Route.skattekortApi(
     forespoerselService: ForespoerselService,
     statusService: StatusService,
 ) {
-    route(BASE_PATH) {
+    route(BASE_PATH_SKATTEKORT) {
         post("bestille") {
             call.requirePermission(requiredScope = Scope.BESTILLE_SCOPE, requiredRole = Role.BESTILLE_ROLE)
             val request = call.receive<ForespoerselRequest>()

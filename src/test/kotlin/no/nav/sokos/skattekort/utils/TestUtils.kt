@@ -115,6 +115,7 @@ object TestUtils {
 
             dependencies {
                 provide<String>(name = "pdlUrl") { WiremockListener.wiremock.baseUrl() }
+                provide<String>(name = "skatteetatenUrl") { WiremockListener.wiremock.baseUrl() }
                 provide<String>(name = "tilgangsmaskinUrl") { WiremockListener.wiremock.baseUrl() }
                 provide { mockk<MaskinportenTokenClient>(relaxed = true) }
                 provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {

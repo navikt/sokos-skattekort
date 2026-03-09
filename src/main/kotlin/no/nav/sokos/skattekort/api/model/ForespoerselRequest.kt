@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidAar
-import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidForsystem
-import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
+import no.nav.sokos.skattekort.forespoersel.Forsystem
+import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidAar
+import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidForsystem
+import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidPersonIdent
 
 @Serializable
 data class ForespoerselRequest(

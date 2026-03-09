@@ -9,8 +9,8 @@ import io.ktor.server.plugins.requestvalidation.ValidationResult.Invalid
 import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.dto.validTilleggsopplysningList
 import no.nav.sokos.skattekort.dto.validTrekkodeList
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidPersonIdent
 
 @Serializable
 data class OpprettSkattekortRequest(

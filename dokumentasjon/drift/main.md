@@ -11,7 +11,7 @@ https://grafana.nav.cloud.nais.io/a/grafana-lokiexplore-app/explore/service_name
 - For Dev
     * Datasource: dev-gcp-loki
 
-Sensitive meldinger logges til `Securelogs` [Team Logs](https://console.cloud.google.com/logs/query;query=sokos%20skattekort).
+Sensitive meldinger logges til `TEAM LOGS` [Team Logs](https://console.cloud.google.com/logs/query;query=sokos%20skattekort).
 
 - For Produksjon
     * Project: okonomi-prod

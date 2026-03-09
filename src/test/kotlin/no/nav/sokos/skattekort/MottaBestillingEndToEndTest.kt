@@ -9,17 +9,17 @@ import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 
+import no.nav.sokos.skattekort.forespoersel.AbonnementRepository
+import no.nav.sokos.skattekort.forespoersel.ForespoerselRepository
+import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.MQListener.forespoerselQueue
 import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.module.forespoersel.AbonnementRepository
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselRepository
-import no.nav.sokos.skattekort.module.forespoersel.Forsystem
-import no.nav.sokos.skattekort.module.utsending.UtsendingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
+import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
 class MottaBestillingEndToEndTest :
     FunSpec({

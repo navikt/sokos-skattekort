@@ -53,7 +53,7 @@ class AuthorizationGuardTest :
             val token = generateToken(scopes = Scope.entries.map { it.value }, roles = Role.entries.map { it.value })
             every { call.principal<JWTPrincipal>() } returns token.getPrincipal()
 
-            shouldNotThrowAny { call.requirePermission(requiredScope = Scope.HENT_SCOPE, requiredRole = Role.HENT_ROLE) }
+            shouldNotThrowAny { call.requirePermission(requiredScope = Scope.HENT_SKATTEKORT_SCOPE, requiredRole = Role.HENT_SKATTEKORT_ROLE) }
         }
 
         test("requirePermission throws AuthenticationException when principal is missing") {
@@ -62,7 +62,7 @@ class AuthorizationGuardTest :
 
             val response =
                 shouldThrow<AuthenticationException> {
-                    call.requirePermission(Scope.HENT_SCOPE, Role.HENT_ROLE)
+                    call.requirePermission(Scope.HENT_SKATTEKORT_SCOPE, Role.HENT_SKATTEKORT_ROLE)
                 }
 
             response.message shouldBe "No principal found - authentication not configured"
@@ -86,7 +86,7 @@ class AuthorizationGuardTest :
             val token = generateToken(scopes = Scope.entries.map { it.value })
             every { call.principal<JWTPrincipal>() } returns token.getPrincipal()
 
-            shouldNotThrowAny { call.requireScope(Scope.HENT_SCOPE) }
+            shouldNotThrowAny { call.requireScope(Scope.HENT_SKATTEKORT_SCOPE) }
         }
 
         test("requireScope throws AuthenticationException when principal is missing") {
@@ -95,7 +95,7 @@ class AuthorizationGuardTest :
 
             val response =
                 shouldThrow<AuthenticationException> {
-                    call.requireScope(Scope.HENT_SCOPE)
+                    call.requireScope(Scope.HENT_SKATTEKORT_SCOPE)
                 }
             response.message shouldBe "No principal found - authentication not configured"
         }
@@ -119,7 +119,7 @@ class AuthorizationGuardTest :
             val token = generateToken(roles = Role.entries.map { it.value })
             every { call.principal<JWTPrincipal>() } returns token.getPrincipal()
 
-            shouldNotThrowAny { call.requireRole(Role.HENT_ROLE) }
+            shouldNotThrowAny { call.requireRole(Role.HENT_SKATTEKORT_ROLE) }
         }
 
         test("requireRole throws AuthenticationException when principal is missing") {
@@ -128,7 +128,7 @@ class AuthorizationGuardTest :
 
             val response =
                 shouldThrow<AuthenticationException> {
-                    call.requireRole(Role.HENT_ROLE)
+                    call.requireRole(Role.HENT_SKATTEKORT_ROLE)
                 }
 
             response.message shouldBe "No principal found - authentication not configured"

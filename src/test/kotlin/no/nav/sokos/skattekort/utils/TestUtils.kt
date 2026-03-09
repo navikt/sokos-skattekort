@@ -115,8 +115,12 @@ object TestUtils {
 
             dependencies {
                 provide<String>(name = "pdlUrl") { WiremockListener.wiremock.baseUrl() }
+                provide<String>(name = "tilgangsmaskinUrl") { WiremockListener.wiremock.baseUrl() }
                 provide { mockk<MaskinportenTokenClient>(relaxed = true) }
                 provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
+                    mockk<AzuredTokenClient>(relaxed = true)
+                }
+                provide<AzuredTokenClient>(name = "tilgangsmaksinAzuredTokenClient") {
                     mockk<AzuredTokenClient>(relaxed = true)
                 }
                 provide { MQListener.connectionFactory }

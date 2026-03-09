@@ -27,6 +27,7 @@ import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.kafka.IdentifikatorEndringService
 import no.nav.sokos.skattekort.kafka.KafkaConsumerService
@@ -108,6 +109,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(SkattekortPersonService::class)
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
+        provide(PdlService::class)
         provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)

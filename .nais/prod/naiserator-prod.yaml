@@ -53,16 +53,18 @@ spec:
             scopes:
               - "bestille-scope"
               - "status-scope"
+              - "hent-skattekort-scope"
+              - "hent-navn-scope"
         - application: saas-proxy
           namespace: platforce
           permissions:
             scopes:
-              - "hent-scope"
+              - "hent-skattekort-scope"
         - application: saas-proxy
           namespace: teamcrm
           permissions:
             scopes:
-              - "hent-scope"
+              - "hent-skattekort-scope"
     outbound:
       rules:
         - application: logging

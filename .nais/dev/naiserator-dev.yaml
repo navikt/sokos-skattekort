@@ -53,12 +53,14 @@ spec:
           permissions:
             scopes:
               - "bestille-scope"
-              - "hent-scope"
+              - "hent-skattekort-scope"
+              - "hent-navn-scope"
               - "status-scope"
               - "opprett-scope"
             roles:
               - "bestille-role"
-              - "hent-role"
+              - "hent-skattekort-role"
+              - "hent-navn-role"
         - application: sokos-up-skattekort-ssr
           permissions:
             scopes:
@@ -68,29 +70,30 @@ spec:
             scopes:
               - "bestille-scope"
               - "status-scope"
-              - "hent-scope"
+              - "hent-skattekort-scope"
+              - "hent-navn-scope"
         - application: sokos-dare-poc
           permissions:
             roles:
-              - "hent-role"
+              - "hent-skattekort-role"
               - "bestille-role"
         - application: saas-proxy
           namespace: platforce
           permissions:
             scopes:
-              - "hent-scope"
+              - "hent-skattekort-scope"
         - application: saas-proxy
           namespace: teamcrm
           permissions:
             scopes:
-              - "hent-scope"
+              - "hent-skattekort-scope"
         - application: testnav-dolly-proxy-trygdeetaten
           cluster: dev-fss
           namespace: dolly
           permissions:
             roles:
               - "opprett-role"
-              - "hent-role"
+              - "hent-skattekort-role"
         # Det MÅ gis tilgang til testnav-dolly-proxy for at testnav-dolly-proxy-trygdeetaten kan hente data fra sokos-skattekort.
         - application: testnav-dolly-proxy
           cluster: dev-fss

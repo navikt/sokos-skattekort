@@ -15,7 +15,10 @@ import io.ktor.server.plugins.di.annotations.Named
 import mu.KotlinLogging
 
 import no.nav.pdl.HentIdenterBolk
+import no.nav.pdl.HentPersonBolk
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
+import no.nav.pdl.hentpersonbolk.Person
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
 private val logger = KotlinLogging.logger {}
@@ -49,14 +52,49 @@ class PdlClientService(
                 }
                 result.data
                     ?.hentIdenterBolk
-                    ?.map { item ->
-                        item.ident to (item.identer ?: emptyList())
-                    }?.groupBy({ it.first }, { it.second })
+                    ?.map { item -> item.ident to (item.identer ?: emptyList()) }
+                    ?.groupBy({ it.first }, { it.second })
                     ?.mapValues { entry -> entry.value.flatten() }
                     .orEmpty()
             }
 
             else -> {
+                throw ClientRequestException(
+                    response,
+                    "Noe gikk galt ved oppslag mot PDL",
+                )
+            }
+        }
+    }
+
+    suspend fun getPersonNavnBulk(identer: List<String>): Map<String, Person> {
+        val request = HentPersonBolk(HentPersonBolk.Variables(identer))
+
+        val accessToken = azuredTokenClient.getSystemToken()
+
+        logger.debug { "Henter navn fra PDL" }
+        val response =
+            httpClient.post("$pdlUrl/graphql") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+                header("behandlingsnummer", BEHANDLINGSKATALOGNUMMER)
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+        return when {
+            response.status.isSuccess() -> {
+                val result = response.body<GraphQLResponse<HentPersonBolk.Result>>()
+                if (result.errors?.isNotEmpty() == true) {
+                    handleErrors(result.errors)
+                }
+                result.data
+                    ?.hentPersonBolk
+                    ?.filter { item -> item.person != null }
+                    ?.associate { item -> item.ident to item.person!! } ?: emptyMap()
+            }
+
+            else -> {
+                logger.error(marker = TEAM_LOGS_MARKER) { "Noe gikk galt ved oppslag mot PDL for ident: $identer" }
                 throw ClientRequestException(
                     response,
                     "Noe gikk galt ved oppslag mot PDL",

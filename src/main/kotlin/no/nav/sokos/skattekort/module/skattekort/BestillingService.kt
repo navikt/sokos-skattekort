@@ -184,7 +184,7 @@ class BestillingService(
                 return
             }
 
-        val inntektsaar = arbeidstaker.inntektsaar.toInt()
+        val inntektsaar = arbeidstaker.inntektsaar
 
         val skattekort = Skattekort(personId, arbeidstaker)
         val id = SkattekortId(SkattekortRepository.insert(tx, skattekort, batchId))

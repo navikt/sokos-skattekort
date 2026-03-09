@@ -105,7 +105,7 @@ object PropertiesConfig {
 
     fun getSkatteetatenProperties(): SkatteetatenProperties =
         SkatteetatenProperties(
-            skatteetatenApiUrl = getOrEmpty("SKATTEETATEN_API_URL"),
+            skatteetatenUrl = getOrEmpty("SKATTEETATEN_API_URL"),
         )
 
     fun getKafkaProperties(): KafkaProperties =
@@ -200,7 +200,7 @@ object PropertiesConfig {
     )
 
     data class SkatteetatenProperties(
-        val skatteetatenApiUrl: String,
+        val skatteetatenUrl: String,
     )
 
     data class KafkaProperties(

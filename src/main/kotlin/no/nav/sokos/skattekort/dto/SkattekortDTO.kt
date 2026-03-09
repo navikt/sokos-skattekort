@@ -5,16 +5,16 @@ import java.math.BigDecimal
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
-import no.nav.sokos.skattekort.module.person.PersonId
-import no.nav.sokos.skattekort.module.skattekort.Forskuddstrekk
-import no.nav.sokos.skattekort.module.skattekort.Frikort
-import no.nav.sokos.skattekort.module.skattekort.Prosentkort
-import no.nav.sokos.skattekort.module.skattekort.ResultatForSkattekort
-import no.nav.sokos.skattekort.module.skattekort.Skattekort
-import no.nav.sokos.skattekort.module.skattekort.SkattekortKilde
-import no.nav.sokos.skattekort.module.skattekort.Tabellkort
-import no.nav.sokos.skattekort.module.skattekort.Tilleggsopplysning
-import no.nav.sokos.skattekort.module.skattekort.Trekkode
+import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.skattekort.Forskuddstrekk
+import no.nav.sokos.skattekort.skattekort.Frikort
+import no.nav.sokos.skattekort.skattekort.Prosentkort
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.Skattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortKilde
+import no.nav.sokos.skattekort.skattekort.Tabellkort
+import no.nav.sokos.skattekort.skattekort.Tilleggsopplysning
+import no.nav.sokos.skattekort.skattekort.Trekkode
 
 @Serializable
 data class SkattekortDTO(

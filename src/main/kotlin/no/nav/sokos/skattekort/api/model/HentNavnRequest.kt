@@ -6,7 +6,7 @@ import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 import io.ktor.server.plugins.requestvalidation.ValidationResult.Invalid
 
-import no.nav.sokos.skattekort.module.skattekort.SkattekortPersonValidator.isValidPersonIdent
+import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidPersonIdent
 
 @Serializable
 data class HentNavnRequest(

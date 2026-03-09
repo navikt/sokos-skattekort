@@ -12,13 +12,15 @@ import com.github.kagkarlsson.scheduler.task.helper.Tasks
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.infrastructure.MetricsService
-import no.nav.sokos.skattekort.module.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.module.skattekort.BestillingBatchService
-import no.nav.sokos.skattekort.module.skattekort.BestillingService
-import no.nav.sokos.skattekort.module.utsending.UtsendingService
-import no.nav.sokos.skattekort.scheduler.ScheduledTaskService
+import no.nav.sokos.skattekort.infrastructure.scheduler.ScheduledTaskService
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
+import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
+import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
+import no.nav.sokos.skattekort.utsending.UtsendingService
 
 private val logger = KotlinLogging.logger { }
 private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
@@ -32,8 +34,9 @@ object JobTaskConfig {
 
     fun scheduler(
         bestillingService: BestillingService,
-        bestillingBatchService: BestillingBatchService,
+        bestillingsbatchService: BestillingsbatchService,
         utsendingService: UtsendingService,
+        skattekortdataService: SkattekortDataService,
         scheduledTaskService: ScheduledTaskService,
         metricsService: MetricsService,
         forespoerselService: ForespoerselService,
@@ -45,17 +48,18 @@ object JobTaskConfig {
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
-                recurringBestillingManagementBatchTask(bestillingService, bestillingBatchService, scheduledTaskService),
+                recurringBestillingManagementBatchTask(bestillingService, bestillingsbatchService, scheduledTaskService, skattekortdataService),
                 recurringSendUtsendingTask(utsendingService, scheduledTaskService),
-                recurringHentOppdaterteSkattekortBatchTask(bestillingService, scheduledTaskService),
+                recurringHentOppdaterteSkattekortBatchTask(bestillingService, bestillingsbatchService, scheduledTaskService),
                 recurringFetchMetricsTask(metricsService, scheduledTaskService),
                 recurringFetchForespoerselInputTask(forespoerselService, scheduledTaskService),
             ).build()
 
     fun recurringBestillingManagementBatchTask(
         bestillingService: BestillingService,
-        bestillingBatchService: BestillingBatchService,
+        bestillingsbatchService: BestillingsbatchService,
         scheduledTaskService: ScheduledTaskService,
+        skattekortdataService: SkattekortDataService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
@@ -67,17 +71,12 @@ object JobTaskConfig {
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
                     withTracerId {
-                        try {
-                            showLog(showLogLocalTime, instance, context)
-                            val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
-                            scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
-
-                            bestillingBatchService.opprettBestillingsbatch()
-                            // TODO: Bør vente litt før vi kalle hentSkattekort
-                            bestillingService.hentSkattekort()
-                        } catch (e: Exception) {
-                            // Spis exception for å unngå spurious logging
-                        }
+                        showLog(showLogLocalTime, instance, context)
+                        val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
+                        scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_SEND_BESTILLING_BATCH)
+                        bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
+                        skattekortdataService.processSkattekortData()
+                        bestillingsbatchService.bestillSkattekort()
                     }
                 }
             }
@@ -112,6 +111,7 @@ object JobTaskConfig {
 
     fun recurringHentOppdaterteSkattekortBatchTask(
         bestillingService: BestillingService,
+        bestillingsbatchService: BestillingsbatchService,
         scheduledTaskService: ScheduledTaskService,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
@@ -124,12 +124,13 @@ object JobTaskConfig {
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
                     withTracerId {
-                        try {
+                        runCatching {
                             showLog(showLogLocalTime, instance, context)
                             val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                             scheduledTaskService.insertScheduledTaskHistory(ident, JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH)
-                            bestillingService.hentOppdaterteSkattekort()
-                        } catch (e: Exception) {
+                            bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
+                            bestillingsbatchService.bestillOppdaterteSkattekort()
+                        }.onFailure { _ ->
                             // Spis exception for å ta kontroll over logging
                         }
                     }

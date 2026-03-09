@@ -8,11 +8,11 @@ import no.nav.sokos.skattekort.dto.ForskuddstrekkDTO
 import no.nav.sokos.skattekort.dto.FrikortDTO
 import no.nav.sokos.skattekort.dto.ProsentkortDTO
 import no.nav.sokos.skattekort.dto.TabellkortDTO
-import no.nav.sokos.skattekort.module.skattekort.Frikort
-import no.nav.sokos.skattekort.module.skattekort.Prosentkort
-import no.nav.sokos.skattekort.module.skattekort.Skattekort
-import no.nav.sokos.skattekort.module.skattekort.SkattekortKilde
-import no.nav.sokos.skattekort.module.skattekort.Tabellkort
+import no.nav.sokos.skattekort.skattekort.Frikort
+import no.nav.sokos.skattekort.skattekort.Prosentkort
+import no.nav.sokos.skattekort.skattekort.Skattekort
+import no.nav.sokos.skattekort.skattekort.SkattekortKilde
+import no.nav.sokos.skattekort.skattekort.Tabellkort
 
 @Serializable
 data class SkattekortResponseDTO(

@@ -15,7 +15,7 @@ import no.nav.sokos.skattekort.skattekort.SkattekortKilde
 import no.nav.sokos.skattekort.skattekort.Tabellkort
 
 @Serializable
-data class SkattekortResponseDTO(
+data class SkattekortDTO(
     val forskuddstrekkList: List<ForskuddstrekkDTO>,
     val id: Long,
     val identifikator: String?,

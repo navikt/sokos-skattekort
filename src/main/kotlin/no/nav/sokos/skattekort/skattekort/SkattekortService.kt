@@ -6,6 +6,7 @@ import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+import io.github.resilience4j.core.functions.Either
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
@@ -13,6 +14,7 @@ import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori.GYLDIGE
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
@@ -20,44 +22,53 @@ import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
+import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 private val logger = KotlinLogging.logger {}
 
 class SkattekortService(
     private val dataSource: DataSource,
     private val personService: PersonService,
+    private val tilgangsmaskinClientService: TilgangsmaskinClientService,
     private val auditLogger: AuditLogger,
 ) {
-    fun getSingleSkattekortForEachYear(
+    suspend fun getSingleSkattekortForEachYear(
         fnr: String,
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<Skattekort> = getSkattekort(fnr, inntektsaar, saksbehandler).distinctBy { it.inntektsaar }
+    ): Either<ProblemDetailResponse, List<Skattekort>> = getSkattekort(fnr, inntektsaar, saksbehandler).map { it.distinctBy { skattekort -> skattekort.inntektsaar } }
 
-    fun getSkattekort(
+    suspend fun getSkattekort(
         fnr: String,
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
-    ): List<Skattekort> {
+    ): Either<ProblemDetailResponse, List<Skattekort>> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
+        saksbehandler?.let {
+            tilgangsmaskinClientService.checkSaksbehandlerAccess(it.ident, fnr)?.let { response ->
+                return Either.left(response)
+            }
+        }
 
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
         if (Foedselsnummerkategori.GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
-            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
+            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har søkt etter skattekort for bruker"))
         }
 
-        return dataSource
-            .transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
-                SkattekortRepository
-                    .findAllByPersonId(
-                        tx,
-                        person.id!!,
-                        inntektsaar,
-                        adminRole = false,
-                    )
-            }.toList()
+        return Either.right(
+            dataSource
+                .transaction { tx ->
+                    val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
+                    SkattekortRepository
+                        .findAllByPersonId(
+                            tx,
+                            person.id!!,
+                            inntektsaar,
+                            adminRole = false,
+                        )
+                }.toList(),
+        )
     }
 
     fun createSkattekort(
@@ -75,7 +86,7 @@ class SkattekortService(
 
         if (GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Manuell opprettelse av reelle skattekort må gjøres på vegne av en saksbehandler" }
-            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr))
+            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har opprettet skattekort for bruker"))
         }
 
         return dataSource.transaction { tx ->

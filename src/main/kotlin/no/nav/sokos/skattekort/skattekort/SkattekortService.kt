@@ -17,8 +17,6 @@ import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
-import no.nav.sokos.skattekort.skattekort.Skattekort
-import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
@@ -26,8 +24,8 @@ import no.nav.sokos.skattekort.util.audit.AuditLogger
 private val logger = KotlinLogging.logger {}
 
 class SkattekortService(
-    val dataSource: DataSource,
-    val personService: PersonService,
+    private val dataSource: DataSource,
+    private val personService: PersonService,
     private val auditLogger: AuditLogger,
 ) {
     fun getSingleSkattekortForEachYear(

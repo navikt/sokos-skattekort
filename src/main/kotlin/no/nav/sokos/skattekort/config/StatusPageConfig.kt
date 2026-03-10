@@ -8,6 +8,7 @@ import kotlin.time.Instant
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.JsonConvertException
 import io.ktor.server.application.ApplicationCall
@@ -28,8 +29,9 @@ fun StatusPagesConfig.statusPageConfig() {
                     val jsonException = cause.findCauseOfType<JsonConvertException>()
                     createApiError(HttpStatusCode.BadRequest, jsonException?.message ?: cause.message, call)
                 }
-
+                is ClientRequestException -> createApiError(cause.response.status, cause.message, call)
                 is RequestValidationException -> createApiError(HttpStatusCode.BadRequest, cause.reasons.joinToString(), call)
+                is IllegalAccessException -> createApiError(HttpStatusCode.Forbidden, cause.message, call)
                 is IllegalArgumentException -> createApiError(HttpStatusCode.BadRequest, cause.message, call)
                 is AuthenticationException -> createApiError(HttpStatusCode.Unauthorized, cause.message, call)
                 is AuthorizationException -> createApiError(HttpStatusCode.Forbidden, cause.message, call)

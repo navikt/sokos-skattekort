@@ -5,12 +5,14 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.util.audit.AuditLogger
 
 private val logger = KotlinLogging.logger {}
 
 class PdlService(
     private val pdlClientService: PdlClientService,
     private val tilgangsmaskinClientService: TilgangsmaskinClientService,
+    private val auditLogger: AuditLogger,
 ) {
     suspend fun getPersonNavn(
         ident: String,

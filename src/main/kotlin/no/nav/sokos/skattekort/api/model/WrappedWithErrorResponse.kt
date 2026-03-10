@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class WrappedWithErrorResponse<T>(
-    var data: List<T> = emptyList(),
-    var errorMessage: String? = null,
+    val data: T,
+    val errorMessage: String? = null,
 )

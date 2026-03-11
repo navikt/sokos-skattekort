@@ -136,7 +136,7 @@ spec:
           - name: "cloudsql.logical_decoding"
             value: "on"
   envFrom:
-    - secret: sokos-skattekort-mq-credentials
+    - secret: sokos-skattekort-secrets
     - secret: sokos-skattekort-unleash-api-token
 
   env:

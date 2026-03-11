@@ -27,6 +27,7 @@ import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
+import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
@@ -44,7 +45,7 @@ private const val OPPRETT_URL = "/api/v1/person/opprett"
 
 class SkattekortpersonApiE2ETest :
     FunSpec({
-        extensions(DbListener, MQListener)
+        extensions(DbListener, MQListener, WiremockListener)
 
         val validator =
             OpenApiInteractionValidator
@@ -135,6 +136,8 @@ class SkattekortpersonApiE2ETest :
                 val auditLogger: Logger = LoggerFactory.getLogger("auditLogger") as Logger
                 auditLogger.addAppender(auditLogAdditions)
 
+                WiremockListener.wiremockTilgangsmaskinStub()
+
                 try {
                     val request = HentSkattekortRequest(fnr = "01010112345", inntektsaar = 2025)
                     val response =
@@ -163,6 +166,8 @@ class SkattekortpersonApiE2ETest :
         test("vi kan hente et frikort med beløpsgrense") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                WiremockListener.wiremockTilgangsmaskinStub()
 
                 val request = HentSkattekortRequest(fnr = "02020212345", inntektsaar = 2025)
                 val response =
@@ -241,6 +246,7 @@ class SkattekortpersonApiE2ETest :
         }
         test("person ikke funnet returnerer 200 med melding") {
             TestUtils.withFullTestApplication {
+                WiremockListener.wiremockTilgangsmaskinStub()
                 val request = HentSkattekortRequest(fnr = "99999999999", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
@@ -252,13 +258,15 @@ class SkattekortpersonApiE2ETest :
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
-                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""[]""")
+                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""{"data": []}""")
             }
         }
 
         test("skattekort ikke funnet returnerer 200 med melding") {
             TestUtils.withFullTestApplication {
                 DbListener.loadDataSet("database/skattekort/person_uten_skattekort.sql")
+
+                WiremockListener.wiremockTilgangsmaskinStub()
                 val request = HentSkattekortRequest(fnr = "03030312345", inntektsaar = 2025)
                 val response =
                     client.post(HENT_SKATTEKORT_URL) {
@@ -270,7 +278,7 @@ class SkattekortpersonApiE2ETest :
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
-                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""[]""")
+                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""{"data": []}""")
             }
         }
 

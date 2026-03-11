@@ -1,17 +1,19 @@
-[
-  {
-    "utstedtDato": "2025-11-11",
-    "inntektsaar": 2025,
-    "resultatForSkattekort": "skattekortopplysningerOK",
-    "forskuddstrekkList": [
-      {
-        "trekkode": "pensjonFraNAV",
-        "prosentkort": {
-          "prosentSats": 18.5,
-          "antallMndForTrekk": 12.0
+{
+  "data": [
+    {
+      "utstedtDato": "2025-11-11",
+      "inntektsaar": 2025,
+      "resultatForSkattekort": "skattekortopplysningerOK",
+      "forskuddstrekkList": [
+        {
+          "trekkode": "pensjonFraNAV",
+          "prosentkort": {
+            "prosentSats": 18.5,
+            "antallMndForTrekk": 12.0
+          }
         }
-      }
-    ],
-    "tilleggsopplysningList": []
-  }
-]
+      ],
+      "tilleggsopplysningList": []
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.configureFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.common.ContentTypes
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import io.kotest.core.listeners.AfterEachListener
@@ -59,6 +60,22 @@ object WiremockListener : BeforeSpecListener, AfterEachListener {
                         .withHeader(HttpHeaders.ContentType, ContentTypes.APPLICATION_JSON)
                         .withStatus(HttpStatusCode.OK.value)
                         .withBody(response),
+                ),
+        )
+    }
+
+    fun wiremockTilgangsmaskinStub(
+        response: String? = null,
+        statusCode: HttpStatusCode = HttpStatusCode.NoContent,
+    ) {
+        wiremock.stubFor(
+            WireMock
+                .post(urlPathMatching("/api/v1/ccf/kjerne/.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader(HttpHeaders.ContentType, ContentTypes.APPLICATION_JSON)
+                        .withStatus(statusCode.value)
+                        .apply { response?.let(::withBody) },
                 ),
         )
     }

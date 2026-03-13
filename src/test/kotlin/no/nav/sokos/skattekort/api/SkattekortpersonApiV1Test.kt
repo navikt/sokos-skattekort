@@ -41,9 +41,10 @@ import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 private const val HENT_SKATTEKORT_URL = "/api/v1/person/hent-skattekort"
-private const val OPPRETT_URL = "/api/v1/person/opprett"
+private const val OPPRETT_SKATTEKORT_URL = "/api/v1/person/opprett"
 
-class SkattekortpersonApiE2ETest :
+@Deprecated("Denne klassen tester både hent og opprett, og bør splittes i SkattekortpersonApiV1HentTest og SkattekortpersonApiV1OpprettTest for å gjøre det tydeligere hva som testes i hver test")
+class SkattekortpersonApiV1Test :
     FunSpec({
         extensions(DbListener, MQListener, WiremockListener)
 
@@ -180,6 +181,7 @@ class SkattekortpersonApiE2ETest :
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
+                println(response.bodyAsText())
 
                 Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement(readFile("/api/skattekortFrikortLoennFraNav.json"))
             }
@@ -258,7 +260,7 @@ class SkattekortpersonApiE2ETest :
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
-                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""{"data": []}""")
+                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""[]""")
             }
         }
 
@@ -278,7 +280,7 @@ class SkattekortpersonApiE2ETest :
                 val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
                 validationReport.hasErrors() shouldBe false
                 response.status shouldBe HttpStatusCode.OK
-                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""{"data": []}""")
+                Json.parseToJsonElement(response.bodyAsText()) shouldBe Json.parseToJsonElement("""[]""")
             }
         }
 
@@ -311,7 +313,7 @@ class SkattekortpersonApiE2ETest :
                     """.trimIndent()
                 try {
                     val response =
-                        client.post(OPPRETT_URL) {
+                        client.post(OPPRETT_SKATTEKORT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
                             header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
@@ -348,7 +350,7 @@ class SkattekortpersonApiE2ETest :
                     """.trimIndent()
                 try {
                     val response =
-                        client.post(OPPRETT_URL) {
+                        client.post(OPPRETT_SKATTEKORT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
                             header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                             setBody(request)
@@ -395,7 +397,7 @@ class SkattekortpersonApiE2ETest :
                     """.trimIndent()
 
                 val response =
-                    client.post(OPPRETT_URL) {
+                    client.post(OPPRETT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
@@ -427,7 +429,7 @@ class SkattekortpersonApiE2ETest :
                     """.trimIndent()
 
                 val response =
-                    client.post(OPPRETT_URL) {
+                    client.post(OPPRETT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
                         setBody(request)
@@ -461,7 +463,7 @@ class SkattekortpersonApiE2ETest :
 
                 try {
                     val response =
-                        client.post(OPPRETT_URL) {
+                        client.post(OPPRETT_SKATTEKORT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
                             header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                             setBody(request)
@@ -500,7 +502,7 @@ class SkattekortpersonApiE2ETest :
 
                 try {
                     val response =
-                        client.post(OPPRETT_URL) {
+                        client.post(OPPRETT_SKATTEKORT_URL) {
                             header(HttpHeaders.ContentType, ContentType.Application.Json)
                             header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                             setBody(request)
@@ -540,7 +542,7 @@ class SkattekortpersonApiE2ETest :
                     """.trimIndent()
 
                 val response =
-                    client.post(OPPRETT_URL) {
+                    client.post(OPPRETT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                         setBody(request)
@@ -573,7 +575,7 @@ class SkattekortpersonApiE2ETest :
                     """.trimIndent()
 
                 val response =
-                    client.post(OPPRETT_URL) {
+                    client.post(OPPRETT_SKATTEKORT_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)
                         header(HttpHeaders.Authorization, "Bearer $m2mTokenWithNavIdent")
                         setBody(request)

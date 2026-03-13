@@ -1,18 +1,16 @@
-{
-  "data": [
-    {
-      "utstedtDato": "2025-11-11",
-      "inntektsaar": 2025,
-      "resultatForSkattekort": "skattekortopplysningerOK",
-      "forskuddstrekkList": [
-        {
-          "trekkode": "loennFraNAV",
-          "frikort": {
-            "frikortBeloep": 65000
-          }
+[
+  {
+    "utstedtDato": "2025-11-11",
+    "inntektsaar": 2025,
+    "resultatForSkattekort": "skattekortopplysningerOK",
+    "forskuddstrekkList": [
+      {
+        "trekkode": "loennFraNAV",
+        "frikort": {
+          "frikortBeloep": 65000
         }
-      ],
-      "tilleggsopplysningList": []
-    }
-  ]
-}
+      }
+    ],
+    "tilleggsopplysningList": []
+  }
+]

@@ -40,7 +40,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SkattekortResponseDTO'
+                  $ref: '#/components/schemas/SkattekortPersonResponse'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -92,6 +92,47 @@ paths:
         required: true
       security:
         - Bearer: [ ]
+
+  /hent-navn:
+    post:
+      tags:
+        - skattekort
+      summary: Hent navn for person
+      description: Returnerer navn for oppgitt fnr
+      operationId: hentNavnPerson
+
+      requestBody:
+        description: fnr er påkrevd.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HentNavnRequest'
+        required: true
+
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HentNavnResponse'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
 components:
   schemas:
     SkattekortPersonRequest:
@@ -115,6 +156,16 @@ components:
           type: boolean
           nullable: true
           description: Hent alle skattekort
+    SkattekortPersonResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkattekortResponseDTO'
+        errorMessage:
+          type: string
+          nullable: true
     OpprettSkattekortRequest:
       type: object
       properties:
@@ -254,6 +305,29 @@ components:
         - tabell
         - prosentSats
         - antallMndForTrekk
+
+    HentNavnRequest:
+      type: object
+      required:
+        - fnr
+      properties:
+        fnr:
+          type: string
+          nullable: false
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+
+    HentNavnResponse:
+      type: object
+      properties:
+        data:
+          type: string
+          nullable: false
+        errorMessage:
+          type: string
+          nullable: true
     
     ApiError:
       type: object

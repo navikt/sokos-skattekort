@@ -21,9 +21,12 @@ import io.mockk.coEvery
 import io.mockk.mockk
 
 import no.nav.pdl.HentIdenterBolk
+import no.nav.pdl.HentPersonBolk
 import no.nav.pdl.enums.IdentGruppe
 import no.nav.pdl.hentidenterbolk.HentIdenterBolkResult
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
+import no.nav.pdl.hentpersonbolk.HentPersonBolkResult
+import no.nav.pdl.hentpersonbolk.Person
 import no.nav.sokos.skattekort.infrastructure.pdl.GraphQLResponse
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
@@ -80,7 +83,7 @@ object WiremockListener : BeforeSpecListener, AfterEachListener {
         )
     }
 
-    fun generatePDLResponse(vararg fnr: String): String =
+    fun generateHentIdenterBolk(vararg fnr: String): String =
         Json.encodeToString(
             GraphQLResponse(
                 HentIdenterBolk.Result(
@@ -90,6 +93,18 @@ object WiremockListener : BeforeSpecListener, AfterEachListener {
                                 ident = value,
                                 identer = listOf(IdentInformasjon(value, false, IdentGruppe.FOLKEREGISTERIDENT)),
                             )
+                        },
+                ),
+            ),
+        )
+
+    fun generateHentPersonBolk(vararg fnrMedNavn: Pair<String, Person>): String =
+        Json.encodeToString(
+            GraphQLResponse(
+                HentPersonBolk.Result(
+                    hentPersonBolk =
+                        fnrMedNavn.toList().map { value ->
+                            HentPersonBolkResult(ident = value.first, person = value.second)
                         },
                 ),
             ),

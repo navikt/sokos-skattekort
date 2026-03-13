@@ -58,7 +58,7 @@ class ForespoerselListenerTest :
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 val fnr = "11111111111"
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
 
                 forespoerselListener.start()
 
@@ -98,7 +98,7 @@ class ForespoerselListenerTest :
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 val fnr = "55555555555"
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
 
                 forespoerselListener.start()
 

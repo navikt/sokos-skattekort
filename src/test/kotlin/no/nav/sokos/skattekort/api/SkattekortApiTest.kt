@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.api
 import java.time.LocalDateTime
 import java.time.Year
 
-import kotlin.time.ExperimentalTime
 import kotlinx.serialization.json.Json
 
 import com.atlassian.oai.validator.OpenApiInteractionValidator
@@ -31,7 +30,6 @@ import no.nav.sokos.skattekort.utils.ApiTestUtils.validationReport
 import no.nav.sokos.skattekort.utils.TestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
 
-@OptIn(ExperimentalTime::class)
 class SkattekortApiTest :
     FunSpec({
         extensions(DbListener, MQListener, WiremockListener)
@@ -47,7 +45,7 @@ class SkattekortApiTest :
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 val fnr = "01010112345"
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
 
                 TestUtils.withFullTestApplication {
                     val request = ForespoerselRequest(personIdent = fnr, aar = inntektsaar, forsystem = Forsystem.MANUELL.value)

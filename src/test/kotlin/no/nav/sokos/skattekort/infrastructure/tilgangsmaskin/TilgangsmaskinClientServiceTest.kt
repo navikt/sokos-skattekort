@@ -11,6 +11,7 @@ import io.ktor.http.HttpStatusCode
 
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.listener.WiremockListener
+import no.nav.sokos.skattekort.listener.WiremockListener.generateProblemDetailResponse
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 class TilgangsmaskinClientServiceTest :
@@ -106,19 +107,3 @@ class TilgangsmaskinClientServiceTest :
             response shouldBe problemDetailResponse
         }
     })
-
-private fun generateProblemDetailResponse(
-    ansattId: String,
-    fnr: String,
-): ProblemDetailResponse =
-    ProblemDetailResponse(
-        instance = "$ansattId/$fnr",
-        status = HttpStatusCode.Forbidden.value,
-        title = ProblemDetailResponse.Title.AVVIST_FORTROLIG_ADRESSE,
-        type = "https://confluence.adeo.no/display/TM/Tilgangsmaskin+API+og+regelsett",
-        brukerIdent = fnr,
-        navIdent = ansattId,
-        begrunnelse = "",
-        traceId = "32cf46af79a38f39ad047303499d0bbf",
-        kanOverstyres = false,
-    )

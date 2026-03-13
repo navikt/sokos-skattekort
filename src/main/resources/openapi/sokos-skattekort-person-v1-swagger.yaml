@@ -38,7 +38,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HentSkattekortResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkattekortDTO'
         400:
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -90,22 +92,8 @@ paths:
         required: true
       security:
         - Bearer: [ ]
-
 components:
   schemas:
-    HentSkattekortResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/SkattekortDTO'
-        errorMessage:
-          type: string
-          nullable: true
-      required:
-        - data
-
     SkattekortPersonRequest:
       type: object
       properties:
@@ -127,7 +115,6 @@ components:
           type: boolean
           nullable: true
           description: Hent alle skattekort
-
     OpprettSkattekortRequest:
       type: object
       properties:
@@ -140,7 +127,6 @@ components:
           pattern: '^\d{11}$'
         skattekort:
           $ref: '#/components/schemas/SkattekortDTO'
-
     SkattekortDTO:
       type: object
       properties:
@@ -266,8 +252,8 @@ components:
     Bearer:
       type: apiKey
       description: |-
-        OIDC-token (JWT via OAuth2.0).<br>
-          Følgende format må brukes i input-feltet "Value" under: <strong>\"Bearer {token}\"</strong>.<br>
+        OIDC-token (JWT via OAuth2.0).<br> 
+          Følgende format må brukes i input-feltet "Value" under: <strong>\"Bearer {token}\"</strong>.<br> 
           Eksempel på verdi i input-felt: <strong>Bearer eYdmifml0ejugm</strong>
       name: Authorization
       in: header

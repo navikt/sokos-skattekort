@@ -55,7 +55,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
                 val osMessage = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(osMessage)
@@ -80,7 +80,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("12345678901", "23456789012"))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("12345678901", "23456789012"))
                 val osMessage = "OS;2025;12345678901;23456789012;"
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -118,7 +118,7 @@ class ForespoerselServiceTest :
 
         test("mot slutten av året skal vi også bestille for neste år") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
                 val osMessage = "OS;2025;01010112345"
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -141,7 +141,7 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+            WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
             val message = "MANUELL;2026;01010112345"
             val brukerId = "Z123456"
 
@@ -169,7 +169,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme person og årstall som en tidligere forespoersel, skal det opprette kun en bestilling") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
                 val message1 = "OS;2025;01010112345"
                 val message2 = "MANUELL;2025;01010112345"
 
@@ -195,7 +195,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme forsystem, person og årstall som en tidligere forespoersel, skal det kun audit logges dersom en utsending ikke er utført") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
                 val message = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(message)
@@ -244,7 +244,7 @@ class ForespoerselServiceTest :
 
         test("Skal ta i mot forespørsler fra databasetabell") {
             DbListener.loadDataSet("database/forespoersler/forespoersel_fra_tabell.sql")
-            WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("19876543210"))
+            WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("19876543210"))
 
             forespoerselService.cronForespoerselInput()
             DbListener.dataSource.transaction { tx ->
@@ -272,7 +272,7 @@ class ForespoerselServiceTest :
 
         test("skal ikke kaste en PSQLException: ERROR: duplicate key value violates unique constraint") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse("01010112345"))
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
 
                 val message = "OS;2025;01010112345"
                 val startLatch = CountDownLatch(1)

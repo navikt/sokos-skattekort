@@ -14,6 +14,7 @@ import no.nav.sokos.skattekort.api.model.OpprettSkattekortRequest
 import no.nav.sokos.skattekort.api.model.WrappedWithErrorResponse
 import no.nav.sokos.skattekort.dto.v2.SkattekortDTO
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
+import no.nav.sokos.skattekort.security.AuthorizationException
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
@@ -31,23 +32,20 @@ fun Route.skattekortPersonApi(
             call.requirePermission(Scope.HENT_SKATTEKORT_SCOPE, Role.HENT_SKATTEKORT_ROLE)
             val request: HentSkattekortRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            val skattekortList =
+            val skattekortAnswer =
                 if (request.hentAlle) {
                     skattekortService.getSkattekort(request.fnr, request.inntektsaar, saksbehandler)
                 } else {
                     skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler)
                 }
-            when (skattekortList) {
-                is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))
+            when (skattekortAnswer) {
+                is Either.Left -> throw AuthorizationException("Mangler rettigheter til å se informasjon!")
                 is Either.Right ->
                     call.respond(
-                        WrappedWithErrorResponse(
-                            data =
-                                skattekortList.get().map {
-                                    no.nav.sokos.skattekort.dto
-                                        .SkattekortDTO(it)
-                                },
-                        ),
+                        skattekortAnswer.get().map {
+                            no.nav.sokos.skattekort.dto
+                                .SkattekortDTO(it)
+                        },
                     )
             }
         }
@@ -69,15 +67,15 @@ fun Route.skattekortPersonApi(
             call.requirePermission(Scope.HENT_SKATTEKORT_SCOPE, Role.HENT_SKATTEKORT_ROLE)
             val request: HentSkattekortRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            val skattekortList =
+            val skattekortAnswer =
                 if (request.hentAlle) {
                     skattekortService.getSkattekort(request.fnr, request.inntektsaar, saksbehandler)
                 } else {
                     skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler)
                 }
-            when (skattekortList) {
+            when (skattekortAnswer) {
                 is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))
-                is Either.Right -> call.respond(WrappedWithErrorResponse(data = skattekortList.get().map(::SkattekortDTO)))
+                is Either.Right -> call.respond(WrappedWithErrorResponse(data = skattekortAnswer.get().map(::SkattekortDTO)))
             }
         }
 

@@ -64,7 +64,7 @@ spec:
         - application: sokos-up-skattekort-ssr
           permissions:
             scopes:
-              - "hent-scope"
+              - "hent-skattekort-scope"
         - application: sokos-utbetalingsportalen
           permissions:
             scopes:

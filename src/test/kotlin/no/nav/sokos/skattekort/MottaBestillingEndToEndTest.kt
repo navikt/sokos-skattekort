@@ -32,7 +32,7 @@ class MottaBestillingEndToEndTest :
                     DbListener.loadDataSet("basicendtoendtest/basicdata.sql")
 
                     val fnr = "15467834260"
-                    WiremockListener.wiremockPDLStub(WiremockListener.generatePDLResponse(fnr))
+                    WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
                     JmsTestUtil.sendMessage(msg = "OS;2027;$fnr", queue = forespoerselQueue)
 
                     eventually(eventuallyConfiguration) {

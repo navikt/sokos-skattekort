@@ -4,15 +4,14 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.request.accept
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.plugins.di.annotations.Named
 import mu.KotlinLogging
-import org.apache.hc.core5.http.message.MessageSupport.header
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient
@@ -34,7 +33,7 @@ class TilgangsmaskinClientService(
             httpClient.post("$tilgangsmaskinUrl/api/v1/ccf/kjerne/$saksbehandlerIdent") {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Application.Json)
-                header(HttpHeaders.Authorization, "Bearer $accessToken")
+                bearerAuth(accessToken)
                 setBody(fnr)
             }
         return when (response.status) {

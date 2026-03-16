@@ -2,8 +2,12 @@ package no.nav.sokos.skattekort.infrastructure.skatteetaten
 
 import java.math.BigDecimal.valueOf
 
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
+import no.nav.sokos.skattekort.api.model.WrappedWithErrorResponse
+import no.nav.sokos.skattekort.dto.v2.SkattekortDTO
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort
@@ -15,6 +19,14 @@ import no.nav.sokos.skattekort.skattekort.anArbeidstaker
 
 object SkatteetatenClientTestUtils {
     fun String.toBestillSkattekortResponse() = Json.decodeFromString(BestillSkattekortResponse.serializer(), this)
+
+    fun String.toSkattekortDTOWrappedWithErrorResponse() =
+        Json.decodeFromString(
+            WrappedWithErrorResponse.serializer(ListSerializer(SkattekortDTO.serializer())),
+            this,
+        )
+
+    fun String.toStringWrappedWithErrorResponse() = Json.decodeFromString(WrappedWithErrorResponse.serializer(String.serializer()), this)
 
     fun okBestillSkattekortResponse(ref: String): BestillSkattekortResponse =
         """

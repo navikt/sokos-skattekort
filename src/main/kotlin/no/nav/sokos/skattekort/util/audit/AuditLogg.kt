@@ -8,6 +8,7 @@ package no.nav.sokos.skattekort.util.audit
 data class AuditLogg(
     val saksbehandler: String,
     val fnr: String,
+    val brukerhandling: String,
 ) {
     private val version = "0"
     private val deviceVendor = "Utbetalingsportalen"
@@ -16,7 +17,6 @@ data class AuditLogg(
     private val deviceEventClassId = "audit:access"
     private val name = "sokos-skattekort"
     private val severity = "INFO"
-    private val brukerhandling = "NAV-ansatt har søkt etter skattekort for bruker"
 
     fun logMessage(): String {
         val extension = "suid=$saksbehandler duid=$fnr end=${System.currentTimeMillis()} msg=$brukerhandling"

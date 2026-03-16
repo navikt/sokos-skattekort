@@ -30,6 +30,7 @@ import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
 import no.nav.sokos.skattekort.infrastructure.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
@@ -113,6 +114,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(SkattekortService::class)
         provide(KafkaConsumerService::class)
         provide(PdlClientService::class)
+        provide(PdlService::class)
         provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)

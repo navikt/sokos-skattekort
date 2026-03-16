@@ -11,6 +11,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonService
@@ -22,6 +23,7 @@ class SkattekortServiceTest :
         extensions(DbListener)
 
         val mockAuditLogger: AuditLogger = mockk<AuditLogger>()
+        val tilgangsmaskinClientService = mockk<TilgangsmaskinClientService>(relaxed = true)
 
         val skattekortService: SkattekortService by lazy {
             SkattekortService(
@@ -32,6 +34,7 @@ class SkattekortServiceTest :
                         pdlClientService = mockk(),
                     ),
                 auditLogger = mockAuditLogger,
+                tilgangsmaskinClientService = tilgangsmaskinClientService,
             )
         }
 
@@ -54,12 +57,11 @@ class SkattekortServiceTest :
                     aDbForskuddstrekk(3L, 9L, ForskuddstrekkType.FRIKORT.type, Trekkode.PENSJON_FRA_NAV, frikortbeløp = null),
                 )
 
-                val skattekort = skattekortService.getSkattekort("01410100001")
-                println("skattekort = $skattekort")
+                val skattekort = skattekortService.getSkattekort("01410100001").get()
                 skattekort shouldNotBeNull {
                     size shouldBe 9
                 }
-                val onlyLastSkattekort = skattekortService.getSingleSkattekortForEachYear("01410100001")
+                val onlyLastSkattekort = skattekortService.getSingleSkattekortForEachYear("01410100001").get()
                 onlyLastSkattekort shouldBeFunctionallyEquivalentTo
                     listOf(
                         aDomainSkattekort(

@@ -19,7 +19,7 @@ import no.nav.sokos.skattekort.infrastructure.pdl.GraphQLResponse
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.listener.WiremockListener.generatePDLResponse
+import no.nav.sokos.skattekort.listener.WiremockListener.generateHentIdenterBolk
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class PersonServiceTest :
@@ -91,7 +91,7 @@ class PersonServiceTest :
             val fnrList = listOf("10101000010", "10101000011", "10101000012")
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(generatePDLResponse(*fnrList.toTypedArray()))
+            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
             result.size shouldBe 3
@@ -104,7 +104,7 @@ class PersonServiceTest :
             val fnrList = listOf("15467834260")
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(generatePDLResponse(*fnrList.toTypedArray()))
+            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
             result.size shouldBe 1
@@ -155,7 +155,7 @@ class PersonServiceTest :
             val fnrList = listOf(existingFnr, newFnr)
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(generatePDLResponse(newFnr))
+            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(newFnr))
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
             result.size shouldBe 2
@@ -185,7 +185,7 @@ class PersonServiceTest :
         test("getPersonIdAndCheckFoedselsnumreIsUpdated skal håndtere store mengder fnr med chunking") {
             val fnrList = (1..100).map { "1010100%04d".format(it) }
 
-            WiremockListener.wiremockPDLStub(generatePDLResponse(*fnrList.toTypedArray()))
+            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
             DbListener.loadDataSet("database/person/persondata.sql")
 
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM, 30)

@@ -58,7 +58,7 @@ paths:
 
       security:
         - Bearer: [ ]
-  
+
   /opprett:
     post:
       tags:
@@ -217,7 +217,7 @@ components:
         - tabell
         - prosentSats
         - antallMndForTrekk
-    
+
     ApiError:
       type: object
       required:

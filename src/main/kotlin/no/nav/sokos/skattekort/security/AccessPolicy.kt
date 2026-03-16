@@ -9,7 +9,8 @@ enum class Scope(
 ) {
     BESTILLE_SCOPE("bestille-scope"),
     STATUS_SCOPE("status-scope"),
-    HENT_SCOPE("hent-scope"),
+    HENT_SKATTEKORT_SCOPE("hent-skattekort-scope"),
+    HENT_NAVN_SCOPE("hent-navn-scope"),
     OPPRETT_SCOPE("opprett-scope"),
     ;
 
@@ -24,7 +25,7 @@ enum class Role(
 ) {
     BESTILLE_ROLE("bestille-role"),
     OPPRETT_ROLE("opprett-role"),
-    HENT_ROLE("hent-role"),
+    HENT_SKATTEKORT_ROLE("hent-skattekort-role"),
     ;
 
     override fun toString() = value

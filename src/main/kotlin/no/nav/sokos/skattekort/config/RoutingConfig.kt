@@ -9,6 +9,7 @@ import no.nav.sokos.skattekort.api.skattekortApi
 import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
@@ -23,9 +24,10 @@ fun Application.routingConfig(
             val forespoerselService: ForespoerselService by dependencies
             val skattekortService: SkattekortService by dependencies
             val statusService: StatusService by dependencies
+            val pdlService: PdlService by dependencies
 
             skattekortApi(forespoerselService, statusService)
-            skattekortPersonApi(skattekortService)
+            skattekortPersonApi(skattekortService, pdlService)
         }
     }
 }

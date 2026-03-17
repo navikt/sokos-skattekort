@@ -154,6 +154,14 @@ configurations.all {
                 useTarget("at.yawk.lz4:lz4-java:1.10.4")
                 because("Prefer the patched fork for vulnerability fix")
             }
+            if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
+                useVersion("2.21.1")
+                because("jackson-core: Number Length Constraint Bypass in Async Parser Leads to Potential DoS Condition. Affected version >= 2.19.0, < 2.21.1")
+            }
+             if (requested.group == "org.eclipse.jetty" && requested.name == "jetty-server") {
+                useVersion("9.4.57.v20241219")
+                because("Eclipse Jetty's ThreadLimitHandler.getRemote() vulnerable to remote DoS attacks. Affected version >= 9.3.12, <= 9.4.55")
+            }
         }
     }
 }

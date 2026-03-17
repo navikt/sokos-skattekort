@@ -92,8 +92,8 @@ object Syntetisering {
             }
 
             skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.KILDESKATT_PAA_PENSJON) -> {
-                var forskuddstrekk = skattekort.forskuddstrekkList.toMutableList()
-                var oppdatert = emptyList<String>().toMutableList()
+                val forskuddstrekk = skattekort.forskuddstrekkList.toMutableList()
+                val oppdatert = emptyList<String>().toMutableList()
                 if (forskuddstrekk.find { it.trekkode() == Trekkode.PENSJON_FRA_NAV } == null) {
                     forskuddstrekk.add(
                         Prosentkort(

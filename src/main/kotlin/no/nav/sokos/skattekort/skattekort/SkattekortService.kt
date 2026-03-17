@@ -71,7 +71,7 @@ class SkattekortService(
         )
     }
 
-    fun createSkattekort(
+    fun createManualSkattekort(
         fnr: String,
         skattekortDTO: SkattekortDTO,
         saksbehandler: Saksbehandler?,

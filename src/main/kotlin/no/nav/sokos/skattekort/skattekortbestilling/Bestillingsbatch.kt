@@ -21,9 +21,3 @@ data class Bestillingsbatch
 value class BestillingsbatchId(
     val id: Long,
 )
-
-enum class BestillingsbatchStatus {
-    NY,
-    FERDIG,
-    FEILET,
-}

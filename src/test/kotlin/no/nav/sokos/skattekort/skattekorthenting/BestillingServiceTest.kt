@@ -55,6 +55,7 @@ import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsbatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.FEILET
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.FERDIG
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.RETRY
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.OPPDATERING
 import no.nav.sokos.skattekort.skattekortdata.SkattekortDataRepository
@@ -307,9 +308,9 @@ class BestillingServiceTest :
             val bestillingListAfter = tx(DBTestUtils::getAllBestilling)
 
             assertSoftly {
-                withClue("Should mark batch as FEILET") {
+                withClue("Should mark batch as RETRY") {
                     bestillingsbatchList shouldNotBeNull {
-                        first().status shouldBe FEILET
+                        first().status shouldBe RETRY
                     }
                 }
 
@@ -335,8 +336,7 @@ class BestillingServiceTest :
                     .shouldContainExactlyInAnyOrder(
                         listOf(
                             Level.INFO to "Henter skattekort for ref1",
-                            Level.ERROR to "Henting av skattekort for batch 1 feilet. Feil ved henting av skattekort: 404",
-                            Level.ERROR to "Henting av skattekort for batch 1 feilet, sjekk TEAM LOGS for detaljer",
+                            Level.INFO to "Henting av skattekort for batch 1 feilet, men prøvd på nytt senere",
                         ),
                     )
             }
@@ -473,8 +473,8 @@ class BestillingServiceTest :
                         listOf(
                             Level.INFO to "Henter skattekort for ref1",
                             Level.INFO to "Ved henting av skattekort for batch 1 returnerte Skatteetaten FORESPOERSEL_OK",
-                            Level.ERROR to "Henting av skattekort for batch 1 feilet. Ugyldig organisasjonsnummer",
-                            Level.ERROR to "Henting av skattekort for batch 1 feilet, sjekk TEAM LOGS for detaljer",
+                            Level.ERROR to "Ugydlig organisasjonsnummer av skattekort for batch 1 feilet. Ugyldig organisasjonsnummer",
+                            Level.ERROR to "Henting av skattekort for batch 1 feilet med Ugyldig organisasjonsnummer, sjekk TEAM LOGS for detaljer",
                         ),
                     )
             }

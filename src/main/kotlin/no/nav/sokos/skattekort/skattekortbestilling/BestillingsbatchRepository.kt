@@ -37,7 +37,7 @@ object BestillingsbatchRepository {
                 """
                     |SELECT * 
                     |FROM bestillingsbatcher
-                    |WHERE status IN ('NY', 'RETRY') AND type = :type
+                    |WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') AND type = :type
                     |ORDER BY oppdatert ASC
                 """.trimMargin(),
                 mapOf(
@@ -102,6 +102,16 @@ object BestillingsbatchRepository {
             ).asExecute,
         )
     }
+
+    fun getLastBestilingsbatch(tx: TransactionalSession): Bestillingsbatch? =
+        tx.single(
+            queryOf(
+                """
+                SELECT * FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet DESC LIMIT 1
+                """.trimIndent(),
+            ),
+            extractor = mapToBestillingsbatch,
+        )
 
     @OptIn(ExperimentalTime::class)
     val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->

@@ -54,7 +54,7 @@ fun Route.skattekortPersonApi(
             call.requirePermission(Scope.OPPRETT_SCOPE, Role.OPPRETT_ROLE)
             val request = call.receive<OpprettSkattekortRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            skattekortService.createSkattekort(
+            skattekortService.createManuelSkattekort(
                 request.fnr,
                 request.skattekort,
                 saksbehandler,
@@ -95,7 +95,7 @@ fun Route.skattekortPersonApi(
             call.requirePermission(Scope.OPPRETT_SCOPE, Role.OPPRETT_ROLE)
             val request = call.receive<OpprettSkattekortRequest>()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            skattekortService.createSkattekort(
+            skattekortService.createManuelSkattekort(
                 request.fnr,
                 request.skattekort,
                 saksbehandler,

@@ -79,18 +79,20 @@ class BestillingService(
                                 .isBefore(Instant.now())
                         ) {
                             logger.error(marker = TEAM_LOGS_MARKER, exception) { "Henting av skattekort for batch $batchId feilet. ${exception.message}" }
-                            logger.error("Henting av skattekort for batch $batchId feilet, sjekk TEAM LOGS for detaljer")
+                            logger.error("Henting av skattekort for batch: $batchId, type: ${batch.type.name} feilet, sjekk TEAM LOGS for detaljer")
                             dataSource.transaction { errorTx ->
                                 BestillingsbatchRepository.markAs(errorTx, batchId, BestillingsbatchStatus.FEILET)
-                                AuditRepository.insertBatch(
-                                    errorTx,
-                                    AuditTag.HENTING_AV_SKATTEKORT_FEILET,
-                                    BestillingRepository.getAllBestillingsInBatch(errorTx, batchId).map { bestilling -> bestilling.personId },
-                                    "Batchhenting av skattekort feilet med ${exception.javaClass.simpleName}, batchid $batchId",
-                                )
+                                if (batch.type == BESTILLING) {
+                                    AuditRepository.insertBatch(
+                                        errorTx,
+                                        AuditTag.HENTING_AV_SKATTEKORT_FEILET,
+                                        BestillingRepository.getAllBestillingsInBatch(errorTx, batchId).map { bestilling -> bestilling.personId },
+                                        "Batchhenting av skattekort feilet med ${exception.javaClass.simpleName}, batchid $batchId",
+                                    )
+                                }
                             }
                         } else {
-                            logger.info { "Henting av skattekort for batch $batchId feilet, men prøvd på nytt senere" }
+                            logger.info { "Henting av skattekort for batch: $batchId, type: ${batch.type.name} feilet, men prøvd på nytt senere" }
                             dataSource.transaction { tx -> BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.RETRY) }
                         }
                     }

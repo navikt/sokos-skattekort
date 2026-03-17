@@ -336,7 +336,7 @@ class BestillingServiceTest :
                     .shouldContainExactlyInAnyOrder(
                         listOf(
                             Level.INFO to "Henter skattekort for ref1",
-                            Level.INFO to "Henting av skattekort for batch 1 feilet, men prøvd på nytt senere",
+                            Level.INFO to "Henting av skattekort for batch: 1, type: BESTILLING feilet, men prøvd på nytt senere",
                         ),
                     )
             }

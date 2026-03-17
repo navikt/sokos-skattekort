@@ -32,7 +32,7 @@ class UnleashIntegration {
         if (appProperties.environment == PropertiesConfig.Environment.TEST) {
             unleashClient =
                 FakeUnleash().also { fakeUnleash ->
-                    fakeUnleash.enable("sokos-skattekort.forespoersel-listener.enabled")
+                    fakeUnleash.enable("sokos-skattekort.forespoerselinput.enabled")
                     fakeUnleash.enable("sokos-skattekort.utsendinger.enabled")
                     fakeUnleash.enable("sokos-skattekort.bestillinger.enabled")
                     fakeUnleash.enable("sokos-skattekort.oppdateringer.enabled")

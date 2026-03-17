@@ -30,8 +30,4 @@ class UnleashIntegrationTest :
         test("isLagreMottatteBestillingerEnabled skal returnere false som default") {
             unleash.isLagreMottatteBestillingerEnabled() shouldBe false
         }
-
-        test("isForespoerselListenerEnabled skal returnere true når FORESPOERSEL_LISTENER flagget er på") {
-            unleash.isForespoerselListenerEnabled() shouldBe true
-        }
     })

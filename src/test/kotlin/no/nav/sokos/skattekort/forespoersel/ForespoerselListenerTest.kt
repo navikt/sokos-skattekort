@@ -49,11 +49,6 @@ class ForespoerselListenerTest :
             )
         }
 
-        afterEach {
-            // Ensure listener is stopped after each test
-            forespoerselListener.stop()
-        }
-
         test("start() skal opprette JMS context og consumer") {
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
@@ -74,63 +69,5 @@ class ForespoerselListenerTest :
                     }
                 }
             }
-        }
-
-        test("stop() skal lukke JMS consumer og context") {
-            forespoerselListener.start()
-            forespoerselListener.stop()
-
-            JmsTestUtil.assertAllQueuesAreEmpty()
-
-            // Verifiser at listener ikke mottar meldinger etter stop
-            val jmsMessage = "OS;2025;22222222222"
-            JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
-
-            eventually(eventuallyConfiguration) {
-                DbListener.dataSource.transaction { session ->
-                    ForespoerselRepository.getAllForespoersel(session) shouldBe emptyList()
-                }
-            }
-            JmsTestUtil.getMessages(forSystemQueue).size shouldBe 1
-        }
-
-        test("onOppdateringChanged() skal ikke gjøre noe når enabled er true og listener allerede kjører") {
-            // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
-            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val fnr = "55555555555"
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
-
-                forespoerselListener.start()
-
-                forespoerselListener.onOppdateringChanged(enabled = true)
-
-                // Listener skal fortsatt være kjørende og mottar meldinger
-                val jmsMessage = "OS;2025;$fnr"
-                JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
-
-                eventually(eventuallyConfiguration) {
-                    DbListener.dataSource.transaction { session ->
-                        ForespoerselRepository.getAllForespoersel(session).any {
-                            it.dataMottatt == jmsMessage
-                        } shouldBe true
-                    }
-                }
-            }
-        }
-
-        test("onOppdateringChanged() skal ikke gjøre noe når enabled er false og listener allerede stoppet") {
-            forespoerselListener.stop()
-
-            forespoerselListener.onOppdateringChanged(enabled = false)
-
-            val jmsMessage = "OS;2025;66666666666"
-            JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
-
-            eventually(eventuallyConfiguration) {
-                DbListener.dataSource.transaction { session ->
-                    ForespoerselRepository.getAllForespoersel(session) shouldBe emptyList()
-                }
-            }
-            JmsTestUtil.getMessages(forSystemQueue).size shouldBe 1
         }
     })

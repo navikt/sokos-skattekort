@@ -2,8 +2,6 @@ package no.nav.sokos.skattekort
 
 import javax.sql.DataSource
 
-import kotlinx.coroutines.runBlocking
-
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
@@ -118,22 +116,16 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
-        provide<UnleashIntegration> {
-            UnleashIntegration { enabled ->
-                val forespoerselListener: ForespoerselListener =
-                    runBlocking {
-                        this@module.dependencies.resolve()
-                    }
-                forespoerselListener.onOppdateringChanged(enabled)
-            }
-        }
+        provide(UnleashIntegration::class)
     }
 
     securityConfig()
     routingConfig(applicationState)
 
-    val forespoerselListener: ForespoerselListener by dependencies
-    forespoerselListener.start()
+    if (PropertiesConfig.getApplicationProperties().mqListenerEnabled) {
+        val forespoerselListener: ForespoerselListener by dependencies
+        forespoerselListener.start()
+    }
 
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies

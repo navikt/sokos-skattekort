@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.forespoersel
 
 import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
-import jakarta.jms.JMSConsumer
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
@@ -18,18 +17,11 @@ class ForespoerselListener(
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
     @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
 ) {
-    private var jmsContext: JMSContext? = null
-    private var jmsConsumer: JMSConsumer? = null
+    private val jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+    private val messageListener = jmsContext.createConsumer(forespoerselQueue)
 
-    @Volatile
-    private var isRunning = false
-
-    @Synchronized
-    fun start() {
-        jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
-        jmsConsumer = jmsContext!!.createConsumer(forespoerselQueue)
-
-        jmsConsumer!!.setMessageListener { message: Message ->
+    init {
+        messageListener.setMessageListener { message: Message ->
             TraceUtils.withTracerId {
                 runCatching {
                     val jmsMessage = message.getBody(String::class.java)
@@ -43,32 +35,9 @@ class ForespoerselListener(
                 }
             }
         }
-
-        jmsContext!!.start()
-        isRunning = true
-        logger.info { "Forespoersel started, listening on queue: ${forespoerselQueue.queueName}" }
     }
 
-    @Synchronized
-    fun stop() {
-        isRunning = false
-        try {
-            jmsContext?.stop() // Stop message delivery first
-            jmsConsumer?.messageListener = null
-            jmsConsumer?.close()
-            jmsContext?.close() // This closes the underlying connection
-            jmsConsumer = null
-            jmsContext = null
-        } catch (e: Exception) {
-            logger.error(e) { "Error stopping ForespoerselListener" }
-        }
-        logger.info { "ForespoerselListener stopped on queue:  ${forespoerselQueue.queueName}" }
-    }
-
-    fun onOppdateringChanged(enabled: Boolean) {
-        when {
-            enabled && !isRunning -> start()
-            !enabled && isRunning -> stop()
-        }
+    fun start() {
+        jmsContext.start()
     }
 }

@@ -221,14 +221,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ForskuddstrekkDTO'
-        id: 
+        id:
           type: number
         identifikator:
           type: string
         inntektsaar:
           type: integer
           format: year
-        kilde: 
+        kilde:
           type: string
         opprettet:
           type: string

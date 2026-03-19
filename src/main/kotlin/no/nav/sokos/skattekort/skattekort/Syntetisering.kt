@@ -29,105 +29,57 @@ object Syntetisering {
             )
         }
 
-    private fun genererForskuddstrekk(skattekort: Skattekort): Pair<List<Forskuddstrekk>, String>? =
-        when {
+    private fun genererForskuddstrekk(skattekort: Skattekort): Pair<List<Forskuddstrekk>, String>? {
+        val manglendeKildeskattPaaPensjonSatser = manglendeKildeskattPaaPensjonSatser(skattekort.forskuddstrekkList)
+        return when {
             skattekort.resultatForSkattekort == ResultatForSkattekort.IkkeTrekkplikt -> {
                 Pair(
-                    listOf<Forskuddstrekk>(
-                        Frikort(
-                            trekkode = Trekkode.LOENN_FRA_NAV,
-                            frikortBeloep = null,
-                        ),
-                        Frikort(
-                            trekkode = Trekkode.PENSJON_FRA_NAV,
-                            frikortBeloep = null,
-                        ),
-                        Frikort(
-                            trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                            frikortBeloep = null,
-                        ),
-                    ),
+                    listOf(Trekkode.LOENN_FRA_NAV, Trekkode.PENSJON_FRA_NAV, Trekkode.UFOERETRYGD_FRA_NAV)
+                        .map { Frikort(it, null) },
                     "Frikort uten beløpsgrense syntetisert fordi brukeren ikke er trekkpliktig",
                 )
             }
 
             skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD) -> {
-                if (skattekort.inntektsaar < 2026) {
-                    Pair(
-                        listOf<Forskuddstrekk>(
-                            Prosentkort(
-                                trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.70),
-                            ),
-                            Prosentkort(
-                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.70),
-                            ),
-                            Prosentkort(
-                                trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(13.10),
-                            ),
-                        ),
-                        "Prosentkort med default skattesatser for Svalbard syntetisert pga mottatt tilleggsinformasjon ${Tilleggsopplysning.OPPHOLD_PAA_SVALBARD.value}",
-                    )
-                } else {
-                    Pair(
-                        listOf<Forskuddstrekk>(
-                            Prosentkort(
-                                trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.60),
-                            ),
-                            Prosentkort(
-                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.60),
-                            ),
-                            Prosentkort(
-                                trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(13.10),
-                            ),
-                        ),
-                        "Prosentkort med default skattesatser for Svalbard syntetisert pga mottatt tilleggsinformasjon ${Tilleggsopplysning.OPPHOLD_PAA_SVALBARD.value}",
-                    )
-                }
+                Pair(
+                    svalbardsatser(skattekort.inntektsaar),
+                    "Prosentkort med default skattesatser for Svalbard syntetisert pga mottatt tilleggsinformasjon ${Tilleggsopplysning.OPPHOLD_PAA_SVALBARD.value}",
+                )
             }
 
-            skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.KILDESKATT_PAA_PENSJON) -> {
-                val forskuddstrekk = skattekort.forskuddstrekkList.toMutableList()
-                val oppdatert = emptyList<String>().toMutableList()
-                if (forskuddstrekk.find { it.trekkode() == Trekkode.PENSJON_FRA_NAV } == null) {
-                    forskuddstrekk.add(
-                        Prosentkort(
-                            trekkode = Trekkode.PENSJON_FRA_NAV,
-                            prosentSats = BigDecimal.valueOf(15.00),
-                        ),
-                    )
-                    oppdatert.add(
-                        Trekkode.PENSJON_FRA_NAV.value,
-                    )
-                }
-                if (forskuddstrekk.find { it.trekkode() == Trekkode.UFOERETRYGD_FRA_NAV } == null) {
-                    forskuddstrekk.add(
-                        Prosentkort(
-                            trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                            prosentSats = BigDecimal.valueOf(15.00),
-                        ),
-                    )
-                    oppdatert.add(
-                        Trekkode.UFOERETRYGD_FRA_NAV.value,
-                    )
-                }
-                if (oppdatert.isNotEmpty()) {
-                    Pair(
-                        forskuddstrekk,
-                        """Skattekort syntetisert med manglende trekkoder ${oppdatert.joinToString(",")} pga mottatt tilleggsinformasjon ${Tilleggsopplysning.KILDESKATT_PAA_PENSJON}""",
-                    )
-                } else {
-                    null
-                }
+            skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.KILDESKATT_PAA_PENSJON) &&
+                manglendeKildeskattPaaPensjonSatser.isNotEmpty() -> {
+                Pair(
+                    (manglendeKildeskattPaaPensjonSatser + skattekort.forskuddstrekkList).sortedBy { it.trekkode() },
+                    """Skattekort syntetisert med manglende trekkoder ${
+                        manglendeKildeskattPaaPensjonSatser.joinToString(
+                            ",",
+                        )
+                    } pga mottatt tilleggsinformasjon ${Tilleggsopplysning.KILDESKATT_PAA_PENSJON}""",
+                )
             }
 
-            else -> {
-                null
-            }
+            else -> null
         }
+    }
 }
+
+fun svalbardsatser(inntektsaar: Int): List<Forskuddstrekk> =
+    when (inntektsaar) {
+        2025 -> listOf(15.70, 15.70, 13.10)
+        2026 -> listOf(15.60, 15.60, 13.10)
+        else -> error("Har ikke svalbardsatser for: $inntektsaar")
+    }.map(Double::toBigDecimal)
+        .zip(listOf(Trekkode.LOENN_FRA_NAV, Trekkode.UFOERETRYGD_FRA_NAV, Trekkode.PENSJON_FRA_NAV)) { prosentsats, trekkode ->
+            Prosentkort(trekkode, prosentsats)
+        }.sortedBy { it.trekkode }
+
+fun manglendeKildeskattPaaPensjonSatser(fraSkd: List<Forskuddstrekk>): List<Forskuddstrekk> =
+    listOf(Trekkode.PENSJON_FRA_NAV, Trekkode.UFOERETRYGD_FRA_NAV)
+        .subtract(fraSkd.map { it.trekkode() })
+        .map {
+            Prosentkort(
+                trekkode = it,
+                prosentSats = BigDecimal.valueOf(15.00),
+            )
+        }

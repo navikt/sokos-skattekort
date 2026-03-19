@@ -216,8 +216,8 @@ class SkattekortDataServiceTest :
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList.shouldContainExactly(
                             Prosentkort(Trekkode.LOENN_FRA_NAV, 15.7.withScale(), null),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
                             Prosentkort(Trekkode.PENSJON_FRA_NAV, 13.1.withScale(), null),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
                         )
                     }
                 }
@@ -434,8 +434,8 @@ class SkattekortDataServiceTest :
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList.shouldContainExactly(
                             Prosentkort(Trekkode.LOENN_FRA_NAV, 15.7.withScale(), null),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
                             Prosentkort(Trekkode.PENSJON_FRA_NAV, 13.1.withScale(), null),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
                         )
                         tilleggsopplysningList.shouldContainExactly(
                             Tilleggsopplysning.OPPHOLD_PAA_SVALBARD,
@@ -574,8 +574,8 @@ class SkattekortDataServiceTest :
                         resultatForSkattekort shouldBe IkkeSkattekort
                         forskuddstrekkList.shouldContainExactly(
                             Prosentkort(Trekkode.LOENN_FRA_NAV, 15.7.withScale(), null),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
                             Prosentkort(Trekkode.PENSJON_FRA_NAV, 13.1.withScale(), null),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
                         )
                         tilleggsopplysningList.shouldContainExactly(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD)
                     }

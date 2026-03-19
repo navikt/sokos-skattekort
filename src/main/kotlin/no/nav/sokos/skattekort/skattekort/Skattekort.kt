@@ -246,17 +246,20 @@ enum class Trekkode(
     val value: String,
     val requiresAdminRole: Boolean,
 ) {
-    LOENN_FRA_HOVEDARBEIDSGIVER("loennFraHovedarbeidsgiver", true),
-    LOENN_FRA_BIARBEIDSGIVER("loennFraBiarbeidsgiver", true),
+    // Trekkodene vi har behov for
     LOENN_FRA_NAV("loennFraNAV", false),
-    PENSJON("pensjon", true),
     PENSJON_FRA_NAV("pensjonFraNAV", false),
-    LOENN_TIL_UTENRIKSTJENESTEMANN("loennTilUtenrikstjenestemann", true),
+    UFOERETRYGD_FRA_NAV("ufoeretrygdFraNAV", false),
+
+    // Trekkodene vi ikke har behov for
+    INTRODUKSJONSSTOENAD("introduksjonsstoenad", true),
+    LOENN_FRA_BIARBEIDSGIVER("loennFraBiarbeidsgiver", true),
+    LOENN_FRA_HOVEDARBEIDSGIVER("loennFraHovedarbeidsgiver", true),
     LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER("loennKunTrygdeavgiftTilUtenlandskBorger", true),
     LOENN_KUN_TRYGDEAVGIFT_TIL_UTENLANDSK_BORGER_SOM_GRENSEGJENGER("loennKunTrygdeavgiftTilUtenlandskBorgerSomGrensegjenger", true),
-    UFOERETRYGD_FRA_NAV("ufoeretrygdFraNAV", false),
+    LOENN_TIL_UTENRIKSTJENESTEMANN("loennTilUtenrikstjenestemann", true),
+    PENSJON("pensjon", true),
     UFOEREYTELSER_FRA_ANDRE("ufoereytelserFraAndre", true),
-    INTRODUKSJONSSTOENAD("introduksjonsstoenad", true),
     ;
 
     companion object {

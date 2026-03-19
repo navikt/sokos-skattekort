@@ -82,12 +82,12 @@ class SyntetiseringTest :
                                 prosentSats = BigDecimal.valueOf(15.70),
                             ),
                             Prosentkort(
-                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.70),
-                            ),
-                            Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
                                 prosentSats = BigDecimal.valueOf(13.10),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.70),
                             ),
                         )
                 }
@@ -121,12 +121,12 @@ class SyntetiseringTest :
                                 prosentSats = BigDecimal.valueOf(15.60),
                             ),
                             Prosentkort(
-                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.60),
-                            ),
-                            Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
                                 prosentSats = BigDecimal.valueOf(13.10),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                                prosentSats = BigDecimal.valueOf(15.60),
                             ),
                         )
                 }

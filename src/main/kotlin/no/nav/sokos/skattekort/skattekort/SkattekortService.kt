@@ -116,4 +116,13 @@ class SkattekortService(
             }
         }
     }
+
+    fun deleteSkattekortForYear(inntektsaar: Int) {
+        logger.info { "Deleting skattekort for year: $inntektsaar start" }
+        val skattekortIdList = dataSource.transaction { tx -> SkattekortRepository.getAllIdByInntektsaar(tx, inntektsaar) }
+        skattekortIdList.chunked(10000).forEach { chunk ->
+            dataSource.transaction { tx -> SkattekortRepository.deleteBatch(tx, chunk) }
+        }
+        logger.info { "Deleting ${skattekortIdList.size} skattekort for year: $inntektsaar finished" }
+    }
 }

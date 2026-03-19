@@ -31,7 +31,6 @@ import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
-import no.nav.sokos.skattekort.infrastructure.scheduler.ScheduledTaskService
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.person.PersonService
@@ -140,7 +139,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val bestillingsbatchService: BestillingsbatchService by dependencies
         val utsendingService: UtsendingService by dependencies
         val skattekortdataService: SkattekortDataService by dependencies
-        val scheduledTaskService = ScheduledTaskService(DatabaseConfig.dataSourceScheduler)
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
         val dataSource: DataSource by dependencies
@@ -151,7 +149,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 bestillingsbatchService = bestillingsbatchService,
                 utsendingService = utsendingService,
                 skattekortdataService = skattekortdataService,
-                scheduledTaskService = scheduledTaskService,
                 metricsService = metricsService,
                 forespoerselService = forespoerselService,
                 dataSource = dataSource,

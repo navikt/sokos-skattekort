@@ -183,6 +183,34 @@ object SkattekortRepository {
         adminRole: Boolean,
     ): Skattekort = findAllByPersonId(tx, personId, inntektsaar, adminRole).first()
 
+    fun getAllIdByInntektsaar(
+        tx: TransactionalSession,
+        inntektsaar: Int,
+    ): List<Long> =
+        tx.list(
+            queryOf(
+                """
+                SELECT id FROM skattekort WHERE inntektsaar = :inntektsaar ORDER BY id;
+                """.trimIndent(),
+                mapOf("inntektsaar" to inntektsaar),
+            ),
+            extractor = { row -> row.long("id") },
+        )
+
+    fun deleteBatch(
+        tx: TransactionalSession,
+        skattekortIdList: List<Long>,
+    ) {
+        tx.batchPreparedNamedStatement(
+            """
+            DELETE FROM skattekort WHERE id = :skattekortId
+            """.trimIndent(),
+            skattekortIdList.map { id ->
+                mapOf("skattekortId" to id)
+            },
+        )
+    }
+
     fun getSecondsSinceLatestSkattekortOpprettet(tx: TransactionalSession): Double? =
         tx.single(
             queryOf(

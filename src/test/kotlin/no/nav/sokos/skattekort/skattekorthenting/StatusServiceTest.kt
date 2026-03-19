@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.status
+package no.nav.sokos.skattekort.skattekorthenting
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -7,8 +7,8 @@ import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.DbListener.dataSource
 import no.nav.sokos.skattekort.skattekort.aBestilling
 import no.nav.sokos.skattekort.skattekort.aBestillingsbatch
-import no.nav.sokos.skattekort.skattekort.aDbSkattekort
 import no.nav.sokos.skattekort.skattekort.aPerson
+import no.nav.sokos.skattekort.skattekort.aSkattekort
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.anUtsending
 import no.nav.sokos.skattekort.skattekort.databaseHas
@@ -79,7 +79,7 @@ class StatusServiceTest :
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 2025),
+                    aSkattekort(1L, 1L, 2025),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
@@ -90,7 +90,7 @@ class StatusServiceTest :
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 2025),
+                    aSkattekort(1L, 1L, 2025),
                     anUtsending("01010100001", 2025, forsystem = "OS"),
                 )
 
@@ -102,7 +102,7 @@ class StatusServiceTest :
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 2025),
+                    aSkattekort(1L, 1L, 2025),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2026, forsystem = "OS")
@@ -112,7 +112,7 @@ class StatusServiceTest :
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 2025),
+                    aSkattekort(1L, 1L, 2025),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
@@ -122,7 +122,7 @@ class StatusServiceTest :
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 2025),
+                    aSkattekort(1L, 1L, 2025),
                     anUtsending("01010100001", 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR"),
                 )
 
@@ -131,15 +131,3 @@ class StatusServiceTest :
             }
         },
     )
-
-fun aSkattekort(
-    personId: Long,
-    inntektsaar: Int,
-) = aDbSkattekort(
-    id = 10015752,
-    personId = personId,
-    utstedtDato = "2024-12-05",
-    identifikator = "1085419887",
-    inntektsaar = inntektsaar,
-    opprettet = "2025-12-19 15:52:47.833756",
-)

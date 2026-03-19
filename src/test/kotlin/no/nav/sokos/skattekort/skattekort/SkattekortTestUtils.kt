@@ -4,95 +4,127 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 import kotlin.time.Instant
 import kotlinx.serialization.json.Json
 
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
-import io.kotest.matchers.shouldBe
 
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort as Sskattekort
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiver
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidsgiveridentifikator
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkprosent
-import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekktabell
+import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsbatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchId
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.utils.TestUtils.runThisSql
 
+fun aSkattekort(
+    id: Long,
+    personId: Long,
+    inntektsaar: Int,
+    utstedtDato: LocalDate = LocalDate.now(),
+    identifikator: String = "1",
+    opprettet: LocalDateTime = LocalDateTime.now(),
+    kilde: String = "skatteetaten",
+    resultatForSkattekort: ResultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
+    generertFra: Long? = null,
+) = """
+    INSERT INTO skattekort (id, person_id, utstedt_dato, identifikator, inntektsaar, kilde, opprettet, resultatForSkattekort, generert_fra)
+    VALUES ($id, $personId, '$utstedtDato', '$identifikator', $inntektsaar, '$kilde', '$opprettet', '${resultatForSkattekort.value}', $generertFra);
+    """.trimIndent()
+
 fun aForskuddstrekk(
+    id: Long? = null,
+    skattekortId: Long,
     type: Forskuddstrekk,
     trekkode: Trekkode,
     prosentSats: Double? = null,
     antMndForTrekk: Double? = null,
     tabellNummer: String? = null,
     frikortbeløp: Int? = null,
-): Forskuddstrekk =
-    when (type) {
-        is Prosentkort -> {
-            Prosentkort(
-                trekkode,
-                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
-                antMndForTrekk?.let { belop -> BigDecimal(belop).setScale(1, RoundingMode.HALF_UP) },
-            )
-        }
+): String {
+    val idColumn = if (id != null) "id, " else ""
+    val idValue = if (id != null) "$id, " else ""
 
-        is Tabellkort -> {
-            Tabellkort(
-                trekkode,
-                tabellNummer!!,
-                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
-                BigDecimal(antMndForTrekk ?: 12.0).setScale(1, RoundingMode.HALF_UP),
-            )
-        }
+    return when (type) {
+        is Prosentkort ->
+            """
+            INSERT INTO forskuddstrekk (${idColumn}skattekort_id, type, trekk_kode, prosentsats, antall_mnd_for_trekk, tabell_nummer, frikort_beloep)
+            VALUES (${idValue}$skattekortId, 'PROSENTKORT', '${trekkode.value}', ${prosentSats!!}, ${antMndForTrekk?.toString() ?: "NULL"}, NULL, NULL);
+            """.trimIndent()
 
-        is Frikort -> {
-            Frikort(
-                trekkode,
-                frikortbeløp,
-            )
-        }
+        is Tabellkort ->
+            """
+            INSERT INTO forskuddstrekk ($idColumn skattekort_id, type, trekk_kode, prosentsats, antall_mnd_for_trekk, tabell_nummer, frikort_beloep)
+            VALUES ($idValue $skattekortId, 'TABELLKORT', '${trekkode.value}', ${prosentSats!!}, ${antMndForTrekk ?: 12.0}, '${tabellNummer!!}', NULL);
+            """.trimIndent()
+
+        is Frikort ->
+            """
+            INSERT INTO forskuddstrekk ($idColumn skattekort_id, type, trekk_kode, prosentsats, antall_mnd_for_trekk, tabell_nummer, frikort_beloep)
+            VALUES (${idValue}$skattekortId, 'FRIKORT', '${trekkode.value}', NULL, NULL, NULL, ${frikortbeløp ?: "NULL"});
+            """.trimIndent()
     }
+}
 
-fun aSkdForskuddstrekk(
-    trekkode: Trekkode,
-    trekkprosent: Double? = null,
-    tabellNummer: String? = null,
-    frikortbeloep: Int? = null,
-): no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk =
-    no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk(
-        trekkode = trekkode.value,
-        trekktabell = tabellNummer?.let { Trekktabell(it, BigDecimal(trekkprosent!!).setScale(2, RoundingMode.HALF_UP), BigDecimal(12).setScale(1, RoundingMode.HALF_UP)) },
-        trekkprosent = trekkprosent?.let { Trekkprosent(BigDecimal(it).setScale(2, RoundingMode.HALF_UP), null) },
-        frikort =
-            frikortbeloep?.let {
-                no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort
-                    .Frikort(BigDecimal(frikortbeloep).setScale(2, RoundingMode.HALF_UP))
-            },
-    )
+fun aTilleggsopplysning(
+    id: Long? = null,
+    skattekortId: Long,
+    opplysning: Tilleggsopplysning,
+): String {
+    val idColumn = if (id != null) "id, " else ""
+    val idValue = if (id != null) "$id, " else ""
 
-fun aSkattekort(
-    utstedtDato: String,
-    identifikator: Long,
-    forskuddstrekk: List<no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk>,
-): Skattekort =
-    Skattekort(
-        utstedtDato = utstedtDato,
-        skattekortidentifikator = identifikator,
-        forskuddstrekk = forskuddstrekk,
-    )
+    return """
+        INSERT INTO skattekort_tilleggsopplysning ($idColumn skattekort_id, opplysning)
+        VALUES ($idValue  $skattekortId, '${opplysning.value}');
+        """.trimIndent()
+}
+
+fun aSkattekortData(
+    id: Long? = null,
+    dataMottatt: String,
+    inntektsaar: Int,
+    fnr: String,
+    skattekortId: Long? = null,
+): String {
+    val idColumn = if (id != null) "id, " else ""
+    val idValue = if (id != null) "$id, " else ""
+    val escapedJson = dataMottatt.replace("'", "''")
+    return """
+        INSERT INTO skattekort_data ($idColumn data_mottatt, inntektsaar, fnr, skattekort_id)
+        VALUES ($idValue CAST('$escapedJson' AS JSON), $inntektsaar, '$fnr', ${skattekortId ?: "NULL"});
+        """.trimIndent()
+}
+
+fun aDomainSkattekort(
+    inntektsaar: Int,
+    resultatForSkattekort: ResultatForSkattekort,
+    forskuddstrekk: Forskuddstrekk,
+    personId: Long,
+) = Skattekort(
+    inntektsaar = inntektsaar,
+    resultatForSkattekort = resultatForSkattekort,
+    forskuddstrekkList = listOf(forskuddstrekk),
+    personId = PersonId(personId),
+    identifikator = "01410100001",
+    utstedtDato = kotlinx.datetime.LocalDate.parse("2021-01-01"),
+    kilde = "foo",
+)
 
 fun anArbeidstaker(
     resultat: ResultatForSkattekort,
     fnr: String,
     inntektsaar: Int,
     tilleggsopplysninger: List<Tilleggsopplysning>? = null,
-    skattekort: Skattekort? = null,
+    skattekort: Sskattekort? = null,
 ): Arbeidstaker =
     Arbeidstaker(
         arbeidstakeridentifikator = fnr,
@@ -178,21 +210,6 @@ fun anAbonnement(
                     VALUES ($forespoerselId, $personId, $inntektsaar);
     """.trimIndent()
 
-fun aDbSkattekort(
-    id: Long,
-    personId: Long,
-    utstedtDato: String,
-    identifikator: String,
-    inntektsaar: Int,
-    opprettet: String,
-    kilde: String = "skatteetaten",
-    resultatForSkattekort: ResultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
-    generertFra: Long? = null,
-) = """
-    INSERT INTO skattekort (id, person_id, utstedt_dato, identifikator, inntektsaar, kilde, opprettet, resultatForSkattekort, generert_fra)
-    VALUES ($id, $personId, '$utstedtDato', '$identifikator', $inntektsaar, '$kilde', '$opprettet', '${resultatForSkattekort.value}', $generertFra);
-    """.trimIndent()
-
 fun aDbForskuddstrekk(
     id: Long,
     skattekortId: Long,
@@ -232,15 +249,17 @@ fun aBatch(
         dataSendt = "",
     )
 
-fun List<Bestillingsbatch>.shouldBeFunctionallyEquivalentTo(expected: List<Bestillingsbatch>) {
-    this.size shouldBe expected.size
-    expected.shouldContainAllIgnoringFields(
+fun Double.withScale(): BigDecimal = this.toBigDecimal().setScale(2, RoundingMode.HALF_UP)
+
+fun List<Skattekort>.shouldBeFunctionallyEquivalentTo(expected: List<Skattekort>) {
+    this.shouldContainAllIgnoringFields(
         expected,
-        Bestillingsbatch::oppdatert,
-        Bestillingsbatch::opprettet,
-        Bestillingsbatch::id,
-        Bestillingsbatch::dataSendt,
+        Skattekort::id,
+        Skattekort::generertFra,
+        Skattekort::utstedtDato,
+        Skattekort::identifikator,
+        Skattekort::kilde,
+        Skattekort::opprettet,
+        Skattekort::tilleggsopplysningList,
     )
 }
-
-fun Double.withScale() = this.toBigDecimal().setScale(2, RoundingMode.HALF_UP)

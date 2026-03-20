@@ -1,6 +1,6 @@
 package no.nav.sokos.skattekort.infrastructure.skatteetaten
 
-import java.math.BigDecimal.valueOf
+import java.math.BigDecimal
 
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
@@ -51,11 +51,11 @@ object SkatteetatenClientTestUtils {
                     listOf(
                         Forskuddstrekk(
                             trekkode = LOENN_FRA_NAV.value,
-                            trekkprosent = Trekkprosent(valueOf(25)),
+                            trekkprosent = Trekkprosent(BigDecimal("25.00")),
                         ),
                         Forskuddstrekk(
                             trekkode = UFOERETRYGD_FRA_NAV.value,
-                            trekkprosent = Trekkprosent(valueOf(28)),
+                            trekkprosent = Trekkprosent(BigDecimal("28.00")),
                         ),
                     ),
             ),

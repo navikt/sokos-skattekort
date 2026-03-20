@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.skattekortdata
 
+import java.math.BigDecimal
+
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -28,7 +30,6 @@ import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.anAbonnement
 import no.nav.sokos.skattekort.skattekort.databaseHas
-import no.nav.sokos.skattekort.skattekort.withScale
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
@@ -88,11 +89,11 @@ class SkattekortDataServiceTest :
                         kilde shouldBe SkattekortKilde.SKATTEETATEN.value
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList.shouldContainExactly(
-                            Tabellkort(Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, "8140", 43.0.withScale(), 10.5.toBigDecimal()),
-                            Prosentkort(Trekkode.LOENN_FRA_BIARBEIDSGIVER, 43.0.withScale()),
-                            Prosentkort(Trekkode.LOENN_FRA_NAV, 43.0.withScale()),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 43.0.withScale()),
-                            Prosentkort(Trekkode.UFOEREYTELSER_FRA_ANDRE, 43.0.withScale()),
+                            Tabellkort(Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, "8140", BigDecimal("43.00"), BigDecimal("10.5")),
+                            Prosentkort(Trekkode.LOENN_FRA_BIARBEIDSGIVER, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.LOENN_FRA_NAV, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.UFOEREYTELSER_FRA_ANDRE, BigDecimal("43.00")),
                         )
 
                         tilleggsopplysningList shouldBe emptyList()
@@ -198,11 +199,11 @@ class SkattekortDataServiceTest :
                         kilde shouldBe SkattekortKilde.SKATTEETATEN.value
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList.shouldContainExactly(
-                            Tabellkort(Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, "8140", 43.0.withScale(), 10.5.toBigDecimal()),
-                            Prosentkort(Trekkode.LOENN_FRA_BIARBEIDSGIVER, 43.0.withScale()),
-                            Prosentkort(Trekkode.LOENN_FRA_NAV, 43.0.withScale()),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 43.0.withScale()),
-                            Prosentkort(Trekkode.UFOEREYTELSER_FRA_ANDRE, 43.0.withScale()),
+                            Tabellkort(Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, "8140", BigDecimal("43.00"), BigDecimal("10.5")),
+                            Prosentkort(Trekkode.LOENN_FRA_BIARBEIDSGIVER, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.LOENN_FRA_NAV, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.UFOEREYTELSER_FRA_ANDRE, BigDecimal("43.00")),
                         )
                         tilleggsopplysningList.shouldContainExactly(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD)
                     }
@@ -215,9 +216,9 @@ class SkattekortDataServiceTest :
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList.shouldContainExactly(
-                            Prosentkort(Trekkode.LOENN_FRA_NAV, 15.7.withScale(), null),
-                            Prosentkort(Trekkode.PENSJON_FRA_NAV, 13.1.withScale(), null),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
+                            Prosentkort(Trekkode.LOENN_FRA_NAV, BigDecimal("15.70"), null),
+                            Prosentkort(Trekkode.PENSJON_FRA_NAV, BigDecimal("13.10"), null),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, BigDecimal("15.70"), null),
                         )
                     }
                 }
@@ -412,11 +413,11 @@ class SkattekortDataServiceTest :
                         kilde shouldBe SkattekortKilde.SKATTEETATEN.value
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList.shouldContainExactly(
-                            Tabellkort(Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, "8140", 43.0.withScale(), 10.5.toBigDecimal()),
-                            Prosentkort(Trekkode.LOENN_FRA_BIARBEIDSGIVER, 43.0.withScale()),
-                            Prosentkort(Trekkode.LOENN_FRA_NAV, 43.0.withScale()),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 43.0.withScale()),
-                            Prosentkort(Trekkode.UFOEREYTELSER_FRA_ANDRE, 43.0.withScale()),
+                            Tabellkort(Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER, "8140", BigDecimal("43.00"), BigDecimal("10.5")),
+                            Prosentkort(Trekkode.LOENN_FRA_BIARBEIDSGIVER, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.LOENN_FRA_NAV, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, BigDecimal("43.00")),
+                            Prosentkort(Trekkode.UFOEREYTELSER_FRA_ANDRE, BigDecimal("43.00")),
                         )
                         tilleggsopplysningList.shouldContainExactly(
                             Tilleggsopplysning.OPPHOLD_PAA_SVALBARD,
@@ -433,9 +434,9 @@ class SkattekortDataServiceTest :
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
                         resultatForSkattekort shouldBe SkattekortopplysningerOK
                         forskuddstrekkList.shouldContainExactly(
-                            Prosentkort(Trekkode.LOENN_FRA_NAV, 15.7.withScale(), null),
-                            Prosentkort(Trekkode.PENSJON_FRA_NAV, 13.1.withScale(), null),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
+                            Prosentkort(Trekkode.LOENN_FRA_NAV, BigDecimal("15.70"), null),
+                            Prosentkort(Trekkode.PENSJON_FRA_NAV, BigDecimal("13.10"), null),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, BigDecimal("15.70"), null),
                         )
                         tilleggsopplysningList.shouldContainExactly(
                             Tilleggsopplysning.OPPHOLD_PAA_SVALBARD,
@@ -573,9 +574,9 @@ class SkattekortDataServiceTest :
                         kilde shouldBe SkattekortKilde.SYNTETISERT.value
                         resultatForSkattekort shouldBe IkkeSkattekort
                         forskuddstrekkList.shouldContainExactly(
-                            Prosentkort(Trekkode.LOENN_FRA_NAV, 15.7.withScale(), null),
-                            Prosentkort(Trekkode.PENSJON_FRA_NAV, 13.1.withScale(), null),
-                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, 15.7.withScale(), null),
+                            Prosentkort(Trekkode.LOENN_FRA_NAV, BigDecimal("15.70"), null),
+                            Prosentkort(Trekkode.PENSJON_FRA_NAV, BigDecimal("13.10"), null),
+                            Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, BigDecimal("15.70"), null),
                         )
                         tilleggsopplysningList.shouldContainExactly(Tilleggsopplysning.OPPHOLD_PAA_SVALBARD)
                     }

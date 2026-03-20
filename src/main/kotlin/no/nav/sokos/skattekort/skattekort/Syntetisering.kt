@@ -66,10 +66,10 @@ object Syntetisering {
 
 fun svalbardsatser(inntektsaar: Int): List<Forskuddstrekk> =
     when (inntektsaar) {
-        2025 -> listOf(15.70, 13.10, 15.70)
-        2026 -> listOf(15.60, 13.10, 15.60)
+        2025 -> listOf("15.70", "13.10", "15.70")
+        2026 -> listOf("15.60", "13.10", "15.60")
         else -> error("Har ikke svalbardsatser for: $inntektsaar")
-    }.map(Double::toBigDecimal)
+    }.map(::BigDecimal)
         .zip(listOf(Trekkode.LOENN_FRA_NAV, Trekkode.PENSJON_FRA_NAV, Trekkode.UFOERETRYGD_FRA_NAV)) { prosentsats, trekkode ->
             Prosentkort(trekkode, prosentsats)
         }
@@ -80,6 +80,6 @@ fun manglendeKildeskattPaaPensjonSatser(fraSkd: List<Forskuddstrekk>): List<Fors
         .map {
             Prosentkort(
                 trekkode = it,
-                prosentSats = BigDecimal.valueOf(15.00),
+                prosentSats = BigDecimal("15.00"),
             )
         }

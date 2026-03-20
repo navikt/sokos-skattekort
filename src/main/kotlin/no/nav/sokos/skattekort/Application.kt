@@ -141,6 +141,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val skattekortdataService: SkattekortDataService by dependencies
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
+        val skattekortService: SkattekortService by dependencies
         val dataSource: DataSource by dependencies
 
         JobTaskConfig
@@ -151,6 +152,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 skattekortdataService = skattekortdataService,
                 metricsService = metricsService,
                 forespoerselService = forespoerselService,
+                skattekortService = skattekortService,
                 dataSource = dataSource,
             ).start()
     }

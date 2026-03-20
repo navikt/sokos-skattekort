@@ -24,7 +24,7 @@ private const val POLL_DURATION_SECONDS = 10L
 class KafkaConsumerService(
     private val kafkaConfig: KafkaConfig,
     private val identifikatorEndringService: IdentifikatorEndringService,
-) {
+) : AutoCloseable {
     private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(kafkaConfig.properties)
     private val kafkaClientMetrics: KafkaClientMetrics = KafkaClientMetrics(kafkaConsumer)
 
@@ -78,4 +78,9 @@ class KafkaConsumerService(
                     },
             )
         }
+
+    override fun close() {
+        kafkaConsumer.unsubscribe()
+        kafkaConsumer.close()
+    }
 }

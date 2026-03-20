@@ -46,6 +46,7 @@ class ForespoerselListenerTest :
                     ),
                 forespoerselQueue = forSystemQueue,
                 forespoerselBoqQueue = forSystemBOQQueue,
+                featureToggles = UnleashIntegration(),
             )
         }
 

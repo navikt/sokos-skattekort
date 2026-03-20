@@ -102,7 +102,6 @@ object TestUtils {
                             )
                         }
                     }
-
                 thunk()
             }
         }

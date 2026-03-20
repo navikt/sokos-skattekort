@@ -37,61 +37,59 @@ class UtsendingService(
     private val logger = KotlinLogging.logger {}
 
     fun handleUtsending() {
-        if (featureToggles.isUtsendingEnabled()) {
-            (jmsConnectionFactory.createConnection() ?: error("Kunne ikke koble til JMS")).use { jmsConnection ->
-                jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE).use { jmsSession ->
-                    jmsSession.createProducer(leveransekoeOppdragZSkattekort).use { jmsProducer ->
-                        jmsSession.createProducer(leveransekoeOppdragZSkattekortStor).use { jmsProducerStor ->
+        (jmsConnectionFactory.createConnection() ?: error("Kunne ikke koble til JMS")).use { jmsConnection ->
+            jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE).use { jmsSession ->
+                jmsSession.createProducer(leveransekoeOppdragZSkattekort).use { jmsProducer ->
+                    jmsSession.createProducer(leveransekoeOppdragZSkattekortStor).use { jmsProducerStor ->
 
-                            val utsendinger: List<Utsending> =
-                                try {
-                                    dataSource.transaction { tx ->
-                                        UtsendingRepository.getAllUtsendinger(tx)
-                                    }
-                                } catch (e: Exception) {
-                                    logger.error("Feil under henting av utsendinger", e)
-                                    throw e
-                                }
-                            utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
-                            utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
-                            utsendinger.forEach { utsending ->
+                        val utsendinger: List<Utsending> =
+                            try {
                                 dataSource.transaction { tx ->
-                                    when (utsending.forsystem) {
-                                        Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> {
-                                            try {
-                                                val (producer, queueName) =
-                                                    when (utsending.forsystem) {
-                                                        Forsystem.OPPDRAGSSYSTEMET -> jmsProducer to leveransekoeOppdragZSkattekort.queueName
-                                                        else -> jmsProducerStor to leveransekoeOppdragZSkattekortStor.queueName
-                                                    }
-                                                sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar, queueName, jmsSession, producer)
-                                                UtsendingRepository.delete(tx, utsending.id!!)
-                                                utsendingOppdragzCounter.inc()
-                                            } catch (e: BatchUpdateException) {
-                                                logger.error(marker = TEAM_LOGS_MARKER, e) { "Feil under sending til oppdragz: ${e.message}" }
-                                                logger.error("Feil under sending til oppdragz, detaljer er logget til TEAM LOGS")
-                                                dataSource.transaction { errorTx ->
-                                                    PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
-                                                        AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
-                                                    }
-                                                    UtsendingRepository.increaseFailCount(errorTx, utsending.id, "SQL-feil, feil er logget til TEAM LOGS")
-                                                    feiledeUtsendingerOppdragzCounter.inc()
+                                    UtsendingRepository.getAllUtsendinger(tx)
+                                }
+                            } catch (e: Exception) {
+                                logger.error("Feil under henting av utsendinger", e)
+                                throw e
+                            }
+                        utsendingerIKoe.labelValues("uhaandtert").set(utsendinger.size.toDouble())
+                        utsendingerIKoe.labelValues("feilet").set(utsendinger.filterNot { it.failCount == 0 }.size.toDouble())
+                        utsendinger.forEach { utsending ->
+                            dataSource.transaction { tx ->
+                                when (utsending.forsystem) {
+                                    Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> {
+                                        try {
+                                            val (producer, queueName) =
+                                                when (utsending.forsystem) {
+                                                    Forsystem.OPPDRAGSSYSTEMET -> jmsProducer to leveransekoeOppdragZSkattekort.queueName
+                                                    else -> jmsProducerStor to leveransekoeOppdragZSkattekortStor.queueName
                                                 }
-                                            } catch (e: Exception) {
-                                                logger.error("Feil under sending til oppdragz", e)
-                                                dataSource.transaction { errorTx ->
-                                                    PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
-                                                        AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
-                                                    }
-                                                    UtsendingRepository.increaseFailCount(errorTx, utsending.id, e.message ?: "Ukjent feil")
-                                                    feiledeUtsendingerOppdragzCounter.inc()
+                                            sendTilOppdragz(tx, utsending.fnr, utsending.inntektsaar, queueName, jmsSession, producer)
+                                            UtsendingRepository.delete(tx, utsending.id!!)
+                                            utsendingOppdragzCounter.inc()
+                                        } catch (e: BatchUpdateException) {
+                                            logger.error(marker = TEAM_LOGS_MARKER, e) { "Feil under sending til oppdragz: ${e.message}" }
+                                            logger.error("Feil under sending til oppdragz, detaljer er logget til TEAM LOGS")
+                                            dataSource.transaction { errorTx ->
+                                                PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
+                                                    AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
                                                 }
+                                                UtsendingRepository.increaseFailCount(errorTx, utsending.id, "SQL-feil, feil er logget til TEAM LOGS")
+                                                feiledeUtsendingerOppdragzCounter.inc()
+                                            }
+                                        } catch (e: Exception) {
+                                            logger.error("Feil under sending til oppdragz", e)
+                                            dataSource.transaction { errorTx ->
+                                                PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
+                                                    AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
+                                                }
+                                                UtsendingRepository.increaseFailCount(errorTx, utsending.id, e.message ?: "Ukjent feil")
+                                                feiledeUtsendingerOppdragzCounter.inc()
                                             }
                                         }
+                                    }
 
-                                        Forsystem.MANUELL -> {
-                                            UtsendingRepository.delete(tx, utsending.id!!)
-                                        }
+                                    Forsystem.MANUELL -> {
+                                        UtsendingRepository.delete(tx, utsending.id!!)
                                     }
                                 }
                             }
@@ -99,8 +97,6 @@ class UtsendingService(
                     }
                 }
             }
-        } else {
-            logger.debug("Utsending er disablet")
         }
         dataSource.transaction { tx ->
             UtsendingRepository.slettGamleBevis(tx)

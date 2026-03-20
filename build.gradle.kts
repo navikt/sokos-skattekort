@@ -10,7 +10,7 @@ import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 plugins {
     kotlin("jvm") version "2.3.10"
     kotlin("plugin.serialization") version "2.3.10"
-    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.7"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "9.0.0"
@@ -30,7 +30,7 @@ repositories {
 }
 
 val resilience4jVersion = "2.3.0"
-val ktorVersion = "3.4.0"
+val ktorVersion = "3.4.1"
 val nimbusVersion = "10.8"
 val logbackVersion = "1.5.32"
 val logstashVersion = "9.0"

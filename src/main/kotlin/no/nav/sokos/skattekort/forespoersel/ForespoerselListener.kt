@@ -8,6 +8,7 @@ import jakarta.jms.Message
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.util.TraceUtils
 
 private val logger = KotlinLogging.logger { }
@@ -17,6 +18,7 @@ class ForespoerselListener(
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
     @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
+    private val featureToggles: UnleashIntegration,
 ) {
     private var jmsContext: JMSContext? = null
     private var jmsConsumer: JMSConsumer? = null
@@ -30,6 +32,9 @@ class ForespoerselListener(
         jmsConsumer = jmsContext!!.createConsumer(forespoerselQueue)
 
         jmsConsumer!!.setMessageListener { message: Message ->
+            if (!featureToggles.isForespoerselListenerEnabled()) {
+                logger.error { "ForespoerselListener er disablet, burde ikke ha fått melding med id ${message.jmsMessageID}" }
+            }
             TraceUtils.withTracerId {
                 runCatching {
                     val jmsMessage = message.getBody(String::class.java)

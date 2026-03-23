@@ -17,7 +17,7 @@ class ForespoerselListener(
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
     @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
-) {
+) : AutoCloseable {
     private var jmsContext: JMSContext? = null
     private var jmsConsumer: JMSConsumer? = null
 
@@ -25,7 +25,7 @@ class ForespoerselListener(
     private var isRunning = false
 
     @Synchronized
-    fun start() {
+    private fun start() {
         jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
         jmsConsumer = jmsContext!!.createConsumer(forespoerselQueue)
 
@@ -50,7 +50,7 @@ class ForespoerselListener(
     }
 
     @Synchronized
-    fun stop() {
+    private fun stop() {
         isRunning = false
         try {
             jmsContext?.stop() // Stop message delivery first
@@ -70,5 +70,9 @@ class ForespoerselListener(
             enabled && !isRunning -> start()
             !enabled && isRunning -> stop()
         }
+    }
+
+    override fun close() {
+        stop()
     }
 }

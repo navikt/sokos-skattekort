@@ -4,7 +4,6 @@ import io.getunleash.DefaultUnleash
 import io.getunleash.FakeUnleash
 import io.getunleash.Unleash
 import io.getunleash.event.ClientFeaturesResponse
-import io.getunleash.event.ClientFeaturesResponse.Status
 import io.getunleash.event.UnleashSubscriber
 import io.getunleash.util.UnleashConfig
 import mu.KotlinLogging
@@ -61,13 +60,12 @@ class UnleashIntegration(
                     .subscriber(
                         object : UnleashSubscriber {
                             override fun togglesFetched(toggleResponse: ClientFeaturesResponse) {
-                                if (toggleResponse.status == Status.CHANGED) {
-                                    onForespoerselListenerChanged(isForespoerselListenerEnabled())
-                                }
+                                onForespoerselListenerChanged(isForespoerselListenerEnabled())
                             }
                         },
                     ).build()
             unleashClient = DefaultUnleash(config)
         }
+        onForespoerselListenerChanged(unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled"))
     }
 }

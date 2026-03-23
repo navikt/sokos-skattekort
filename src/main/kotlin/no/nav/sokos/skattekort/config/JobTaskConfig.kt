@@ -14,6 +14,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.infrastructure.MetricsService
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
@@ -42,6 +43,7 @@ object JobTaskConfig {
         forespoerselService: ForespoerselService,
         skattekortService: SkattekortService,
         dataSource: DataSource,
+        unleashIntegration: UnleashIntegration,
     ): Scheduler =
         Scheduler
             .create(dataSource)
@@ -49,11 +51,11 @@ object JobTaskConfig {
             .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
-                recurringBestillingManagementBatchTask(bestillingService, bestillingsbatchService, skattekortdataService),
-                recurringSendUtsendingTask(utsendingService),
-                recurringHentOppdaterteSkattekortBatchTask(bestillingService, bestillingsbatchService),
+                recurringBestillingManagementBatchTask(bestillingService, bestillingsbatchService, skattekortdataService, unleashIntegration),
+                recurringSendUtsendingTask(utsendingService, unleashIntegration),
+                recurringHentOppdaterteSkattekortBatchTask(bestillingService, bestillingsbatchService, unleashIntegration),
                 recurringFetchMetricsTask(metricsService),
-                recurringFetchForespoerselInputTask(forespoerselService),
+                recurringFetchForespoerselInputTask(forespoerselService, unleashIntegration),
                 recurringDeleteSkattekort(skattekortService),
             ).build()
 
@@ -61,6 +63,7 @@ object JobTaskConfig {
         bestillingService: BestillingService,
         bestillingsbatchService: BestillingsbatchService,
         skattekortdataService: SkattekortDataService,
+        unleashIntegration: UnleashIntegration,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
@@ -70,7 +73,7 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronBestilling),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                if (handleJobs) {
+                if (handleJobs && unleashIntegration.isBestillingerEnabled()) {
                     withTracerId {
                         showLog(showLogLocalTime, instance, context)
                         val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
@@ -84,6 +87,7 @@ object JobTaskConfig {
 
     fun recurringSendUtsendingTask(
         utsendingService: UtsendingService,
+        unleashIntegration: UnleashIntegration,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
         val startTime = LocalDateTime.now()
@@ -93,13 +97,13 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronUtsending),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                if (handleJobs) {
+                if (handleJobs && unleashIntegration.isUtsendingEnabled()) {
                     withTracerId {
                         try {
                             showLog(startTime, instance, context)
                             val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                             utsendingService.handleUtsending()
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             // Spis exception for å ta kontroll over logging
                         }
                     }
@@ -110,6 +114,7 @@ object JobTaskConfig {
     fun recurringHentOppdaterteSkattekortBatchTask(
         bestillingService: BestillingService,
         bestillingsbatchService: BestillingsbatchService,
+        unleashIntegration: UnleashIntegration,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
@@ -119,7 +124,7 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronHentOppdaterte),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                if (handleJobs) {
+                if (handleJobs && unleashIntegration.isOppdateringEnabled()) {
                     withTracerId {
                         showLog(showLogLocalTime, instance, context)
                         val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
@@ -172,6 +177,7 @@ object JobTaskConfig {
 
     fun recurringFetchForespoerselInputTask(
         forespoerselService: ForespoerselService,
+        unleashIntegration: UnleashIntegration,
         schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
@@ -182,13 +188,13 @@ object JobTaskConfig {
                 cron(schedulerProperties.cronForespoerselInput),
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                if (handleJobs) {
+                if (handleJobs && unleashIntegration.isForespoerselInputEnabled()) {
                     withTracerId {
                         try {
                             showLog(showLogLocalTime, instance, context)
                             val ident = instance.data ?: PropertiesConfig.getApplicationProperties().naisAppName
                             forespoerselService.cronForespoerselInput()
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             // Spis exception for å ta kontroll over logging
                         }
                     }

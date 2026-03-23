@@ -10,6 +10,7 @@ import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.KafkaException
 
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -82,8 +83,12 @@ class KafkaConsumerService(
     override fun close() {
         try {
             kafkaConsumer.close()
-        } catch (e: Exception) {
-            // Jeg har aldri skjønt hva folk tror  man skal gjøre dersom en closeoperasjon feiler. Greit å vite om, antar jeg.
+        } catch (e: InterruptedException) {
+            // Ikke noe vi trenger å logge - vi skal ikke gjøre noe med situasjonen
+        } catch (e: KafkaException) {
+            if (!"Failed to close kafka consumer".equals(e.message)) {
+                logger.warn("Uventet feil under lukking av kafka-consumer: ${e.message}", e)
+            }
         }
     }
 }

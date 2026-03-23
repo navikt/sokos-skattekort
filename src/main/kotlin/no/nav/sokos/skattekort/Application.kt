@@ -132,9 +132,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     securityConfig()
     routingConfig(applicationState)
 
-    val forespoerselListener: ForespoerselListener by dependencies
-    forespoerselListener.start()
-
     if (PropertiesConfig.SchedulerProperties().enabled) {
         val bestillingService: BestillingService by dependencies
         val bestillingsbatchService: BestillingsbatchService by dependencies
@@ -144,6 +141,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
         val dataSource: DataSource by dependencies
+        val unleashIntegration: UnleashIntegration by dependencies
 
         JobTaskConfig
             .scheduler(
@@ -155,6 +153,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 metricsService = metricsService,
                 forespoerselService = forespoerselService,
                 dataSource = dataSource,
+                unleashIntegration = unleashIntegration,
             ).start()
     }
 

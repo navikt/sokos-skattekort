@@ -11,7 +11,6 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
@@ -42,17 +41,15 @@ class ForespoerselListenerTest :
                     ForespoerselService(
                         dataSource = DbListener.dataSource,
                         personService = PersonService(DbListener.dataSource, pdlClientService),
-                        featureToggles = UnleashIntegration(),
                     ),
                 forespoerselQueue = forSystemQueue,
                 forespoerselBoqQueue = forSystemBOQQueue,
-                featureToggles = UnleashIntegration(),
             )
         }
 
         afterEach {
             // Ensure listener is stopped after each test
-            forespoerselListener.stop()
+            forespoerselListener.onOppdateringChanged(false)
         }
 
         test("start() skal opprette JMS context og consumer") {
@@ -61,7 +58,7 @@ class ForespoerselListenerTest :
                 val fnr = "11111111111"
                 WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
 
-                forespoerselListener.start()
+                forespoerselListener.onOppdateringChanged(true)
 
                 val jmsMessage = "OS;2025;$fnr"
                 JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
@@ -78,8 +75,8 @@ class ForespoerselListenerTest :
         }
 
         test("stop() skal lukke JMS consumer og context") {
-            forespoerselListener.start()
-            forespoerselListener.stop()
+            forespoerselListener.onOppdateringChanged(true)
+            forespoerselListener.onOppdateringChanged(false)
 
             JmsTestUtil.assertAllQueuesAreEmpty()
 
@@ -101,7 +98,7 @@ class ForespoerselListenerTest :
                 val fnr = "55555555555"
                 WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
 
-                forespoerselListener.start()
+                forespoerselListener.onOppdateringChanged(enabled = true)
 
                 forespoerselListener.onOppdateringChanged(enabled = true)
 
@@ -120,7 +117,7 @@ class ForespoerselListenerTest :
         }
 
         test("onOppdateringChanged() skal ikke gjøre noe når enabled er false og listener allerede stoppet") {
-            forespoerselListener.stop()
+            forespoerselListener.onOppdateringChanged(enabled = false)
 
             forespoerselListener.onOppdateringChanged(enabled = false)
 

@@ -62,6 +62,7 @@ fun Route.skattekortPersonApi(
             call.respond(HttpStatusCode.Created)
         }
     }
+
     route("/api/v2/person") {
         post("hent-skattekort") {
             call.requirePermission(Scope.HENT_SKATTEKORT_SCOPE, Role.HENT_SKATTEKORT_ROLE)

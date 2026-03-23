@@ -68,7 +68,7 @@ data class SkattekortDTO(
 
     fun toDomainSkattekort(
         personId: PersonId,
-        utstedtDato: LocalDate,
+        utstedtDato: LocalDate?,
         identifikator: String?,
         kilde: SkattekortKilde,
     ): Skattekort =

@@ -76,7 +76,7 @@ class SkattekortServiceTest :
                         aDomainSkattekort(
                             inntektsaar = 2021,
                             resultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
-                            forskuddstrekk = Prosentkort(trekkode = Trekkode.UFOERETRYGD_FRA_NAV, prosentSats = BigDecimal.valueOf(81.28)),
+                            forskuddstrekk = Prosentkort(trekkode = Trekkode.UFOERETRYGD_FRA_NAV, prosentSats = BigDecimal("81.28")),
                             personId = 1L,
                         ),
                         aDomainSkattekort(
@@ -86,8 +86,8 @@ class SkattekortServiceTest :
                                 Tabellkort(
                                     trekkode = Trekkode.LOENN_FRA_NAV,
                                     tabellNummer = "8765",
-                                    prosentSats = BigDecimal.valueOf(13.37),
-                                    antallMndForTrekk = BigDecimal.valueOf(4.0),
+                                    prosentSats = BigDecimal("13.37"),
+                                    antallMndForTrekk = BigDecimal("4.0"),
                                 ),
                             personId = 1L,
                         ),

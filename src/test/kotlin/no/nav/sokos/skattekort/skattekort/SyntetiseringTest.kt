@@ -79,15 +79,15 @@ class SyntetiseringTest :
                         listOf<Forskuddstrekk>(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.70),
+                                prosentSats = BigDecimal("15.70"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(13.10),
+                                prosentSats = BigDecimal("13.10"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.70),
+                                prosentSats = BigDecimal("15.70"),
                             ),
                         )
                 }
@@ -118,15 +118,15 @@ class SyntetiseringTest :
                         listOf<Forskuddstrekk>(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.60),
+                                prosentSats = BigDecimal("15.60"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(13.10),
+                                prosentSats = BigDecimal("13.10"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.60),
+                                prosentSats = BigDecimal("15.60"),
                             ),
                         )
                 }
@@ -146,15 +146,15 @@ class SyntetiseringTest :
                         listOf(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
@@ -184,11 +184,11 @@ class SyntetiseringTest :
                         listOf(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
@@ -207,15 +207,15 @@ class SyntetiseringTest :
                         listOf(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.0),
+                                prosentSats = BigDecimal("15.00"),
                             ),
                         )
                 }
@@ -234,7 +234,7 @@ class SyntetiseringTest :
                         listOf(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
@@ -253,15 +253,15 @@ class SyntetiseringTest :
                         listOf(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.0),
+                                prosentSats = BigDecimal("15.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.0),
+                                prosentSats = BigDecimal("15.00"),
                             ),
                         )
                 }
@@ -280,11 +280,11 @@ class SyntetiseringTest :
                         listOf(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                         ),
                     tilleggsopplysningList = listOf(Tilleggsopplysning.KILDESKATT_PAA_PENSJON),
@@ -303,15 +303,15 @@ class SyntetiseringTest :
                         listOf(
                             Prosentkort(
                                 trekkode = Trekkode.LOENN_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(15.0),
+                                prosentSats = BigDecimal("15.00"),
                             ),
                             Prosentkort(
                                 trekkode = Trekkode.PENSJON_FRA_NAV,
-                                prosentSats = BigDecimal.valueOf(200.0),
+                                prosentSats = BigDecimal("200.00"),
                             ),
                         )
                 }

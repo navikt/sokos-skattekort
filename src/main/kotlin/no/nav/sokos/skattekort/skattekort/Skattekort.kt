@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -16,6 +17,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.skattekort.Prosentkort
 
 enum class ResultatForSkattekort(
     val value: String,
@@ -118,8 +120,8 @@ sealed interface Forskuddstrekk {
                 ForskuddstrekkType.PROSENTKORT -> {
                     Prosentkort(
                         trekkode = Trekkode.fromValue(row.string("trekk_kode")),
-                        prosentSats = row.bigDecimal("prosentsats"),
-                        antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk"),
+                        prosentSats = row.bigDecimal("prosentsats").setScale(2, RoundingMode.HALF_UP),
+                        antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk")?.setScale(1, RoundingMode.HALF_UP),
                     )
                 }
 
@@ -127,8 +129,8 @@ sealed interface Forskuddstrekk {
                     Tabellkort(
                         trekkode = Trekkode.fromValue(row.string("trekk_kode")),
                         tabellNummer = row.string("tabell_nummer"),
-                        prosentSats = row.bigDecimal("prosentsats"),
-                        antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk"),
+                        prosentSats = row.bigDecimal("prosentsats").setScale(2, RoundingMode.HALF_UP),
+                        antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk").setScale(1, RoundingMode.HALF_UP),
                     )
                 }
             }

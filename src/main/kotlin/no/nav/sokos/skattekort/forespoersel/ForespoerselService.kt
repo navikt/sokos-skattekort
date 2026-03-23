@@ -14,6 +14,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
@@ -33,6 +34,7 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselService(
     private val dataSource: DataSource,
     private val personService: PersonService,
+    private val featureToggles: UnleashIntegration,
 ) {
     fun taImotForespoersel(
         message: String,
@@ -180,42 +182,44 @@ class ForespoerselService(
     }
 
     fun cronForespoerselInput() {
-        val forespoerselInput: List<ForespoerselInput> =
-            dataSource.transaction { tx ->
-                val returverdi = ForespoerselRepository.getAllForespoerselInput(tx)
-                ForespoerselRepository.deleteAllForespoerselInput(tx)
-                returverdi
-            }
+        if (featureToggles.isForespoerselInputEnabled()) {
+            val forespoerselInput: List<ForespoerselInput> =
+                dataSource.transaction { tx ->
+                    val returverdi = ForespoerselRepository.getAllForespoerselInput(tx)
+                    ForespoerselRepository.deleteAllForespoerselInput(tx)
+                    returverdi
+                }
 
-        forespoerselInput.forEach { input ->
-            var i = 0
-            retry@ while (i < 5) {
-                try {
+            forespoerselInput.forEach { input ->
+                var i = 0
+                retry@ while (i < 5) {
                     try {
-                        assert(input.fnrList.first().length == 11)
+                        try {
+                            assert(input.fnrList.first().length == 11)
 
-                        val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(input.fnrList)
-                        dataSource.transaction { tx ->
-                            val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
-                            handleForespoersel(tx, message, input, foedselsnumreWithPersonIdMap, null)
+                            val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(input.fnrList)
+                            dataSource.transaction { tx ->
+                                val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
+                                handleForespoersel(tx, message, input, foedselsnumreWithPersonIdMap, null)
+                            }
+                            break@retry
+                        } catch (_: NumberFormatException) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
+                            break@retry
+                        } catch (_: AssertionError) {
+                            logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
+                            logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
+                            break@retry
                         }
-                        break@retry
-                    } catch (_: NumberFormatException) {
-                        logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
-                        logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
-                        break@retry
-                    } catch (_: AssertionError) {
-                        logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
-                        logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
-                        break@retry
+                    } catch (e: BatchUpdateException) {
+                        logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
+                        logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til TEAM LOGS")
+                        i++
+                    } catch (e: Exception) {
+                        logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)
+                        i++
                     }
-                } catch (e: BatchUpdateException) {
-                    logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
-                    logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til TEAM LOGS")
-                    i++
-                } catch (e: Exception) {
-                    logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)
-                    i++
                 }
             }
         }

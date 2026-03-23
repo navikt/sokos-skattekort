@@ -51,7 +51,9 @@ class ForespoerselListener(
 
     @Synchronized
     private fun stop() {
+        if (!isRunning) return
         isRunning = false
+
         try {
             jmsContext?.stop() // Stop message delivery first
             jmsConsumer?.messageListener = null

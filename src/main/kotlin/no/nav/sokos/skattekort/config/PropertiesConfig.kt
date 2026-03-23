@@ -189,6 +189,7 @@ object PropertiesConfig {
         val cronHentOppdaterte: String = get("HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION"),
         val cronFetchMetrics: String = get("FETCH_METRICS_CRON_EXPRESSION"),
         val cronForespoerselInput: String = get("FORESPOERSEL_INPUT_CRON_EXPRESSION"),
+        val cronDeleteSkattekort: String = get("DELETE_SKATTEKORT_CRON_EXPRESSION"),
     )
 
     data class MaskinportenProperties(

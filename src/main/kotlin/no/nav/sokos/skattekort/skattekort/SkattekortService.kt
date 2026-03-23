@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.skattekort
 
+import java.time.Year
 import javax.sql.DataSource
 
 import kotlin.time.Clock
@@ -114,6 +115,21 @@ class SkattekortService(
             Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, _) ->
                 SkattekortRepository.insert(tx, syntetisertSkattekort)
             }
+        }
+    }
+
+    fun deleteSkattekortForYear(inntektsaar: Int = Year.now().minusYears(2).value) {
+        runCatching {
+            logger.info { "Deleting skattekort for year: $inntektsaar start" }
+            val skattekortIdList = dataSource.transaction { tx -> SkattekortRepository.getAllIdByInntektsaar(tx, inntektsaar) }
+            skattekortIdList.chunked(10000).forEach { chunk ->
+                dataSource.transaction { tx -> SkattekortRepository.deleteBatch(tx, chunk) }
+            }
+            logger.info {
+                "Deleting ${skattekortIdList.size} skattekort for year: $inntektsaar finished"
+            }
+        }.onFailure { exception ->
+            logger.error("Failed to delete skattekort for year: $inntektsaar", exception)
         }
     }
 }

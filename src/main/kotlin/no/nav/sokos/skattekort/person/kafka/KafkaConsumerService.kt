@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort.person.kafka
 
 import java.time.Duration
 
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
@@ -21,12 +23,14 @@ private const val DELAY_ON_ERROR_SECONDS = 60L
 private const val DELAY_KAFKA_START = 500L
 private const val POLL_DURATION_SECONDS = 10L
 
+@OptIn(ExperimentalAtomicApi::class)
 class KafkaConsumerService(
     private val kafkaConfig: KafkaConfig,
     private val identifikatorEndringService: IdentifikatorEndringService,
 ) : AutoCloseable {
     private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(kafkaConfig.properties)
     private val kafkaClientMetrics: KafkaClientMetrics = KafkaClientMetrics(kafkaConsumer)
+    private val stopping = AtomicBoolean(false)
 
     init {
         kafkaClientMetrics.bindTo(Metrics.prometheusMeterRegistry)
@@ -36,7 +40,7 @@ class KafkaConsumerService(
         kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
 
         logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
-        while (applicationState.ready) {
+        while (applicationState.ready && !stopping.load()) {
             if (kafkaConsumer.subscription().isEmpty()) {
                 kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
             }
@@ -80,7 +84,8 @@ class KafkaConsumerService(
         }
 
     override fun close() {
-        runCatching { kafkaConsumer.unsubscribe() }.onFailure { logger.warn(it) { "Failed to unsubscribe Kafka consumer" } }
+        if (stopping.load()) return
+        stopping.store(true)
         runCatching { kafkaConsumer.close() }.onFailure { logger.warn(it) { "Failed to close Kafka consumer" } }
         runCatching { kafkaClientMetrics.close() }.onFailure { logger.warn(it) { "Failed to close Kafka client metrics" } }
     }

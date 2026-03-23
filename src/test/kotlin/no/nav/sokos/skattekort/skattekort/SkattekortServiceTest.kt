@@ -2,22 +2,25 @@ package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.LocalDateTime
+
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
-import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
 import no.nav.sokos.skattekort.util.audit.AuditLogger
+import no.nav.sokos.skattekort.utils.TestUtils.tx
 
+@OptIn(ExperimentalAtomicApi::class)
 class SkattekortServiceTest :
     FunSpec({
         extensions(DbListener)
@@ -62,7 +65,7 @@ class SkattekortServiceTest :
                     size shouldBe 9
                 }
                 val onlyLastSkattekort = skattekortService.getSingleSkattekortForEachYear("01410100001").get()
-                onlyLastSkattekort shouldBeFunctionallyEquivalentTo
+                onlyLastSkattekort.shouldBeFunctionallyEquivalentTo(
                     listOf(
                         aDomainSkattekort(
                             inntektsaar = 2022,
@@ -88,54 +91,87 @@ class SkattekortServiceTest :
                                 ),
                             personId = 1L,
                         ),
-                    )
+                    ),
+                )
             }
         }
+
+        test("deleteSkattekortForYear should delete all rows for target year in chunks and keep other years untouched") {
+            val yearToDelete = 2025
+            val yearToKeep = 2026
+
+            val keepIds = listOf(50001L, 50002L, 50003L)
+            val skattekortId = AtomicLong(0L)
+            val rowsForDeleteYear =
+                (1L..10005L).flatMap {
+                    var id = skattekortId.incrementAndFetch()
+                    listOf(
+                        aSkattekort(
+                            id = id,
+                            personId = 1L,
+                            inntektsaar = yearToDelete,
+                            identifikator = "delete-$id",
+                        ),
+                        aSkattekort(
+                            id = skattekortId.incrementAndFetch(),
+                            personId = 1L,
+                            inntektsaar = yearToDelete,
+                            identifikator = "delete-$id",
+                            generertFra = id,
+                        ),
+                        aForskuddstrekk(
+                            skattekortId = id,
+                            type =
+                                Prosentkort(
+                                    trekkode = Trekkode.LOENN_FRA_NAV,
+                                    prosentSats = BigDecimal.valueOf(25.0),
+                                ),
+                            trekkode = Trekkode.LOENN_FRA_NAV,
+                            prosentSats = 25.0,
+                        ),
+                        aTilleggsopplysning(
+                            skattekortId = id,
+                            opplysning = Tilleggsopplysning.OPPHOLD_I_TILTAKSSONE,
+                        ),
+                        aSkattekortData(
+                            dataMottatt = """{"identifikator":"delete-$id"}""",
+                            inntektsaar = yearToDelete,
+                            fnr = "01410100001",
+                            skattekortId = id,
+                        ),
+                    )
+                }
+
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(1L, "01410100001"),
+                rowsForDeleteYear.joinToString("\n"),
+                aSkattekort(
+                    id = keepIds[0],
+                    personId = 1L,
+                    inntektsaar = yearToKeep,
+                    identifikator = "keep-${keepIds[0]}",
+                ),
+                aSkattekort(
+                    id = keepIds[1],
+                    personId = 1L,
+                    inntektsaar = yearToKeep,
+                    identifikator = "keep-${keepIds[1]}",
+                ),
+                aSkattekort(
+                    id = keepIds[2],
+                    personId = 1L,
+                    inntektsaar = yearToKeep,
+                    identifikator = "keep-${keepIds[2]}",
+                ),
+            )
+
+            tx { SkattekortRepository.getAllIdByInntektsaar(it, yearToDelete) }.size shouldBe 20010
+            tx { SkattekortRepository.getAllIdByInntektsaar(it, yearToKeep) } shouldBe keepIds
+
+            skattekortService.deleteSkattekortForYear(yearToDelete)
+
+            tx { SkattekortRepository.getAllIdByInntektsaar(it, yearToDelete) } shouldBe emptyList()
+            tx { SkattekortRepository.getAllIdByInntektsaar(it, yearToKeep) } shouldBe keepIds
+        }
     })
-
-fun aSkattekort(
-    id: Long,
-    personId: Long,
-    inntektsaar: Int = LocalDate.now().year,
-    opprettet: LocalDateTime = LocalDateTime.now(),
-    identifikator: String = "1",
-    utstedtDato: LocalDate = LocalDate.now(),
-    resultatForSkattekort: ResultatForSkattekort = ResultatForSkattekort.SkattekortopplysningerOK,
-) = aDbSkattekort(
-    id = id,
-    personId = personId,
-    utstedtDato = utstedtDato.toString(),
-    identifikator = identifikator,
-    inntektsaar = inntektsaar,
-    opprettet = opprettet.toString(),
-    resultatForSkattekort = resultatForSkattekort,
-)
-
-fun aDomainSkattekort(
-    inntektsaar: Int,
-    resultatForSkattekort: ResultatForSkattekort,
-    forskuddstrekk: Forskuddstrekk,
-    personId: Long,
-) = Skattekort(
-    inntektsaar = inntektsaar,
-    resultatForSkattekort = resultatForSkattekort,
-    forskuddstrekkList = listOf(forskuddstrekk),
-    personId = PersonId(personId),
-    identifikator = "01410100001",
-    utstedtDato = kotlinx.datetime.LocalDate.parse("2021-01-01"),
-    kilde = "foo",
-)
-
-infix fun List<Skattekort>.shouldBeFunctionallyEquivalentTo(expected: List<Skattekort>) {
-    this.shouldContainAllIgnoringFields(
-        expected,
-        Skattekort::id,
-        Skattekort::generertFra,
-        Skattekort::utstedtDato,
-        Skattekort::identifikator,
-        Skattekort::kilde,
-        Skattekort::opprettet,
-        Skattekort::tilleggsopplysningList,
-    )
-//    this.size shouldBe expected.size
-}

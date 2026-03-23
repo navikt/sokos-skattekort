@@ -23,7 +23,6 @@ import no.nav.sokos.skattekort.skattekort.aBestilling
 import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.databaseHas
-import no.nav.sokos.skattekort.skattekort.shouldBeFunctionallyEquivalentTo
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.BESTILLING
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.OPPDATERING
@@ -230,3 +229,14 @@ class BestillingsbatchServiceTest :
             }
         }
     })
+
+fun List<Bestillingsbatch>.shouldBeFunctionallyEquivalentTo(expected: List<Bestillingsbatch>) {
+    this.size shouldBe expected.size
+    expected.shouldContainAllIgnoringFields(
+        expected,
+        Bestillingsbatch::oppdatert,
+        Bestillingsbatch::opprettet,
+        Bestillingsbatch::id,
+        Bestillingsbatch::dataSendt,
+    )
+}

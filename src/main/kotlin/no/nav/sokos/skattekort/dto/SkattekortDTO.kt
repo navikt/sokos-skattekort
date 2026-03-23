@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.dto
 
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
@@ -103,18 +104,18 @@ data class ForskuddstrekkDTO(
                 Tabellkort(
                     trekkode = Trekkode.fromValue(trekkode),
                     tabellNummer = trekktabell.tabell,
-                    prosentSats = BigDecimal.valueOf(trekktabell.prosentSats),
-                    antallMndForTrekk = BigDecimal.valueOf(trekktabell.antallMndForTrekk),
+                    prosentSats = BigDecimal.valueOf(trekktabell.prosentSats).setScale(2, RoundingMode.HALF_UP),
+                    antallMndForTrekk = BigDecimal.valueOf(trekktabell.antallMndForTrekk).setScale(1, RoundingMode.HALF_UP),
                 )
             }
 
             prosentkort != null -> {
                 Prosentkort(
                     trekkode = Trekkode.fromValue(trekkode),
-                    prosentSats = BigDecimal.valueOf(prosentkort.prosentSats),
+                    prosentSats = BigDecimal.valueOf(prosentkort.prosentSats).setScale(2, RoundingMode.HALF_UP),
                     antallMndForTrekk =
                         prosentkort.antallMndForTrekk?.let { antallMnd ->
-                            BigDecimal.valueOf(antallMnd)
+                            BigDecimal.valueOf(antallMnd).setScale(1, RoundingMode.HALF_UP)
                         },
                 )
             }

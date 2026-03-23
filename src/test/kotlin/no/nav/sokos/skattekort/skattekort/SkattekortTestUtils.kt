@@ -37,8 +37,8 @@ fun aForskuddstrekk(
         is Prosentkort -> {
             Prosentkort(
                 trekkode,
-                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
-                antMndForTrekk?.let { belop -> BigDecimal(belop).setScale(1, RoundingMode.HALF_UP) },
+                BigDecimal.valueOf(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
+                antMndForTrekk?.let { belop -> BigDecimal.valueOf(belop).setScale(1, RoundingMode.HALF_UP) },
             )
         }
 
@@ -46,8 +46,8 @@ fun aForskuddstrekk(
             Tabellkort(
                 trekkode,
                 tabellNummer!!,
-                BigDecimal(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
-                BigDecimal(antMndForTrekk ?: 12.0).setScale(1, RoundingMode.HALF_UP),
+                BigDecimal.valueOf(prosentSats!!).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal.valueOf(antMndForTrekk ?: 12.0).setScale(1, RoundingMode.HALF_UP),
             )
         }
 
@@ -67,7 +67,7 @@ fun aSkdForskuddstrekk(
 ): no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk =
     no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk(
         trekkode = trekkode.value,
-        trekktabell = tabellNummer?.let { Trekktabell(it, BigDecimal(trekkprosent!!).setScale(2, RoundingMode.HALF_UP), BigDecimal(12).setScale(1, RoundingMode.HALF_UP)) },
+        trekktabell = tabellNummer?.let { Trekktabell(it, BigDecimal(trekkprosent!!).setScale(2, RoundingMode.HALF_UP), BigDecimal("12.0")) },
         trekkprosent = trekkprosent?.let { Trekkprosent(BigDecimal(it).setScale(2, RoundingMode.HALF_UP), null) },
         frikort =
             frikortbeloep?.let {
@@ -242,5 +242,3 @@ fun List<Bestillingsbatch>.shouldBeFunctionallyEquivalentTo(expected: List<Besti
         Bestillingsbatch::dataSendt,
     )
 }
-
-fun Double.withScale() = this.toBigDecimal().setScale(2, RoundingMode.HALF_UP)

@@ -11,7 +11,6 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.bestillOppdateringRequest
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.bestillSkattekortRequest
@@ -28,10 +27,8 @@ private val logger = KotlinLogging.logger {}
 class BestillingsbatchService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
-    private val featureToggles: UnleashIntegration,
 ) {
     fun bestillSkattekort() {
-        featureToggles.takeIf { it.isBestillingerEnabled() } ?: return
         val bestillingList: MutableList<Bestilling> = mutableListOf()
 
         runCatching {
@@ -59,7 +56,10 @@ class BestillingsbatchService(
             }
         }.onFailure { exception ->
             when (exception) {
-                is CallNotPermittedException -> return
+                is CallNotPermittedException -> {
+                    return
+                }
+
                 is BatchUpdateException -> {
                     logger.error(marker = TEAM_LOGS_MARKER, exception) { "Oppretting av bestillingsbatch feilet: ${exception.message}" }
                     logger.error("Oppretting av bestillingsbatch feilet, detaljer er logget til TEAM LOGS")
@@ -79,12 +79,11 @@ class BestillingsbatchService(
     }
 
     fun bestillOppdaterteSkattekort() {
-        featureToggles.takeIf { it.isOppdateringEnabled() } ?: return
         runCatching {
             dataSource.transaction { tx ->
                 if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transaction
 
-                // Bør vi stresse med å hente oppdateringer på skattekort for neste år allerede 15.desember?
+                // Vi henter skattekort for neste år 15. desember for å ha de klar til første utbetaling i januar, og for å kunne ta juleferie uten trøbbel
                 ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->
                     val response =
                         runBlocking {
@@ -102,7 +101,10 @@ class BestillingsbatchService(
                     logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til TEAM LOGS")
                 }
 
-                is CallNotPermittedException -> return
+                is CallNotPermittedException -> {
+                    return
+                }
+
                 else -> {
                     logger.error(exception) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${exception.message}" }
                 }

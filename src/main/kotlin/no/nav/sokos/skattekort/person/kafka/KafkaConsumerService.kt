@@ -80,7 +80,10 @@ class KafkaConsumerService(
         }
 
     override fun close() {
-        kafkaConsumer.unsubscribe()
-        kafkaConsumer.close()
+        try {
+            kafkaConsumer.close()
+        } catch (e: Exception) {
+            // Jeg har aldri skjønt hva folk tror  man skal gjøre dersom en closeoperasjon feiler. Greit å vite om, antar jeg.
+        }
     }
 }

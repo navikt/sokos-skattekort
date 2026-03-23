@@ -33,28 +33,28 @@ class KafkaConsumerService(
     }
 
     suspend fun start(applicationState: ApplicationState) {
-        kafkaConsumer.use { consumer ->
-            consumer.subscribe(listOf(kafkaConfig.topic))
+        kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
 
-            logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
-            while (applicationState.ready) {
-                if (kafkaConsumer.subscription().isEmpty()) {
-                    kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
-                }
+        logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
+        while (applicationState.ready) {
+            if (kafkaConsumer.subscription().isEmpty()) {
+                kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
+            }
 
-                runCatching {
-                    val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-                    if (!consumerRecords.isEmpty) {
-                        consumerRecords.forEach { record ->
-                            logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
-                            val personHendelseDTO = mapToPersonHendelseDTO(record)
-                            identifikatorEndringService.processIdentifikatorEndring(personHendelseDTO)
-                        }
-                        kafkaConsumer.commitSync()
+            runCatching {
+                val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+                if (!consumerRecords.isEmpty) {
+                    consumerRecords.forEach { record ->
+                        logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
+                        val personHendelseDTO = mapToPersonHendelseDTO(record)
+                        identifikatorEndringService.processIdentifikatorEndring(personHendelseDTO)
                     }
-                }.onFailure { exception ->
-                    logger.error(exception) { "Error running kafka consumer for ${kafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
-                    kafkaConsumer.unsubscribe()
+                    kafkaConsumer.commitSync()
+                }
+            }.onFailure { exception ->
+                logger.error(exception) { "Error running kafka consumer for ${kafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
+                kafkaConsumer.unsubscribe()
+                if (applicationState.ready) {
                     delay(DELAY_ON_ERROR_SECONDS.seconds)
                 }
             }
@@ -80,7 +80,8 @@ class KafkaConsumerService(
         }
 
     override fun close() {
-        kafkaConsumer.unsubscribe()
-        kafkaConsumer.close()
+        runCatching { kafkaConsumer.unsubscribe() }.onFailure { logger.warn(it) { "Failed to unsubscribe Kafka consumer" } }
+        runCatching { kafkaConsumer.close() }.onFailure { logger.warn(it) { "Failed to close Kafka consumer" } }
+        runCatching { kafkaClientMetrics.close() }.onFailure { logger.warn(it) { "Failed to close Kafka client metrics" } }
     }
 }

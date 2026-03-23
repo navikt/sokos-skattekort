@@ -6,11 +6,8 @@ import io.getunleash.Unleash
 import io.getunleash.event.ClientFeaturesResponse
 import io.getunleash.event.UnleashSubscriber
 import io.getunleash.util.UnleashConfig
-import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
-
-private val logger = KotlinLogging.logger { }
 
 class UnleashIntegration(
     private val onForespoerselListenerChanged: (Boolean) -> Unit = {},
@@ -54,8 +51,6 @@ class UnleashIntegration(
                     .instanceId(appProperties.podName)
                     .unleashAPI(unleashProps.unleashAPI + "/api/")
                     .apiKey(unleashProps.apiKey)
-                    // TODO
-//                    .environment(unleashProps.environment)
                     .synchronousFetchOnInitialisation(true)
                     .subscriber(
                         object : UnleashSubscriber {
@@ -66,6 +61,5 @@ class UnleashIntegration(
                     ).build()
             unleashClient = DefaultUnleash(config)
         }
-        onForespoerselListenerChanged(unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled"))
     }
 }

@@ -12,6 +12,7 @@ import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.errors.WakeupException
 
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -37,31 +38,37 @@ class KafkaConsumerService(
     }
 
     suspend fun start(applicationState: ApplicationState) {
-        kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
+        try {
+            kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
 
-        logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
-        while (applicationState.ready && !stopping.load()) {
-            if (kafkaConsumer.subscription().isEmpty()) {
-                kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
-            }
-
-            runCatching {
-                val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-                if (!consumerRecords.isEmpty) {
-                    consumerRecords.forEach { record ->
-                        logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
-                        val personHendelseDTO = mapToPersonHendelseDTO(record)
-                        identifikatorEndringService.processIdentifikatorEndring(personHendelseDTO)
+            logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
+            while (applicationState.ready && !stopping.load()) {
+                if (kafkaConsumer.subscription().isEmpty()) {
+                    kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
+                }
+                try {
+                    val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+                    if (!consumerRecords.isEmpty) {
+                        consumerRecords.forEach { record ->
+                            logger.info { "Record mottatt med offset = ${record.offset()}, partisjon = ${record.partition()}, topic = ${record.topic()}" }
+                            val personHendelseDTO = mapToPersonHendelseDTO(record)
+                            identifikatorEndringService.processIdentifikatorEndring(personHendelseDTO)
+                        }
+                        kafkaConsumer.commitSync()
                     }
-                    kafkaConsumer.commitSync()
-                }
-            }.onFailure { exception ->
-                logger.error(exception) { "Error running kafka consumer for ${kafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
-                kafkaConsumer.unsubscribe()
-                if (applicationState.ready) {
-                    delay(DELAY_ON_ERROR_SECONDS.seconds)
+                } catch (e: WakeupException) {
+                    if (stopping.load()) break else throw e
+                } catch (exception: Exception) {
+                    logger.error(exception) { "Error running kafka consumer for ${kafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
+                    kafkaConsumer.unsubscribe()
+                    if (applicationState.ready) {
+                        delay(DELAY_ON_ERROR_SECONDS.seconds)
+                    }
                 }
             }
+        } finally {
+            runCatching { kafkaClientMetrics.close() }.onFailure { logger.warn(it) { "Failed to close Kafka client metrics" } }
+            runCatching { kafkaConsumer.close() }.onFailure { logger.warn(it) { "Failed to close Kafka consumer" } }
         }
     }
 
@@ -84,9 +91,8 @@ class KafkaConsumerService(
         }
 
     override fun close() {
-        if (stopping.load()) return
-        stopping.store(true)
-        runCatching { kafkaConsumer.close() }.onFailure { logger.warn(it) { "Failed to close Kafka consumer" } }
-        runCatching { kafkaClientMetrics.close() }.onFailure { logger.warn(it) { "Failed to close Kafka client metrics" } }
+        if (stopping.compareAndSet(false, true)) {
+            runCatching { kafkaConsumer.wakeup() }
+        }
     }
 }

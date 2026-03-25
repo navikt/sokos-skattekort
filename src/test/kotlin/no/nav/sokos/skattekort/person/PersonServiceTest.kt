@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.person
 
+import kotlin.text.get
 import kotlinx.serialization.json.Json
 
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
@@ -193,5 +194,51 @@ class PersonServiceTest :
             WiremockListener.wiremock.verify(4, postRequestedFor(urlEqualTo("/graphql")))
             result.size shouldBe fnrList.size
             result.values.shouldNotContainNull()
+        }
+
+        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal registrere gammelt fnr på eksisterende person id når ny ident allerede er registrert") {
+            val oldFnr = "10100000098" // Ikke i DB, vil slå opp i PDL
+            val existingActiveIdent = "10101000010" // Ligger allerede i DB via persondata.sql
+            val fnrList = listOf(oldFnr)
+
+            DbListener.loadDataSet("database/person/persondata.sql")
+
+            // Mock PDL-responsen til å si at oldFnr i dag peker til existingActiveIdent som ikke er historisk
+            WiremockListener.wiremockPDLStub(
+                Json.encodeToString(
+                    GraphQLResponse(
+                        HentIdenterBolk.Result(
+                            hentIdenterBolk =
+                                listOf(
+                                    HentIdenterBolkResult(
+                                        ident = oldFnr,
+                                        identer =
+                                            listOf(
+                                                IdentInformasjon(existingActiveIdent, false, IdentGruppe.FOLKEREGISTERIDENT),
+                                                IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+                                            ),
+                                    ),
+                                ),
+                        ),
+                    ),
+                ),
+            )
+
+            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
+
+            result[oldFnr] shouldNotBe null
+
+            // Hent audits for å sjekke at logikken for "allerede registrert" ble kjørt
+            DbListener.dataSource.transaction { tx ->
+                val auditLogs = AuditRepository.getAuditByPersonId(tx, result[oldFnr]!!)
+
+                auditLogs.shouldNotBeNull {
+                    // Sjekker at den nye grenen opprettet riktig OPPDATERT_PERSONIDENTIFIKATOR-audit
+                    this.any {
+                        it.tag == AuditTag.OPPDATERT_PERSONIDENTIFIKATOR &&
+                            it.informasjon == "Oppdatert gamle foedselsnummer: $oldFnr"
+                    } shouldBe true
+                }
+            }
         }
     })

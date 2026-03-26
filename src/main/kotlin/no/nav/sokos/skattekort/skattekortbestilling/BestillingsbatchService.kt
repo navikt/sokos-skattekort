@@ -3,6 +3,8 @@ package no.nav.sokos.skattekort.skattekortbestilling
 import java.sql.BatchUpdateException
 import javax.sql.DataSource
 
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
@@ -23,6 +25,7 @@ import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}
+private val RECENT_BATCH_GRACE_PERIOD = 1.hours
 
 class BestillingsbatchService(
     private val dataSource: DataSource,
@@ -35,16 +38,13 @@ class BestillingsbatchService(
             bestillingList.addAll(dataSource.transaction { tx -> BestillingRepository.getAllBestilling(tx, maxYear = maxInntektsaar()) })
             bestillingList.ifEmpty { return }
 
-            val (request, response) =
-                runBlocking {
-                    val request =
-                        bestillSkattekortRequest(
-                            inntektsaar = bestillingList.firstOrNull()!!.inntektsaar,
-                            fnr = bestillingList.map { it.fnr }.distinct(),
-                            bestillingOrgnr = PropertiesConfig.getApplicationProperties().bestillingOrgnr,
-                        )
-                    Pair(request, skatteetatenClient.bestillSkattekort(request))
-                }
+            val request =
+                bestillSkattekortRequest(
+                    inntektsaar = bestillingList.first().inntektsaar,
+                    fnr = bestillingList.map { it.fnr }.distinct(),
+                    bestillingOrgnr = PropertiesConfig.getApplicationProperties().bestillingOrgnr,
+                )
+            val response = runBlocking { skatteetatenClient.bestillSkattekort(request) }
 
             dataSource.transaction { tx ->
                 logger.info { "Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten" }
@@ -69,10 +69,7 @@ class BestillingsbatchService(
                 }
 
                 else -> {
-                    dataSource.transaction { errorTx ->
-                        AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillingList.map { it.personId }, "Oppretting av bestilling feilet")
-                    }
-                    logger.error(exception) { "Oppretting av bestillingsbatch feilet: ${exception.message}" }
+                    logErrorAsInfoIfRecentBatch("Oppretting av bestillingsbatch feilet", exception)
                 }
             }
         }
@@ -96,19 +93,30 @@ class BestillingsbatchService(
             }
         }.onFailure { exception ->
             when (exception) {
-                is BatchUpdateException -> {
-                    logger.error(marker = TEAM_LOGS_MARKER, exception) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${exception.message}" }
-                    logger.error("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet, detaljer er logget til TEAM LOGS")
-                }
-
                 is CallNotPermittedException -> {
                     return
                 }
 
                 else -> {
-                    logger.error(exception) { "Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet: ${exception.message}" }
+                    logErrorAsInfoIfRecentBatch("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet", exception)
                 }
             }
         }
+    }
+
+    private fun logErrorAsInfoIfRecentBatch(
+        errorMessage: String,
+        exception: Throwable,
+    ) {
+        val lastBestillingsbatch = dataSource.transaction { tx -> BestillingsbatchRepository.getLastBestillingsbatch(tx) }
+        lastBestillingsbatch?.let { batch ->
+            if (batch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
+                logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
+                logger.info { "$errorMessage. Feilen ignoreres foreløpig da det allerede finnes en vellykket bestillingsbatch fra den siste timen. Forsøker igjen ved neste kjøring." }
+                return
+            }
+        }
+        logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
+        logger.error { "$errorMessage, detaljer er logget til TEAM LOGS" }
     }
 }

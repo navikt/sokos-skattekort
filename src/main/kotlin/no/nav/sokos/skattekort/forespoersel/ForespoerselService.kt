@@ -14,6 +14,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
@@ -33,6 +34,7 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselService(
     private val dataSource: DataSource,
     private val personService: PersonService,
+    private val featureToggles: UnleashIntegration,
 ) {
     fun taImotForespoersel(
         message: String,
@@ -180,6 +182,7 @@ class ForespoerselService(
     }
 
     fun cronForespoerselInput() {
+        if (!featureToggles.isForespoerselInputEnabled()) return
         val forespoerselInput: List<ForespoerselInput> =
             dataSource.transaction { tx ->
                 val returverdi = ForespoerselRepository.getAllForespoerselInput(tx)

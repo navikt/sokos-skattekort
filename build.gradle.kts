@@ -13,7 +13,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.7"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
-    id("com.expediagroup.graphql") version "9.0.0"
+    id("com.expediagroup.graphql") version "9.1.0"
     id("org.openapi.generator") version "7.20.0"
 
     application
@@ -56,7 +56,7 @@ val kafkaClientsVersion = "8.1.1-ce"
 val avroVersion = "1.12.1"
 val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
-val graphqlClientVersion = "9.0.0"
+val graphqlClientVersion = "9.1.0"
 val wiremockVersion = "3.13.2"
 val unleashedVersion = "12.2.0"
 

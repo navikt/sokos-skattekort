@@ -244,8 +244,12 @@ class SkattekortpersonApiV1Test :
                         header(HttpHeaders.Authorization, "Bearer $tokenWithBogusIssuer")
                         setBody(request)
                     }
+                val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
+                validationReport.hasErrors() shouldBe false
+                response.status shouldBe HttpStatusCode.Unauthorized
             }
         }
+
         test("person ikke funnet returnerer 200 med melding") {
             TestUtils.withFullTestApplication {
                 WiremockListener.wiremockTilgangsmaskinStub()

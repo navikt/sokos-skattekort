@@ -3,10 +3,6 @@ package no.nav.sokos.skattekort.skattekort
 import java.time.Year
 import javax.sql.DataSource
 
-import kotlin.time.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-
 import io.github.resilience4j.core.functions.Either
 import mu.KotlinLogging
 
@@ -88,6 +84,8 @@ class SkattekortService(
         if (GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Manuell opprettelse av reelle skattekort må gjøres på vegne av en saksbehandler" }
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har opprettet skattekort for bruker"))
+        } else {
+            auditLogger.auditLog(AuditLogg(saksbehandler = "DOLLY", fnr = fnr, brukerhandling = "Dolly har opprettet skattekort for bruker"))
         }
 
         return dataSource.transaction { tx ->
@@ -97,16 +95,16 @@ class SkattekortService(
                     informasjon = "Skattekort manuelt opprettet person",
                     tx = tx,
                 )
-            val today =
-                Clock.System
-                    .now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .date
             // Evt opprette Bestilling for Testnorge-brukere?
             val skattekort =
                 skattekortDTO.toDomainSkattekort(
                     personId = personId,
-                    utstedtDato = skattekortDTO.utstedtDato ?: today,
+                    utstedtDato =
+                        when (skattekortDTO.resultatForSkattekort) {
+                            ResultatForSkattekort.SkattekortopplysningerOK.value -> skattekortDTO.utstedtDato
+                            ResultatForSkattekort.IkkeSkattekort.value, ResultatForSkattekort.IkkeTrekkplikt.value -> null
+                            else -> null // Kan også vurdere å kaste feilmelding
+                        },
                     identifikator = null,
                     kilde = SkattekortKilde.MANUELL,
                 )

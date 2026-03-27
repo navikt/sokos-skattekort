@@ -119,10 +119,8 @@ class BestillingsbatchServiceTest :
                 batches.size shouldBe 2
                 batches.shouldContainAllIgnoringFields(
                     listOf(
-                        no.nav.sokos.skattekort.skattekort
-                            .aBatch(id = 1L, status = NY, type = BESTILLING, bestillingsreferanse = "ref1"),
-                        no.nav.sokos.skattekort.skattekort
-                            .aBatch(id = 2L, status = NY, type = BESTILLING, bestillingsreferanse = "ref2"),
+                        aBatch(id = 1L, status = NY, type = BESTILLING, bestillingsreferanse = "ref1"),
+                        aBatch(id = 2L, status = NY, type = BESTILLING, bestillingsreferanse = "ref2"),
                     ),
                     Bestillingsbatch::oppdatert,
                     Bestillingsbatch::opprettet,

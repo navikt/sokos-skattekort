@@ -31,7 +31,7 @@ class BestillingsbatchService(
     private val featureToggles: UnleashIntegration,
 ) {
     fun bestillSkattekort() {
-        featureToggles.takeIf { it.isBestillingerEnabled() } ?: return
+        if (!featureToggles.isBestillingerEnabled()) return
         val bestillingList: MutableList<Bestilling> = mutableListOf()
 
         runCatching {
@@ -82,7 +82,7 @@ class BestillingsbatchService(
     }
 
     fun bestillOppdaterteSkattekort() {
-        featureToggles.takeIf { it.isOppdateringEnabled() } ?: return
+        if (!featureToggles.isOppdateringEnabled()) return
         runCatching {
             dataSource.transaction { tx ->
                 if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transaction

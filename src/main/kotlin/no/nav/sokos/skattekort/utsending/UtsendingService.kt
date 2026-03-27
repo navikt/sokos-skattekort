@@ -37,7 +37,7 @@ class UtsendingService(
     private val logger = KotlinLogging.logger {}
 
     fun handleUtsending() {
-        featureToggles.takeIf { it.isUtsendingEnabled() } ?: return
+        if (!featureToggles.isUtsendingEnabled()) return
         (jmsConnectionFactory.createConnection() ?: error("Kunne ikke koble til JMS")).use { jmsConnection ->
             jmsConnection.createSession(JMSContext.AUTO_ACKNOWLEDGE).use { jmsSession ->
                 jmsSession.createProducer(leveransekoeOppdragZSkattekort).use { jmsProducer ->

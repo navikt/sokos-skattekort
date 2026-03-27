@@ -24,6 +24,24 @@ object FoedselsnummerRepository {
             ),
         )
 
+    fun insertByExistingFnr(
+        tx: TransactionalSession,
+        fnr: String,
+        existingFnr: String,
+    ): Long? =
+        tx.updateAndReturnGeneratedKey(
+            queryOf(
+                """
+                INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr) 
+                SELECT person_id, gjelder_fom - INTERVAL '1 day', :fnr FROM foedselsnumre WHERE fnr = :existingFnr
+                """.trimIndent(),
+                mapOf(
+                    "fnr" to fnr,
+                    "existingFnr" to existingFnr,
+                ),
+            ),
+        )
+
     fun findPersonIdByFnrList(
         tx: TransactionalSession,
         fnrList: List<String>,

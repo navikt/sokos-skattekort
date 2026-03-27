@@ -13,6 +13,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.bestillOppdateringRequest
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.bestillSkattekortRequest
@@ -30,8 +31,10 @@ private val RECENT_BATCH_GRACE_PERIOD = 1.hours
 class BestillingsbatchService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
+    private val featureToggles: UnleashIntegration,
 ) {
     fun bestillSkattekort() {
+        if (!featureToggles.isBestillingerEnabled()) return
         val bestillingList: MutableList<Bestilling> = mutableListOf()
 
         runCatching {
@@ -76,6 +79,7 @@ class BestillingsbatchService(
     }
 
     fun bestillOppdaterteSkattekort() {
+        if (!featureToggles.isOppdateringEnabled()) return
         runCatching {
             dataSource.transaction { tx ->
                 if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transaction

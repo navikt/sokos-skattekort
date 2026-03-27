@@ -13,6 +13,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.mockk.coEvery
 import io.mockk.mockk
 
+import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClientTestUtils.okBestillSkattekortResponse
 import no.nav.sokos.skattekort.listener.DbListener
@@ -40,6 +41,7 @@ class BestillingsbatchServiceTest :
             BestillingsbatchService(
                 dataSource = DbListener.dataSource,
                 skatteetatenClient = skatteetatenClient,
+                featureToggles = UnleashIntegration(),
             )
         }
 

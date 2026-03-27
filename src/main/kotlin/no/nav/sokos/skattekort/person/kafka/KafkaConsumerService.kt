@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort.person.kafka
 
 import java.time.Duration
 
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
@@ -10,6 +12,7 @@ import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.errors.WakeupException
 
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -21,28 +24,29 @@ private const val DELAY_ON_ERROR_SECONDS = 60L
 private const val DELAY_KAFKA_START = 500L
 private const val POLL_DURATION_SECONDS = 10L
 
+@OptIn(ExperimentalAtomicApi::class)
 class KafkaConsumerService(
     private val kafkaConfig: KafkaConfig,
     private val identifikatorEndringService: IdentifikatorEndringService,
 ) : AutoCloseable {
     private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(kafkaConfig.properties)
     private val kafkaClientMetrics: KafkaClientMetrics = KafkaClientMetrics(kafkaConsumer)
+    private val stopping = AtomicBoolean(false)
 
     init {
         kafkaClientMetrics.bindTo(Metrics.prometheusMeterRegistry)
     }
 
     suspend fun start(applicationState: ApplicationState) {
-        kafkaConsumer.use { consumer ->
-            consumer.subscribe(listOf(kafkaConfig.topic))
+        try {
+            kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
 
             logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
-            while (applicationState.ready) {
+            while (applicationState.ready && !stopping.load()) {
                 if (kafkaConsumer.subscription().isEmpty()) {
                     kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
                 }
-
-                runCatching {
+                try {
                     val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
                     if (!consumerRecords.isEmpty) {
                         consumerRecords.forEach { record ->
@@ -52,12 +56,19 @@ class KafkaConsumerService(
                         }
                         kafkaConsumer.commitSync()
                     }
-                }.onFailure { exception ->
+                } catch (e: WakeupException) {
+                    if (stopping.load()) break else throw e
+                } catch (exception: Exception) {
                     logger.error(exception) { "Error running kafka consumer for ${kafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
                     kafkaConsumer.unsubscribe()
-                    delay(DELAY_ON_ERROR_SECONDS.seconds)
+                    if (applicationState.ready) {
+                        delay(DELAY_ON_ERROR_SECONDS.seconds)
+                    }
                 }
             }
+        } finally {
+            runCatching { kafkaClientMetrics.close() }.onFailure { logger.warn(it) { "Failed to close Kafka client metrics" } }
+            runCatching { kafkaConsumer.close() }.onFailure { logger.warn(it) { "Failed to close Kafka consumer" } }
         }
     }
 
@@ -80,7 +91,8 @@ class KafkaConsumerService(
         }
 
     override fun close() {
-        kafkaConsumer.unsubscribe()
-        kafkaConsumer.close()
+        if (stopping.compareAndSet(false, true)) {
+            runCatching { kafkaConsumer.wakeup() }
+        }
     }
 }

@@ -70,6 +70,20 @@ class PersonService(
                 foedselsnummerList.forEach { fnr ->
                     val identInformasjon = identInformasjonMap[fnr]
                     if (!identInformasjon.isNullOrEmpty()) {
+                        // Hent ut ikke historisk ident
+                        val ident = identInformasjon.first { !it.historisk }.ident
+
+                        // hvis fnr er historisk og ident er allerede registrert i DB, da registrert vi kun gamle FNR med riktig personId
+                        if (identInformasjon.find { it.historisk && it.ident == fnr } != null) {
+                            PersonRepository.findPersonIdByFnr(tx, Personidentifikator(ident))?.let { personId ->
+                                logger.info(marker = TEAM_LOGS_MARKER) { "Folkeregisteridentifikator=$ident allerede registrert, registrerer gamle FNR: $fnr i DB" }
+                                FoedselsnummerRepository.insertByExistingFnr(tx, fnr, ident)
+                                AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, personId, "Oppdatert gamle foedselsnummer: $fnr")
+                                foedselsnumreWithPersonIdMap[fnr] = personId
+                                return@forEach
+                            }
+                        }
+
                         val personId =
                             findPersonIdOrCreatePersonByFnr(
                                 tx = tx,
@@ -80,8 +94,6 @@ class PersonService(
                         // oppdatert foedselsnumreWithPersonIdMap med mangler personId
                         foedselsnumreWithPersonIdMap[fnr] = personId
 
-                        // sjekk om det fins nye identen som tilhønrer til personen
-                        val ident = identInformasjon.first { !it.historisk }.ident
                         if (ident != fnr) {
                             logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$personId med folkeregisteridentifikator=$ident" }
                             updateFoedselsnummer(

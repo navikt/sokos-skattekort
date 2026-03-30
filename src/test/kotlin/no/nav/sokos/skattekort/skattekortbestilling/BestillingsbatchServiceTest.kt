@@ -234,7 +234,7 @@ class BestillingsbatchServiceTest :
 
 fun List<Bestillingsbatch>.shouldBeFunctionallyEquivalentTo(expected: List<Bestillingsbatch>) {
     this.size shouldBe expected.size
-    expected.shouldContainAllIgnoringFields(
+    this.shouldContainAllIgnoringFields(
         expected,
         Bestillingsbatch::oppdatert,
         Bestillingsbatch::opprettet,

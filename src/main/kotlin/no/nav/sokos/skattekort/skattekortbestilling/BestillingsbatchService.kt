@@ -113,13 +113,13 @@ class BestillingsbatchService(
         exception: Throwable,
     ) {
         val lastBestillingsbatch = dataSource.transaction { tx -> BestillingsbatchRepository.getLastBestillingsbatch(tx) }
-        lastBestillingsbatch?.let { batch ->
-            if (batch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
-                logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
-                logger.info { "$errorMessage. Feilen ignoreres foreløpig da det allerede finnes en vellykket bestillingsbatch fra den siste timen. Forsøker igjen ved neste kjøring." }
-                return
-            }
+
+        if (lastBestillingsbatch != null && lastBestillingsbatch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
+            logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
+            logger.info { "$errorMessage. Feilen ignoreres foreløpig da det allerede finnes en vellykket bestillingsbatch fra den siste timen. Forsøker igjen ved neste kjøring." }
+            return
         }
+
         logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
         logger.error { "$errorMessage, detaljer er logget til TEAM LOGS" }
     }

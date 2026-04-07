@@ -164,7 +164,6 @@ class ForespoerselService(
         return currentDate.isAfter(cutoffDate) && inntektsaar == currentYear - 1
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun parseCopybookMessage(message: String): ForespoerselInput {
         val parts = message.split(DELIMITER).filter { it.isNotBlank() }
         val forsystem =
@@ -172,7 +171,7 @@ class ForespoerselService(
                 Forsystem.OPPDRAGSSYSTEMET == Forsystem.fromValue(parts[0]) && parts.size > 3 -> Forsystem.OPPDRAGSSYSTEMET_STOR
                 else -> Forsystem.fromValue(parts[0])
             }
-        val inntektsaar = Integer.parseInt(parts[1])
+        val inntektsaar = parts[1].toInt()
 
         return ForespoerselInput(
             forsystem = forsystem,
@@ -192,7 +191,7 @@ class ForespoerselService(
 
         forespoerselInput.forEach { input ->
             var i = 0
-            retry@ while (i < 5) {
+            while (i < 5) {
                 try {
                     try {
                         assert(input.fnrList.first().length == 11)
@@ -202,15 +201,15 @@ class ForespoerselService(
                             val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
                             handleForespoersel(tx, message, input, foedselsnumreWithPersonIdMap, null)
                         }
-                        break@retry
+                        break
                     } catch (_: NumberFormatException) {
                         logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
                         logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
-                        break@retry
+                        break
                     } catch (_: AssertionError) {
                         logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
                         logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
-                        break@retry
+                        break
                     }
                 } catch (e: BatchUpdateException) {
                     logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }

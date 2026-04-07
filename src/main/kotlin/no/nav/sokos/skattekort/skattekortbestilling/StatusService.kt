@@ -60,7 +60,7 @@ class StatusService(
         if (skattekort.isNotEmpty()) {
             val validForsystem =
                 try {
-                    Forsystem.Companion.fromValue(forsystem)
+                    Forsystem.fromValue(forsystem)
                 } catch (_: NoSuchElementException) {
                     return Status.UGYLDIG_FORSYSTEM
                 }

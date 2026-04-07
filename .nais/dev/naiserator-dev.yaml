@@ -123,8 +123,7 @@ spec:
       - type: POSTGRES_18
         diskAutoresize: true
         pointInTimeRecovery: true
-        tier: db-f1-micro
-        diskType: HDD
+        tier: db-custom-1-3840
         databases:
           - name: sokos-skattekort
             envVarPrefix: DB

@@ -121,11 +121,10 @@ spec:
   gcp:
     sqlInstances:
       - type: POSTGRES_18
-        highAvailability: true
         diskAutoresize: true
         pointInTimeRecovery: true
-        autoBackupHour: 3
-        tier: db-custom-1-3840
+        tier: db-f1-micro
+        diskType: HDD
         databases:
           - name: sokos-skattekort
             envVarPrefix: DB

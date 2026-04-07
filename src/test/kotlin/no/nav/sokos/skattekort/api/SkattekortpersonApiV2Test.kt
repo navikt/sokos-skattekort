@@ -183,7 +183,7 @@ class SkattekortpersonApiV2Test :
                     }
 
                     auditLogAdditions.list.size shouldBe 1
-                    auditLogAdditions.list.get(0).formattedMessage shouldMatch
+                    auditLogAdditions.list[0].formattedMessage shouldMatch
                         "CEF\\:0\\|Utbetalingsportalen\\|sokos\\-skattekort\\|1\\.0\\|audit\\:access\\|sokos\\-skattekort\\|INFO\\|suid\\=aUser duid\\=01010112345 end=\\d+ msg\\=NAV\\-ansatt har søkt etter skattekort for bruker"
                 } finally {
                     auditLogger.detachAppender(auditLogAdditions)
@@ -288,8 +288,12 @@ class SkattekortpersonApiV2Test :
                         header(HttpHeaders.Authorization, "Bearer $tokenWithBogusIssuer")
                         setBody(request)
                     }
+                val validationReport = response.validationReport(validator, HttpMethod.Post, HENT_SKATTEKORT_URL, Json.encodeToString(request))
+                validationReport.hasErrors() shouldBe false
+                response.status shouldBe HttpStatusCode.Unauthorized
             }
         }
+
         test("hent-skattekort - person ikke funnet returnerer 200 med melding") {
             TestUtils.withFullTestApplication {
                 WiremockListener.wiremockTilgangsmaskinStub()

@@ -42,7 +42,15 @@ class BestillingService(
 ) {
     @OptIn(ExperimentalTime::class)
     fun hentBestillingsbatcher(type: BestillingsbatchType) {
-        dataSource.transaction { tx -> BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, type) }.forEach { batch ->
+        val bestillingsbatchList =
+            try {
+                dataSource.transaction { tx -> BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, type) }
+            } catch (exception: Exception) {
+                logger.error(exception) { "Feil ved henting av bestillingsbatcher for type $type" }
+                return
+            }
+
+        loop@ for (batch in bestillingsbatchList) {
             val batchId = batch.id!!.id
             runCatching {
                 logger.info("Henter skattekort for ${batch.bestillingsreferanse}")
@@ -51,7 +59,7 @@ class BestillingService(
                         skatteetatenClient.hentSkattekort(batch.bestillingsreferanse)
                     } ?: run {
                         logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
-                        return@runCatching
+                        break@loop
                     }
                 logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
                 handleBestillingsbatch(batchId = batchId, response = response, type = type)
@@ -95,6 +103,7 @@ class BestillingService(
                             logger.info { "Henting av skattekort for batch: $batchId, type: ${batch.type.name} feilet, men prøvd på nytt senere" }
                             dataSource.transaction { tx -> BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.RETRY) }
                         }
+                        break@loop
                     }
                 }
             }

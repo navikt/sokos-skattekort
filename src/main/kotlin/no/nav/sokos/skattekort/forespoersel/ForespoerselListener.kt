@@ -36,10 +36,10 @@ class ForespoerselListener(
                     forespoerselService.taImotForespoersel(jmsMessage)
                     message.acknowledge()
                 }.onFailure {
+                    logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
                     val boqProducer = jmsContext!!.createProducer()
                     boqProducer.send(forespoerselBoqQueue, message)
                     message.acknowledge()
-                    logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
                 }
             }
         }

@@ -59,6 +59,47 @@ paths:
       security:
         - Bearer: [ ]
 
+  /auditLogg:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Hent audit-logg for person
+      description: Returnerer audit-logg for oppgitt fødselsnummer
+      operationId: hentAuditLogg
+
+      requestBody:
+        description: Fødselsnummer for personen du ønsker audit-logg for
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FnrRequest'
+        required: true
+
+      responses:
+        200:
+          description: OK - Returnerer audit-logg
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditResponse'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
 components:
   schemas:
     BatchInsightRequest:
@@ -80,9 +121,9 @@ components:
     BatchInsightResponse:
       type: object
       required:
-        - bestillingsbatcher
+        - items
       properties:
-        bestillingsbatcher:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Bestillingsbatch'
@@ -206,6 +247,82 @@ components:
           type: string
           example: /api/v1/admin/hentBatcher
           description: Endepunktet hvor feilen oppsto
+
+    AuditResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Audit'
+
+    Audit:
+      type: object
+      required:
+        - personId
+        - brukerId
+        - opprettet
+        - tag
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 12345
+          description: Audit ID
+        personId:
+          type: integer
+          format: int64
+          example: 1
+          description: Person ID
+        brukerId:
+          type: string
+          example: "F123456"
+          description: Bruker ID som utførte handlingen
+        opprettet:
+          type: string
+          format: date-time
+          example: '2026-04-10T10:30:00Z'
+          description: Når audit-entry ble opprettet
+        tag:
+          type: string
+          enum:
+            - BESTILLING_ETTERLATT
+            - BESTILLING_FEILET
+            - BESTILLING_SENDT
+            - HENTING_AV_SKATTEKORT_FEILET
+            - INVALID_FNR
+            - MOTTATT_FORESPOERSEL
+            - NYTT_FNR
+            - OPPDATERT_PERSONIDENTIFIKATOR
+            - OPPRETTET_PERSON
+            - SKATTEKORTINFORMASJON_MOTTATT
+            - SYNTETISERT_SKATTEKORT
+            - UKJENT
+            - UTSENDING_FEILET
+            - UTSENDING_OK
+            - UVENTET_PERSON
+            - MANUELL                                                                                            description: Type audit-event
+        informasjon:
+          type: string
+          nullable: true
+          description: Ytterligere informasjon om auditeringen
+
+    FnrRequest:
+      type: object
+      required:
+        - fnr
+      properties:
+        fnr:
+          type: string
+          nullable: false
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+          description: Fødselsnummer
 
   securitySchemes:
     Bearer:

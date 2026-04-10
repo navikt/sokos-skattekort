@@ -21,3 +21,5 @@ fun RequestValidationConfig.requestValidationHentNavnRequest() {
         }
     }
 }
+
+typealias FnrRequest = HentNavnRequest

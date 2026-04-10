@@ -11,6 +11,7 @@ import no.nav.sokos.skattekort.api.skattekortPersonApi
 import no.nav.sokos.skattekort.api.swaggerApi
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
+import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
@@ -28,8 +29,9 @@ fun Application.routingConfig(
             val statusService: StatusService by dependencies
             val pdlService: PdlService by dependencies
             val bestillingsbatchService: BestillingsbatchService by dependencies
+            val personService: PersonService by dependencies
 
-            skattekortAdminApi(bestillingsbatchService)
+            skattekortAdminApi(bestillingsbatchService, personService)
             skattekortApi(forespoerselService, statusService)
             skattekortPersonApi(skattekortService, pdlService)
         }

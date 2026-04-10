@@ -4,6 +4,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
+@Serializable
 data class Bestillingsbatch
     @OptIn(ExperimentalTime::class)
     constructor(
@@ -14,6 +15,7 @@ data class Bestillingsbatch
         val oppdatert: Instant,
         val opprettet: Instant,
         val dataSendt: String,
+        val dataMottatt: String? = null,
     )
 
 @Serializable

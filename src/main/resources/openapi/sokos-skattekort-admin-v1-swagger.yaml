@@ -1,0 +1,218 @@
+openapi: '3.0.3'
+
+info:
+  version: 1.0.0
+  title: sokos-skattekort API
+  description: API-tjeneste for admininnsyn i bestillingsbatcher for skattekort
+  contact:
+    name: PO Utbetaling
+    email: okonomi@nav.no
+    url: https://nav-it.slack.com/archives/CKZADNFBP
+servers:
+  - url: /api/v1/admin
+tags:
+  - name: skattekort-admin
+    description: Adminfunksjoner for Skattekort
+
+paths:
+  /hentBatcher:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Hent bestillingsbatcher
+      description: Returnerer bestillingsbatcher filtrert på opprettet/oppdatert tidspunkt.
+      operationId: hentBestillingsbatcher
+
+      requestBody:
+        description: |
+          Tidspunkt-filter for henting av batcher.
+          `tidspunktFom` og `tidspunktTom` er valgfrie.
+          Hvis de ikke oppgis, returneres batcher for siste 24 timer.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchInsightRequest'
+        required: true
+
+      responses:
+        200:
+          description: OK - Returnerer bestillingsbatcher i valgt tidsrom
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchInsightResponse'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
+components:
+  schemas:
+    BatchInsightRequest:
+      type: object
+      properties:
+        tidspunktFom:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-04-08T08:00:00Z'
+          description: Start-tidspunkt
+        tidspunktTom:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-04-09T08:00:00Z'
+          description: Slutt-tidspunkt
+
+    BatchInsightResponse:
+      type: object
+      required:
+        - bestillingsbatcher
+      properties:
+        bestillingsbatcher:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bestillingsbatch'
+
+    Bestillingsbatch:
+      type: object
+      required:
+        - status
+        - type
+        - bestillingsreferanse
+        - oppdatert
+        - opprettet
+        - dataSendt
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 12345
+        status:
+          type: string
+          enum:
+            - NY
+            - FERDIG
+            - FEILET
+            - RETRY
+        type:
+          type: string
+          enum:
+            - BESTILLING
+            - OPPDATERING
+        bestillingsreferanse:
+          type: string
+          example: '20260409-abc123'
+        oppdatert:
+          type: string
+          format: date-time
+          example: '2026-04-09T08:32:14Z'
+        opprettet:
+          type: string
+          format: date-time
+          example: '2026-04-09T08:30:00Z'
+        dataSendt:
+          type: object
+          description: JSON sendt til Skatteetaten
+          example:
+            inntektsaar: "2026"
+            bestillingstype: "HENT_ALLE_OPPGITTE"
+            kontaktinformasjon:
+              epostadresse: "nav.ur.og.os@nav.no"
+              mobiltelefonummer: "+4721070000"
+            varslingstype: "INGEN_VARSEL"
+            forespoerselOmSkattekortTilArbeidsgiver:
+              arbeidsgiver:
+                - arbeidsgiveridentifikator:
+                    organisasjonsnummer: "995277670"
+                  arbeidstakeridentifikator:
+                    - "12345612345"
+        dataMottatt:
+          type: object
+          description: JSON mottatt fra Skatteetaten
+          nullable: true
+          example:
+            status: "FORESPOERSEL_OK"
+            arbeidsgiver:
+              - arbeidsgiveridentifikator:
+                  organisasjonsnummer: "995277670"
+                arbeidstaker:
+                  - arbeidstakeridentifikator: "123456612345"
+                    resultatForSkattekort: "skattekortopplysningerOK"
+                    skattekort:
+                      utstedtDato: "2025-12-05"
+                      skattekortidentifikator: 1234567890
+                      forskuddstrekk:
+                        - trekkode: "loennFraHovedarbeidsgiver"
+                          trekktabell:
+                            tabellnummer: "8090"
+                            prosentsats: 44.0
+                            antallMaanederForTrekk: 10.5
+                        - trekkode: "loennFraNAV"
+                          trekktabell:
+                            tabellnummer: "8090"
+                            prosentsats: 44.0
+                            antallMaanederForTrekk: 10.5
+                        - trekkode: "ufoeretrygdFraNAV"
+                          trekktabell:
+                            tabellnummer: "8090"
+                            prosentsats: 44.0
+                            antallMaanederForTrekk: 10.5
+                        - trekkode: "loennFraBiarbeidsgiver"
+                          trekkprosent:
+                            prosentsats: 44.0
+                        - trekkode: "ufoereytelserFraAndre"
+                          trekkprosent:
+                            prosentsats: 44.0
+                    inntektsaar: 2026
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Tidspunkt feilen oppsto
+        status:
+          type: integer
+          example: 4xx
+          description: HTTP status kode
+        error:
+          type: string
+          example: Error type
+        message:
+          type: string
+          example: Error message
+        path:
+          type: string
+          example: /api/v1/admin/hentBatcher
+          description: Endepunktet hvor feilen oppsto
+
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: |-
+        OIDC-token (JWT via OAuth2.0).<br> 
+          Følgende format må brukes i input-feltet "Value" under: <strong>\"Bearer {token}\"</strong>.<br> 
+          Eksempel på verdi i input-felt: <strong>Bearer eYdmifml0ejugm</strong>
+      name: Authorization
+      in: header

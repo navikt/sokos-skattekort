@@ -1,6 +1,10 @@
 package no.nav.sokos.skattekort.skattekortbestilling
 
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 import kotlin.time.toKotlinInstant
 
 import kotliquery.Row
@@ -46,6 +50,33 @@ object BestillingsbatchRepository {
             ),
             extractor = mapToBestillingsbatch,
         )
+
+    fun getBestillingsbatches(
+        tx: TransactionalSession,
+        instantStart: Instant?,
+        instantEnd: Instant? = Clock.System.now(),
+    ): List<Bestillingsbatch> {
+        val start = (instantStart ?: (Clock.System.now() - 24.hours))
+        val end = (instantEnd ?: Clock.System.now())
+        val query =
+            queryOf(
+                """
+                    |SELECT *
+                    |FROM bestillingsbatcher
+                    |WHERE ((opprettet between :start AND :end)
+                    |OR (oppdatert between :start AND :end))
+                    |ORDER BY opprettet ASC
+                """.trimMargin(),
+                mapOf(
+                    "start" to start.toJavaInstant(),
+                    "end" to end.toJavaInstant(),
+                ),
+            )
+        return tx.list(
+            query,
+            extractor = mapToBestillingsbatch,
+        )
+    }
 
     fun findById(
         tx: TransactionalSession,
@@ -123,6 +154,7 @@ object BestillingsbatchRepository {
             dataSendt = row.string("data_sendt"),
             oppdatert = row.instant("oppdatert").toKotlinInstant(),
             opprettet = row.instant("opprettet").toKotlinInstant(),
+            dataMottatt = row.stringOrNull("data_mottatt"),
         )
     }
 }

@@ -5,6 +5,7 @@ import javax.sql.DataSource
 
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
@@ -105,6 +106,17 @@ class BestillingsbatchService(
                     logErrorAsInfoIfRecentBatch("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet", exception)
                 }
             }
+        }
+    }
+
+    fun getBestillingsbatches(
+        instantStart: Instant?,
+        instantEnd: Instant?,
+    ): List<Bestillingsbatch> {
+        logger.info { "Service OK " }
+
+        return dataSource.transaction { tx ->
+            BestillingsbatchRepository.getBestillingsbatches(tx, instantStart, instantEnd)
         }
     }
 

@@ -130,4 +130,25 @@ class SkattekortService(
             logger.error("Failed to delete skattekort for year: $inntektsaar", exception)
         }
     }
+
+    fun genertManueltGenerertSkattekort() {
+        logger.info { "Genererer manuelt genererte skattekort" }
+
+        runCatching {
+            dataSource.transaction { tx ->
+                val skattekortList = SkattekortRepository.getManueltGenerertSkattekort(tx)
+                logger.info { "Fant ${skattekortList.size} manuelt genererte skattekort som skal syntetiseres" }
+                skattekortList.forEach { skattekort ->
+                    Syntetisering.evtSyntetiserSkattekort(skattekort, skattekort.id!!)?.let { (syntetisertSkattekort, _) ->
+                        val manueltSkattekort = syntetisertSkattekort.copy(id = SkattekortId(skattekort.id.value.inc()))
+                        // logger.info { "Setter inn manuelt generert skattekort med id ${manueltSkattekort.id} for skattekort $manueltSkattekort" }
+                        SkattekortRepository.insert(tx, manueltSkattekort)
+                    }
+                }
+            }
+            logger.info { "Manuelt genererte skattekort syntetisert" }
+        }.onFailure { exception ->
+            logger.error(exception) { "Failed to generate manuelt generated skattekort" }
+        }
+    }
 }

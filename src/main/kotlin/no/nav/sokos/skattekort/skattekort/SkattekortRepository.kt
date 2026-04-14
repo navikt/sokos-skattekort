@@ -14,24 +14,53 @@ object SkattekortRepository {
         tx: TransactionalSession,
         skattekort: Skattekort,
     ): Long {
+        val columns =
+            mutableListOf(
+                "generert_fra",
+                "person_id",
+                "utstedt_dato",
+                "identifikator",
+                "inntektsaar",
+                "kilde",
+                "resultatForSkattekort",
+            )
+        val values =
+            mutableListOf(
+                ":generertFra",
+                ":personId",
+                ":utstedtDato",
+                ":identifikator",
+                ":inntektsaar",
+                ":kilde",
+                ":resultatForSkattekort",
+            )
+
+        val params =
+            mutableMapOf<String, Any?>(
+                "generertFra" to skattekort.generertFra?.value,
+                "personId" to skattekort.personId.value,
+                "utstedtDato" to skattekort.utstedtDato?.toJavaLocalDate(),
+                "identifikator" to skattekort.identifikator,
+                "inntektsaar" to skattekort.inntektsaar,
+                "kilde" to skattekort.kilde,
+                "resultatForSkattekort" to skattekort.resultatForSkattekort.value,
+            )
+
+        skattekort.id?.value?.let { explicitId ->
+            columns.add(0, "id")
+            values.add(0, ":id")
+            params["id"] = explicitId
+        }
+
         val id =
             tx.updateAndReturnGeneratedKey(
                 Query(
                     statement =
                         """
-                        INSERT INTO skattekort (generert_fra, person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
-                        VALUES (:generertFra, :personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
+                        INSERT INTO skattekort (${columns.joinToString(", ")})
+                        VALUES (${values.joinToString(", ")})
                         """.trimIndent(),
-                    paramMap =
-                        mapOf(
-                            "generertFra" to skattekort.generertFra?.value,
-                            "personId" to skattekort.personId.value,
-                            "utstedtDato" to skattekort.utstedtDato?.toJavaLocalDate(),
-                            "identifikator" to skattekort.identifikator,
-                            "inntektsaar" to skattekort.inntektsaar,
-                            "kilde" to skattekort.kilde,
-                            "resultatForSkattekort" to skattekort.resultatForSkattekort.value,
-                        ),
+                    paramMap = params,
                 ),
             )
         if (skattekort.forskuddstrekkList.isNotEmpty()) {
@@ -207,6 +236,46 @@ object SkattekortRepository {
             """.trimIndent(),
             skattekortIdList.map { id ->
                 mapOf("skattekortId" to id)
+            },
+        )
+    }
+
+    fun getManueltGenerertSkattekort(tx: TransactionalSession): List<Skattekort> {
+        val adminRole = false
+        return tx.list(
+            queryOf(
+                """
+                SELECT s.* from skattekort s
+                    WHERE s.resultatforskattekort = 'ikkeTrekkplikt' and s.kilde != 'manuell'
+                      and s.generert_fra is null
+                      and (not exists(select 1 from skattekort where generert_fra=s.id))
+                    UNION
+                    select * from skattekort s
+                    where s.resultatforskattekort != 'ikkeTrekkplikt'  and s.kilde != 'manuell'
+                      and EXISTS (SELECT 1
+                                  FROM skattekort_tilleggsopplysning kpp
+                                  WHERE kpp.skattekort_id = s.id
+                                    AND kpp.opplysning = 'kildeskattPaaPensjon')
+                      AND NOT (EXISTS (SELECT 1
+                                       FROM forskuddstrekk ufore
+                                       WHERE ufore.skattekort_id = s.id
+                                         AND ufore.trekk_kode = 'ufoeretrygdFraNAV')
+                        AND EXISTS (SELECT 1
+                                    FROM forskuddstrekk pensjon
+                                    WHERE pensjon.skattekort_id = s.id
+                                      AND pensjon.trekk_kode = 'pensjonFraNAV'))
+                      and (not exists(select 1 from skattekort where generert_fra=s.id))
+                    UNION
+                    SELECT s.* FROM skattekort_tilleggsopplysning ops
+                                        join skattekort s on s.id = ops.skattekort_id
+                    WHERE ops.skattekort_id = s.id  AND ops.opplysning = 'oppholdPaaSvalbard'
+                      and (not exists(select 1 from skattekort where generert_fra=s.id))  and s.kilde != 'manuell'
+                      and s.generert_fra is null;
+                """.trimIndent(),
+            ),
+            extractor = { row ->
+                val id = SkattekortId(row.long("id"))
+                Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id, adminRole = adminRole), findAllTilleggsopplysningBySkattekortId(tx, id, adminRole))
             },
         )
     }

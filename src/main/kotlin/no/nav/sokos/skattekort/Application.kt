@@ -2,6 +2,9 @@ package no.nav.sokos.skattekort
 
 import javax.sql.DataSource
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 import com.ibm.mq.jakarta.jms.MQQueue
@@ -169,4 +172,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     }
 
     logger.info { "Kafka consumer is enabled: ${kafkaProperties.enabled}" }
+
+    CoroutineScope(Dispatchers.IO).launch {
+        val skattekortService: SkattekortService by dependencies
+        skattekortService.genertManueltGenerertSkattekort()
+    }
 }

@@ -144,6 +144,23 @@ object BestillingsbatchRepository {
             extractor = mapToBestillingsbatch,
         )
 
+    fun rerun(
+        tx: TransactionalSession,
+        bestillingsreferanse: Bestillingsreferanse,
+    ) = tx.run(
+        queryOf(
+            """
+                    |UPDATE bestillingsbatcher
+                    |SET status = 'RERUN', oppdatert = NOW()
+                    |WHERE bestillingsreferanse = :bestillingsreferanse
+                    |AND status = 'FEILET'
+            """.trimMargin(),
+            mapOf(
+                "bestillingsreferanse" to bestillingsreferanse.value,
+            ),
+        ).asExecute,
+    )
+
     @OptIn(ExperimentalTime::class)
     val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
         Bestillingsbatch(

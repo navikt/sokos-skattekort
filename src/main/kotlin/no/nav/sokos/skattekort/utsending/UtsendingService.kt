@@ -146,6 +146,16 @@ class UtsendingService(
             UtsendingRepository.getAllUtsendinger(tx)
         }
 
+    fun createUtsending(
+        fnr: Personidentifikator,
+        aar: Int,
+        forsystem: Forsystem,
+    ) {
+        dataSource.transaction { tx ->
+            UtsendingRepository.insert(tx, Utsending(fnr, aar, forsystem))
+        }
+    }
+
     companion object {
         val utsendingOppdragzCounter =
             counter(

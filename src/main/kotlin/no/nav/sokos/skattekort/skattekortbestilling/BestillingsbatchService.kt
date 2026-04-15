@@ -135,4 +135,9 @@ class BestillingsbatchService(
         logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
         logger.error { "$errorMessage, detaljer er logget til TEAM LOGS" }
     }
+
+    fun rerun(bestillingsreferanse: Bestillingsreferanse) =
+        dataSource.transaction { tx ->
+            BestillingsbatchRepository.rerun(tx, bestillingsreferanse)
+        }
 }

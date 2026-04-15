@@ -32,6 +32,16 @@ data class Utsending
             failMessage = row.stringOrNull("fail_message"),
             opprettet = row.instant("opprettet").toKotlinInstant(),
         )
+        constructor(
+            fnr: Personidentifikator,
+            inntektsaar: Int,
+            forsystem: Forsystem,
+        ) : this(
+            id = null,
+            fnr = fnr,
+            inntektsaar = inntektsaar,
+            forsystem = forsystem,
+        )
     }
 
 @Serializable

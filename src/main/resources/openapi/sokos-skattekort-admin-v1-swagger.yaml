@@ -25,9 +25,9 @@ paths:
 
       requestBody:
         description: |
-          Tidspunkt-filter for henting av batcher.
-          `tidspunktFom` og `tidspunktTom` er valgfrie.
-          Hvis de ikke oppgis, returneres batcher for siste 24 timer.
+          Filter for henting av batcher.
+          Alle felter er valgfrie.
+          Hvis de ikke oppgis, returneres de 20 siste batchene pluss de som ikke har status FERDIG og som ikke er blant de 20 siste batchene.
         content:
           application/json:
             schema:
@@ -100,6 +100,82 @@ paths:
       security:
         - Bearer: [ ]
 
+  /rerun/{bestillingsreferanse}:
+    get:
+      tags:
+        - skattekort-admin
+      summary: Kjør batch på nytt
+      description: Trigger rerun av batch for gitt bestillingsreferanse.
+      operationId: rerunBestillingsbatch
+
+      parameters:
+        - name: bestillingsreferanse
+          in: path
+          required: true
+          description: 2-3 bokstaver A-Z etterfulgt av 4-8 sifre.
+          schema:
+            type: string
+            pattern: '^[A-Z]{2,3}[0-9]{4,8}$'
+            example: 'BR123456'
+
+      responses:
+        202:
+          description: Accepted - rerun startet
+        400:
+          description: Ugyldig bestillingsreferanse
+          content:
+            text/plain:
+              schema:
+                type: string
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
+  /utsending:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Opprett utsending
+      description: Oppretter utsending for person, år og forsystem.
+      operationId: opprettUtsending
+
+      requestBody:
+        description: Informasjon som trengs for å opprette utsending
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForespoerselRequest'
+        required: true
+
+      responses:
+        202:
+          description: Accepted - utsending opprettet
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
 components:
   schemas:
     BatchInsightRequest:
@@ -117,6 +193,22 @@ components:
           nullable: true
           example: '2026-04-09T08:00:00Z'
           description: Slutt-tidspunkt
+        status:
+          type: string
+          nullable: true
+          enum:
+            - NY
+            - FERDIG
+            - FEILET
+            - RETRY
+          description: Filtrer på bestillingsbatch-status
+        type:
+          type: string
+          nullable: true
+          enum:
+            - BESTILLING
+            - OPPDATERING
+          description: Filtrer på bestillingsbatch-type
 
     BatchInsightResponse:
       type: object
@@ -157,7 +249,7 @@ components:
             - OPPDATERING
         bestillingsreferanse:
           type: string
-          example: '20260409-abc123'
+          example: 'BR123456'
         oppdatert:
           type: string
           format: date-time
@@ -167,59 +259,14 @@ components:
           format: date-time
           example: '2026-04-09T08:30:00Z'
         dataSendt:
-          type: object
-          description: JSON sendt til Skatteetaten
-          example:
-            inntektsaar: "2026"
-            bestillingstype: "HENT_ALLE_OPPGITTE"
-            kontaktinformasjon:
-              epostadresse: "nav.ur.og.os@nav.no"
-              mobiltelefonummer: "+4721070000"
-            varslingstype: "INGEN_VARSEL"
-            forespoerselOmSkattekortTilArbeidsgiver:
-              arbeidsgiver:
-                - arbeidsgiveridentifikator:
-                    organisasjonsnummer: "995277670"
-                  arbeidstakeridentifikator:
-                    - "12345612345"
+          type: string
+          description: JSON-streng sendt til Skatteetaten
+          example: '{"inntektsaar":"2026","bestillingstype":"HENT_ALLE_OPPGITTE"}'
         dataMottatt:
-          type: object
-          description: JSON mottatt fra Skatteetaten
+          type: string
+          description: JSON-streng mottatt fra Skatteetaten
           nullable: true
-          example:
-            status: "FORESPOERSEL_OK"
-            arbeidsgiver:
-              - arbeidsgiveridentifikator:
-                  organisasjonsnummer: "995277670"
-                arbeidstaker:
-                  - arbeidstakeridentifikator: "123456612345"
-                    resultatForSkattekort: "skattekortopplysningerOK"
-                    skattekort:
-                      utstedtDato: "2025-12-05"
-                      skattekortidentifikator: 1234567890
-                      forskuddstrekk:
-                        - trekkode: "loennFraHovedarbeidsgiver"
-                          trekktabell:
-                            tabellnummer: "8090"
-                            prosentsats: 44.0
-                            antallMaanederForTrekk: 10.5
-                        - trekkode: "loennFraNAV"
-                          trekktabell:
-                            tabellnummer: "8090"
-                            prosentsats: 44.0
-                            antallMaanederForTrekk: 10.5
-                        - trekkode: "ufoeretrygdFraNAV"
-                          trekktabell:
-                            tabellnummer: "8090"
-                            prosentsats: 44.0
-                            antallMaanederForTrekk: 10.5
-                        - trekkode: "loennFraBiarbeidsgiver"
-                          trekkprosent:
-                            prosentsats: 44.0
-                        - trekkode: "ufoereytelserFraAndre"
-                          trekkprosent:
-                            prosentsats: 44.0
-                    inntektsaar: 2026
+          example: '{"status":"FORESPOERSEL_OK"}'
     ApiError:
       type: object
       required:
@@ -304,7 +351,8 @@ components:
             - UTSENDING_FEILET
             - UTSENDING_OK
             - UVENTET_PERSON
-            - MANUELL                                                                                            description: Type audit-event
+            - MANUELL
+          description: Type audit-event
         informasjon:
           type: string
           nullable: true
@@ -323,6 +371,33 @@ components:
           maxLength: 11
           pattern: '^\d{11}$'
           description: Fødselsnummer
+
+    ForespoerselRequest:
+      type: object
+      required:
+        - personIdent
+        - aar
+        - forsystem
+      properties:
+        personIdent:
+          type: string
+          example: '01010112345'
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+          description: Personidentifikator (fødselsnummer)
+        aar:
+          type: integer
+          format: int32
+          example: 2026
+          description: Inntektsår
+        forsystem:
+          type: string
+          enum:
+            - OS
+            - MANUELL
+          example: 'MANUELL'
+          description: Forsystem (OS_STOR er ikke gyldig for dette endepunktet)
 
   securitySchemes:
     Bearer:

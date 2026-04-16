@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.skattekortbestilling
 
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
@@ -51,26 +49,61 @@ object BestillingsbatchRepository {
             extractor = mapToBestillingsbatch,
         )
 
-    fun getBestillingsbatches(
+    fun getFilteredBestillingsbatches(
         tx: TransactionalSession,
         instantStart: Instant?,
-        instantEnd: Instant? = Clock.System.now(),
+        instantEnd: Instant?,
+        status: BestillingsbatchStatus?,
+        type: BestillingsbatchType?,
     ): List<Bestillingsbatch> {
-        val start = (instantStart ?: (Clock.System.now() - 24.hours))
-        val end = (instantEnd ?: Clock.System.now())
+        var sqlparts: List<String> = ArrayList()
+        sqlparts += """
+                    |SELECT *
+                    |FROM bestillingsbatcher
+                    |WHERE 1 = 1
+                    """
+        if (status != null) sqlparts += "AND status = :status"
+        if (type != null) sqlparts += "AND type = :type"
+        if (instantStart != null) sqlparts += "AND (opprettet > :start OR oppdatert > :start)"
+        if (instantEnd != null) sqlparts += "AND (opprettet < :end OR oppdatert < :end)"
+
+        sqlparts += "ORDER BY oppdatert ASC"
+
+        val statement = sqlparts.joinToString(" ").trimMargin()
+        val query =
+            queryOf(
+                statement,
+                mapOf(
+                    "start" to instantStart?.toJavaInstant(),
+                    "end" to instantEnd?.toJavaInstant(),
+                    "status" to status?.name,
+                    "type" to type?.name,
+                ),
+            )
+
+        return tx.list(
+            query,
+            extractor = mapToBestillingsbatch,
+        )
+    }
+
+    fun getDefaultBatchInsightResults(tx: TransactionalSession): List<Bestillingsbatch> {
         val query =
             queryOf(
                 """
-                    |SELECT *
-                    |FROM bestillingsbatcher
-                    |WHERE ((opprettet between :start AND :end)
-                    |OR (oppdatert between :start AND :end))
-                    |ORDER BY opprettet ASC
+                    |SELECT * FROM bestillingsbatcher
+                    |WHERE id IN (
+                    |        (SELECT id
+                    |            FROM bestillingsbatcher
+                    |            ORDER BY oppdatert DESC
+                    |            LIMIT 20) 
+                    |   UNION 
+                    |       (SELECT id
+                    |           FROM bestillingsbatcher
+                    |           WHERE status <> 'FERDIG')
+                    |           )
+                    |ORDER BY oppdatert DESC
                 """.trimMargin(),
-                mapOf(
-                    "start" to start.toJavaInstant(),
-                    "end" to end.toJavaInstant(),
-                ),
             )
         return tx.list(
             query,

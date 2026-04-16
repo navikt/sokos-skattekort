@@ -7,7 +7,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.AuditResponse
 import no.nav.sokos.skattekort.api.model.BatchInsightRequest
@@ -21,8 +20,6 @@ import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsreferanse
 import no.nav.sokos.skattekort.utsending.UtsendingService
 
-private val logger = KotlinLogging.logger { }
-
 const val BASE_PATH_ADMIN = "/api/v1/admin"
 
 fun Route.skattekortAdminApi(
@@ -35,11 +32,12 @@ fun Route.skattekortAdminApi(
             // Utkommentert fordi vi ikke har deployet ennå
 //            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<BatchInsightRequest>()
-            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom)
+            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom, request.status, request.type)
             call.respond(
                 BatchInsightResponse(bestillingsbatcher),
             )
         }
+
         post("auditLogg") {
             // Utkommentert fordi vi ikke har deployet ennå
 //            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
@@ -48,13 +46,16 @@ fun Route.skattekortAdminApi(
             call.respond(AuditResponse(audits))
         }
         get("rerun/{bestillingsreferanse}") {
+            //            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+
             val bestillingsreferanse =
                 Bestillingsreferanse(
-                    call.parameters["bestillingsreferanse"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid Foo value: must be 2–5 letters followed by 4–8 digits"),
+                    call.parameters["bestillingsreferanse"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid Bestillingsreferanse: must be 2–3 letters followed by 4–8 digits"),
                 )
             bestillingsbatchService.rerun(bestillingsreferanse)
         }
         post("utsending") {
+//            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<ForespoerselRequest>()
             utsendingService.createUtsending(Personidentifikator(request.personIdent), request.aar, Forsystem.fromValue(request.forsystem))
             return@post call.respond(HttpStatusCode.Accepted)

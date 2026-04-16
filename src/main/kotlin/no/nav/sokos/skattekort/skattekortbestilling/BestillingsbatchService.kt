@@ -112,11 +112,17 @@ class BestillingsbatchService(
     fun getBestillingsbatches(
         instantStart: Instant?,
         instantEnd: Instant?,
+        status: BestillingsbatchStatus?,
+        type: BestillingsbatchType?,
     ): List<Bestillingsbatch> {
         logger.info { "Service OK " }
 
+        if (instantStart == null && instantEnd == null && status == null && type == null) {
+            return dataSource.transaction(BestillingsbatchRepository::getDefaultBatchInsightResults)
+        }
+
         return dataSource.transaction { tx ->
-            BestillingsbatchRepository.getBestillingsbatches(tx, instantStart, instantEnd)
+            BestillingsbatchRepository.getFilteredBestillingsbatches(tx, instantStart, instantEnd, status, type)
         }
     }
 

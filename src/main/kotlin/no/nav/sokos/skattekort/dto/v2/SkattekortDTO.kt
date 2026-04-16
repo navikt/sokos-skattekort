@@ -8,6 +8,7 @@ import no.nav.sokos.skattekort.dto.ForskuddstrekkDTO
 import no.nav.sokos.skattekort.dto.FrikortDTO
 import no.nav.sokos.skattekort.dto.ProsentkortDTO
 import no.nav.sokos.skattekort.dto.TabellkortDTO
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.Frikort
 import no.nav.sokos.skattekort.skattekort.Prosentkort
 import no.nav.sokos.skattekort.skattekort.Skattekort
@@ -16,6 +17,7 @@ import no.nav.sokos.skattekort.skattekort.Tabellkort
 
 @Serializable
 data class SkattekortDTO(
+    val fnr: String? = null,
     val forskuddstrekkList: List<ForskuddstrekkDTO>,
     val id: Long,
     val identifikator: String?,
@@ -26,7 +28,7 @@ data class SkattekortDTO(
     val tilleggsopplysningList: List<String> = emptyList(),
     val utstedtDato: LocalDate?,
 ) {
-    constructor(skattekort: Skattekort) : this(
+    constructor(skattekort: Skattekort, personidentifikator: Personidentifikator?) : this(
         forskuddstrekkList =
             skattekort.forskuddstrekkList.map {
                 when (it) {
@@ -61,6 +63,7 @@ data class SkattekortDTO(
                     }
                 }
             },
+        fnr = personidentifikator?.value,
         id = skattekort.id?.value ?: throw IllegalStateException("Skattekort fra databasen mangler id"),
         identifikator = skattekort.identifikator,
         inntektsaar = skattekort.inntektsaar,
@@ -70,4 +73,5 @@ data class SkattekortDTO(
         tilleggsopplysningList = skattekort.tilleggsopplysningList.map { it.value },
         utstedtDato = skattekort.utstedtDato,
     )
+    constructor(skattekort: Skattekort) : this(skattekort, null)
 }

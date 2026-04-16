@@ -108,12 +108,6 @@ object PropertiesConfig {
             skatteetatenUrl = getOrEmpty("SKATTEETATEN_API_URL"),
         )
 
-    fun getDarePocProperties(): DarePocProperties =
-        DarePocProperties(
-            darePocUrl = getOrEmpty("DAREPOC_URL"),
-            darePocScope = getOrEmpty("DAREPOC_SCOPE"),
-        )
-
     fun getKafkaProperties(): KafkaProperties =
         KafkaProperties(
             enabled = getOrEmpty("KAFKA_CONSUMER_ENABLED").toBoolean(),
@@ -208,11 +202,6 @@ object PropertiesConfig {
 
     data class SkatteetatenProperties(
         val skatteetatenUrl: String,
-    )
-
-    data class DarePocProperties(
-        val darePocUrl: String,
-        val darePocScope: String,
     )
 
     data class KafkaProperties(

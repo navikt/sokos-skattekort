@@ -3,8 +3,6 @@ package no.nav.sokos.skattekort.utsending
 import java.sql.BatchUpdateException
 import javax.sql.DataSource
 
-import kotlinx.coroutines.runBlocking
-
 import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
@@ -15,12 +13,10 @@ import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.dto.v2.SkattekortDTO
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.infrastructure.dare.UtsendingDareClientService
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
@@ -37,7 +33,6 @@ class UtsendingService(
     @Named(value = "leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
     @Named(value = "leveransekoeOppdragZSkattekortStor") private val leveransekoeOppdragZSkattekortStor: Queue,
     private val featureToggles: UnleashIntegration,
-    private val utsendingDareClientService: UtsendingDareClientService,
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -97,22 +92,6 @@ class UtsendingService(
                                     Forsystem.MANUELL -> {
                                         UtsendingRepository.delete(tx, utsending.id!!)
                                     }
-
-                                    Forsystem.DARE_POC -> {
-                                        try {
-                                            logger.info { "Sender ut skattekort til Dare-Poc" }
-                                            sendTilDarePoc(tx, utsending.fnr, utsending.inntektsaar)
-                                            UtsendingRepository.delete(tx, utsending.id!!)
-                                        } catch (e: Exception) {
-                                            logger.error("Feil under sending til DARE POC", e)
-                                            dataSource.transaction { errorTx ->
-                                                PersonRepository.findPersonByFnr(errorTx, utsending.fnr)?.let { person ->
-                                                    AuditRepository.insert(errorTx, AuditTag.UTSENDING_FEILET, person.id!!, "Utsending feilet")
-                                                }
-                                                UtsendingRepository.increaseFailCount(errorTx, utsending.id, e.message ?: "Ukjent feil")
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -122,25 +101,6 @@ class UtsendingService(
         }
         dataSource.transaction { tx ->
             UtsendingRepository.slettGamleBevis(tx)
-        }
-    }
-
-    private fun sendTilDarePoc(
-        tx: TransactionalSession,
-        fnr: Personidentifikator,
-        inntektsaar: Int,
-    ) {
-        val person = PersonRepository.findPersonByFnr(tx, fnr)
-        val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, person?.id!!, inntektsaar, adminRole = false)
-        runBlocking {
-            utsendingDareClientService.sendSkattekort(
-                skattekortDTO =
-                    SkattekortDTO(
-                        skattekort,
-                        fnr,
-                    ),
-            )
-            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, person.id, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
         }
     }
 

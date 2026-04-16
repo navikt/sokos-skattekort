@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.utsending
+package no.nav.sokos.skattekort.utsending.oppdragz
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
@@ -6,23 +6,21 @@ import io.kotest.extensions.testcontainers.toDataSource
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.mockk
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.infrastructure.dare.UtsendingDareClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.person.Audit
 import no.nav.sokos.skattekort.person.AuditService
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.utsending.UtsendingService
 
 class UtsendingCronJobTest :
     FunSpec(
         {
             extensions(listOf(MQListener, DbListener))
-            val utsendingDareClientService = mockk<UtsendingDareClientService>()
             val uut =
                 UtsendingService(
                     DbListener.dataSource,
@@ -30,7 +28,6 @@ class UtsendingCronJobTest :
                     MQListener.utsendingsQueue,
                     MQListener.utsendingStorQueue,
                     UnleashIntegration(),
-                    utsendingDareClientService,
                 )
             val auditService = AuditService(DbListener.dataSource)
 

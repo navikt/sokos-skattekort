@@ -29,7 +29,6 @@ import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.infrastructure.dare.UtsendingDareClientService
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
@@ -47,18 +46,6 @@ import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 import no.nav.sokos.skattekort.utsending.UtsendingService
-
-const val FORESPORSEL_QUEUE = "forespoerselQueue"
-const val FORESPORSEL_BOQ_QUEUE = "forespoerselBoqQueue"
-const val LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT = "leveransekoeOppdragZSkattekort"
-const val LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR = "leveransekoeOppdragZSkattekortStor"
-const val PDL_URL = "pdlUrl"
-const val PDL_AZURED_TOKEN_CLIENT = "pdlAzuredTokenClient"
-const val TILGANGSMASKIN_URL = "tilgangsmaskinUrl"
-const val TILGANGSMAKSIN_AZURED_TOKEN_CLIENT = "tilgangsmaksinAzuredTokenClient"
-const val SKATTEETATEN_URL = "skatteetatenUrl"
-const val DAREPOC_URL = "darePocUrl"
-const val DAREPOC_AZURED_TOKEN_CLIENT = "darePocAzuredTokenClient"
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
@@ -89,35 +76,31 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(AuditLogger::class)
 
         provide { MQConfig.connectionFactory }
-        provide<Queue>(name = FORESPORSEL_QUEUE) {
+        provide<Queue>(name = "forespoerselQueue") {
             MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
         }
-        provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
+        provide<Queue>(name = "forespoerselBoqQueue") {
             MQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
         }
-        provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
+        provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
             val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
-        provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
+        provide<Queue>(name = "leveransekoeOppdragZSkattekortStor") {
             val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
-        provide<String>(name = PDL_URL) { PropertiesConfig.getPdlProperties().pdlUrl }
-        provide<AzuredTokenClient>(name = PDL_AZURED_TOKEN_CLIENT) {
+        provide<String>(name = "pdlUrl") { PropertiesConfig.getPdlProperties().pdlUrl }
+        provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
         }
-        provide<String>(name = TILGANGSMASKIN_URL) { PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinUrl }
-        provide<AzuredTokenClient>(name = TILGANGSMAKSIN_AZURED_TOKEN_CLIENT) {
+        provide<String>(name = "tilgangsmaskinUrl") { PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinUrl }
+        provide<AzuredTokenClient>(name = "tilgangsmaksinAzuredTokenClient") {
             AzuredTokenClient(createHttpClient(), PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinScope)
         }
-        provide<String>(name = SKATTEETATEN_URL) { PropertiesConfig.getSkatteetatenProperties().skatteetatenUrl }
-        provide<String>(name = DAREPOC_URL) { PropertiesConfig.getDarePocProperties().darePocUrl }
-        provide<AzuredTokenClient>(name = DAREPOC_AZURED_TOKEN_CLIENT) {
-            AzuredTokenClient(createHttpClient(), PropertiesConfig.getDarePocProperties().darePocScope)
-        }
+        provide<String>(name = "skatteetatenUrl") { PropertiesConfig.getSkatteetatenProperties().skatteetatenUrl }
         provide(StatusService::class)
         provide(PersonService::class)
         provide(ForespoerselService::class)
@@ -134,7 +117,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
-        provide(UtsendingDareClientService::class)
         provide<UnleashIntegration> {
             UnleashIntegration { enabled ->
                 val forespoerselListener: ForespoerselListener =

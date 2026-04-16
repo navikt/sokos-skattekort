@@ -31,6 +31,17 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
+import no.nav.sokos.skattekort.DAREPOC_AZURED_TOKEN_CLIENT
+import no.nav.sokos.skattekort.DAREPOC_URL
+import no.nav.sokos.skattekort.FORESPORSEL_BOQ_QUEUE
+import no.nav.sokos.skattekort.FORESPORSEL_QUEUE
+import no.nav.sokos.skattekort.LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT
+import no.nav.sokos.skattekort.LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR
+import no.nav.sokos.skattekort.PDL_AZURED_TOKEN_CLIENT
+import no.nav.sokos.skattekort.PDL_URL
+import no.nav.sokos.skattekort.SKATTEETATEN_URL
+import no.nav.sokos.skattekort.TILGANGSMAKSIN_AZURED_TOKEN_CLIENT
+import no.nav.sokos.skattekort.TILGANGSMASKIN_URL
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
@@ -113,27 +124,31 @@ object TestUtils {
             }
 
             dependencies {
-                provide<String>(name = "pdlUrl") { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = "skatteetatenUrl") { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = "tilgangsmaskinUrl") { WiremockListener.wiremock.baseUrl() }
+                provide<String>(name = PDL_URL) { WiremockListener.wiremock.baseUrl() }
+                provide<String>(name = DAREPOC_URL) { WiremockListener.wiremock.baseUrl() }
+                provide<String>(name = SKATTEETATEN_URL) { WiremockListener.wiremock.baseUrl() }
+                provide<String>(name = TILGANGSMASKIN_URL) { WiremockListener.wiremock.baseUrl() }
                 provide { mockk<MaskinportenTokenClient>(relaxed = true) }
-                provide<AzuredTokenClient>(name = "pdlAzuredTokenClient") {
+                provide<AzuredTokenClient>(name = PDL_AZURED_TOKEN_CLIENT) {
                     mockk<AzuredTokenClient>(relaxed = true)
                 }
-                provide<AzuredTokenClient>(name = "tilgangsmaksinAzuredTokenClient") {
+                provide<AzuredTokenClient>(name = TILGANGSMAKSIN_AZURED_TOKEN_CLIENT) {
+                    mockk<AzuredTokenClient>(relaxed = true)
+                }
+                provide<AzuredTokenClient>(name = DAREPOC_AZURED_TOKEN_CLIENT) {
                     mockk<AzuredTokenClient>(relaxed = true)
                 }
                 provide { MQListener.connectionFactory }
-                provide<Queue>(name = "forespoerselQueue") {
+                provide<Queue>(name = FORESPORSEL_QUEUE) {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
                 }
-                provide<Queue>(name = "forespoerselBoqQueue") {
+                provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
                     ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
                 }
-                provide<Queue>(name = "leveransekoeOppdragZSkattekort") {
+                provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
                 }
-                provide<Queue>(name = "leveransekoeOppdragZSkattekortStor") {
+                provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
                     ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
                 }
             }

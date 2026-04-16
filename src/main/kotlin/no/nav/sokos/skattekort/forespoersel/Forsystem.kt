@@ -6,6 +6,7 @@ enum class Forsystem(
     OPPDRAGSSYSTEMET("OS"),
     OPPDRAGSSYSTEMET_STOR("OS_STOR"),
     MANUELL("MANUELL"),
+    DARE_POC("DARE_POC"),
     ;
 
     companion object {

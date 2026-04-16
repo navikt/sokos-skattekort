@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-    kotlin("jvm") version "2.3.10"
-    kotlin("plugin.serialization") version "2.3.10"
+    kotlin("jvm") version "2.3.20"
+    kotlin("plugin.serialization") version "2.3.20"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
@@ -31,14 +31,14 @@ repositories {
 
 val resilience4jVersion = "2.4.0"
 val ktorVersion = "3.4.2"
-val nimbusVersion = "10.8"
+val nimbusVersion = "10.9"
 val logbackVersion = "1.5.32"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.16.4"
 val dbSchedulerVersion = "16.7.1"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
-val kotestVersion = "6.1.10"
+val kotestVersion = "6.1.11"
 val kotlinxSerializationVersion = "1.10.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
 val mockOAuth2ServerVersion = "3.0.1"
@@ -157,6 +157,10 @@ configurations.all {
             if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
                 useVersion("2.21.1")
                 because("jackson-core: Number Length Constraint Bypass in Async Parser Leads to Potential DoS Condition. Affected version >= 2.19.0, < 2.21.1")
+            }
+            if (requested.group == "tools.jackson.core" && requested.name == "jackson-core") {
+                useVersion("3.1.1")
+                because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
             }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http") {
                 useVersion("4.2.11.Final")

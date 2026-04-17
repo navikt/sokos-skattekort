@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.utsending
+package no.nav.sokos.skattekort.utsending.oppdragz
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
@@ -15,6 +15,7 @@ import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
+import no.nav.sokos.skattekort.utsending.UtsendingService
 
 class UtsendingEndToEndTest :
     FunSpec({

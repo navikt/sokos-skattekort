@@ -13,8 +13,6 @@ import io.ktor.http.contentType
 import io.ktor.server.plugins.di.annotations.Named
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.TILGANGSMAKSIN_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.TILGANGSMASKIN_URL
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
@@ -23,8 +21,8 @@ private val logger = KotlinLogging.logger {}
 
 class TilgangsmaskinClientService(
     private val httpClient: HttpClient,
-    @Named(TILGANGSMASKIN_URL) private val tilgangsmaskinUrl: String,
-    @Named(TILGANGSMAKSIN_AZURED_TOKEN_CLIENT) private val azuredTokenClient: AzuredTokenClient,
+    @Named("tilgangsmaskinUrl") private val tilgangsmaskinUrl: String,
+    @Named("tilgangsmaksinAzuredTokenClient") private val azuredTokenClient: AzuredTokenClient,
 ) {
     suspend fun checkSaksbehandlerAccess(
         saksbehandlerIdent: String,

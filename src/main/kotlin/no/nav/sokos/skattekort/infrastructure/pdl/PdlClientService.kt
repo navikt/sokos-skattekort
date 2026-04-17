@@ -18,8 +18,6 @@ import no.nav.pdl.HentIdenterBolk
 import no.nav.pdl.HentPersonBolk
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
 import no.nav.pdl.hentpersonbolk.Person
-import no.nav.sokos.skattekort.PDL_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.PDL_URL
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
@@ -29,8 +27,8 @@ private const val BEHANDLINGSKATALOGNUMMER = "B749"
 
 class PdlClientService(
     private val httpClient: HttpClient,
-    @Named(PDL_URL) private val pdlUrl: String,
-    @Named(PDL_AZURED_TOKEN_CLIENT) private val azuredTokenClient: AzuredTokenClient,
+    @Named("pdlUrl") private val pdlUrl: String,
+    @Named("pdlAzuredTokenClient") private val azuredTokenClient: AzuredTokenClient,
 ) {
     suspend fun getIdenterBolk(identer: List<String>): Map<String, List<IdentInformasjon>> {
         val request = HentIdenterBolk(HentIdenterBolk.Variables(identer))

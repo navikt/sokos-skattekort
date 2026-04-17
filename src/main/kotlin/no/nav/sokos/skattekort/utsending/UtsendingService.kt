@@ -37,7 +37,7 @@ class UtsendingService(
     @Named(value = "leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
     @Named(value = "leveransekoeOppdragZSkattekortStor") private val leveransekoeOppdragZSkattekortStor: Queue,
     private val featureToggles: UnleashIntegration,
-    private val utsendingDareClientService: UtsendingDareClientService,
+    private val utsendingDareClientService: UtsendingDareClientService? = null,
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -99,6 +99,11 @@ class UtsendingService(
                                     }
 
                                     Forsystem.DARE_POC -> {
+                                        if (utsendingDareClientService == null) {
+                                            logger.error { "UtsendingDareClientService ikke tilgjengelig i prod" }
+                                            return@transaction
+                                        }
+
                                         try {
                                             logger.info { "Sender ut skattekort til Dare-Poc" }
                                             sendTilDarePoc(tx, utsending.fnr, utsending.inntektsaar)
@@ -133,7 +138,7 @@ class UtsendingService(
         val person = PersonRepository.findPersonByFnr(tx, fnr)
         val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, person?.id!!, inntektsaar, adminRole = false)
         runBlocking {
-            utsendingDareClientService.sendSkattekort(
+            utsendingDareClientService?.sendSkattekort(
                 skattekortDTO =
                     SkattekortDTO(
                         skattekort,

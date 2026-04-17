@@ -9,6 +9,14 @@ import io.getunleash.util.UnleashConfig
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 
+private const val SOKOS_SKATTEKORT_OPPDATERINGER_ENABLED = "sokos-skattekort.oppdateringer.enabled"
+private const val SOKOS_SKATTEKORT_BEVISFORSENDING_ENABLED = "sokos-skattekort.bevisforsending.enabled"
+private const val SOKOS_SKATTEKORT_FORESPOERSELINPUT_ENABLED = "sokos-skattekort.forespoerselinput.enabled"
+private const val SOKOS_SKATTEKORT_LAGRE_MOTTATTE_BESTILLINGER_ENABLED = "sokos-skattekort.lagre-mottatte-bestillinger.enabled"
+private const val SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED = "sokos-skattekort.forespoersel-listener.enabled"
+private const val SOKOS_SKATTEKORT_UTSENDINGER_ENABLED = "sokos-skattekort.utsendinger.enabled"
+private const val SOKOS_SKATTEKORT_BESTILLINGER_ENABLED = "sokos-skattekort.bestillinger.enabled"
+
 class UnleashIntegration(
     private val onForespoerselListenerChanged: (Boolean) -> Unit = {},
 ) {
@@ -17,31 +25,31 @@ class UnleashIntegration(
     private val unleashProps = PropertiesConfig.getUnleashProperties()
 
     // Kill switcher:
-    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.utsendinger.enabled")
+    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_UTSENDINGER_ENABLED)
 
-    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bestillinger.enabled")
+    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_BESTILLINGER_ENABLED)
 
-    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.oppdateringer.enabled")
+    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_OPPDATERINGER_ENABLED)
 
-    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.bevisforsending.enabled")
+    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_BEVISFORSENDING_ENABLED)
 
-    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoerselinput.enabled")
+    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_FORESPOERSELINPUT_ENABLED)
 
-    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.lagre-mottatte-bestillinger.enabled")
+    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_LAGRE_MOTTATTE_BESTILLINGER_ENABLED)
 
-    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled("sokos-skattekort.forespoersel-listener.enabled")
+    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED)
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST) {
             unleashClient =
                 FakeUnleash().also { fakeUnleash ->
-                    fakeUnleash.enable("sokos-skattekort.forespoersel-listener.enabled")
-                    fakeUnleash.enable("sokos-skattekort.utsendinger.enabled")
-                    fakeUnleash.enable("sokos-skattekort.bestillinger.enabled")
-                    fakeUnleash.enable("sokos-skattekort.oppdateringer.enabled")
-                    fakeUnleash.enable("sokos-skattekort.bevisforsending.enabled")
-                    fakeUnleash.enable("sokos-skattekort.forespoerselinput.enabled")
-                    fakeUnleash.disable("sokos-skattekort.lagre-mottatte-bestillinger.enabled")
+                    fakeUnleash.enable(SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED)
+                    fakeUnleash.enable(SOKOS_SKATTEKORT_UTSENDINGER_ENABLED)
+                    fakeUnleash.enable(SOKOS_SKATTEKORT_BESTILLINGER_ENABLED)
+                    fakeUnleash.enable(SOKOS_SKATTEKORT_OPPDATERINGER_ENABLED)
+                    fakeUnleash.enable(SOKOS_SKATTEKORT_BEVISFORSENDING_ENABLED)
+                    fakeUnleash.enable(SOKOS_SKATTEKORT_FORESPOERSELINPUT_ENABLED)
+                    fakeUnleash.disable(SOKOS_SKATTEKORT_LAGRE_MOTTATTE_BESTILLINGER_ENABLED)
                 }
         } else {
             val config =

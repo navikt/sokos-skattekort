@@ -134,7 +134,12 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
-        provide(UtsendingDareClientService::class)
+        // SOKOS-DARE-POC skal kun brukes i test.
+        if (!PropertiesConfig.isProd()) {
+            provide(UtsendingDareClientService::class)
+        } else {
+            provide<UtsendingDareClientService?> { null }
+        }
         provide<UnleashIntegration> {
             UnleashIntegration { enabled ->
                 val forespoerselListener: ForespoerselListener =

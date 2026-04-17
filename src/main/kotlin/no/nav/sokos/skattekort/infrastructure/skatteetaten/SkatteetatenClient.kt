@@ -20,6 +20,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.server.plugins.di.annotations.Named
 
+import no.nav.sokos.skattekort.SKATTEETATEN_URL
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortRequest
@@ -29,7 +30,7 @@ import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 class SkatteetatenClient(
     private val httpClient: HttpClient,
-    @Named("skatteetatenUrl") private val skatteetatenUrl: String,
+    @Named(SKATTEETATEN_URL) private val skatteetatenUrl: String,
     private val maskinportenTokenClient: MaskinportenTokenClient,
 ) {
     suspend fun bestillSkattekort(request: BestillSkattekortRequest): BestillSkattekortResponse =

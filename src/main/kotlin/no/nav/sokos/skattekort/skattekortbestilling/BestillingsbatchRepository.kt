@@ -103,7 +103,7 @@ object BestillingsbatchRepository {
         )
     }
 
-    fun getLastBestillingsbatch(tx: TransactionalSession): Bestillingsbatch? =
+    fun getFirstNotFerdigBestillingsbatch(tx: TransactionalSession): Bestillingsbatch? =
         tx.single(
             queryOf(
                 """

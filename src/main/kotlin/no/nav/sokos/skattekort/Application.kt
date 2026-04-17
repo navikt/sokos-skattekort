@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopPreparing
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -145,17 +146,23 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val skattekortService: SkattekortService by dependencies
         val dataSource: DataSource by dependencies
 
-        JobTaskConfig
-            .scheduler(
-                bestillingService = bestillingService,
-                bestillingsbatchService = bestillingsbatchService,
-                utsendingService = utsendingService,
-                skattekortdataService = skattekortdataService,
-                metricsService = metricsService,
-                forespoerselService = forespoerselService,
-                skattekortService = skattekortService,
-                dataSource = dataSource,
-            ).start()
+        val scheduler =
+            JobTaskConfig
+                .scheduler(
+                    bestillingService = bestillingService,
+                    bestillingsbatchService = bestillingsbatchService,
+                    utsendingService = utsendingService,
+                    skattekortdataService = skattekortdataService,
+                    metricsService = metricsService,
+                    forespoerselService = forespoerselService,
+                    skattekortService = skattekortService,
+                    dataSource = dataSource,
+                ).also { it.start() }
+
+        monitor.subscribe(ApplicationStopPreparing) {
+            logger.info { "Stopping scheduler..." }
+            scheduler.stop()
+        }
     }
 
     val kafkaProperties = PropertiesConfig.getKafkaProperties()

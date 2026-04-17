@@ -46,7 +46,6 @@ object JobTaskConfig {
         Scheduler
             .create(dataSource)
             .enableImmediateExecution()
-            .registerShutdownHook()
             .pollUsingLockAndFetch(0.5, 1.0)
             .startTasks(
                 recurringBestillingManagementBatchTask(bestillingService, bestillingsbatchService, skattekortdataService),

@@ -255,4 +255,6 @@ object PropertiesConfig {
     fun isLocal() = getApplicationProperties().environment == Environment.LOCAL
 
     fun isTest() = getApplicationProperties().environment == Environment.TEST
+
+    fun isProd() = getApplicationProperties().environment == Environment.PROD
 }

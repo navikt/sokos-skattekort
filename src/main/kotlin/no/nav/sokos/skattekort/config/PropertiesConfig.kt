@@ -108,6 +108,12 @@ object PropertiesConfig {
             skatteetatenUrl = getOrEmpty("SKATTEETATEN_API_URL"),
         )
 
+    fun getDarePocProperties(): DarePocProperties =
+        DarePocProperties(
+            darePocUrl = getOrEmpty("DAREPOC_URL"),
+            darePocScope = getOrEmpty("DAREPOC_SCOPE"),
+        )
+
     fun getKafkaProperties(): KafkaProperties =
         KafkaProperties(
             enabled = getOrEmpty("KAFKA_CONSUMER_ENABLED").toBoolean(),
@@ -204,6 +210,11 @@ object PropertiesConfig {
         val skatteetatenUrl: String,
     )
 
+    data class DarePocProperties(
+        val darePocUrl: String,
+        val darePocScope: String,
+    )
+
     data class KafkaProperties(
         val enabled: Boolean,
         val topic: String,
@@ -244,4 +255,6 @@ object PropertiesConfig {
     fun isLocal() = getApplicationProperties().environment == Environment.LOCAL
 
     fun isTest() = getApplicationProperties().environment == Environment.TEST
+
+    fun isProd() = getApplicationProperties().environment == Environment.PROD
 }

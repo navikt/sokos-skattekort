@@ -83,21 +83,6 @@ object BestillingRepository {
         },
     )
 
-    fun retryUnprocessedBestillings(
-        tx: TransactionalSession,
-        batch: Long,
-    ) {
-        tx.run(
-            queryOf(
-                """
-                UPDATE bestillinger SET bestillingsbatch_id = null 
-                WHERE bestillingsbatch_id = :bestillingsbatchId
-                """.trimIndent(),
-                mapOf("bestillingsbatchId" to batch),
-            ).asUpdate,
-        )
-    }
-
     fun findByPersonIdAndInntektsaar(
         tx: TransactionalSession,
         personId: PersonId,

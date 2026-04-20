@@ -111,9 +111,9 @@ class BestillingsbatchService(
         errorMessage: String,
         exception: Throwable,
     ) {
-        val lastBestillingsbatch = dataSource.transaction { tx -> BestillingsbatchRepository.getLastBestillingsbatch(tx) }
+        val notFerdigBestilingsbatch = dataSource.transaction { tx -> BestillingsbatchRepository.getFirstNotFerdigBestillingsbatch(tx) }
 
-        if (lastBestillingsbatch != null && lastBestillingsbatch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
+        if (notFerdigBestilingsbatch != null && notFerdigBestilingsbatch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
             logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
             logger.info { "$errorMessage. Feilen ignoreres foreløpig da det allerede finnes en vellykket bestillingsbatch fra den siste timen. Forsøker igjen ved neste kjøring." }
             return

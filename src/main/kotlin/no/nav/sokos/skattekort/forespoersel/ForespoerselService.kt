@@ -54,12 +54,17 @@ class ForespoerselService(
                             input.fnrList.filter { fnr ->
                                 val kanBestilleSkattekort = foedselsnummerkategori.kanBestilleSkattekort(fnr)
                                 if (!kanBestilleSkattekort) {
-                                    logger.info(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
+                                    logger.error(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
                                 }
                                 kanBestilleSkattekort
                             },
                     )
                 }
+
+            if (forespoerselInput.fnrList.isEmpty()) {
+                logger.error { "Ingen data blir lagret i forespørseler pga. ugyldig fnr" }
+                return
+            }
 
             val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(forespoerselInput.fnrList, saksbehandler?.ident)
             dataSource.transaction { tx ->

@@ -184,12 +184,14 @@ object BestillingsbatchRepository {
         queryOf(
             """
                     |UPDATE bestillingsbatcher
-                    |SET status = 'RERUN', oppdatert = NOW()
+                    |SET status = :retry, oppdatert = NOW()
                     |WHERE bestillingsreferanse = :bestillingsreferanse
-                    |AND status = 'FEILET'
+                    |AND status = :feilet
             """.trimMargin(),
             mapOf(
                 "bestillingsreferanse" to bestillingsreferanse.value,
+                "retry" to BestillingsbatchStatus.RETRY.name,
+                "feilet" to BestillingsbatchStatus.FEILET.name,
             ),
         ).asExecute,
     )

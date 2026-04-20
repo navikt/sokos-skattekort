@@ -183,8 +183,10 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                 ).also { it.start() }
 
         monitor.subscribe(ApplicationStopPreparing) {
-            logger.info { "Stopping scheduler..." }
-            scheduler.stop()
+            if (!scheduler.schedulerState.isShuttingDown) {
+                logger.info { "Stopping scheduler..." }
+                scheduler.stop()
+            }
         }
     }
 

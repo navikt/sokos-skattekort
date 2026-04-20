@@ -4,7 +4,6 @@ import java.sql.BatchUpdateException
 import javax.sql.DataSource
 
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -13,6 +12,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.config.RECENT_BATCH_GRACE_PERIOD
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
@@ -27,7 +27,6 @@ import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 private val logger = KotlinLogging.logger {}
-private val RECENT_BATCH_GRACE_PERIOD = 1.hours
 
 class BestillingsbatchService(
     private val dataSource: DataSource,
@@ -130,9 +129,9 @@ class BestillingsbatchService(
         errorMessage: String,
         exception: Throwable,
     ) {
-        val lastBestillingsbatch = dataSource.transaction { tx -> BestillingsbatchRepository.getLastBestillingsbatch(tx) }
+        val notFerdigBestilingsbatch = dataSource.transaction { tx -> BestillingsbatchRepository.getFirstNotFerdigBestillingsbatch(tx) }
 
-        if (lastBestillingsbatch != null && lastBestillingsbatch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
+        if (notFerdigBestilingsbatch != null && notFerdigBestilingsbatch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
             logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
             logger.info { "$errorMessage. Feilen ignoreres foreløpig da det allerede finnes en vellykket bestillingsbatch fra den siste timen. Forsøker igjen ved neste kjøring." }
             return

@@ -77,7 +77,6 @@ spec:
         - application: sokos-dare-poc
           permissions:
             roles:
-              - "hent-skattekort-role"
               - "bestille-role"
         - application: saas-proxy
           namespace: platforce

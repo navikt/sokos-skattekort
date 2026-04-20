@@ -21,7 +21,7 @@ fi
 echo "Fetching environment variables from pod: $POD_NAME"
 
 # Get AZURE system variables
-envValue=$(kubectl exec "$POD_NAME" -c sokos-skattekort -- env | egrep "^AZURE|^MASKINPORTEN|^MQ_SERVICE|^DB|^UNLEASH_SERVER_API" | sort)
+envValue=$(kubectl exec "$POD_NAME" -c sokos-skattekort -- env | egrep "^AZURE|^MASKINPORTEN|^MQ_SERVICE|^DB|^UNLEASH_SERVER_API|^DARE" | sort)
 
 # Set AZURE as local environment variables
 rm -f defaults.properties

@@ -39,12 +39,12 @@ val dbSchedulerVersion = "16.7.1"
 val kotlinLoggingVersion = "3.0.5"
 val janionVersion = "3.1.12"
 val kotestVersion = "6.1.11"
-val kotlinxSerializationVersion = "1.10.0"
+val kotlinxSerializationVersion = "1.11.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
 val mockOAuth2ServerVersion = "3.0.1"
 val mockkVersion = "1.14.9"
 val hikariVersion = "7.0.2"
-val kotliqueryVersion = "2.0.4"
+val kotliqueryVersion = "2.0.5"
 val testcontainersVersion = "1.21.4"
 val flywayVersion = "12.3.0"
 val postgresVersion = "42.7.10"
@@ -151,7 +151,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.10.4")
+                useTarget("at.yawk.lz4:lz4-java:1.11.0")
                 because("Prefer the patched fork for vulnerability fix")
             }
             if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {

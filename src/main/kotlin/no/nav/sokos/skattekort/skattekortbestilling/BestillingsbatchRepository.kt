@@ -103,11 +103,11 @@ object BestillingsbatchRepository {
         )
     }
 
-    fun getLastBestillingsbatch(tx: TransactionalSession): Bestillingsbatch? =
+    fun getFirstNotFerdigBestillingsbatch(tx: TransactionalSession): Bestillingsbatch? =
         tx.single(
             queryOf(
                 """
-                SELECT * FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet DESC LIMIT 1
+                SELECT * FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet LIMIT 1
                 """.trimIndent(),
             ),
             extractor = mapToBestillingsbatch,

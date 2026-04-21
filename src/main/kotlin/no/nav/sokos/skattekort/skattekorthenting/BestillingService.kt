@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.Instant
 import javax.sql.DataSource
 
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.toJavaInstant
 import kotlinx.coroutines.runBlocking
@@ -13,6 +14,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.RECENT_BATCH_GRACE_PERIOD
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
@@ -40,6 +42,8 @@ class BestillingService(
     private val skatteetatenClient: SkatteetatenClient,
     private val featureToggles: UnleashIntegration,
 ) {
+    private val errorLoggedBatchIds = mutableSetOf<Long>()
+
     @OptIn(ExperimentalTime::class)
     fun hentBestillingsbatcher(type: BestillingsbatchType) {
         val bestillingsbatchList =
@@ -50,22 +54,28 @@ class BestillingService(
                 return
             }
 
-        loop@ for (batch in bestillingsbatchList) {
+        for (batch in bestillingsbatchList) {
             val batchId = batch.id!!.id
             runCatching {
                 logger.info("Henter skattekort for ${batch.bestillingsreferanse}")
-                val response =
-                    runBlocking {
-                        skatteetatenClient.hentSkattekort(batch.bestillingsreferanse)
-                    } ?: run {
-                        logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
-                        break@loop
+                val response = runBlocking { skatteetatenClient.hentSkattekort(batch.bestillingsreferanse) }
+                if (response == null) {
+                    logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
+                    if (batch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) < Clock.System.now() && errorLoggedBatchIds.add(batchId)) {
+                        logger.error { "Henting av skattekort for batch $batchId feilet med tomt svar for mer enn ${RECENT_BATCH_GRACE_PERIOD.inWholeHours} time siden." }
                     }
+                    return@runCatching
+                }
+                errorLoggedBatchIds.remove(batchId)
+
                 logger.info("Ved henting av skattekort for batch $batchId returnerte Skatteetaten ${response.status}")
                 handleBestillingsbatch(batchId = batchId, response = response, type = type)
             }.onFailure { exception ->
                 when (exception) {
-                    is CallNotPermittedException -> return@onFailure
+                    is CallNotPermittedException -> {
+                        return@onFailure
+                    }
+
                     is UgyldigOrganisasjonsnummerException -> {
                         logger.error(marker = TEAM_LOGS_MARKER, exception) { "Ugydlig organisasjonsnummer av skattekort for batch $batchId feilet. ${exception.message}" }
                         logger.error("Henting av skattekort for batch $batchId feilet med Ugyldig organisasjonsnummer, sjekk TEAM LOGS for detaljer")
@@ -103,7 +113,7 @@ class BestillingService(
                             logger.info { "Henting av skattekort for batch: $batchId, type: ${batch.type.name} feilet, men prøvd på nytt senere" }
                             dataSource.transaction { tx -> BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.RETRY) }
                         }
-                        break@loop
+                        break
                     }
                 }
             }

@@ -142,7 +142,8 @@ class SkattekortApiTest :
                 val apiError = response.body<ApiError>()
                 apiError.error shouldBe HttpStatusCode.BadRequest.description
                 apiError.status shouldBe HttpStatusCode.BadRequest.value
-                apiError.message shouldBe "forsystem er ugyldig. Gyldige verdier er: OS, MANUELL"
+                val gyldigeForsystemVerdier = Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }.joinToString { it.value }
+                apiError.message shouldBe "forsystem er ugyldig. Gyldige verdier er: $gyldigeForsystemVerdier"
                 apiError.path shouldBe "$BASE_PATH_SKATTEKORT/bestille"
 
                 DbListener.dataSource.transaction { tx ->

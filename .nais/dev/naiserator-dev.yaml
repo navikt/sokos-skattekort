@@ -103,6 +103,7 @@ spec:
           namespace: nais-system
         - application: populasjonstilgangskontroll
           namespace: tilgangsmaskin
+        - application: sokos-dare-poc
       external:
         - host: mqls02.preprod.local
           ports:

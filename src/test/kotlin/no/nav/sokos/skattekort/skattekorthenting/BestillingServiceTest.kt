@@ -3,6 +3,7 @@ package no.nav.sokos.skattekort.skattekorthenting
 import java.time.LocalDateTime
 
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.LocalDate
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
@@ -35,9 +36,11 @@ import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.Audit
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
+import no.nav.sokos.skattekort.person.Foedselsnummer
 import no.nav.sokos.skattekort.person.Person
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
@@ -76,11 +79,14 @@ class BestillingServiceTest :
 
         val skatteetatenClient = mockk<SkatteetatenClient>()
 
+        val personService = mockk<PersonService>()
+
         val bestillingService: BestillingService by lazy {
             BestillingService(
                 dataSource = DbListener.dataSource,
                 skatteetatenClient = skatteetatenClient,
                 featureToggles = UnleashIntegration(),
+                personService = personService,
             )
         }
 
@@ -397,6 +403,13 @@ class BestillingServiceTest :
                         fnr = dnr,
                         inntektsaar = 2025,
                     ),
+                )
+
+            coEvery { personService.getGyldigFnr(any(), any()) } returns
+                Foedselsnummer(
+                    personId = PersonId(1L),
+                    gjelderFom = LocalDate(2025, 1, 1),
+                    fnr = Personidentifikator(fnr),
                 )
 
             databaseHas(

@@ -241,4 +241,106 @@ class PersonServiceTest :
                 }
             }
         }
+
+        test("getGyldigFnr skal returnere ny Foedselsnummer når PDL returnerer nytt fnr") {
+            val oldFnr = "10101000098"
+            val newFnr = "10101000099"
+            DbListener.loadDataSet("database/person/persondata.sql")
+
+            WiremockListener.wiremockPDLStub(
+                Json.encodeToString(
+                    GraphQLResponse(
+                        HentIdenterBolk.Result(
+                            hentIdenterBolk =
+                                listOf(
+                                    HentIdenterBolkResult(
+                                        ident = oldFnr,
+                                        identer =
+                                            listOf(
+                                                IdentInformasjon(newFnr, false, IdentGruppe.FOLKEREGISTERIDENT),
+                                                IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+                                            ),
+                                    ),
+                                ),
+                        ),
+                    ),
+                ),
+            )
+
+            val personId =
+                DbListener.dataSource.transaction { tx ->
+                    personService
+                        .findPersonIdOrCreatePersonByFnr(
+                            fnr = Personidentifikator(oldFnr),
+                            informasjon = "TEST",
+                            brukerId = AUDIT_SYSTEM,
+                            tx = tx,
+                        ).first
+                }
+
+            val result = personService.getGyldigFnr(oldFnr, personId)
+
+            result shouldNotBe null
+            result!!.fnr.value shouldBe newFnr
+            result.personId shouldBe personId
+
+            DbListener.dataSource.transaction { tx ->
+                AuditRepository.getAuditByPersonId(tx, personId) shouldNotBeNull {
+                    this.any {
+                        it.tag == AuditTag.OPPDATERT_PERSONIDENTIFIKATOR &&
+                            it.informasjon == "Oppdatert foedselsnummer: $newFnr"
+                    } shouldBe true
+                }
+            }
+        }
+
+        test("getGyldigFnr skal returnere null når PDL ikke finner person") {
+            val unknownFnr = "00000000000"
+            DbListener.loadDataSet("database/person/persondata.sql")
+
+            WiremockListener.wiremockPDLStub(
+                Json.encodeToString(
+                    GraphQLResponse(
+                        HentIdenterBolk.Result(
+                            hentIdenterBolk = listOf(),
+                        ),
+                    ),
+                ),
+            )
+
+            val personId =
+                DbListener.dataSource.transaction { tx ->
+                    personService
+                        .findPersonIdOrCreatePersonByFnr(
+                            fnr = Personidentifikator(unknownFnr),
+                            informasjon = "TEST",
+                            brukerId = AUDIT_SYSTEM,
+                            tx = tx,
+                        ).first
+                }
+
+            val result = personService.getGyldigFnr(unknownFnr, personId)
+            result shouldBe null
+        }
+
+        test("getGyldigFnr skal returnere null når fnr allerede er gjeldende ident i PDL") {
+            val fnr = "10101000010"
+            DbListener.loadDataSet("database/person/persondata.sql")
+
+            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(fnr))
+
+            val personId =
+                DbListener.dataSource.transaction { tx ->
+                    personService
+                        .findPersonIdOrCreatePersonByFnr(
+                            fnr = Personidentifikator(fnr),
+                            informasjon = "TEST",
+                            brukerId = AUDIT_SYSTEM,
+                            tx = tx,
+                        ).first
+                }
+
+            val result = personService.getGyldigFnr(fnr, personId)
+            result shouldBe null
+        }
     })

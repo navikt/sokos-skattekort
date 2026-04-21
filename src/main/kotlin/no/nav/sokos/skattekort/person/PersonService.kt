@@ -38,6 +38,33 @@ class PersonService(
             PersonId(personId) to true
         }
 
+    fun getGyldigFnr(
+        fnr: String,
+        personId: PersonId,
+    ): Foedselsnummer? {
+        val identInformasjon = runBlocking { pdlClientService.getIdenterBolk(listOf(fnr))[fnr] }
+
+        if (!identInformasjon.isNullOrEmpty()) {
+            val ident = identInformasjon.first { !it.historisk }.ident
+            if (ident != fnr) {
+                logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$personId med folkeregisteridentifikator=$ident" }
+                val newFoedselsnummer =
+                    Foedselsnummer(
+                        personId = personId,
+                        gjelderFom = LocalDate.now().toKotlinLocalDate(),
+                        fnr = Personidentifikator(ident),
+                    )
+                dataSource.transaction { tx -> updateFoedselsnummer(tx, newFoedselsnummer) }
+                return newFoedselsnummer
+            }
+            logger.error { "Ingen nye fnr funnet i PDL med personId=$personId" }
+        } else {
+            logger.error(marker = TEAM_LOGS_MARKER) { "Ingen person funnet i PDL for fnr: $fnr" }
+            logger.error { "Ingen person funnet i PDL, sjekk TEAM LOGS" }
+        }
+        return null
+    }
+
     fun getPersonIdAndCheckFoedselsnumreIsUpdated(
         fnrList: List<String>,
         brukerId: String? = null,
@@ -58,58 +85,58 @@ class PersonService(
             return foedselsnumreWithPersonIdMap
         }
 
-        dataSource.transaction { tx ->
+        val identInformasjonMap =
             runBlocking {
-                val identInformasjonMap =
-                    foedselsnummerList
-                        .chunked(chunkedSize)
-                        .flatMap { chunk -> pdlClientService.getIdenterBolk(chunk).entries }
-                        .groupBy({ it.key }, { it.value })
-                        .mapValues { entry -> entry.value.flatten() }
+                foedselsnummerList
+                    .chunked(chunkedSize)
+                    .flatMap { chunk -> pdlClientService.getIdenterBolk(chunk).entries }
+                    .groupBy({ it.key }, { it.value })
+                    .mapValues { entry -> entry.value.flatten() }
+            }
 
-                foedselsnummerList.forEach { fnr ->
-                    val identInformasjon = identInformasjonMap[fnr]
-                    if (!identInformasjon.isNullOrEmpty()) {
-                        // Hent ut ikke historisk ident
-                        val ident = identInformasjon.first { !it.historisk }.ident
+        dataSource.transaction { tx ->
+            foedselsnummerList.forEach { fnr ->
+                val identInformasjon = identInformasjonMap[fnr]
+                if (!identInformasjon.isNullOrEmpty()) {
+                    // Hent ut ikke historisk ident
+                    val ident = identInformasjon.first { !it.historisk }.ident
 
-                        // hvis fnr er historisk og ident er allerede registrert i DB, da registrert vi kun gamle FNR med riktig personId
-                        if (identInformasjon.find { it.historisk && it.ident == fnr } != null) {
-                            PersonRepository.findPersonIdByFnr(tx, Personidentifikator(ident))?.let { personId ->
-                                logger.info(marker = TEAM_LOGS_MARKER) { "Folkeregisteridentifikator=$ident allerede registrert, registrerer gamle FNR: $fnr i DB" }
-                                FoedselsnummerRepository.insertByExistingFnr(tx, fnr, ident)
-                                AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, personId, "Oppdatert gamle foedselsnummer: $fnr")
-                                foedselsnumreWithPersonIdMap[fnr] = personId
-                                return@forEach
-                            }
+                    // hvis fnr er historisk og ident er allerede registrert i DB, da registrert vi kun gamle FNR med riktig personId
+                    if (identInformasjon.find { it.historisk && it.ident == fnr } != null) {
+                        PersonRepository.findPersonIdByFnr(tx, Personidentifikator(ident))?.let { personId ->
+                            logger.info(marker = TEAM_LOGS_MARKER) { "Folkeregisteridentifikator=$ident allerede registrert, registrerer gamle FNR: $fnr i DB" }
+                            FoedselsnummerRepository.insertByExistingFnr(tx, fnr, ident)
+                            AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, personId, "Oppdatert gamle foedselsnummer: $fnr")
+                            foedselsnumreWithPersonIdMap[fnr] = personId
+                            return@forEach
                         }
-
-                        val personId =
-                            findPersonIdOrCreatePersonByFnr(
-                                tx = tx,
-                                fnr = Personidentifikator(fnr),
-                                informasjon = "Opprett person",
-                                brukerId = brukerId,
-                            ).first
-                        // oppdatert foedselsnumreWithPersonIdMap med mangler personId
-                        foedselsnumreWithPersonIdMap[fnr] = personId
-
-                        if (ident != fnr) {
-                            logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$personId med folkeregisteridentifikator=$ident" }
-                            updateFoedselsnummer(
-                                tx,
-                                Foedselsnummer(
-                                    personId = personId,
-                                    gjelderFom = LocalDate.now().toKotlinLocalDate(),
-                                    fnr = Personidentifikator(ident),
-                                ),
-                            )
-                        }
-                    } else {
-                        logger.error(marker = TEAM_LOGS_MARKER) { "Ingen person funnet i PDL for fnr: $fnr" }
-                        logger.error { "Ingen person funnet i PDL, sjekk TEAM LOGS" }
-                        foedselsnumreWithPersonIdMap.remove(fnr)
                     }
+
+                    val personId =
+                        findPersonIdOrCreatePersonByFnr(
+                            tx = tx,
+                            fnr = Personidentifikator(fnr),
+                            informasjon = "Opprett person",
+                            brukerId = brukerId,
+                        ).first
+                    // oppdatert foedselsnumreWithPersonIdMap med mangler personId
+                    foedselsnumreWithPersonIdMap[fnr] = personId
+
+                    if (ident != fnr) {
+                        logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$personId med folkeregisteridentifikator=$ident" }
+                        updateFoedselsnummer(
+                            tx,
+                            Foedselsnummer(
+                                personId = personId,
+                                gjelderFom = LocalDate.now().toKotlinLocalDate(),
+                                fnr = Personidentifikator(ident),
+                            ),
+                        )
+                    }
+                } else {
+                    logger.error(marker = TEAM_LOGS_MARKER) { "Ingen person funnet i PDL for fnr: $fnr" }
+                    logger.error { "Ingen person funnet i PDL, sjekk TEAM LOGS" }
+                    foedselsnumreWithPersonIdMap.remove(fnr)
                 }
             }
         }

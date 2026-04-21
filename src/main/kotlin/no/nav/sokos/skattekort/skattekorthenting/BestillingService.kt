@@ -25,6 +25,7 @@ import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonRepository
+import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
@@ -41,6 +42,7 @@ class BestillingService(
     private val dataSource: DataSource,
     private val skatteetatenClient: SkatteetatenClient,
     private val featureToggles: UnleashIntegration,
+    private val personService: PersonService,
 ) {
     private val errorLoggedBatchIds = mutableSetOf<Long>()
 
@@ -195,9 +197,10 @@ class BestillingService(
             }
 
             ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
-                val gyldigFnr = PersonRepository.findGyldigFnrByPersonId(tx, personId)!!
-                check(gyldigFnr.value != arbeidstaker.arbeidstakeridentifikator) { "Har ikke fått nytt fnr for personId $personId" }
-                BestillingRepository.insert(tx, Bestilling(personId = personId, fnr = gyldigFnr, inntektsaar = inntektsaar))
+                val gyldigFnr = personService.getGyldigFnr(arbeidstaker.arbeidstakeridentifikator, personId)
+                val personIdentifikator = requireNotNull(gyldigFnr) { "Har ikke fått nytt fnr for personId $personId" }.fnr
+
+                BestillingRepository.insert(tx, Bestilling(personId = personId, fnr = personIdentifikator, inntektsaar = inntektsaar))
                 AuditRepository.insert(tx, AuditTag.NYTT_FNR, personId, "Opprettet bestilling pga. tilbakemelding fra Skatteetaten om utgått Personidentifikator")
             }
 

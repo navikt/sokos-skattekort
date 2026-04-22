@@ -7,6 +7,8 @@ import no.nav.sokos.skattekort.forespoersel.Forsystem
 object SkattekortValidator {
     fun isValidPersonIdent(personIdent: String): Boolean = Regex("^\\d{11}$").matches(personIdent)
 
+    fun allFnrAreValid(fnrs: List<String>): Boolean = fnrs.all { isValidPersonIdent(it) }
+
     fun isValidAar(aar: Int): Boolean {
         val currentYear = Year.now().value
         return aar in (currentYear - 1)..currentYear

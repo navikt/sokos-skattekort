@@ -201,6 +201,14 @@ class UtsendingService(
         }
     }
 
+    fun createUtsendingForMangeFnr(
+        personidentifikators: List<Personidentifikator>,
+        aar: Int,
+        forsystem: Forsystem,
+    ) {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         val utsendingOppdragzCounter =
             counter(

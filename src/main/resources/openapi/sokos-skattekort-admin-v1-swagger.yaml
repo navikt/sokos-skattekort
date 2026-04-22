@@ -139,6 +139,34 @@ paths:
       security:
         - Bearer: [ ]
 
+  /utsendtStatus:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Hent utsendt-status (ikke implementert)
+      description: Stub-endepunkt. Returnerer 501 Not Implemented inntil videre.
+      operationId: hentUtsendtStatus
+      requestBody:
+        description: Samme request-format som /utsending
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UtsendingRequest'
+        required: true
+      responses:
+        501:
+          description: Endepunktet er ikke implementert ennå
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+      security:
+        - Bearer: [ ]
+
   /utsending:
     post:
       tags:
@@ -152,7 +180,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ForespoerselRequest'
+              $ref: '#/components/schemas/UtsendingRequest'
         required: true
 
       responses:
@@ -297,6 +325,7 @@ components:
 
     AuditResponse:
       type: object
+      description: Returnerer audit-logg for alle fnr som er knyttet til samme person som oppgitt fnr
       required:
         - items
       properties:
@@ -356,7 +385,7 @@ components:
         informasjon:
           type: string
           nullable: true
-          description: Ytterligere informasjon om auditeringen
+          description: Informasjon
 
     FnrRequest:
       type: object
@@ -372,20 +401,23 @@ components:
           pattern: '^\d{11}$'
           description: Fødselsnummer
 
-    ForespoerselRequest:
+    UtsendingRequest:
       type: object
       required:
-        - personIdent
+        - fnr
         - aar
         - forsystem
       properties:
-        personIdent:
-          type: string
-          example: '01010112345'
-          minLength: 11
-          maxLength: 11
-          pattern: '^\d{11}$'
-          description: Personidentifikator (fødselsnummer)
+        fnr:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 11
+            maxLength: 11
+            pattern: '^\d{11}$'
+            example: '01010112345'
+          description: Liste med fødselsnumre det skal opprettes utsending for
         aar:
           type: integer
           format: int32
@@ -395,10 +427,11 @@ components:
           type: string
           enum:
             - OS
-            - MANUELL
-          example: 'MANUELL'
-          description: Forsystem (OS_STOR er ikke gyldig for dette endepunktet)
-
+          example: 'OS'
+          description: |
+            Forsystem. MANUELL og OS_STOR er ikke gyldige for dette endepunktet.
+            DARE forventes lagt til snart.
+            
   securitySchemes:
     Bearer:
       type: apiKey

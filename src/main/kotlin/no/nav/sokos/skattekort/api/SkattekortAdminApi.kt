@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.api.model.AuditResponse
 import no.nav.sokos.skattekort.api.model.BatchInsightRequest
 import no.nav.sokos.skattekort.api.model.BatchInsightResponse
 import no.nav.sokos.skattekort.api.model.FnrRequest
-import no.nav.sokos.skattekort.api.model.ForespoerselRequest
+import no.nav.sokos.skattekort.api.model.UtsendingRequest
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
@@ -53,11 +53,18 @@ fun Route.skattekortAdminApi(
                     call.parameters["bestillingsreferanse"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid Bestillingsreferanse: must be 2–3 letters followed by 4–8 digits"),
                 )
             bestillingsbatchService.rerun(bestillingsreferanse)
+            return@get call.respond(HttpStatusCode.Accepted)
         }
+
+        post("utsendtStatus") {
+            val request = call.receive<UtsendingRequest>()
+            return@post call.respond(HttpStatusCode.NotImplemented)
+        }
+
         post("utsending") {
 //            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-            val request = call.receive<ForespoerselRequest>()
-            utsendingService.createUtsending(Personidentifikator(request.personIdent), request.aar, Forsystem.fromValue(request.forsystem))
+            val request = call.receive<UtsendingRequest>()
+            utsendingService.createUtsendingForMangeFnr(request.fnr.map { fnr -> Personidentifikator(fnr) }, request.aar, Forsystem.fromValue(request.forsystem))
             return@post call.respond(HttpStatusCode.Accepted)
         }
     }

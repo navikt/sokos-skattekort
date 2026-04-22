@@ -16,6 +16,8 @@ import no.nav.sokos.skattekort.api.model.UtsendingRequest
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
+import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
+import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsreferanse
 import no.nav.sokos.skattekort.utsending.UtsendingService
@@ -29,8 +31,7 @@ fun Route.skattekortAdminApi(
 ) {
     route(BASE_PATH_ADMIN) {
         post("hentBatcher") {
-            // Utkommentert fordi vi ikke har deployet ennå
-//            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<BatchInsightRequest>()
             val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom, request.status, request.type)
             call.respond(
@@ -39,15 +40,13 @@ fun Route.skattekortAdminApi(
         }
 
         post("auditLogg") {
-            // Utkommentert fordi vi ikke har deployet ennå
-//            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<FnrRequest>()
             val audits = personService.getAuditLogs(request.fnr)
             call.respond(AuditResponse(audits))
         }
         get("rerun/{bestillingsreferanse}") {
-            //            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val bestillingsreferanse =
                 Bestillingsreferanse(
                     call.parameters["bestillingsreferanse"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid Bestillingsreferanse: must be 2–3 letters followed by 4–8 digits"),
@@ -57,12 +56,13 @@ fun Route.skattekortAdminApi(
         }
 
         post("utsendtStatus") {
-            val request = call.receive<UtsendingRequest>()
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            call.receive<UtsendingRequest>()
             return@post call.respond(HttpStatusCode.NotImplemented)
         }
 
         post("utsending") {
-//            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<UtsendingRequest>()
             utsendingService.createUtsendingForMangeFnr(request.fnr.map { fnr -> Personidentifikator(fnr) }, request.aar, Forsystem.fromValue(request.forsystem))
             return@post call.respond(HttpStatusCode.Accepted)

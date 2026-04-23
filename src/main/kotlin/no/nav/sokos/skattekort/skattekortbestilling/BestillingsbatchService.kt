@@ -11,6 +11,7 @@ import kotlinx.serialization.json.Json
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.model.BestillingsbatchDTO
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.RECENT_BATCH_GRACE_PERIOD
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -113,17 +114,17 @@ class BestillingsbatchService(
         instantEnd: Instant?,
         status: BestillingsbatchStatus?,
         type: BestillingsbatchType?,
-    ): List<Bestillingsbatch> {
-        logger.info { "Service OK " }
-
-        if (instantStart == null && instantEnd == null && status == null && type == null) {
-            return dataSource.transaction(BestillingsbatchRepository::getDefaultBatchInsightResults)
-        }
-
-        return dataSource.transaction { tx ->
-            BestillingsbatchRepository.getFilteredBestillingsbatches(tx, instantStart, instantEnd, status, type)
-        }
-    }
+    ): List<BestillingsbatchDTO> =
+        dataSource
+            .transaction { tx ->
+                if (instantStart == null && instantEnd == null && status == null && type == null) {
+                    BestillingsbatchRepository.getDefaultBatchInsightResults(tx)
+                } else {
+                    BestillingsbatchRepository.getFilteredBestillingsbatches(tx, instantStart, instantEnd, status, type)
+                }
+            }.map { (batch, dataMottatt) ->
+                BestillingsbatchDTO.toDto(batch, dataMottatt)
+            }
 
     private fun logErrorAsInfoIfRecentBatch(
         errorMessage: String,

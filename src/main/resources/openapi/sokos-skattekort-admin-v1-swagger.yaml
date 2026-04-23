@@ -15,7 +15,7 @@ tags:
     description: Adminfunksjoner for Skattekort
 
 paths:
-  /hentBatcher:
+  /bestillingsbatcher:
     post:
       tags:
         - skattekort-admin
@@ -100,23 +100,22 @@ paths:
       security:
         - Bearer: [ ]
 
-  /rerun/{bestillingsreferanse}:
-    get:
+  /bestillingsbatcher/{id}:
+    patch:
       tags:
         - skattekort-admin
       summary: Kjør batch på nytt
-      description: Trigger rerun av batch for gitt bestillingsreferanse.
-      operationId: rerunBestillingsbatch
+      description: Trigger rerun av batch for gitt id.
+      operationId: rerun Bestillingsbatch
 
       parameters:
-        - name: bestillingsreferanse
+        - name: id
           in: path
           required: true
-          description: 2-3 bokstaver A-Z etterfulgt av 4-8 sifre.
+          description: .
           schema:
-            type: string
-            pattern: '^[A-Z]{2,3}[0-9]{4,8}$'
-            example: 'BR123456'
+            type: number
+            example: 1234
 
       responses:
         202:
@@ -320,7 +319,7 @@ components:
           example: Error message
         path:
           type: string
-          example: /api/v1/admin/hentBatcher
+          example: /api/v1/admin/bestillingsbatcher
           description: Endepunktet hvor feilen oppsto
 
     AuditResponse:

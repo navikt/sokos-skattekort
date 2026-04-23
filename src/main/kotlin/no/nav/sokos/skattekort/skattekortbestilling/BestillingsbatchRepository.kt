@@ -55,7 +55,7 @@ object BestillingsbatchRepository {
         instantEnd: Instant?,
         status: BestillingsbatchStatus?,
         type: BestillingsbatchType?,
-    ): List<Bestillingsbatch> {
+    ): Map<Bestillingsbatch, String?> {
         var sqlparts: List<String> = ArrayList()
         sqlparts += """
                     |SELECT *
@@ -81,13 +81,14 @@ object BestillingsbatchRepository {
                 ),
             )
 
-        return tx.list(
-            query,
-            extractor = mapToBestillingsbatch,
-        )
+        return tx
+            .list(
+                query,
+                extractor = mapToBestillingsbatchWithDataMottatt,
+            ).toMap()
     }
 
-    fun getDefaultBatchInsightResults(tx: TransactionalSession): List<Bestillingsbatch> {
+    fun getDefaultBatchInsightResults(tx: TransactionalSession): Map<Bestillingsbatch, String?> {
         val query =
             queryOf(
                 """
@@ -105,10 +106,11 @@ object BestillingsbatchRepository {
                     |ORDER BY oppdatert DESC
                 """.trimMargin(),
             )
-        return tx.list(
-            query,
-            extractor = mapToBestillingsbatch,
-        )
+        return tx
+            .list(
+                query,
+                extractor = mapToBestillingsbatchWithDataMottatt,
+            ).toMap()
     }
 
     fun findById(
@@ -206,7 +208,19 @@ object BestillingsbatchRepository {
             dataSendt = row.string("data_sendt"),
             oppdatert = row.instant("oppdatert").toKotlinInstant(),
             opprettet = row.instant("opprettet").toKotlinInstant(),
-            dataMottatt = row.stringOrNull("data_mottatt"),
         )
+    }
+
+    @OptIn(ExperimentalTime::class)
+    val mapToBestillingsbatchWithDataMottatt: (Row) -> Pair<Bestillingsbatch, String?> = { row ->
+        Bestillingsbatch(
+            id = BestillingsbatchId(row.long("id")),
+            status = BestillingsbatchStatus.valueOf(row.string("status")),
+            type = BestillingsbatchType.valueOf(row.string("type")),
+            bestillingsreferanse = row.string("bestillingsreferanse"),
+            dataSendt = row.string("data_sendt"),
+            oppdatert = row.instant("oppdatert").toKotlinInstant(),
+            opprettet = row.instant("opprettet").toKotlinInstant(),
+        ) to row.stringOrNull("data_mottatt")
     }
 }

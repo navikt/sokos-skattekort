@@ -4,7 +4,6 @@ import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.person.Audit
-import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsbatch
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 
@@ -16,7 +15,7 @@ data class BatchInsightRequest(
     val type: BestillingsbatchType?,
 )
 
-typealias BatchInsightResponse = ListResponse<Bestillingsbatch>
+typealias BatchInsightResponse = ListResponse<BestillingsbatchDTO>
 typealias AuditResponse = ListResponse<Audit>
 
 @Serializable

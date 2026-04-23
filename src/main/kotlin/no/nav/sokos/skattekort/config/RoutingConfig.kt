@@ -15,7 +15,6 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
-import no.nav.sokos.skattekort.utsending.UtsendingService
 
 fun Application.routingConfig(
     applicationState: ApplicationState,
@@ -31,9 +30,8 @@ fun Application.routingConfig(
             val personService: PersonService by dependencies
             val skattekortService: SkattekortService by dependencies
             val statusService: StatusService by dependencies
-            val utsendingService: UtsendingService by dependencies
 
-            skattekortAdminApi(bestillingsbatchService, personService, utsendingService)
+            skattekortAdminApi(bestillingsbatchService, personService)
             skattekortApi(forespoerselService, statusService)
             skattekortPersonApi(skattekortService, pdlService)
         }

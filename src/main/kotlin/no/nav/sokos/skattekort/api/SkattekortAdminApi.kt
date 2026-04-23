@@ -12,22 +12,17 @@ import no.nav.sokos.skattekort.api.model.AuditResponse
 import no.nav.sokos.skattekort.api.model.BatchInsightRequest
 import no.nav.sokos.skattekort.api.model.BatchInsightResponse
 import no.nav.sokos.skattekort.api.model.FnrRequest
-import no.nav.sokos.skattekort.api.model.UtsendingRequest
-import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.PersonService
-import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsreferanse
-import no.nav.sokos.skattekort.utsending.UtsendingService
 
 const val BASE_PATH_ADMIN = "/api/v1/admin"
 
 fun Route.skattekortAdminApi(
     bestillingsbatchService: BestillingsbatchService,
     personService: PersonService,
-    utsendingService: UtsendingService,
 ) {
     route(BASE_PATH_ADMIN) {
         post("hentBatcher") {
@@ -53,19 +48,6 @@ fun Route.skattekortAdminApi(
                 )
             bestillingsbatchService.rerun(bestillingsreferanse)
             return@get call.respond(HttpStatusCode.Accepted)
-        }
-
-        post("utsendtStatus") {
-            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-            call.receive<UtsendingRequest>()
-            return@post call.respond(HttpStatusCode.NotImplemented)
-        }
-
-        post("utsending") {
-            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-            val request = call.receive<UtsendingRequest>()
-            utsendingService.createUtsendingForMangeFnr(request.fnr.map { fnr -> Personidentifikator(fnr) }, request.aar, Forsystem.fromValue(request.forsystem))
-            return@post call.respond(HttpStatusCode.Accepted)
         }
     }
 }

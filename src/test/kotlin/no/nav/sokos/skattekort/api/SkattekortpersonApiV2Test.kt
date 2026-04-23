@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 
 import no.nav.pdl.hentpersonbolk.Navn
 import no.nav.pdl.hentpersonbolk.Person
-import no.nav.sokos.skattekort.api.model.HentNavnRequest
+import no.nav.sokos.skattekort.api.model.FnrRequest
 import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClientTestUtils.toSkattekortDTOWrappedWithErrorResponse
@@ -635,7 +635,7 @@ class SkattekortpersonApiV2Test :
 
         test("hent-navn - Auth: missing token is rejected") {
             TestUtils.withFullTestApplication {
-                val request = HentNavnRequest(fnr = "01010112345")
+                val request = FnrRequest(fnr = "01010112345")
 
                 val response =
                     client.post(HENT_NAVN_URL) {
@@ -653,7 +653,7 @@ class SkattekortpersonApiV2Test :
                 WiremockListener.wiremockTilgangsmaskinStub()
                 WiremockListener.wiremockPDLStub(generateHentPersonBolk(Pair(fnr, Person(listOf(Navn("Fornavn", "Mellomnavn", "Etternavn"))))))
 
-                val request = HentNavnRequest(fnr = "01010112345")
+                val request = FnrRequest(fnr = "01010112345")
                 val response =
                     client.post(HENT_NAVN_URL) {
                         header(HttpHeaders.ContentType, ContentType.Application.Json)

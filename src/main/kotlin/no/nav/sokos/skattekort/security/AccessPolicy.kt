@@ -12,6 +12,7 @@ enum class Scope(
     HENT_SKATTEKORT_SCOPE("hent-skattekort-scope"),
     HENT_NAVN_SCOPE("hent-navn-scope"),
     OPPRETT_SCOPE("opprett-scope"),
+    ADMIN_SCOPE("admin-scope"),
     ;
 
     override fun toString() = value

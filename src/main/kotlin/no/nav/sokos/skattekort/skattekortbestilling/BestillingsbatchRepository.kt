@@ -1,6 +1,8 @@
 package no.nav.sokos.skattekort.skattekortbestilling
 
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 import kotlin.time.toKotlinInstant
 
 import kotliquery.Row
@@ -46,6 +48,70 @@ object BestillingsbatchRepository {
             ),
             extractor = mapToBestillingsbatch,
         )
+
+    fun getFilteredBestillingsbatches(
+        tx: TransactionalSession,
+        instantStart: Instant?,
+        instantEnd: Instant?,
+        status: BestillingsbatchStatus?,
+        type: BestillingsbatchType?,
+    ): Map<Bestillingsbatch, String?> {
+        var sqlparts: List<String> = ArrayList()
+        sqlparts += """
+                    |SELECT *
+                    |FROM bestillingsbatcher
+                    |WHERE 1 = 1
+                    """
+        if (status != null) sqlparts += "AND status = :status"
+        if (type != null) sqlparts += "AND type = :type"
+        if (instantStart != null) sqlparts += "AND (opprettet > :start OR oppdatert > :start)"
+        if (instantEnd != null) sqlparts += "AND (opprettet < :end OR oppdatert < :end)"
+
+        sqlparts += "ORDER BY oppdatert ASC"
+
+        val statement = sqlparts.joinToString(" ").trimMargin()
+        val query =
+            queryOf(
+                statement,
+                mapOf(
+                    "start" to instantStart?.toJavaInstant(),
+                    "end" to instantEnd?.toJavaInstant(),
+                    "status" to status?.name,
+                    "type" to type?.name,
+                ),
+            )
+
+        return tx
+            .list(
+                query,
+                extractor = mapToBestillingsbatchWithDataMottatt,
+            ).toMap()
+    }
+
+    fun getDefaultBatchInsightResults(tx: TransactionalSession): Map<Bestillingsbatch, String?> {
+        val query =
+            queryOf(
+                """
+                    |SELECT * FROM bestillingsbatcher
+                    |WHERE id IN (
+                    |        (SELECT id
+                    |            FROM bestillingsbatcher
+                    |            ORDER BY oppdatert DESC
+                    |            LIMIT 20) 
+                    |   UNION 
+                    |       (SELECT id
+                    |           FROM bestillingsbatcher
+                    |           WHERE status <> 'FERDIG')
+                    |           )
+                    |ORDER BY oppdatert DESC
+                """.trimMargin(),
+            )
+        return tx
+            .list(
+                query,
+                extractor = mapToBestillingsbatchWithDataMottatt,
+            ).toMap()
+    }
 
     fun findById(
         tx: TransactionalSession,
@@ -113,6 +179,25 @@ object BestillingsbatchRepository {
             extractor = mapToBestillingsbatch,
         )
 
+    fun rerun(
+        tx: TransactionalSession,
+        bestillingsreferanse: Bestillingsreferanse,
+    ) = tx.run(
+        queryOf(
+            """
+                    |UPDATE bestillingsbatcher
+                    |SET status = :retry, oppdatert = NOW()
+                    |WHERE bestillingsreferanse = :bestillingsreferanse
+                    |AND status = :feilet
+            """.trimMargin(),
+            mapOf(
+                "bestillingsreferanse" to bestillingsreferanse.value,
+                "retry" to BestillingsbatchStatus.RETRY.name,
+                "feilet" to BestillingsbatchStatus.FEILET.name,
+            ),
+        ).asExecute,
+    )
+
     @OptIn(ExperimentalTime::class)
     val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
         Bestillingsbatch(
@@ -124,5 +209,18 @@ object BestillingsbatchRepository {
             oppdatert = row.instant("oppdatert").toKotlinInstant(),
             opprettet = row.instant("opprettet").toKotlinInstant(),
         )
+    }
+
+    @OptIn(ExperimentalTime::class)
+    val mapToBestillingsbatchWithDataMottatt: (Row) -> Pair<Bestillingsbatch, String?> = { row ->
+        Bestillingsbatch(
+            id = BestillingsbatchId(row.long("id")),
+            status = BestillingsbatchStatus.valueOf(row.string("status")),
+            type = BestillingsbatchType.valueOf(row.string("type")),
+            bestillingsreferanse = row.string("bestillingsreferanse"),
+            dataSendt = row.string("data_sendt"),
+            oppdatert = row.instant("oppdatert").toKotlinInstant(),
+            opprettet = row.instant("opprettet").toKotlinInstant(),
+        ) to row.stringOrNull("data_mottatt")
     }
 }

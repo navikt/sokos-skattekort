@@ -1,0 +1,442 @@
+openapi: '3.0.3'
+
+info:
+  version: 1.0.0
+  title: sokos-skattekort API
+  description: API-tjeneste for admininnsyn i bestillingsbatcher for skattekort
+  contact:
+    name: PO Utbetaling
+    email: okonomi@nav.no
+    url: https://nav-it.slack.com/archives/CKZADNFBP
+servers:
+  - url: /api/v1/admin
+tags:
+  - name: skattekort-admin
+    description: Adminfunksjoner for Skattekort
+
+paths:
+  /bestillingsbatcher:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Hent bestillingsbatcher
+      description: Returnerer bestillingsbatcher filtrert på opprettet/oppdatert tidspunkt.
+      operationId: hentBestillingsbatcher
+
+      requestBody:
+        description: |
+          Filter for henting av batcher.
+          Alle felter er valgfrie.
+          Hvis de ikke oppgis, returneres de 20 siste batchene pluss de som ikke har status FERDIG og som ikke er blant de 20 siste batchene.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchInsightRequest'
+        required: true
+
+      responses:
+        200:
+          description: OK - Returnerer bestillingsbatcher i valgt tidsrom
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchInsightResponse'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
+  /auditLogg:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Hent audit-logg for person
+      description: Returnerer audit-logg for oppgitt fødselsnummer
+      operationId: hentAuditLogg
+
+      requestBody:
+        description: Fødselsnummer for personen du ønsker audit-logg for
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FnrRequest'
+        required: true
+
+      responses:
+        200:
+          description: OK - Returnerer audit-logg
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditResponse'
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
+  /bestillingsbatcher/{id}:
+    patch:
+      tags:
+        - skattekort-admin
+      summary: Kjør batch på nytt
+      description: Trigger rerun av batch for gitt id.
+      operationId: rerun Bestillingsbatch
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: .
+          schema:
+            type: number
+            example: 1234
+
+      responses:
+        202:
+          description: Accepted - rerun startet
+        400:
+          description: Ugyldig bestillingsreferanse
+          content:
+            text/plain:
+              schema:
+                type: string
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
+  /utsendtStatus:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Hent utsendt-status (ikke implementert)
+      description: Stub-endepunkt. Returnerer 501 Not Implemented inntil videre.
+      operationId: hentUtsendtStatus
+      requestBody:
+        description: Samme request-format som /utsending
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UtsendingRequest'
+        required: true
+      responses:
+        501:
+          description: Endepunktet er ikke implementert ennå
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+      security:
+        - Bearer: [ ]
+
+  /utsending:
+    post:
+      tags:
+        - skattekort-admin
+      summary: Opprett utsending
+      description: Oppretter utsending for person, år og forsystem.
+      operationId: opprettUtsending
+
+      requestBody:
+        description: Informasjon som trengs for å opprette utsending
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UtsendingRequest'
+        required: true
+
+      responses:
+        202:
+          description: Accepted - utsending opprettet
+        400:
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        401:
+          description: Ingen tilgang
+        500:
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+      security:
+        - Bearer: [ ]
+
+components:
+  schemas:
+    BatchInsightRequest:
+      type: object
+      properties:
+        tidspunktFom:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-04-08T08:00:00Z'
+          description: Start-tidspunkt
+        tidspunktTom:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-04-09T08:00:00Z'
+          description: Slutt-tidspunkt
+        status:
+          type: string
+          nullable: true
+          enum:
+            - NY
+            - FERDIG
+            - FEILET
+            - RETRY
+          description: Filtrer på bestillingsbatch-status
+        type:
+          type: string
+          nullable: true
+          enum:
+            - BESTILLING
+            - OPPDATERING
+          description: Filtrer på bestillingsbatch-type
+
+    BatchInsightResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bestillingsbatch'
+
+    Bestillingsbatch:
+      type: object
+      required:
+        - status
+        - type
+        - bestillingsreferanse
+        - oppdatert
+        - opprettet
+        - dataSendt
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 12345
+        status:
+          type: string
+          enum:
+            - NY
+            - FERDIG
+            - FEILET
+            - RETRY
+        type:
+          type: string
+          enum:
+            - BESTILLING
+            - OPPDATERING
+        bestillingsreferanse:
+          type: string
+          example: 'BR123456'
+        oppdatert:
+          type: string
+          format: date-time
+          example: '2026-04-09T08:32:14Z'
+        opprettet:
+          type: string
+          format: date-time
+          example: '2026-04-09T08:30:00Z'
+        dataSendt:
+          type: string
+          description: JSON-streng sendt til Skatteetaten
+          example: '{"inntektsaar":"2026","bestillingstype":"HENT_ALLE_OPPGITTE"}'
+        dataMottatt:
+          type: string
+          description: JSON-streng mottatt fra Skatteetaten
+          nullable: true
+          example: '{"status":"FORESPOERSEL_OK"}'
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Tidspunkt feilen oppsto
+        status:
+          type: integer
+          example: 4xx
+          description: HTTP status kode
+        error:
+          type: string
+          example: Error type
+        message:
+          type: string
+          example: Error message
+        path:
+          type: string
+          example: /api/v1/admin/bestillingsbatcher
+          description: Endepunktet hvor feilen oppsto
+
+    AuditResponse:
+      type: object
+      description: Returnerer audit-logg for alle fnr som er knyttet til samme person som oppgitt fnr
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Audit'
+
+    Audit:
+      type: object
+      required:
+        - personId
+        - brukerId
+        - opprettet
+        - tag
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 12345
+          description: Audit ID
+        personId:
+          type: integer
+          format: int64
+          example: 1
+          description: Person ID
+        brukerId:
+          type: string
+          example: "F123456"
+          description: Bruker ID som utførte handlingen
+        opprettet:
+          type: string
+          format: date-time
+          example: '2026-04-10T10:30:00Z'
+          description: Når audit-entry ble opprettet
+        tag:
+          type: string
+          enum:
+            - BESTILLING_ETTERLATT
+            - BESTILLING_FEILET
+            - BESTILLING_SENDT
+            - HENTING_AV_SKATTEKORT_FEILET
+            - INVALID_FNR
+            - MOTTATT_FORESPOERSEL
+            - NYTT_FNR
+            - OPPDATERT_PERSONIDENTIFIKATOR
+            - OPPRETTET_PERSON
+            - SKATTEKORTINFORMASJON_MOTTATT
+            - SYNTETISERT_SKATTEKORT
+            - UKJENT
+            - UTSENDING_FEILET
+            - UTSENDING_OK
+            - UVENTET_PERSON
+            - MANUELL
+          description: Type audit-event
+        informasjon:
+          type: string
+          nullable: true
+          description: Informasjon
+
+    FnrRequest:
+      type: object
+      required:
+        - fnr
+      properties:
+        fnr:
+          type: string
+          nullable: false
+          example: "01010112345"
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+          description: Fødselsnummer
+
+    UtsendingRequest:
+      type: object
+      required:
+        - fnr
+        - aar
+        - forsystem
+      properties:
+        fnr:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 11
+            maxLength: 11
+            pattern: '^\d{11}$'
+            example: '01010112345'
+          description: Liste med fødselsnumre det skal opprettes utsending for
+        aar:
+          type: integer
+          format: int32
+          example: 2026
+          description: Inntektsår
+        forsystem:
+          type: string
+          enum:
+            - OS
+          example: 'OS'
+          description: |
+            Forsystem. MANUELL og OS_STOR er ikke gyldige for dette endepunktet.
+            DARE forventes lagt til snart.
+            
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: |-
+        OIDC-token (JWT via OAuth2.0).<br> 
+          Følgende format må brukes i input-feltet "Value" under: <strong>\"Bearer {token}\"</strong>.<br> 
+          Eksempel på verdi i input-felt: <strong>Bearer eYdmifml0ejugm</strong>
+      name: Authorization
+      in: header

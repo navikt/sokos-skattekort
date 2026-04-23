@@ -239,6 +239,7 @@ components:
             - skattekortopplysningerOK
             - ikkeSkattekort
             - ikkeTrekkplikt
+            - utgaattDnummerSkattekortForFoedselsnummerErLevert
         tilleggsopplysningList:
           type: array
           items:

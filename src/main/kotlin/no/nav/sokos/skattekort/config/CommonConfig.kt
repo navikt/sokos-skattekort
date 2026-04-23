@@ -33,6 +33,7 @@ import org.slf4j.event.Level
 import no.nav.sokos.skattekort.api.model.requestValidationOpprettSkattekortRequest
 import no.nav.sokos.skattekort.api.model.requestValidationSkattekortConfig
 import no.nav.sokos.skattekort.api.model.requestValidationSkattekortRequest
+import no.nav.sokos.skattekort.api.model.requestValidationUtsendingConfig
 import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.security.TokenUtils
 
@@ -68,6 +69,7 @@ fun Application.commonConfig() {
     }
     install(RequestValidation) {
         requestValidationSkattekortConfig()
+        requestValidationUtsendingConfig()
         requestValidationSkattekortRequest()
         requestValidationOpprettSkattekortRequest()
     }

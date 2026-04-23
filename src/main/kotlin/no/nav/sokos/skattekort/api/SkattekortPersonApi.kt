@@ -8,7 +8,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
-import no.nav.sokos.skattekort.api.model.HentNavnRequest
+import no.nav.sokos.skattekort.api.model.FnrRequest
 import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
 import no.nav.sokos.skattekort.api.model.OpprettSkattekortRequest
 import no.nav.sokos.skattekort.api.model.WrappedWithErrorResponse
@@ -85,7 +85,7 @@ fun Route.skattekortPersonApi(
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             requireNotNull(saksbehandler) { "Missing NAVident in private claims" }
 
-            val reqeust: HentNavnRequest = call.receive()
+            val reqeust: FnrRequest = call.receive()
             when (val result = pdlService.getPersonNavn(reqeust.fnr, saksbehandler)) {
                 is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))
                 is Either.Right -> call.respond(WrappedWithErrorResponse(data = result.get()))

@@ -57,6 +57,7 @@ spec:
               - "hent-navn-scope"
               - "status-scope"
               - "opprett-scope"
+              - "admin-scope"
             roles:
               - "bestille-role"
               - "hent-skattekort-role"
@@ -72,6 +73,7 @@ spec:
               - "status-scope"
               - "hent-skattekort-scope"
               - "hent-navn-scope"
+              - "admin-scope"
         - application: sokos-dare-poc
           permissions:
             roles:

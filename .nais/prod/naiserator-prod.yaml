@@ -55,6 +55,7 @@ spec:
               - "status-scope"
               - "hent-skattekort-scope"
               - "hent-navn-scope"
+              - "admin-scope"
         - application: saas-proxy
           namespace: platforce
           permissions:

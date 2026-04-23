@@ -4,12 +4,14 @@ import java.sql.BatchUpdateException
 import javax.sql.DataSource
 
 import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.model.BestillingsbatchDTO
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.RECENT_BATCH_GRACE_PERIOD
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -107,6 +109,23 @@ class BestillingsbatchService(
         }
     }
 
+    fun getBestillingsbatches(
+        instantStart: Instant?,
+        instantEnd: Instant?,
+        status: BestillingsbatchStatus?,
+        type: BestillingsbatchType?,
+    ): List<BestillingsbatchDTO> =
+        dataSource
+            .transaction { tx ->
+                if (instantStart == null && instantEnd == null && status == null && type == null) {
+                    BestillingsbatchRepository.getDefaultBatchInsightResults(tx)
+                } else {
+                    BestillingsbatchRepository.getFilteredBestillingsbatches(tx, instantStart, instantEnd, status, type)
+                }
+            }.map { (batch, dataMottatt) ->
+                BestillingsbatchDTO.toDto(batch, dataMottatt)
+            }
+
     private fun logErrorAsInfoIfRecentBatch(
         errorMessage: String,
         exception: Throwable,
@@ -122,4 +141,9 @@ class BestillingsbatchService(
         logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
         logger.error { "$errorMessage, detaljer er logget til TEAM LOGS" }
     }
+
+    fun rerun(bestillingsreferanse: Bestillingsreferanse) =
+        dataSource.transaction { tx ->
+            BestillingsbatchRepository.rerun(tx, bestillingsreferanse)
+        }
 }

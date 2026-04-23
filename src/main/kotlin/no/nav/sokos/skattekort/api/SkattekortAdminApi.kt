@@ -4,7 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
@@ -25,7 +25,7 @@ fun Route.skattekortAdminApi(
     personService: PersonService,
 ) {
     route(BASE_PATH_ADMIN) {
-        post("hentBatcher") {
+        post("bestillingsbatcher") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<BatchInsightRequest>()
             val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom, request.status, request.type)
@@ -40,14 +40,15 @@ fun Route.skattekortAdminApi(
             val audits = personService.getAuditLogs(request.fnr)
             call.respond(AuditResponse(audits))
         }
-        get("rerun/{bestillingsreferanse}") {
+        patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val bestillingsreferanse =
                 Bestillingsreferanse(
-                    call.parameters["bestillingsreferanse"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid Bestillingsreferanse: must be 2–3 letters followed by 4–8 digits"),
+                    call.parameters["id"]
+                        ?: return@patch call.respond(HttpStatusCode.BadRequest, "Mangler Id"),
                 )
             bestillingsbatchService.rerun(bestillingsreferanse)
-            return@get call.respond(HttpStatusCode.Accepted)
+            return@patch call.respond(HttpStatusCode.Accepted)
         }
     }
 }

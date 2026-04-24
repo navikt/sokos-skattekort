@@ -207,30 +207,30 @@ object BestillingsbatchRepository {
             ),
             extractor = mapToBestillingsbatch,
         )
-}
 
-@OptIn(ExperimentalTime::class)
-val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
-    Bestillingsbatch(
-        id = BestillingsbatchId(row.long("id")),
-        status = BestillingsbatchStatus.valueOf(row.string("status")),
-        type = BestillingsbatchType.valueOf(row.string("type")),
-        bestillingsreferanse = row.string("bestillingsreferanse"),
-        dataSendt = row.string("data_sendt"),
-        oppdatert = row.instant("oppdatert").toKotlinInstant(),
-        opprettet = row.instant("opprettet").toKotlinInstant(),
-    )
-}
+    @OptIn(ExperimentalTime::class)
+    val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
+        Bestillingsbatch(
+            id = BestillingsbatchId(row.long("id")),
+            status = BestillingsbatchStatus.valueOf(row.string("status")),
+            type = BestillingsbatchType.valueOf(row.string("type")),
+            bestillingsreferanse = row.string("bestillingsreferanse"),
+            dataSendt = row.string("data_sendt"),
+            oppdatert = row.instant("oppdatert").toKotlinInstant(),
+            opprettet = row.instant("opprettet").toKotlinInstant(),
+        )
+    }
 
-@OptIn(ExperimentalTime::class)
-val mapToBestillingsbatchWithDataMottatt: (Row) -> Pair<Bestillingsbatch, String?> = { row ->
-    Bestillingsbatch(
-        id = BestillingsbatchId(row.long("id")),
-        status = BestillingsbatchStatus.valueOf(row.string("status")),
-        type = BestillingsbatchType.valueOf(row.string("type")),
-        bestillingsreferanse = row.string("bestillingsreferanse"),
-        dataSendt = row.string("data_sendt"),
-        oppdatert = row.instant("oppdatert").toKotlinInstant(),
-        opprettet = row.instant("opprettet").toKotlinInstant(),
-    ) to row.stringOrNull("data_mottatt")
+    @OptIn(ExperimentalTime::class)
+    val mapToBestillingsbatchWithDataMottatt: (Row) -> Pair<Bestillingsbatch, String?> = { row ->
+        Bestillingsbatch(
+            id = BestillingsbatchId(row.long("id")),
+            status = BestillingsbatchStatus.valueOf(row.string("status")),
+            type = BestillingsbatchType.valueOf(row.string("type")),
+            bestillingsreferanse = row.string("bestillingsreferanse"),
+            dataSendt = row.string("data_sendt"),
+            oppdatert = row.instant("oppdatert").toKotlinInstant(),
+            opprettet = row.instant("opprettet").toKotlinInstant(),
+        ) to row.stringOrNull("data_mottatt")
+    }
 }

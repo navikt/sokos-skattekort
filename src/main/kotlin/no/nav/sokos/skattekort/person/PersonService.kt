@@ -123,4 +123,13 @@ class PersonService(
         FoedselsnummerRepository.insert(tx, newFoedselsnummer)
         AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, newFoedselsnummer.personId!!, "Oppdatert foedselsnummer: ${newFoedselsnummer.fnr.value}")
     }
+
+    fun getAuditLogs(fnr: String): List<Audit> {
+        return dataSource.transaction { tx ->
+            val personId =
+                PersonRepository.findPersonIdByFnr(tx, Personidentifikator(fnr))
+                    ?: return@transaction emptyList()
+            AuditRepository.getAuditByPersonId(tx, personId)
+        }
+    }
 }

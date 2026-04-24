@@ -9,12 +9,12 @@ import io.ktor.server.plugins.requestvalidation.ValidationResult.Invalid
 import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidPersonIdent
 
 @Serializable
-data class HentNavnRequest(
+data class FnrRequest(
     val fnr: String,
 )
 
 fun RequestValidationConfig.requestValidationHentNavnRequest() {
-    validate<HentNavnRequest> { request ->
+    validate<FnrRequest> { request ->
         when {
             !isValidPersonIdent(request.fnr) -> Invalid("fnr er ugyldig. Tillatt format er 11 siffer, var ${request.fnr}")
             else -> ValidationResult.Valid

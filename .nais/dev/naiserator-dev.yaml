@@ -57,6 +57,7 @@ spec:
               - "hent-navn-scope"
               - "status-scope"
               - "opprett-scope"
+              - "admin-scope"
             roles:
               - "bestille-role"
               - "hent-skattekort-role"
@@ -72,6 +73,7 @@ spec:
               - "status-scope"
               - "hent-skattekort-scope"
               - "hent-navn-scope"
+              - "admin-scope"
         - application: sokos-dare-poc
           permissions:
             roles:
@@ -103,6 +105,7 @@ spec:
           namespace: nais-system
         - application: populasjonstilgangskontroll
           namespace: tilgangsmaskin
+        - application: sokos-dare-poc
       external:
         - host: mqls02.preprod.local
           ports:

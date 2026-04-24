@@ -53,8 +53,6 @@ object BestillingsbatchRepository {
         tx: TransactionalSession,
         instantStart: Instant?,
         instantEnd: Instant?,
-        status: BestillingsbatchStatus?,
-        type: BestillingsbatchType?,
     ): Map<Bestillingsbatch, String?> {
         var sqlparts: List<String> = ArrayList()
         sqlparts += """
@@ -62,8 +60,6 @@ object BestillingsbatchRepository {
                     |FROM bestillingsbatcher
                     |WHERE 1 = 1
                     """
-        if (status != null) sqlparts += "AND status = :status"
-        if (type != null) sqlparts += "AND type = :type"
         if (instantStart != null) sqlparts += "AND (opprettet > :start OR oppdatert > :start)"
         if (instantEnd != null) sqlparts += "AND (opprettet < :end OR oppdatert < :end)"
 
@@ -76,8 +72,6 @@ object BestillingsbatchRepository {
                 mapOf(
                     "start" to instantStart?.toJavaInstant(),
                     "end" to instantEnd?.toJavaInstant(),
-                    "status" to status?.name,
-                    "type" to type?.name,
                 ),
             )
 
@@ -198,29 +192,45 @@ object BestillingsbatchRepository {
         ).asExecute,
     )
 
-    @OptIn(ExperimentalTime::class)
-    val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
-        Bestillingsbatch(
-            id = BestillingsbatchId(row.long("id")),
-            status = BestillingsbatchStatus.valueOf(row.string("status")),
-            type = BestillingsbatchType.valueOf(row.string("type")),
-            bestillingsreferanse = row.string("bestillingsreferanse"),
-            dataSendt = row.string("data_sendt"),
-            oppdatert = row.instant("oppdatert").toKotlinInstant(),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
+    fun getIncompleteBatches(tx: TransactionalSession): List<Bestillingsbatch> =
+        tx.list(
+            queryOf(
+                """
+                    |SELECT * 
+                    |FROM bestillingsbatcher
+                    |WHERE status <> :ferdig
+                    |ORDER BY oppdatert DESC
+                """.trimMargin(),
+                mapOf(
+                    "ferdig" to BestillingsbatchStatus.FERDIG.name,
+                ),
+            ),
+            extractor = mapToBestillingsbatch,
         )
-    }
+}
 
-    @OptIn(ExperimentalTime::class)
-    val mapToBestillingsbatchWithDataMottatt: (Row) -> Pair<Bestillingsbatch, String?> = { row ->
-        Bestillingsbatch(
-            id = BestillingsbatchId(row.long("id")),
-            status = BestillingsbatchStatus.valueOf(row.string("status")),
-            type = BestillingsbatchType.valueOf(row.string("type")),
-            bestillingsreferanse = row.string("bestillingsreferanse"),
-            dataSendt = row.string("data_sendt"),
-            oppdatert = row.instant("oppdatert").toKotlinInstant(),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
-        ) to row.stringOrNull("data_mottatt")
-    }
+@OptIn(ExperimentalTime::class)
+val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
+    Bestillingsbatch(
+        id = BestillingsbatchId(row.long("id")),
+        status = BestillingsbatchStatus.valueOf(row.string("status")),
+        type = BestillingsbatchType.valueOf(row.string("type")),
+        bestillingsreferanse = row.string("bestillingsreferanse"),
+        dataSendt = row.string("data_sendt"),
+        oppdatert = row.instant("oppdatert").toKotlinInstant(),
+        opprettet = row.instant("opprettet").toKotlinInstant(),
+    )
+}
+
+@OptIn(ExperimentalTime::class)
+val mapToBestillingsbatchWithDataMottatt: (Row) -> Pair<Bestillingsbatch, String?> = { row ->
+    Bestillingsbatch(
+        id = BestillingsbatchId(row.long("id")),
+        status = BestillingsbatchStatus.valueOf(row.string("status")),
+        type = BestillingsbatchType.valueOf(row.string("type")),
+        bestillingsreferanse = row.string("bestillingsreferanse"),
+        dataSendt = row.string("data_sendt"),
+        oppdatert = row.instant("oppdatert").toKotlinInstant(),
+        opprettet = row.instant("opprettet").toKotlinInstant(),
+    ) to row.stringOrNull("data_mottatt")
 }

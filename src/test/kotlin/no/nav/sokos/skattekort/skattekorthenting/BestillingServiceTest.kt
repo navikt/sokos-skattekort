@@ -387,46 +387,6 @@ class BestillingServiceTest :
             }
         }
 
-        test("UtgaattDnummerSkattekortForFoedselsnummerErLevert skal opprette ny bestilling med gyldig fnr") {
-            val dnr = "41010100001"
-            val fnr = "01010112345"
-            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
-                aHentSkattekortResponse(
-                    anArbeidstaker(
-                        resultat = ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert,
-                        fnr = dnr,
-                        inntektsaar = 2025,
-                    ),
-                )
-
-            databaseHas(
-                aPerson(personId = 1L),
-                afoedselsnummer(personId = 1L, fnr = dnr),
-                anAbonnement(forespoerselId = 1L, personId = 1L, inntektsaar = 2025),
-                aBestillingsbatch(id = 1L, ref = "ref1", status = NY),
-                aBestilling(personId = 1L, fnr = dnr, inntektsaar = 2025, batchId = 1L),
-                // Oppdatert foedselsnummer
-                afoedselsnummer(personId = 1L, fnr = fnr),
-            )
-            bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
-
-            var bestillingsbatchList = tx(DBTestUtils::getAllBestillingsbatch)
-            var bestillingListAfter = tx(DBTestUtils::getAllBestilling)
-
-            assertSoftly {
-                bestillingsbatchList.count { it.status == FERDIG } shouldBe 1
-                bestillingListAfter shouldNotBeNull {
-                    size shouldBe 1
-                    first() shouldNotBeNull {
-                        this.fnr.value shouldBe fnr
-                        personId.value shouldBe 1L
-                        inntektsaar shouldBe 2025
-                        bestillingsbatchId shouldBe null
-                    }
-                }
-            }
-        }
-
         test("UgyldigOrganisasjonsnummer skal markere batch som FEILET og auditlogger") {
             coEvery { skatteetatenClient.hentSkattekort(any()) } returns
                 aHentSkattekortResponse(

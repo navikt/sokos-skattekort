@@ -17,193 +17,150 @@ tags:
 paths:
   /bestillingsbatcher:
     post:
-      tags:
-        - skattekort-admin
+      tags: [skattekort-admin]
       summary: Hent bestillingsbatcher
       description: Returnerer bestillingsbatcher filtrert på opprettet/oppdatert tidspunkt.
       operationId: hentBestillingsbatcher
-
       requestBody:
         description: |
-          Filter for henting av batcher.
-          Alle felter er valgfrie.
-          Hvis de ikke oppgis, returneres de 20 siste batchene pluss de som ikke har status FERDIG og som ikke er blant de 20 siste batchene.
+          Filter for henting av batcher. Alle felter er valgfrie.
+          Hvis ingen filtre oppgis, returneres de 20 siste batchene pluss alle som ikke har status FERDIG.
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/BatchInsightRequest'
-        required: true
-
       responses:
         200:
-          description: OK - Returnerer bestillingsbatcher i valgt tidsrom
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchInsightResponse'
-        400:
-          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+        400: { $ref: '#/components/responses/BadRequest' }
+        401: { description: Ingen tilgang }
+        500: { $ref: '#/components/responses/ServerError' }
+      security:
+        - Bearer: []
+    get:
+      tags: [ skattekort-admin ]
+      summary: Hent uferdige bestillingsbatcher (uten JSON-payloads)
+      description: |
+        Returnerer alle bestillingsbatcher som ikke har status FERDIG.
+      operationId: hentUferdigeBestillingsbatcher
+      responses:
+        200:
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiError'
-        401:
-          description: Ingen tilgang
-        500:
-          description: Annen feil
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
-
+                $ref: '#/components/schemas/BatchInsightResponse'
+        401: { description: Ingen tilgang }
+        500: { $ref: '#/components/responses/ServerError' }
       security:
         - Bearer: [ ]
+  /bestillingsbatcher/{id}:
+    patch:
+      tags: [ skattekort-admin ]
+      summary: Kjør batch på nytt
+      description: Trigger rerun av batch for gitt bestillingsreferanse (path-parameter heter `id` av historiske grunner).
+      operationId: rerunBestillingsbatch
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Bestillingsreferanse for batchen som skal kjøres på nytt
+          schema:
+            type: string
+            example: 'BR123456'
+      responses:
+        202: { description: Accepted - rerun startet }
+        400:
+          description: Mangler Id
+          content:
+            text/plain:
+              schema: { type: string }
+        401: { description: Ingen tilgang }
+        500: { $ref: '#/components/responses/ServerError' }
+      security:
+        - Bearer: [ ] 
+
+  /bestillinger:
+    get:
+      tags: [skattekort-admin]
+      summary: Hent alle bestillinger
+      description: Returnerer alle registrerte bestillinger (inkl. både ubehandlede og batch-tilknyttede).
+      operationId: hentBestillinger
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BestillingResponse'
+        401: { description: Ingen tilgang }
+        500: { $ref: '#/components/responses/ServerError' }
+      security:
+        - Bearer: []
+
+  /utsendinger:
+    get:
+      tags: [skattekort-admin]
+      summary: Hent alle utsendinger
+      description: Returnerer alle utsendinger.
+      operationId: hentUtsendinger
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UtsendingResponse'
+        401: { description: Ingen tilgang }
+        500: { $ref: '#/components/responses/ServerError' }
+      security:
+        - Bearer: []
 
   /auditLogg:
     post:
-      tags:
-        - skattekort-admin
+      tags: [skattekort-admin]
       summary: Hent audit-logg for person
       description: Returnerer audit-logg for oppgitt fødselsnummer
       operationId: hentAuditLogg
-
       requestBody:
+        required: true
         description: Fødselsnummer for personen du ønsker audit-logg for
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FnrRequest'
-        required: true
-
       responses:
         200:
-          description: OK - Returnerer audit-logg
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuditResponse'
-        400:
-          description: Ugyldig request, oppfyller ikke swagger-kontrakt
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
-        401:
-          description: Ingen tilgang
-        500:
-          description: Annen feil
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
-
+        400: { $ref: '#/components/responses/BadRequest' }
+        401: { description: Ingen tilgang }
+        500: { $ref: '#/components/responses/ServerError' }
       security:
-        - Bearer: [ ]
-
-  /bestillingsbatcher/{id}:
-    patch:
-      tags:
-        - skattekort-admin
-      summary: Kjør batch på nytt
-      description: Trigger rerun av batch for gitt id.
-      operationId: rerun Bestillingsbatch
-
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: .
-          schema:
-            type: number
-            example: 1234
-
-      responses:
-        202:
-          description: Accepted - rerun startet
-        400:
-          description: Ugyldig bestillingsreferanse
-          content:
-            text/plain:
-              schema:
-                type: string
-        401:
-          description: Ingen tilgang
-        500:
-          description: Annen feil
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
-
-      security:
-        - Bearer: [ ]
-
-  /utsendtStatus:
-    post:
-      tags:
-        - skattekort-admin
-      summary: Hent utsendt-status (ikke implementert)
-      description: Stub-endepunkt. Returnerer 501 Not Implemented inntil videre.
-      operationId: hentUtsendtStatus
-      requestBody:
-        description: Samme request-format som /utsending
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UtsendingRequest'
-        required: true
-      responses:
-        501:
-          description: Endepunktet er ikke implementert ennå
-        400:
-          description: Ugyldig request, oppfyller ikke swagger-kontrakt
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
-        401:
-          description: Ingen tilgang
-      security:
-        - Bearer: [ ]
-
-  /utsending:
-    post:
-      tags:
-        - skattekort-admin
-      summary: Opprett utsending
-      description: Oppretter utsending for person, år og forsystem.
-      operationId: opprettUtsending
-
-      requestBody:
-        description: Informasjon som trengs for å opprette utsending
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UtsendingRequest'
-        required: true
-
-      responses:
-        202:
-          description: Accepted - utsending opprettet
-        400:
-          description: Ugyldig request, oppfyller ikke swagger-kontrakt
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
-        401:
-          description: Ingen tilgang
-        500:
-          description: Annen feil
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
-
-      security:
-        - Bearer: [ ]
+        - Bearer: []
 
 components:
+  responses:
+    BadRequest:
+      description: Ugyldig request, oppfyller ikke swagger-kontrakt
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    ServerError:
+      description: Annen feil
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
   schemas:
     BatchInsightRequest:
       type: object
@@ -220,22 +177,6 @@ components:
           nullable: true
           example: '2026-04-09T08:00:00Z'
           description: Slutt-tidspunkt
-        status:
-          type: string
-          nullable: true
-          enum:
-            - NY
-            - FERDIG
-            - FEILET
-            - RETRY
-          description: Filtrer på bestillingsbatch-status
-        type:
-          type: string
-          nullable: true
-          enum:
-            - BESTILLING
-            - OPPDATERING
-          description: Filtrer på bestillingsbatch-type
 
     BatchInsightResponse:
       type: object
@@ -294,6 +235,117 @@ components:
           description: JSON-streng mottatt fra Skatteetaten
           nullable: true
           example: '{"status":"FORESPOERSEL_OK"}'
+          
+    BestillingResponse:
+      type: object
+      required: [ items ]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bestilling'
+          
+
+    Bestilling:
+      type: object
+      required:
+        - personId
+        - fnr
+        - inntektsaar
+        - oppdatert
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 4711
+          description: Bestillings-ID
+        personId:
+          type: integer
+          format: int64
+          example: 1
+          description: Person-ID
+        fnr:
+          type: string
+          example: '01010112345'
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+          description: Fødselsnummer
+        inntektsaar:
+          type: integer
+          format: int32
+          example: 2026
+        bestillingsbatchId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 12345
+          description: ID for batchen bestillingen ble tilknyttet (null = ubehandlet)
+        oppdatert:
+          type: string
+          format: date-time
+          example: '2026-04-10T10:30:00Z'
+          
+
+    UtsendingResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Utsending'
+          
+    Utsending:
+      type: object
+      required:
+        - fnr
+        - inntektsaar
+        - forsystem
+        - failCount
+        - opprettet
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 9001
+        fnr:
+          type: string
+          example: '01010112345'
+          minLength: 11
+          maxLength: 11
+          pattern: '^\d{11}$'
+        inntektsaar:
+          type: integer
+          format: int32
+          example: 2026
+        forsystem:
+          $ref: '#/components/schemas/Forsystem'
+        failCount:
+          type: integer
+          format: int32
+          example: 0
+          description: Antall mislykkede utsendingsforsøk
+        failMessage:
+          type: string
+          nullable: true
+          example: 'Tilkobling timet ut'
+        opprettet:
+          type: string
+          format: date-time
+          example: '2026-04-10T10:30:00Z'
+
+    Forsystem:
+      type: string
+      description: Forsystem som utsendingen er knyttet til
+      enum:
+        - OS
+        - OS_STOR
+        - MANUELL
+        - DARE_POC
+    
     ApiError:
       type: object
       required:

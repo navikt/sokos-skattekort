@@ -4,6 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -11,26 +12,53 @@ import io.ktor.server.routing.route
 import no.nav.sokos.skattekort.api.model.AuditResponse
 import no.nav.sokos.skattekort.api.model.BatchInsightRequest
 import no.nav.sokos.skattekort.api.model.BatchInsightResponse
+import no.nav.sokos.skattekort.api.model.BestillingDTO
+import no.nav.sokos.skattekort.api.model.BestillingResponse
 import no.nav.sokos.skattekort.api.model.FnrRequest
+import no.nav.sokos.skattekort.api.model.UtsendingDTO
+import no.nav.sokos.skattekort.api.model.UtsendingResponse
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsreferanse
+import no.nav.sokos.skattekort.utsending.UtsendingService
 
 const val BASE_PATH_ADMIN = "/api/v1/admin"
 
 fun Route.skattekortAdminApi(
     bestillingsbatchService: BestillingsbatchService,
     personService: PersonService,
+    utsendingService: UtsendingService,
 ) {
     route(BASE_PATH_ADMIN) {
         post("bestillingsbatcher") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<BatchInsightRequest>()
-            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom, request.status, request.type)
+            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom)
             call.respond(
                 BatchInsightResponse(bestillingsbatcher),
+            )
+        }
+        get("bestillingsbatcher") {
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            val bestillingsbatcher = bestillingsbatchService.getIncompleteBestillingsbatchesWithoutJson()
+            call.respond(
+                BatchInsightResponse(bestillingsbatcher),
+            )
+        }
+        get("bestillinger") {
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            val bestillingsbatcher = bestillingsbatchService.getAllBestillings()
+            call.respond(
+                BestillingResponse(bestillingsbatcher.map(BestillingDTO::fromDomain)),
+            )
+        }
+        get("utsendinger") {
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            val utsendinger = utsendingService.getAllUtsendinger()
+            call.respond(
+                UtsendingResponse(utsendinger.map(UtsendingDTO::fromDomain)),
             )
         }
 

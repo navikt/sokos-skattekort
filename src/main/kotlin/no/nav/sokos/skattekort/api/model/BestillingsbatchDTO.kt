@@ -15,12 +15,13 @@ data class BestillingsbatchDTO(
     val bestillingsreferanse: String,
     val oppdatert: Instant,
     val opprettet: Instant,
-    val dataSendt: String,
+    val dataSendt: String? = null,
     val dataMottatt: String? = null,
 ) {
     companion object {
         fun toDto(
             bestillingsbatch: Bestillingsbatch,
+            dataSendt: String? = null,
             dataMottatt: String?,
         ): BestillingsbatchDTO =
             BestillingsbatchDTO(
@@ -30,7 +31,7 @@ data class BestillingsbatchDTO(
                 bestillingsreferanse = bestillingsbatch.bestillingsreferanse,
                 oppdatert = bestillingsbatch.oppdatert,
                 opprettet = bestillingsbatch.opprettet,
-                dataSendt = bestillingsbatch.dataSendt,
+                dataSendt = dataSendt,
                 dataMottatt = dataMottatt,
             )
     }

@@ -130,4 +130,6 @@ class SkattekortService(
             logger.error("Failed to delete skattekort for year: $inntektsaar", exception)
         }
     }
+
+    fun getNoekkelinformasjon() = dataSource.transaction(SkattekortRepository::getNoekkelinformasjon)
 }

@@ -17,9 +17,11 @@ import no.nav.sokos.skattekort.api.model.BestillingResponse
 import no.nav.sokos.skattekort.api.model.FnrRequest
 import no.nav.sokos.skattekort.api.model.UtsendingDTO
 import no.nav.sokos.skattekort.api.model.UtsendingResponse
+import no.nav.sokos.skattekort.dto.NoekkelinformasjonResponse
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Scope
+import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsreferanse
 import no.nav.sokos.skattekort.utsending.UtsendingService
@@ -30,6 +32,7 @@ fun Route.skattekortAdminApi(
     bestillingsbatchService: BestillingsbatchService,
     personService: PersonService,
     utsendingService: UtsendingService,
+    skattekortService: SkattekortService,
 ) {
     route(BASE_PATH_ADMIN) {
         post("bestillingsbatcher") {
@@ -59,6 +62,13 @@ fun Route.skattekortAdminApi(
             val utsendinger = utsendingService.getAllUtsendinger()
             call.respond(
                 UtsendingResponse(utsendinger.map(UtsendingDTO::fromDomain)),
+            )
+        }
+
+        get("noekkelinformasjon") {
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            call.respond(
+                NoekkelinformasjonResponse(skattekortService.getNoekkelinformasjon()),
             )
         }
 

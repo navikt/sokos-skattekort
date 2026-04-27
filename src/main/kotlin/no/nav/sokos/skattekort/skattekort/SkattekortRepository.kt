@@ -298,4 +298,17 @@ object SkattekortRepository {
                     type to count
                 },
             ).toMap()
+
+    fun getNoekkelinformasjon(tx: TransactionalSession): Map<String, Int> =
+        tx
+            .list(
+                queryOf(
+                    """
+            |SELECT inntektsaar::text AS key, COUNT(1) AS antall FROM skattekort GROUP BY inntektsaar
+            |UNION ALL
+            |SELECT 'personer' AS key, COUNT(1) AS antall FROM personer;
+                    """.trimMargin(),
+                ),
+            ) { row -> row.string("key") to row.int("antall") }
+            .toMap()
 }

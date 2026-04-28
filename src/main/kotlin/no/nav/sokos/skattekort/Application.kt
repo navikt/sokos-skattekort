@@ -1,13 +1,13 @@
 package no.nav.sokos.skattekort
 
-import javax.sql.DataSource
-
 import kotlinx.coroutines.runBlocking
 
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopPreparing
+import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -167,7 +167,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val metricsService: MetricsService by dependencies
         val forespoerselService: ForespoerselService by dependencies
         val skattekortService: SkattekortService by dependencies
-        val dataSource: DataSource by dependencies
 
         val scheduler =
             JobTaskConfig
@@ -179,13 +178,20 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                     metricsService = metricsService,
                     forespoerselService = forespoerselService,
                     skattekortService = skattekortService,
-                    dataSource = dataSource,
+                    dataSource = DatabaseConfig.dataSourceScheduler,
                 ).also { it.start() }
 
         monitor.subscribe(ApplicationStopPreparing) {
             if (!scheduler.schedulerState.isShuttingDown) {
                 logger.info { "Stopping scheduler..." }
                 scheduler.stop()
+            }
+        }
+
+        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+            monitor.subscribe(ApplicationStopped) {
+                logger.info { "Closing database scheduler pools..." }
+                (DatabaseConfig.dataSourceScheduler as? HikariDataSource)?.close()
             }
         }
     }

@@ -65,6 +65,11 @@ object PersonRepository {
             extractor = mapToPerson,
         )
 
+    /**
+     * pg_advisory_xact_lock acquires a transaction-scoped advisory lock in PostgreSQL.
+     * It blocks until the lock is acquired; if another transaction holds the same lock, this call waits.
+     * The lock is released automatically at the end of the current transaction (commit or rollback).
+     */
     fun insert(
         tx: TransactionalSession,
         fnr: Personidentifikator,
@@ -72,12 +77,7 @@ object PersonRepository {
         informasjon: String,
         brukerId: String? = null,
     ): Long? {
-        /**
-         * pg_advisory_xact_lock acquires a transaction-scoped advisory lock in PostgreSQL.
-         * It blocks until the lock is acquired; if another transaction holds the same lock, this call waits.
-         * The lock is released automatically at the end of the current transaction (commit or rollback).
-         */
-            val (k1, k2) = advisoryKeysFromString(fnr.value)
+        val (k1, k2) = advisoryKeysFromString(fnr.value)
         tx.execute(
             queryOf(
                 "SELECT pg_advisory_xact_lock(:k1, :k2)",
@@ -143,25 +143,6 @@ object PersonRepository {
             mapOf("personId" to personId.value),
         ),
     )
-
-    fun findGyldigFnrByPersonId(
-        tx: TransactionalSession,
-        personId: PersonId,
-    ): Personidentifikator? =
-        tx.single(
-            queryOf(
-                """
-            |SELECT fnr 
-            |FROM foedselsnumre 
-            |WHERE person_id = :personId 
-            |ORDER BY id DESC 
-            |LIMIT 1
-                """.trimMargin(),
-                mapOf("personId" to personId.value),
-            ),
-        ) { row ->
-            Personidentifikator(row.string("fnr"))
-        }
 
     private val mapToPerson: (Row) -> Person = { row ->
         Person(

@@ -35,7 +35,6 @@ object DatabaseConfig {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     (dataSource as HikariDataSource).close()
-                    (dataSourceScheduler as HikariDataSource).close()
                 },
             )
         }

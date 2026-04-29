@@ -154,5 +154,5 @@ class BestillingsbatchService(
         return updated
     }
 
-    fun getAllBestillings(): List<Bestilling> = dataSource.transaction(BestillingRepository::getEveryBestilling)
+    fun getAllBestillings(): List<Bestilling> = dataSource.transaction(BestillingRepository::getAllBestillingsForAdmin)
 }

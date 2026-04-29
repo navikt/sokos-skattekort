@@ -6,9 +6,9 @@ import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 import io.ktor.server.plugins.requestvalidation.ValidationResult.Invalid
 
-import no.nav.sokos.skattekort.dto.SkattekortDTO
-import no.nav.sokos.skattekort.dto.validTilleggsopplysningList
-import no.nav.sokos.skattekort.dto.validTrekkodeList
+import no.nav.sokos.skattekort.api.model.v1.SkattekortDTO
+import no.nav.sokos.skattekort.api.model.v1.validTilleggsopplysningList
+import no.nav.sokos.skattekort.api.model.v1.validTrekkodeList
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortValidator.isValidPersonIdent
 

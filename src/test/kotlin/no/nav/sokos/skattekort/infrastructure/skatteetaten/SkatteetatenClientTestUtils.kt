@@ -7,7 +7,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 import no.nav.sokos.skattekort.api.model.WrappedWithErrorResponse
-import no.nav.sokos.skattekort.dto.v2.SkattekortDTO
+import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortResponse
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort

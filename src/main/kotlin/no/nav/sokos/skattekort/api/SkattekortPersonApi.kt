@@ -12,7 +12,7 @@ import no.nav.sokos.skattekort.api.model.FnrRequest
 import no.nav.sokos.skattekort.api.model.HentSkattekortRequest
 import no.nav.sokos.skattekort.api.model.OpprettSkattekortRequest
 import no.nav.sokos.skattekort.api.model.WrappedWithErrorResponse
-import no.nav.sokos.skattekort.dto.v2.SkattekortDTO
+import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
 import no.nav.sokos.skattekort.security.AuthorizationException
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
@@ -43,7 +43,7 @@ fun Route.skattekortPersonApi(
                 is Either.Right ->
                     call.respond(
                         skattekortAnswer.get().map {
-                            no.nav.sokos.skattekort.dto
+                            no.nav.sokos.skattekort.api.model.v1
                                 .SkattekortDTO(it)
                         },
                     )

@@ -6,9 +6,9 @@ import javax.sql.DataSource
 import io.github.resilience4j.core.functions.Either
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.model.v1.SkattekortDTO
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.dto.SkattekortDTO
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori.GYLDIGE
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
@@ -130,4 +130,6 @@ class SkattekortService(
             logger.error("Failed to delete skattekort for year: $inntektsaar", exception)
         }
     }
+
+    fun getNoekkelinformasjon() = dataSource.transaction(SkattekortRepository::getNoekkelinformasjon)
 }

@@ -16,7 +16,6 @@ import no.nav.sokos.skattekort.dto.v2.SkattekortDTO
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
 import no.nav.sokos.skattekort.security.AuthorizationException
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
-import no.nav.sokos.skattekort.security.AuthorizationGuard.hasAdminScope
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Role
@@ -33,12 +32,11 @@ fun Route.skattekortPersonApi(
             call.requirePermission(Scope.HENT_SKATTEKORT_SCOPE, Role.HENT_SKATTEKORT_ROLE)
             val request: HentSkattekortRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            val isAdmin = call.hasAdminScope(Scope.ADMIN_SCOPE)
             val skattekortAnswer =
                 if (request.hentAlle) {
-                    skattekortService.getSkattekort(request.fnr, request.inntektsaar, saksbehandler, isAdmin)
+                    skattekortService.getSkattekort(request.fnr, request.inntektsaar, saksbehandler)
                 } else {
-                    skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler, isAdmin)
+                    skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler)
                 }
             when (skattekortAnswer) {
                 is Either.Left -> throw AuthorizationException("Mangler rettigheter til å se informasjon!")
@@ -70,12 +68,11 @@ fun Route.skattekortPersonApi(
             call.requirePermission(Scope.HENT_SKATTEKORT_SCOPE, Role.HENT_SKATTEKORT_ROLE)
             val request: HentSkattekortRequest = call.receive()
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
-            val isAdmin = call.hasAdminScope(Scope.ADMIN_SCOPE)
             val skattekortAnswer =
                 if (request.hentAlle) {
-                    skattekortService.getSkattekort(request.fnr, request.inntektsaar, saksbehandler, isAdmin)
+                    skattekortService.getSkattekort(request.fnr, request.inntektsaar, saksbehandler)
                 } else {
-                    skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler, isAdmin)
+                    skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler)
                 }
             when (skattekortAnswer) {
                 is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))

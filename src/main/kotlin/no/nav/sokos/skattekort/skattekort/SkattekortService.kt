@@ -33,14 +33,12 @@ class SkattekortService(
         fnr: String,
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
-        isAdmin: Boolean = false,
-    ): Either<ProblemDetailResponse, List<Skattekort>> = getSkattekort(fnr, inntektsaar, saksbehandler, isAdmin).map { it.distinctBy { skattekort -> skattekort.inntektsaar } }
+    ): Either<ProblemDetailResponse, List<Skattekort>> = getSkattekort(fnr, inntektsaar, saksbehandler).map { it.distinctBy { skattekort -> skattekort.inntektsaar } }
 
     suspend fun getSkattekort(
         fnr: String,
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
-        isAdmin: Boolean = false,
     ): Either<ProblemDetailResponse, List<Skattekort>> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
         saksbehandler?.let {
@@ -64,7 +62,7 @@ class SkattekortService(
                             tx,
                             person.id!!,
                             inntektsaar,
-                            adminRole = isAdmin,
+                            adminRole = false,
                         )
                 }.toList(),
         )

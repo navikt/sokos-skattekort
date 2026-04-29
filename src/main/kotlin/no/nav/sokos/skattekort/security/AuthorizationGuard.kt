@@ -92,8 +92,6 @@ object AuthorizationGuard {
             has = { roles -> AccessPolicy.hasRequiredRole(roles, requiredRole.value) },
         )
 
-    fun ApplicationCall.hasAdminScope(requiredScope: Scope): Boolean = principal<JWTPrincipal>()?.scopes()?.any { AccessPolicy.hasRequiredScope(listOf(it), requiredScope.value) } ?: false
-
     private fun ApplicationCall.require(
         claimName: String,
         required: String,

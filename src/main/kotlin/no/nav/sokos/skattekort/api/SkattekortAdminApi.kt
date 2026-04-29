@@ -51,9 +51,8 @@ fun Route.skattekortAdminApi(
         }
         get("bestillinger") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-            val bestillingsbatcher = bestillingsbatchService.getAllBestillings()
             call.respond(
-                BestillingResponse(bestillingsbatcher.map(BestillingDTO::fromDomain)),
+                BestillingResponse(bestillingsbatchService.getAllBestillings().map(BestillingDTO::fromDomain)),
             )
         }
         get("utsendinger") {
@@ -79,7 +78,7 @@ fun Route.skattekortAdminApi(
         }
         patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-            val id = call.parameters["id"]?.toLongOrNull() ?: return@patch call.respond(HttpStatusCode.BadRequest, "Invalid id")
+            val id = call.parameters["id"]?.toLongOrNull() ?: throw IllegalArgumentException("Ugyldig id, må være et tall")
             val updatedRows = bestillingsbatchService.rerun(id)
             return@patch call.respond(HttpStatusCode.Accepted, "Oppdaterte $updatedRows batcher")
         }

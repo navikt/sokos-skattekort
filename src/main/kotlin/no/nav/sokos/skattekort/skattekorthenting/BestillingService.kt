@@ -28,6 +28,12 @@ import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeSkattekort
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeTrekkplikt
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
@@ -189,23 +195,16 @@ class BestillingService(
     ) {
         val inntektsaar = arbeidstaker.inntektsaar
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
-            ResultatForSkattekort.IkkeSkattekort, ResultatForSkattekort.IkkeTrekkplikt, ResultatForSkattekort.SkattekortopplysningerOK -> {
+            IkkeSkattekort, IkkeTrekkplikt, SkattekortopplysningerOK, UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
                 SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator)
                 AuditRepository.insert(tx, AuditTag.SKATTEKORTINFORMASJON_MOTTATT, personId, "Mottatt skattekortinformasjon for inntektsår $inntektsaar")
             }
 
-            ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
-                val gyldigFnr = PersonRepository.findGyldigFnrByPersonId(tx, personId)!!
-                check(gyldigFnr.value != arbeidstaker.arbeidstakeridentifikator) { "Har ikke fått nytt fnr for personId $personId" }
-                BestillingRepository.insert(tx, Bestilling(personId = personId, fnr = gyldigFnr, inntektsaar = inntektsaar))
-                AuditRepository.insert(tx, AuditTag.NYTT_FNR, personId, "Opprettet bestilling pga. tilbakemelding fra Skatteetaten om utgått Personidentifikator")
-            }
-
-            ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
+            UgyldigOrganisasjonsnummer -> {
                 throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
             }
 
-            ResultatForSkattekort.UgyldigFoedselsEllerDnummer -> {
+            UgyldigFoedselsEllerDnummer -> {
                 PersonRepository.flaggPerson(tx, personId)
                 SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator)
                 AuditRepository.insert(tx, AuditTag.INVALID_FNR, personId, "Tilbakemelding fra Skatteetaten om UgyldigFoedselsEllerDnummer")

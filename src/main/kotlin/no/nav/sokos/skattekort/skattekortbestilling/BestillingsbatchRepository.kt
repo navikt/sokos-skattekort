@@ -86,7 +86,16 @@ object BestillingsbatchRepository {
         val query =
             queryOf(
                 """
-                    |SELECT * FROM bestillingsbatcher
+                    |SELECT id,
+                    | status,
+                    | type,
+                    | bestillingsreferanse,
+                    | data_sendt,
+                    | oppdatert,
+                    | opprettet,
+                    | data_mottatt
+                    | 
+                    | FROM bestillingsbatcher
                     |WHERE id IN (
                     |        (SELECT id
                     |            FROM bestillingsbatcher
@@ -114,7 +123,14 @@ object BestillingsbatchRepository {
         tx.single(
             queryOf(
                 """
-                    |SELECT * 
+                    |SELECT id,
+                    | status,
+                    | type,
+                    | bestillingsreferanse,
+                    | data_sendt,
+                    | oppdatert,
+                    | opprettet
+                    |  
                     |FROM bestillingsbatcher
                     |WHERE id = :id
                 """.trimMargin(),
@@ -167,7 +183,15 @@ object BestillingsbatchRepository {
         tx.single(
             queryOf(
                 """
-                SELECT * FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet LIMIT 1
+                |SELECT id,
+                | status,
+                | type,
+                | bestillingsreferanse,
+                | data_sendt,
+                | oppdatert,
+                | opprettet
+                |  
+                |FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet LIMIT 1
                 """.trimIndent(),
             ),
             extractor = mapToBestillingsbatch,
@@ -197,7 +221,14 @@ object BestillingsbatchRepository {
         tx.list(
             queryOf(
                 """
-                    |SELECT * 
+                    |SELECT id,
+                    | status,
+                    | type,
+                    | bestillingsreferanse,
+                    | data_sendt,
+                    | oppdatert,
+                    | opprettet
+                    | 
                     |FROM bestillingsbatcher
                     |WHERE status <> :ferdig
                     |ORDER BY oppdatert DESC

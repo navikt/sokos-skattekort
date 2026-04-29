@@ -597,7 +597,7 @@ class SkattekortpersonApiV2Test :
                     }
                 response.status shouldBe HttpStatusCode.BadRequest
                 response.bodyAsText() shouldContain
-                    "Illegal input: Fields [prosentSats, antallMndForTrekk] are required for type with serial name 'no.nav.sokos.skattekort.dto.TabellkortDTO', but they were missing at path: \$.skattekort.forskuddstrekkList[0].trekktabell"
+                    "Illegal input: Fields [prosentSats, antallMndForTrekk] are required for type with serial name 'no.nav.sokos.skattekort.api.model.v1.TabellkortDTO', but they were missing at path: \$.skattekort.forskuddstrekkList[0].trekktabell"
             }
         }
         test("opprett skattekort - Mer informativ feilmelding når tilleggsopplysning er feil") {

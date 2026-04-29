@@ -30,7 +30,7 @@ object BestillingRepository {
             extractor = mapToBestilling,
         )
 
-    fun getEveryBestilling(tx: TransactionalSession): List<Bestilling> =
+    fun getAllBestillingsForAdmin(tx: TransactionalSession): List<Bestilling> =
         tx.list(
             queryOf(
                 """

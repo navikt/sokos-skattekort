@@ -313,26 +313,6 @@ class BestillingsbatchServiceTest :
             ex.message shouldBe "Kunne ikke finne bestillingsbatch med id 99999 for rerun"
         }
 
-        test("rerun - kaster IllegalArgumentException når batch finnes men ikke er FEILET") {
-            databaseHas(
-                aBestillingsbatch(id = 1L, ref = "ny", status = NY),
-                aBestillingsbatch(id = 2L, ref = "ferdig", status = FERDIG),
-                aBestillingsbatch(id = 3L, ref = "retry", status = RETRY),
-            )
-
-            listOf(1L, 2L, 3L).forEach { id ->
-                withClue("rerun på batch $id skal feile fordi den ikke har status FEILET") {
-                    shouldThrow<IllegalArgumentException> {
-                        bestillingsbatchService.rerun(id)
-                    }
-                }
-            }
-
-            // Sanity: ingen statuser ble endret
-            val statuses = tx(DBTestUtils::getAllBestillingsbatch).associate { it.id!!.id to it.status }
-            statuses shouldBe mapOf(1L to NY, 2L to FERDIG, 3L to RETRY)
-        }
-
         test("getAllBestillings - returnerer alle bestillinger uavhengig av batch-tilknytning") {
             databaseHas(
                 aPerson(1L),

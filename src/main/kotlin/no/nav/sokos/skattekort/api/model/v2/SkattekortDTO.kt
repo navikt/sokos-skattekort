@@ -1,13 +1,13 @@
-package no.nav.sokos.skattekort.dto.v2
+package no.nav.sokos.skattekort.api.model.v2
 
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
-import no.nav.sokos.skattekort.dto.ForskuddstrekkDTO
-import no.nav.sokos.skattekort.dto.FrikortDTO
-import no.nav.sokos.skattekort.dto.ProsentkortDTO
-import no.nav.sokos.skattekort.dto.TabellkortDTO
+import no.nav.sokos.skattekort.api.model.v1.ForskuddstrekkDTO
+import no.nav.sokos.skattekort.api.model.v1.FrikortDTO
+import no.nav.sokos.skattekort.api.model.v1.ProsentkortDTO
+import no.nav.sokos.skattekort.api.model.v1.TabellkortDTO
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.Frikort
 import no.nav.sokos.skattekort.skattekort.Prosentkort

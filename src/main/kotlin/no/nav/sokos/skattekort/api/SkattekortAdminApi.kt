@@ -15,9 +15,9 @@ import no.nav.sokos.skattekort.api.model.BatchInsightResponse
 import no.nav.sokos.skattekort.api.model.BestillingDTO
 import no.nav.sokos.skattekort.api.model.BestillingResponse
 import no.nav.sokos.skattekort.api.model.FnrRequest
+import no.nav.sokos.skattekort.api.model.NoekkelinformasjonResponse
 import no.nav.sokos.skattekort.api.model.UtsendingDTO
 import no.nav.sokos.skattekort.api.model.UtsendingResponse
-import no.nav.sokos.skattekort.dto.NoekkelinformasjonResponse
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Scope

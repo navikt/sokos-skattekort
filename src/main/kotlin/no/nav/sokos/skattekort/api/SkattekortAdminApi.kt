@@ -79,9 +79,9 @@ fun Route.skattekortAdminApi(
         }
         patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-            val id = call.parameters["id"]?.toLong() ?: return@patch call.respond(HttpStatusCode.BadRequest)
-            bestillingsbatchService.rerun(id)
-            return@patch call.respond(HttpStatusCode.Accepted)
+            val id = call.parameters["id"]?.toLongOrNull() ?: return@patch call.respond(HttpStatusCode.BadRequest, "Invalid id")
+            val updatedRows = bestillingsbatchService.rerun(id)
+            return@patch call.respond(HttpStatusCode.Accepted, "Oppdaterte $updatedRows batcher")
         }
     }
 }

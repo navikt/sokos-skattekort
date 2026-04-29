@@ -148,9 +148,10 @@ class BestillingsbatchService(
         logger.error { "$errorMessage, detaljer er logget til TEAM LOGS" }
     }
 
-    fun rerun(id: Long) {
+    fun rerun(id: Long): Int {
         val updated = dataSource.transaction { tx -> BestillingsbatchRepository.rerun(tx, id) }
-        require(updated) { "Kunne ikke finne bestillingsbatch med id $id for rerun" }
+        require(updated > 0) { "Kunne ikke finne bestillingsbatch med id $id for rerun" }
+        return updated
     }
 
     fun getAllBestillings(): List<Bestilling> = dataSource.transaction(BestillingRepository::getEveryBestilling)

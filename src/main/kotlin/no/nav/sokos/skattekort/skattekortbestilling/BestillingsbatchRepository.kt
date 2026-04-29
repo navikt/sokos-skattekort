@@ -176,21 +176,22 @@ object BestillingsbatchRepository {
     fun rerun(
         tx: TransactionalSession,
         id: Long,
-    ) = tx.run(
-        queryOf(
-            """
+    ): Int =
+        tx.run(
+            queryOf(
+                """
                     |UPDATE bestillingsbatcher
                     |SET status = :retry, oppdatert = NOW()
                     |WHERE id = :id
                     |AND status = :feilet
-            """.trimMargin(),
-            mapOf(
-                "id" to id,
-                "retry" to BestillingsbatchStatus.RETRY.name,
-                "feilet" to BestillingsbatchStatus.FEILET.name,
-            ),
-        ).asExecute,
-    )
+                """.trimMargin(),
+                mapOf(
+                    "id" to id,
+                    "retry" to BestillingsbatchStatus.RETRY.name,
+                    "feilet" to BestillingsbatchStatus.FEILET.name,
+                ),
+            ).asUpdate,
+        )
 
     fun getIncompleteBatches(tx: TransactionalSession): List<Bestillingsbatch> =
         tx.list(

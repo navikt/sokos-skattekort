@@ -3,11 +3,18 @@ package no.nav.sokos.skattekort.skattekortbestilling
 import java.time.LocalDateTime
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.datatest.withData
 import io.kotest.extensions.time.withConstantNow
+import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.mockk.coEvery
@@ -21,10 +28,15 @@ import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.aBatch
 import no.nav.sokos.skattekort.skattekort.aBestilling
+import no.nav.sokos.skattekort.skattekort.aBestillingsbatch
+import no.nav.sokos.skattekort.skattekort.aBestillingsbatchWithJson
 import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.FEILET
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.FERDIG
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.RETRY
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.BESTILLING
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.OPPDATERING
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
@@ -227,6 +239,138 @@ class BestillingsbatchServiceTest :
                     }
                 }
             }
+        }
+        test("getIncompleteBestillingsbatchesWithoutJson - returnerer kun ikke-FERDIG og utelater JSON-feltene") {
+            databaseHas(
+                aBestillingsbatchWithJson(
+                    id = 1L,
+                    ref = "BR1337",
+                    status = NY,
+                    dataSendt = """{"sendt":"hei"}""",
+                    dataMottatt = null,
+                ),
+                aBestillingsbatchWithJson(
+                    id = 2L,
+                    ref = "BR13373",
+                    status = RETRY,
+                    dataSendt = """{"sendt":"x"}""",
+                    dataMottatt = null,
+                ),
+                aBestillingsbatchWithJson(
+                    id = 3L,
+                    ref = "BR313373",
+                    status = FEILET,
+                    dataSendt = """{"sendt":"y"}""",
+                    dataMottatt = """{"mottatt":"her har det visst blitt litt surr"}""",
+                ),
+                aBestillingsbatchWithJson(
+                    id = 4L,
+                    ref = "BR666",
+                    status = FERDIG,
+                    dataSendt = """{"sendt":"z"}""",
+                    dataMottatt = """{"mottatt":"ok"}""",
+                ),
+            )
+
+            val dtos = bestillingsbatchService.getIncompleteBestillingsbatchesWithoutJson()
+
+            assertSoftly(dtos) {
+                withClue("Skal kun inneholde batcher som ikke er FERDIG") {
+                    map { it.id } shouldContainExactlyInAnyOrder listOf(1L, 2L, 3L)
+                    forAll { it.status shouldNotBe FERDIG }
+                }
+                withClue("dataSendt og dataMottatt skal være null i denne 'lette' responsen") {
+                    forAll {
+                        it.dataSendt.shouldBeNull()
+                        it.dataMottatt.shouldBeNull()
+                    }
+                }
+            }
+        }
+        test("rerun - setter FEILET-batch til RETRY og returnerer 1") {
+            databaseHas(
+                aBestillingsbatch(id = 1L, ref = "feilet", status = FEILET),
+            )
+
+            val updated = bestillingsbatchService.rerun(1L)
+
+            val batch = tx { BestillingsbatchRepository.findById(it, 1L) }
+
+            assertSoftly {
+                updated shouldBe 1
+                batch.shouldNotBeNull()
+                batch.status shouldBe RETRY
+            }
+        }
+
+        test("rerun - kaster IllegalArgumentException når batch ikke finnes") {
+            // tom database
+
+            val ex =
+                shouldThrow<IllegalArgumentException> {
+                    bestillingsbatchService.rerun(99999L)
+                }
+            ex.message shouldBe "Kunne ikke finne bestillingsbatch med id 99999 for rerun"
+        }
+
+        test("getAllBestillings - returnerer alle bestillinger uavhengig av batch-tilknytning") {
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(1L, "01010100001"),
+                aPerson(2L),
+                afoedselsnummer(2L, "02020200002"),
+                aPerson(3L),
+                afoedselsnummer(3L, "03030300003"),
+                aBestillingsbatch(id = 10L, ref = "ref-a", status = NY),
+                aBestilling(personId = 1L, fnr = "01010100001", inntektsaar = 2025, batchId = 10L),
+                aBestilling(personId = 2L, fnr = "02020200002", inntektsaar = 2026, batchId = 10L),
+                aBestilling(personId = 3L, fnr = "03030300003", inntektsaar = 2026, batchId = null),
+            )
+
+            val bestillinger = bestillingsbatchService.getAllBestillings()
+
+            bestillinger.shouldContainAllIgnoringFields(
+                listOf(
+                    Bestilling(
+                        personId = PersonId(1L),
+                        fnr = Personidentifikator("01010100001"),
+                        inntektsaar = 2025,
+                        bestillingsbatchId = BestillingsbatchId(10L),
+                    ),
+                    Bestilling(
+                        personId = PersonId(2L),
+                        fnr = Personidentifikator("02020200002"),
+                        inntektsaar = 2026,
+                        bestillingsbatchId = BestillingsbatchId(10L),
+                    ),
+                    Bestilling(
+                        personId = PersonId(3L),
+                        fnr = Personidentifikator("03030300003"),
+                        inntektsaar = 2026,
+                        bestillingsbatchId = null,
+                    ),
+                ),
+                Bestilling::id,
+                Bestilling::oppdatert,
+            )
+        }
+
+        context("rerun feiler for alle ikke-FEILET statuser") {
+            withData(NY, FERDIG, RETRY) { status ->
+                val id = status.ordinal.toLong()
+                databaseHas(aBestillingsbatch(id = id, ref = "x", status = status))
+                shouldThrow<IllegalArgumentException> { bestillingsbatchService.rerun(id) }
+                tx { BestillingsbatchRepository.findById(it, id)!!.status } shouldBe status
+            }
+        }
+
+        test("BestillingsbatchRepository.rerun - oppdaterer 0 rader når batch har annen status enn FEILET") {
+            databaseHas(aBestillingsbatch(id = 101L, ref = "ny", status = NY))
+
+            val affected = tx { BestillingsbatchRepository.rerun(it, 101L) }
+
+            affected shouldBe 0
+            tx { BestillingsbatchRepository.findById(it, 101L)!!.status } shouldBe NY
         }
     })
 

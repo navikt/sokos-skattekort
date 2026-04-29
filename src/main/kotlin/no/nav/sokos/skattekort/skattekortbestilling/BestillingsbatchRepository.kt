@@ -53,8 +53,6 @@ object BestillingsbatchRepository {
         tx: TransactionalSession,
         instantStart: Instant?,
         instantEnd: Instant?,
-        status: BestillingsbatchStatus?,
-        type: BestillingsbatchType?,
     ): Map<Bestillingsbatch, String?> {
         var sqlparts: List<String> = ArrayList()
         sqlparts += """
@@ -62,8 +60,6 @@ object BestillingsbatchRepository {
                     |FROM bestillingsbatcher
                     |WHERE 1 = 1
                     """
-        if (status != null) sqlparts += "AND status = :status"
-        if (type != null) sqlparts += "AND type = :type"
         if (instantStart != null) sqlparts += "AND (opprettet > :start OR oppdatert > :start)"
         if (instantEnd != null) sqlparts += "AND (opprettet < :end OR oppdatert < :end)"
 
@@ -76,8 +72,6 @@ object BestillingsbatchRepository {
                 mapOf(
                     "start" to instantStart?.toJavaInstant(),
                     "end" to instantEnd?.toJavaInstant(),
-                    "status" to status?.name,
-                    "type" to type?.name,
                 ),
             )
 
@@ -92,7 +86,16 @@ object BestillingsbatchRepository {
         val query =
             queryOf(
                 """
-                    |SELECT * FROM bestillingsbatcher
+                    |SELECT id,
+                    | status,
+                    | type,
+                    | bestillingsreferanse,
+                    | data_sendt,
+                    | oppdatert,
+                    | opprettet,
+                    | data_mottatt
+                    | 
+                    | FROM bestillingsbatcher
                     |WHERE id IN (
                     |        (SELECT id
                     |            FROM bestillingsbatcher
@@ -120,7 +123,14 @@ object BestillingsbatchRepository {
         tx.single(
             queryOf(
                 """
-                    |SELECT * 
+                    |SELECT id,
+                    | status,
+                    | type,
+                    | bestillingsreferanse,
+                    | data_sendt,
+                    | oppdatert,
+                    | opprettet
+                    |  
                     |FROM bestillingsbatcher
                     |WHERE id = :id
                 """.trimMargin(),
@@ -173,7 +183,15 @@ object BestillingsbatchRepository {
         tx.single(
             queryOf(
                 """
-                SELECT * FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet LIMIT 1
+                |SELECT id,
+                | status,
+                | type,
+                | bestillingsreferanse,
+                | data_sendt,
+                | oppdatert,
+                | opprettet
+                |  
+                |FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet LIMIT 1
                 """.trimIndent(),
             ),
             extractor = mapToBestillingsbatch,
@@ -181,22 +199,46 @@ object BestillingsbatchRepository {
 
     fun rerun(
         tx: TransactionalSession,
-        bestillingsreferanse: Bestillingsreferanse,
-    ) = tx.run(
-        queryOf(
-            """
+        id: Long,
+    ): Int =
+        tx.run(
+            queryOf(
+                """
                     |UPDATE bestillingsbatcher
                     |SET status = :retry, oppdatert = NOW()
-                    |WHERE bestillingsreferanse = :bestillingsreferanse
+                    |WHERE id = :id
                     |AND status = :feilet
-            """.trimMargin(),
-            mapOf(
-                "bestillingsreferanse" to bestillingsreferanse.value,
-                "retry" to BestillingsbatchStatus.RETRY.name,
-                "feilet" to BestillingsbatchStatus.FEILET.name,
+                """.trimMargin(),
+                mapOf(
+                    "id" to id,
+                    "retry" to BestillingsbatchStatus.RETRY.name,
+                    "feilet" to BestillingsbatchStatus.FEILET.name,
+                ),
+            ).asUpdate,
+        )
+
+    fun getIncompleteBatches(tx: TransactionalSession): List<Bestillingsbatch> =
+        tx.list(
+            queryOf(
+                """
+                    |SELECT id,
+                    | status,
+                    | type,
+                    | bestillingsreferanse,
+                    | data_sendt,
+                    | oppdatert,
+                    | opprettet
+                    | 
+                    |FROM bestillingsbatcher
+                    |WHERE status <> :ferdig
+                    |ORDER BY oppdatert DESC
+                """.trimMargin(),
+                mapOf(
+                    "ferdig" to BestillingsbatchStatus.FERDIG.name,
+                ),
             ),
-        ).asExecute,
-    )
+            extractor = mapToBestillingsbatch,
+        )
 
     @OptIn(ExperimentalTime::class)
     val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->

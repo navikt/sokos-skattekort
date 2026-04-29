@@ -126,10 +126,7 @@ class BestillingsbatchService(
 
     fun getIncompleteBestillingsbatchesWithoutJson(): List<BestillingsbatchDTO> {
         val bestillingsbatches: List<Bestillingsbatch> =
-            dataSource
-                .transaction { tx ->
-                    BestillingsbatchRepository.getIncompleteBatches(tx)
-                }
+            dataSource.transaction(BestillingsbatchRepository::getIncompleteBatches)
         return bestillingsbatches.map { batch ->
             BestillingsbatchDTO.toDto(batch, dataSendt = null, dataMottatt = null)
         }
@@ -151,10 +148,10 @@ class BestillingsbatchService(
         logger.error { "$errorMessage, detaljer er logget til TEAM LOGS" }
     }
 
-    fun rerun(bestillingsreferanse: Bestillingsreferanse) =
-        dataSource.transaction { tx ->
-            BestillingsbatchRepository.rerun(tx, bestillingsreferanse)
-        }
+    fun rerun(id: Long) {
+        val updated = dataSource.transaction { tx -> BestillingsbatchRepository.rerun(tx, id) }
+        require(updated) { "Kunne ikke finne bestillingsbatch med id $id for rerun" }
+    }
 
     fun getAllBestillings(): List<Bestilling> = dataSource.transaction(BestillingRepository::getEveryBestilling)
 }

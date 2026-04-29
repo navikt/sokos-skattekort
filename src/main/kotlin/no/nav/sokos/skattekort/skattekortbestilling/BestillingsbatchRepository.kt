@@ -175,17 +175,17 @@ object BestillingsbatchRepository {
 
     fun rerun(
         tx: TransactionalSession,
-        bestillingsreferanse: Bestillingsreferanse,
+        id: Long,
     ) = tx.run(
         queryOf(
             """
                     |UPDATE bestillingsbatcher
                     |SET status = :retry, oppdatert = NOW()
-                    |WHERE bestillingsreferanse = :bestillingsreferanse
+                    |WHERE id = :id
                     |AND status = :feilet
             """.trimMargin(),
             mapOf(
-                "bestillingsreferanse" to bestillingsreferanse.value,
+                "id" to id,
                 "retry" to BestillingsbatchStatus.RETRY.name,
                 "feilet" to BestillingsbatchStatus.FEILET.name,
             ),

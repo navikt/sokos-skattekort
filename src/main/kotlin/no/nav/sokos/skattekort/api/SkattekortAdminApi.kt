@@ -23,7 +23,6 @@ import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
-import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsreferanse
 import no.nav.sokos.skattekort.utsending.UtsendingService
 
 const val BASE_PATH_ADMIN = "/api/v1/admin"
@@ -80,12 +79,8 @@ fun Route.skattekortAdminApi(
         }
         patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
-            val bestillingsreferanse =
-                Bestillingsreferanse(
-                    call.parameters["id"]
-                        ?: return@patch call.respond(HttpStatusCode.BadRequest, "Mangler Id"),
-                )
-            bestillingsbatchService.rerun(bestillingsreferanse)
+            val id = call.parameters["id"]?.toLong() ?: return@patch call.respond(HttpStatusCode.BadRequest)
+            bestillingsbatchService.rerun(id)
             return@patch call.respond(HttpStatusCode.Accepted)
         }
     }

@@ -30,6 +30,7 @@ import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.anAbonnement
 import no.nav.sokos.skattekort.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
@@ -69,7 +70,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -121,7 +122,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK_med_tomt_frikort.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -174,7 +175,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK_med_oppholdPaaSvalbard.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -262,7 +263,7 @@ class SkattekortDataServiceTest :
                 }
                 """.trimIndent()
 
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -348,7 +349,7 @@ class SkattekortDataServiceTest :
                   }
                 }
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
             skattekortDataService.processSkattekortData()
@@ -377,7 +378,7 @@ class SkattekortDataServiceTest :
                   }
                 }
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
         }
 
         test("processSkattekortData should persist all tilleggsopplysninger and synthesize skattekort") {
@@ -388,7 +389,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK_med_alle_tilleggsopplysninger.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -484,7 +485,7 @@ class SkattekortDataServiceTest :
                   "inntektsaar": 2025
                 }                
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -538,7 +539,7 @@ class SkattekortDataServiceTest :
                   "inntektsaar": 2025
                 }                
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 

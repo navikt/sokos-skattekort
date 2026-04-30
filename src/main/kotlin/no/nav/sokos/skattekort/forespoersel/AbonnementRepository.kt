@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
 import kotlinx.datetime.toKotlinLocalDate
 
@@ -87,7 +86,6 @@ object AbonnementRepository {
             },
         )
 
-    @OptIn(ExperimentalTime::class)
     private val mapToAbonnement: (Row) -> Abonnement = { row ->
         Abonnement(
             id = AbonnementId(row.long("id")),

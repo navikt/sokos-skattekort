@@ -4,8 +4,6 @@ import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 
-import kotlin.time.ExperimentalTime
-
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
@@ -32,7 +30,6 @@ import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingId
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
-@OptIn(ExperimentalTime::class)
 class ForespoerselServiceTest :
     FunSpec({
         extensions(DbListener, WiremockListener)

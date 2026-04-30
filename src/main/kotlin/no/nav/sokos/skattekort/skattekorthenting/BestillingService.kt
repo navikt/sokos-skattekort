@@ -5,7 +5,6 @@ import java.time.Instant
 import javax.sql.DataSource
 
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlin.time.toJavaInstant
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -32,7 +31,6 @@ import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
-import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
@@ -50,7 +48,6 @@ class BestillingService(
 ) {
     private val errorLoggedBatchIds = mutableSetOf<Long>()
 
-    @OptIn(ExperimentalTime::class)
     fun hentBestillingsbatcher(type: BestillingsbatchType) {
         val bestillingsbatchList =
             try {
@@ -145,7 +142,7 @@ class BestillingService(
                                 logger.error { "Fant ikke person, sjekk TEAM_LOGS for detaljer" }
                                 return@forEach
                             }
-                        handleResultatForSkattekort(tx, arbeidstaker, personId)
+                        handleResultatForSkattekort(tx, arbeidstaker, personId, type)
                     }
 
                     if (type == BESTILLING) {
@@ -192,21 +189,22 @@ class BestillingService(
         tx: TransactionalSession,
         arbeidstaker: Arbeidstaker,
         personId: PersonId,
+        type: BestillingsbatchType,
     ) {
         val inntektsaar = arbeidstaker.inntektsaar
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
             IkkeSkattekort, IkkeTrekkplikt, SkattekortopplysningerOK, UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
-                SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator)
+                SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator, type)
                 AuditRepository.insert(tx, AuditTag.SKATTEKORTINFORMASJON_MOTTATT, personId, "Mottatt skattekortinformasjon for inntektsår $inntektsaar")
             }
 
-            UgyldigOrganisasjonsnummer -> {
+            ResultatForSkattekort.UgyldigOrganisasjonsnummer -> {
                 throw UgyldigOrganisasjonsnummerException("Ugyldig organisasjonsnummer")
             }
 
             UgyldigFoedselsEllerDnummer -> {
                 PersonRepository.flaggPerson(tx, personId)
-                SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator)
+                SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator, type)
                 AuditRepository.insert(tx, AuditTag.INVALID_FNR, personId, "Tilbakemelding fra Skatteetaten om UgyldigFoedselsEllerDnummer")
             }
         }

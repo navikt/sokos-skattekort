@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.utsending
 
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
@@ -35,7 +34,6 @@ Forhåpentligvis vil dette gjenskape den gamle oppførselen bra.
 Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringen, gjør endringen, lager et nytt testdatasett,
 og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
  */
-@OptIn(ExperimentalTime::class)
 class SkattekortFixedRecordFormatterTest :
     FunSpec({
         test("gå gjennom alle skattekort og sjekk at vi får et stabilt svar") {

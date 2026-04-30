@@ -2,12 +2,7 @@ package no.nav.sokos.skattekort.forespoersel
 
 import java.sql.BatchUpdateException
 import java.time.LocalDate
-import java.time.LocalDateTime
 import javax.sql.DataSource
-
-import kotlin.time.ExperimentalTime
-import kotlinx.datetime.Month
-import kotlinx.datetime.toKotlinLocalDateTime
 
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
@@ -21,6 +16,7 @@ import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
@@ -69,7 +65,8 @@ class ForespoerselService(
             val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(forespoerselInput.fnrList, saksbehandler?.ident)
             dataSource.transaction { tx ->
                 handleForespoersel(tx, message, forespoerselInput, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
-                if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
+                val skalLagesForNesteAarOgsaa = ReglerForInntektsaar.lovligeInntektsAarAaBestilleFraSkatteetaten().contains(forespoerselInput.inntektsaar + 1)
+                if (skalLagesForNesteAarOgsaa) {
                     val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
                     handleForespoersel(tx, message, forespoerselForNesteAar, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
                 }
@@ -81,14 +78,6 @@ class ForespoerselService(
         }
     }
 
-    private fun skalLagesForNesteAarOgsaa(forespoerselInput: ForespoerselInput): Boolean {
-        val now = LocalDateTime.now().toKotlinLocalDateTime()
-        val thisYear = now.year
-        // TODO Bruke ReglerforInntektsaar
-        return (forespoerselInput.inntektsaar == thisYear && now.month == Month.DECEMBER && now.day >= 15)
-    }
-
-    @OptIn(ExperimentalTime::class)
     private fun handleForespoersel(
         tx: TransactionalSession,
         message: String,
@@ -227,10 +216,4 @@ class ForespoerselService(
             }
         }
     }
-
-    data class ForespoerselInput(
-        val forsystem: Forsystem,
-        val inntektsaar: Int,
-        val fnrList: List<String>,
-    )
 }

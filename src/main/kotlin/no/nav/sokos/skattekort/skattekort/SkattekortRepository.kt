@@ -141,11 +141,11 @@ object SkattekortRepository {
                     ),
                 ),
                 extractor = { row ->
-                    val ft = Forskuddstrekk.create(row)
-                    if (ft.requiresAdminRole() && !adminRole) {
+                    val forskuddstrekk = Forskuddstrekk.create(row)
+                    if (forskuddstrekk.requiresAdminRole() && !adminRole) {
                         null
                     } else {
-                        ft
+                        forskuddstrekk
                     }
                 },
             )

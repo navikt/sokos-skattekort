@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.skattekorthenting
 
-import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
 
 import kotliquery.Row
@@ -159,7 +158,6 @@ object BestillingRepository {
             },
         )
 
-    @OptIn(ExperimentalTime::class)
     val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(
             id = BestillingId(row.long("id")),

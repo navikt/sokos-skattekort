@@ -17,6 +17,7 @@ object UtsendingRepository {
                 """
                 INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
                 VALUES (:fnr, :inntektsaar, :forsystem)
+                ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
                 """.trimIndent(),
                 mapOf(
                     "fnr" to utsending.fnr.value,

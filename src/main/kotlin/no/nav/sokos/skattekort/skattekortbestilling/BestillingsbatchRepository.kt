@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.skattekortbestilling
 
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
 import kotlin.time.toKotlinInstant
@@ -198,7 +197,6 @@ object BestillingsbatchRepository {
         ).asExecute,
     )
 
-    @OptIn(ExperimentalTime::class)
     val mapToBestillingsbatch: (Row) -> Bestillingsbatch = { row ->
         Bestillingsbatch(
             id = BestillingsbatchId(row.long("id")),
@@ -211,16 +209,7 @@ object BestillingsbatchRepository {
         )
     }
 
-    @OptIn(ExperimentalTime::class)
     val mapToBestillingsbatchWithDataMottatt: (Row) -> Pair<Bestillingsbatch, String?> = { row ->
-        Bestillingsbatch(
-            id = BestillingsbatchId(row.long("id")),
-            status = BestillingsbatchStatus.valueOf(row.string("status")),
-            type = BestillingsbatchType.valueOf(row.string("type")),
-            bestillingsreferanse = row.string("bestillingsreferanse"),
-            dataSendt = row.string("data_sendt"),
-            oppdatert = row.instant("oppdatert").toKotlinInstant(),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
-        ) to row.stringOrNull("data_mottatt")
+        mapToBestillingsbatch(row) to row.stringOrNull("data_mottatt")
     }
 }

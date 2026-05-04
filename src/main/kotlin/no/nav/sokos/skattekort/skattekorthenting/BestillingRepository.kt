@@ -29,6 +29,16 @@ object BestillingRepository {
             extractor = mapToBestilling,
         )
 
+    fun getAllBestillingsForAdmin(tx: TransactionalSession): List<Bestilling> =
+        tx.list(
+            queryOf(
+                """
+                SELECT b.* FROM bestillinger b
+                """.trimIndent(),
+            ),
+            extractor = mapToBestilling,
+        )
+
     fun insert(
         tx: TransactionalSession,
         bestilling: Bestilling,

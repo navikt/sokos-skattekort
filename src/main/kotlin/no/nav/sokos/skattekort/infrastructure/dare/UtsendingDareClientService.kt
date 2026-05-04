@@ -15,8 +15,8 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.DAREPOC_AZURED_TOKEN_CLIENT
 import no.nav.sokos.skattekort.DAREPOC_URL
+import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.dto.v2.SkattekortDTO
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
 private val logger = KotlinLogging.logger {}

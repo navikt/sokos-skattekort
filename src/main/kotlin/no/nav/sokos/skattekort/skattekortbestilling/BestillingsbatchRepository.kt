@@ -192,7 +192,7 @@ object BestillingsbatchRepository {
                 | opprettet
                 |  
                 |FROM bestillingsbatcher WHERE status IN ('${BestillingsbatchStatus.NY}', '${BestillingsbatchStatus.RETRY}') ORDER BY opprettet LIMIT 1
-                """.trimIndent(),
+                """.trimMargin(),
             ),
             extractor = mapToBestillingsbatch,
         )

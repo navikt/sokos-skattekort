@@ -372,6 +372,32 @@ class BestillingsbatchServiceTest :
             affected shouldBe 0
             tx { BestillingsbatchRepository.findById(it, 101L)!!.status } shouldBe NY
         }
+
+        test("BestillingsbatchRepository.getFirstNotFerdigBestillingsbatch - returnerer første batch med status NY eller RETRY") {
+            databaseHas(
+                aBestillingsbatch(id = 1L, ref = "ref1", status = FERDIG),
+                aBestillingsbatch(id = 2L, ref = "ref2", status = NY),
+                aBestillingsbatch(id = 3L, ref = "ref3", status = RETRY),
+            )
+
+            val result = tx { BestillingsbatchRepository.getFirstNotFerdigBestillingsbatch(it) }
+
+            result.shouldNotBeNull()
+            result.id shouldBe BestillingsbatchId(2L)
+            result.bestillingsreferanse shouldBe "ref2"
+            result.status shouldBe NY
+        }
+
+        test("BestillingsbatchRepository.getFirstNotFerdigBestillingsbatch - returnerer null når ingen batcher har status NY eller RETRY") {
+            databaseHas(
+                aBestillingsbatch(id = 1L, ref = "ref1", status = FERDIG),
+                aBestillingsbatch(id = 2L, ref = "ref2", status = FEILET),
+            )
+
+            val result = tx { BestillingsbatchRepository.getFirstNotFerdigBestillingsbatch(it) }
+
+            result.shouldBeNull()
+        }
     })
 
 fun List<Bestillingsbatch>.shouldBeFunctionallyEquivalentTo(expected: List<Bestillingsbatch>) {

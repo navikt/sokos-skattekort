@@ -112,19 +112,25 @@ class BestillingsbatchService(
     fun getBestillingsbatches(
         instantStart: Instant?,
         instantEnd: Instant?,
-        status: BestillingsbatchStatus?,
-        type: BestillingsbatchType?,
     ): List<BestillingsbatchDTO> =
         dataSource
             .transaction { tx ->
-                if (instantStart == null && instantEnd == null && status == null && type == null) {
+                if (instantStart == null && instantEnd == null) {
                     BestillingsbatchRepository.getDefaultBatchInsightResults(tx)
                 } else {
-                    BestillingsbatchRepository.getFilteredBestillingsbatches(tx, instantStart, instantEnd, status, type)
+                    BestillingsbatchRepository.getFilteredBestillingsbatches(tx, instantStart, instantEnd)
                 }
             }.map { (batch, dataMottatt) ->
-                BestillingsbatchDTO.toDto(batch, dataMottatt)
+                BestillingsbatchDTO.toDto(batch, batch.dataSendt, dataMottatt)
             }
+
+    fun getIncompleteBestillingsbatchesWithoutJson(): List<BestillingsbatchDTO> {
+        val bestillingsbatches: List<Bestillingsbatch> =
+            dataSource.transaction(BestillingsbatchRepository::getIncompleteBatches)
+        return bestillingsbatches.map { batch ->
+            BestillingsbatchDTO.toDto(batch, dataSendt = null, dataMottatt = null)
+        }
+    }
 
     private fun logErrorAsInfoIfRecentBatch(
         errorMessage: String,
@@ -142,8 +148,11 @@ class BestillingsbatchService(
         logger.error { "$errorMessage, detaljer er logget til TEAM LOGS" }
     }
 
-    fun rerun(bestillingsreferanse: Bestillingsreferanse) =
-        dataSource.transaction { tx ->
-            BestillingsbatchRepository.rerun(tx, bestillingsreferanse)
-        }
+    fun rerun(id: Long): Int {
+        val updated = dataSource.transaction { tx -> BestillingsbatchRepository.rerun(tx, id) }
+        require(updated > 0) { "Kunne ikke finne bestillingsbatch med id $id for rerun" }
+        return updated
+    }
+
+    fun getAllBestillings(): List<Bestilling> = dataSource.transaction(BestillingRepository::getAllBestillingsForAdmin)
 }

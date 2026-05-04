@@ -605,4 +605,35 @@ class SkattekortDataServiceTest :
                 }
             }
         }
+
+        test("processSkattekortData should create only one utsending when two identical skattekort_data rows are processed") {
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(1L, fnr),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+            )
+
+            val skattekortJson =
+                """
+                {
+                  "arbeidstakeridentifikator": "$fnr",
+                  "resultatForSkattekort": "skattekortopplysningerOK",
+                  "inntektsaar": 2025,
+                  "skattekort": {
+                    "utstedtDato": "2025-11-01",
+                    "skattekortidentifikator": 10001,
+                    "forskuddstrekk": []
+                  }
+                }
+                """.trimIndent()
+
+            // Insert the same payload twice (duplicate skattekort_data)
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+
+            skattekortDataService.processSkattekortData()
+
+            val utsendinger = tx(UtsendingRepository::getAllUtsendinger)
+            utsendinger shouldHaveSize 1
+        }
     })

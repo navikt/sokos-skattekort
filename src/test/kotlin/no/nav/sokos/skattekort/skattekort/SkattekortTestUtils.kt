@@ -1,14 +1,9 @@
 package no.nav.sokos.skattekort.skattekort
 
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 import kotlin.time.Instant
-import kotlinx.serialization.json.Json
 
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 
@@ -152,8 +147,6 @@ fun aHentSkattekortResponse(
             ),
     )
 
-fun aHentSkattekortResponseFromFile(jsonfile: String): HentSkattekortResponse = Json.decodeFromString(HentSkattekortResponse.serializer(), Files.readString(Paths.get(jsonfile)))
-
 fun databaseHas(vararg strings: String) {
     runThisSql(strings.joinToString("\n"))
 }
@@ -189,12 +182,6 @@ fun aBestilling(
 ) = """
     INSERT INTO bestillinger(person_id, fnr, inntektsaar, bestillingsbatch_id)
                     VALUES ($personId, '$fnr', $inntektsaar, $batchId);
-    """.trimIndent()
-
-fun aSkattekortData(dataMottatt: String) =
-    """
-    INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr)
-                 VALUES ((CAST (:dataMottatt AS JSON)), :inntektsaar, :fnr)
     """.trimIndent()
 
 fun anAbonnement(
@@ -249,8 +236,6 @@ fun aBatch(
         dataSendt = "",
     )
 
-fun Double.withScale(): BigDecimal = this.toBigDecimal().setScale(2, RoundingMode.HALF_UP)
-
 fun List<Skattekort>.shouldBeFunctionallyEquivalentTo(expected: List<Skattekort>) {
     this.shouldContainAllIgnoringFields(
         expected,
@@ -263,3 +248,22 @@ fun List<Skattekort>.shouldBeFunctionallyEquivalentTo(expected: List<Skattekort>
         Skattekort::tilleggsopplysningList,
     )
 }
+
+fun aBestillingsbatchWithJson(
+    id: Long,
+    ref: String,
+    status: BestillingsbatchStatus,
+    type: BestillingsbatchType = BestillingsbatchType.BESTILLING,
+    dataSendt: String = """{"sendt":"$ref"}""",
+    dataMottatt: String? = null,
+) = """
+    INSERT INTO bestillingsbatcher (id, bestillingsreferanse, data_sendt, data_mottatt, status, type)
+        VALUES (
+            $id,
+            '$ref',
+            '$dataSendt'::json,
+            ${dataMottatt?.let { "'$it'::json" } ?: "NULL"},
+            '${status.name}',
+            '${type.name}'
+        );
+    """.trimIndent()

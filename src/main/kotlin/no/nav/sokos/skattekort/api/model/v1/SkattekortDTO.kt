@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.dto
+package no.nav.sokos.skattekort.api.model.v1
 
 import java.math.BigDecimal
 import java.math.RoundingMode

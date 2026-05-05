@@ -13,28 +13,30 @@ import org.apache.hc.core5.util.TimeValue
 
 private val logger = KotlinLogging.logger {}
 
-val httpClient: HttpClient by lazy {
-    HttpClient(Apache5) {
-        expectSuccess = false
-        engine {
-            socketTimeout = 30_000
-            connectTimeout = 30_000
-            customizeClient {
-                setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-                setKeepAliveStrategy { _, _ -> TimeValue.ofSeconds(300) }
+object HttpClientConfig {
+    val httpClient: HttpClient by lazy {
+        HttpClient(Apache5) {
+            expectSuccess = false
+            engine {
+                socketTimeout = 30_000
+                connectTimeout = 30_000
+                customizeClient {
+                    setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault()))
+                    setKeepAliveStrategy { _, _ -> TimeValue.ofSeconds(300) }
+                }
             }
-        }
 
-        install(ContentNegotiation) {
-            json(jsonConfig)
-        }
-
-        install(HttpRequestRetry) {
-            retryOnExceptionOrServerErrors(5)
-            modifyRequest { request ->
-                logger.warn { "$retryCount retry feilet mot: ${request.url}" }
+            install(ContentNegotiation) {
+                json(jsonConfig)
             }
-            exponentialDelay()
+
+            install(HttpRequestRetry) {
+                retryOnExceptionOrServerErrors(5)
+                modifyRequest { request ->
+                    logger.warn { "$retryCount retry feilet mot: ${request.url}" }
+                }
+                exponentialDelay()
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.config.httpClient as defaultHttpClient
+import no.nav.sokos.skattekort.config.HttpClientConfig.httpClient as defaultHttpClient
 import no.nav.pdl.HentIdenterBolk
 import no.nav.pdl.HentPersonBolk
 import no.nav.pdl.hentidenterbolk.IdentInformasjon

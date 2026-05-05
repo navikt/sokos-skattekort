@@ -25,9 +25,9 @@ import io.ktor.http.Parameters
 import io.ktor.http.isSuccess
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.HttpClientConfig.httpClient
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.config.httpClient
 
 private val logger = KotlinLogging.logger {}
 

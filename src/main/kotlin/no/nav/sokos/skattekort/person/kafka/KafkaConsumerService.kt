@@ -26,10 +26,9 @@ private const val POLL_DURATION_SECONDS = 10L
 
 @OptIn(ExperimentalAtomicApi::class)
 class KafkaConsumerService(
-    private val kafkaConfig: KafkaConfig = KafkaConfig(),
     private val identifikatorEndringService: IdentifikatorEndringService = IdentifikatorEndringService(),
 ) : AutoCloseable {
-    private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(kafkaConfig.properties)
+    private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(KafkaConfig.properties)
     private val kafkaClientMetrics: KafkaClientMetrics = KafkaClientMetrics(kafkaConsumer)
     private val stopping = AtomicBoolean(false)
 
@@ -39,12 +38,12 @@ class KafkaConsumerService(
 
     suspend fun start(applicationState: ApplicationState) {
         try {
-            kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
+            kafkaConsumer.subscribe(listOf(KafkaConfig.topic))
 
-            logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
+            logger.info { "Starter kafka consumer for topic=${KafkaConfig.topic}" }
             while (applicationState.ready && !stopping.load()) {
                 if (kafkaConsumer.subscription().isEmpty()) {
-                    kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
+                    kafkaConsumer.subscribe(listOf(KafkaConfig.topic))
                 }
                 try {
                     val consumerRecords: ConsumerRecords<String, Personhendelse> = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
@@ -59,7 +58,7 @@ class KafkaConsumerService(
                 } catch (e: WakeupException) {
                     if (stopping.load()) break else throw e
                 } catch (exception: Exception) {
-                    logger.error(exception) { "Error running kafka consumer for ${kafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
+                    logger.error(exception) { "Error running kafka consumer for ${KafkaConfig.topic}, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry" }
                     kafkaConsumer.unsubscribe()
                     if (applicationState.ready) {
                         delay(DELAY_ON_ERROR_SECONDS.seconds)

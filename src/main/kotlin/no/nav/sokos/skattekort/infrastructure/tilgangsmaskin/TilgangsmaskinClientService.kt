@@ -12,7 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.config.httpClient as defaultHttpClient
+import no.nav.sokos.skattekort.config.HttpClientConfig.httpClient as defaultHttpClient
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient

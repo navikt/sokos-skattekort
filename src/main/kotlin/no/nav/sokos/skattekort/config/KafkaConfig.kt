@@ -11,15 +11,13 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.security.auth.SecurityProtocol
 
-class KafkaConfig(
-    private val kafkaProperties: PropertiesConfig.KafkaProperties = PropertiesConfig.kafkaProperties,
-) {
+object KafkaConfig {
     val topic: String by lazy {
-        kafkaProperties.topic
+        PropertiesConfig.kafkaProperties.topic
     }
 
     val properties: Properties by lazy {
-        initProperties(kafkaProperties)
+        initProperties(PropertiesConfig.kafkaProperties)
     }
 
     private fun initProperties(kafkaProperties: PropertiesConfig.KafkaProperties): Properties =

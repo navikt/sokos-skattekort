@@ -68,22 +68,14 @@ object PropertiesConfig {
         config.property("unleash").getAs<UnleashProperties>()
     }
 
-    fun getOrEmpty(key: String): String = config.propertyOrNull(key)?.getString() ?: ""
+    val isLocal: Boolean
+        get() = applicationProperties.isLocal
 
-    fun get(key: String): String = config.property(key).getString()
+    val isTest: Boolean
+        get() = applicationProperties.isTest
 
-    fun isLocal() = applicationProperties.isLocal
-
-    fun isTest() = applicationProperties.isTest
-
-    fun isProd() = applicationProperties.isProd
-
-    enum class Environment {
-        LOCAL,
-        TEST,
-        DEV,
-        PROD,
-    }
+    val isProd: Boolean
+        get() = applicationProperties.isProd
 
     @Serializable
     data class AzureAdProperties(
@@ -98,21 +90,11 @@ object PropertiesConfig {
     data class ApplicationProperties(
         val profile: Profile,
         val appName: String,
-        val namespace: String,
         val podName: String,
         val gyldigeFnr: String,
         val bestillingOrgnr: String,
         val mqListenerEnabled: Boolean,
     ) {
-        val naisAppName: String get() = appName
-        val environment: Environment
-            get() =
-                when (profile) {
-                    Profile.LOCAL -> Environment.LOCAL
-                    Profile.TEST -> Environment.TEST
-                    Profile.DEV -> Environment.DEV
-                    Profile.PROD -> Environment.PROD
-                }
         val isLocal = profile == Profile.LOCAL
         val isTest = profile == Profile.TEST
         val isProd = profile == Profile.PROD
@@ -132,8 +114,8 @@ object PropertiesConfig {
     data class MQProperties(
         val hostname: String,
         val port: Int,
-        val mqQueueManagerName: String,
-        val mqChannelName: String,
+        val queueManagerName: String,
+        val channelName: String,
         val serviceUsername: String,
         val servicePassword: String,
         val userAuth: Boolean,
@@ -213,14 +195,11 @@ object PropertiesConfig {
     )
 }
 
-fun ApplicationConfig.mergeWithEnv(): ApplicationConfig {
+fun ApplicationConfig.loadEnvironmentConfig(): ApplicationConfig {
     val hoconConfig = HoconApplicationConfig(ConfigFactory.load())
-    val environment =
-        (System.getenv("NAIS_CLUSTER_NAME") ?: System.getProperty("NAIS_CLUSTER_NAME"))
-            ?.lowercase()
-            ?.substringBefore("-")
-            ?: propertyOrNull("ktor.environment")?.getString()
-            ?: "local"
+    val environmentName = System.getenv("NAIS_CLUSTER_NAME") ?: System.getProperty("NAIS_CLUSTER_NAME")
+    val environment = environmentName?.lowercase()?.substringBefore("-") ?: "local"
+
     val environmentConfig = ApplicationConfig("application-$environment.conf")
     return environmentConfig overriding this overriding hoconConfig
 }

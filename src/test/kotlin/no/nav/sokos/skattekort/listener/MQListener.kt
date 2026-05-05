@@ -4,7 +4,6 @@ import io.kotest.core.listeners.AfterTestListener
 import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
-import io.ktor.server.config.ApplicationConfig
 import jakarta.jms.JMSContext
 import jakarta.jms.Queue
 import org.apache.activemq.artemis.api.core.SimpleString
@@ -16,14 +15,10 @@ import org.apache.activemq.artemis.core.settings.impl.AddressSettings
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
-import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.utils.JmsTestUtil
 
 object MQListener : BeforeSpecListener, AfterTestListener {
-    init {
-        PropertiesConfig.load(ApplicationConfig("application-test.conf"))
-    }
-
     private val server: EmbeddedActiveMQ =
         EmbeddedActiveMQ()
             .setConfiguration(

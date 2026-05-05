@@ -9,7 +9,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
-import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
@@ -18,6 +17,7 @@ import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.JmsTestUtil
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 
 class ForespoerselListenerTest :

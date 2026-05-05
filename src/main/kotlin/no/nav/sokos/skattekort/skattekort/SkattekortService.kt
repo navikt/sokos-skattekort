@@ -77,7 +77,7 @@ class SkattekortService(
 
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         if (!foedselsnummerkategori.erGyldig(fnr)) {
-            logger.warn(marker = TEAM_LOGS_MARKER) { "Ugyldig fnr for miljø ${PropertiesConfig.applicationProperties.environment}($fnr)" }
+            logger.warn(marker = TEAM_LOGS_MARKER) { "Ugyldig fnr for miljø ${PropertiesConfig.applicationProperties.profile}($fnr)" }
             return null
         }
 

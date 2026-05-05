@@ -24,7 +24,7 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.config.mergeWithEnv
+import no.nav.sokos.skattekort.config.loadEnvironmentConfig
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
@@ -73,7 +73,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     applicationLifecycleConfig(applicationState)
     commonConfig()
 
-    PropertiesConfig.load(applicationConfig.mergeWithEnv())
+    PropertiesConfig.load(applicationConfig.loadEnvironmentConfig())
     val applicationProperties = PropertiesConfig.applicationProperties
     logger.info { "Application started with environment: ${applicationProperties.profile}" }
 
@@ -137,7 +137,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
         // SOKOS-DARE-POC skal kun brukes i test.
-        if (!PropertiesConfig.isProd()) {
+        if (!PropertiesConfig.isProd) {
             provide(UtsendingDareClientService::class)
         } else {
             provide<UtsendingDareClientService?> { null }
@@ -189,7 +189,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             }
         }
 
-        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+        if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             monitor.subscribe(ApplicationStopped) {
                 logger.info { "Closing database scheduler pools..." }
                 (DatabaseConfig.dataSourceScheduler as? HikariDataSource)?.close()

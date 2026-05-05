@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.utsending
+package no.nav.sokos.skattekort.endtoend
 
 import io.kotest.core.spec.style.FunSpec
 

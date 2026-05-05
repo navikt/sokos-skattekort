@@ -45,3 +45,4 @@ privateKey
 .kotlin
 mqjms.log.*
 jdtls-data/
+.opencode

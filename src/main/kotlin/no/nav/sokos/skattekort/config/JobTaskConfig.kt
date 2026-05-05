@@ -37,11 +37,11 @@ object JobTaskConfig {
         bestillingService: BestillingService,
         bestillingsbatchService: BestillingsbatchService,
         utsendingService: UtsendingService,
-        skattekortdataService: SkattekortDataService,
-        metricsService: MetricsService,
         forespoerselService: ForespoerselService,
         skattekortService: SkattekortService,
         dataSource: DataSource,
+        skattekortdataService: SkattekortDataService = SkattekortDataService(),
+        metricsService: MetricsService = MetricsService(),
     ): Scheduler =
         Scheduler
             .create(dataSource)

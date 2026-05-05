@@ -20,16 +20,11 @@ import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
-import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.dare.UtsendingDareClientService
-import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
-import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.kafka.KafkaConsumerService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
-import no.nav.sokos.skattekort.skattekortbestilling.StatusService
-import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 import no.nav.sokos.skattekort.utsending.UtsendingService
@@ -61,20 +56,12 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val forespoerselService = ForespoerselService(featureToggles = unleashIntegration)
     forespoerselListener = ForespoerselListener(forespoerselService = forespoerselService)
     val bestillingsbatchService = BestillingsbatchService(featureToggles = unleashIntegration)
-    val bestillingService = BestillingService(featureToggles = unleashIntegration)
     val utsendingService =
         UtsendingService(
             featureToggles = unleashIntegration,
             utsendingDareClientService = if (!PropertiesConfig.isProd) UtsendingDareClientService() else null,
         )
-
     val skattekortService = SkattekortService()
-    val pdlService = PdlService()
-    val personService = PersonService()
-    val statusService = StatusService()
-    val metricsService = MetricsService()
-    val skattekortDataService = SkattekortDataService()
-    val kafkaConsumerService = KafkaConsumerService()
 
     forespoerselListener.onOppdateringChanged(unleashIntegration.isForespoerselListenerEnabled())
 
@@ -83,10 +70,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         applicationState = applicationState,
         bestillingsbatchService = bestillingsbatchService,
         forespoerselService = forespoerselService,
-        pdlService = pdlService,
-        personService = personService,
         skattekortService = skattekortService,
-        statusService = statusService,
         utsendingService = utsendingService,
     )
 
@@ -94,11 +78,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val scheduler =
             JobTaskConfig
                 .scheduler(
-                    bestillingService = bestillingService,
+                    bestillingService = BestillingService(featureToggles = unleashIntegration),
                     bestillingsbatchService = bestillingsbatchService,
                     utsendingService = utsendingService,
-                    skattekortdataService = skattekortDataService,
-                    metricsService = metricsService,
                     forespoerselService = forespoerselService,
                     skattekortService = skattekortService,
                     dataSource = DatabaseConfig.dataSourceScheduler,
@@ -123,7 +105,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     if (kafkaProperties.enabled) {
         applicationState.onReady = {
             launchBackgroundTask(applicationState) {
-                kafkaConsumerService.start(applicationState)
+                KafkaConsumerService().start(applicationState)
             }
         }
     }

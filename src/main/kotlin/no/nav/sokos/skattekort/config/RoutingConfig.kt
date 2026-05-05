@@ -20,11 +20,11 @@ fun Application.routingConfig(
     applicationState: ApplicationState,
     bestillingsbatchService: BestillingsbatchService,
     forespoerselService: ForespoerselService,
-    pdlService: PdlService,
-    personService: PersonService,
     skattekortService: SkattekortService,
-    statusService: StatusService,
     utsendingService: UtsendingService,
+    pdlService: PdlService = PdlService(),
+    personService: PersonService = PersonService(),
+    statusService: StatusService = StatusService(),
     azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.azureAdProperties,
 ) {
     routing {

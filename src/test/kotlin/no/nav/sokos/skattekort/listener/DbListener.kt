@@ -7,6 +7,7 @@ import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
 import io.kotest.extensions.testcontainers.toDataSource
+import io.ktor.server.config.ApplicationConfig
 import kotliquery.queryOf
 import mu.KotlinLogging
 import org.testcontainers.containers.PostgreSQLContainer
@@ -21,7 +22,11 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 private val logger = KotlinLogging.logger {}
 
 object DbListener : BeforeSpecListener, AfterEachListener {
-    private val postgresProperties = PropertiesConfig.getPostgresProperties()
+    init {
+        PropertiesConfig.load(ApplicationConfig("application-test.conf"))
+    }
+
+    private val postgresProperties = PropertiesConfig.postgresProperties
     val container: PostgreSQLContainer<Nothing> =
         PostgreSQLContainer<Nothing>("postgres:latest").apply {
             withReuse(false)

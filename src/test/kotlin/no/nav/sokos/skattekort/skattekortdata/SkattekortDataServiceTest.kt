@@ -634,6 +634,62 @@ class SkattekortDataServiceTest :
             skattekortDataService.processSkattekortData()
 
             val utsendinger = tx(UtsendingRepository::getAllUtsendinger)
-            utsendinger shouldHaveSize 1
+            utsendinger shouldNotBeNull {
+                size shouldBe 1
+                first() shouldNotBeNull {
+                    this.fnr.value shouldBe fnr
+                    inntektsaar shouldBe 2025
+                    forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                    failMessage shouldBe null
+                    failCount shouldBe 0
+                }
+            }
+        }
+
+        test("processSkattekortData should create one utsending OS_STOR for BESTILLING and one utsending OS for OPPDATERING") {
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(1L, fnr),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
+            )
+
+            val skattekortJson =
+                """
+                {
+                  "arbeidstakeridentifikator": "$fnr",
+                  "resultatForSkattekort": "skattekortopplysningerOK",
+                  "inntektsaar": 2025,
+                  "skattekort": {
+                    "utstedtDato": "2025-11-01",
+                    "skattekortidentifikator": 10001,
+                    "forskuddstrekk": []
+                  }
+                }
+                """.trimIndent()
+
+            // Insert the same payload twice (duplicate skattekort_data)
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.OPPDATERING) }
+
+            skattekortDataService.processSkattekortData()
+
+            val utsendinger = tx(UtsendingRepository::getAllUtsendinger)
+            utsendinger shouldNotBeNull {
+                size shouldBe 2
+                first() shouldNotBeNull {
+                    this.fnr.value shouldBe fnr
+                    inntektsaar shouldBe 2025
+                    forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET_STOR
+                    failMessage shouldBe null
+                    failCount shouldBe 0
+                }
+                last() shouldNotBeNull {
+                    this.fnr.value shouldBe fnr
+                    inntektsaar shouldBe 2025
+                    forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                    failMessage shouldBe null
+                    failCount shouldBe 0
+                }
+            }
         }
     })

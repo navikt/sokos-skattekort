@@ -1,8 +1,6 @@
 package no.nav.sokos.skattekort.skattekortbestilling
 
-import kotlin.time.Instant
-import kotlin.time.toJavaInstant
-import kotlin.time.toKotlinInstant
+import java.time.Instant
 
 import kotliquery.Row
 import kotliquery.TransactionalSession
@@ -69,8 +67,8 @@ object BestillingsbatchRepository {
             queryOf(
                 statement,
                 mapOf(
-                    "start" to instantStart?.toJavaInstant(),
-                    "end" to instantEnd?.toJavaInstant(),
+                    "start" to instantStart,
+                    "end" to instantEnd,
                 ),
             )
 
@@ -246,8 +244,8 @@ object BestillingsbatchRepository {
             type = BestillingsbatchType.valueOf(row.string("type")),
             bestillingsreferanse = row.string("bestillingsreferanse"),
             dataSendt = row.string("data_sendt"),
-            oppdatert = row.instant("oppdatert").toKotlinInstant(),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
+            oppdatert = row.instant("oppdatert"),
+            opprettet = row.instant("opprettet"),
         )
     }
 

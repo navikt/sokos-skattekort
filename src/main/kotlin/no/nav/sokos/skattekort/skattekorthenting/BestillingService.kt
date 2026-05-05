@@ -4,8 +4,6 @@ import java.time.Duration
 import java.time.Instant
 import javax.sql.DataSource
 
-import kotlin.time.Clock
-import kotlin.time.toJavaInstant
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
@@ -64,8 +62,8 @@ class BestillingService(
                 val response = runBlocking { skatteetatenClient.hentSkattekort(batch.bestillingsreferanse) }
                 if (response == null) {
                     logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
-                    if (batch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) < Clock.System.now() && errorLoggedBatchIds.add(batchId)) {
-                        logger.error { "Henting av skattekort for batch $batchId feilet med tomt svar for mer enn ${RECENT_BATCH_GRACE_PERIOD.inWholeHours} time siden." }
+                    if (batch.opprettet.plus(Duration.ofHours(RECENT_BATCH_GRACE_PERIOD)) < Instant.now() && errorLoggedBatchIds.add(batchId)) {
+                        logger.error { "Henting av skattekort for batch $batchId feilet med tomt svar for mer enn $RECENT_BATCH_GRACE_PERIOD time siden." }
                     }
                     return@runCatching
                 }
@@ -94,11 +92,7 @@ class BestillingService(
                     }
 
                     else -> {
-                        if (batch.opprettet
-                                .toJavaInstant()
-                                .plus(Duration.ofHours(1))
-                                .isBefore(Instant.now())
-                        ) {
+                        if (batch.opprettet.plus(Duration.ofHours(1)).isBefore(Instant.now())) {
                             logger.error(marker = TEAM_LOGS_MARKER, exception) { "Henting av skattekort for batch $batchId feilet. ${exception.message}" }
                             logger.error("Henting av skattekort for batch: $batchId, type: ${batch.type.name} feilet, sjekk TEAM LOGS for detaljer")
                             dataSource.transaction { errorTx ->

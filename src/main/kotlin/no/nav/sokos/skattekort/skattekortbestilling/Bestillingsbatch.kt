@@ -1,6 +1,6 @@
 package no.nav.sokos.skattekort.skattekortbestilling
 
-import kotlin.time.Instant
+import java.time.Instant
 
 data class Bestillingsbatch(
     val id: BestillingsbatchId? = null,

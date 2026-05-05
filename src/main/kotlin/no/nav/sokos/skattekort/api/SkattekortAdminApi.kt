@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.api
 
+import kotlin.time.toJavaInstant
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -37,7 +39,7 @@ fun Route.skattekortAdminApi(
         post("bestillingsbatcher") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<BatchInsightRequest>()
-            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom)
+            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom?.toJavaInstant(), request.tidspunktTom?.toJavaInstant())
             call.respond(
                 BatchInsightResponse(bestillingsbatcher),
             )

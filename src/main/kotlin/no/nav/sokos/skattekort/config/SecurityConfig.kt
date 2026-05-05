@@ -25,7 +25,7 @@ fun Application.securityConfig(azureAdProperties: PropertiesConfig.AzureAdProper
 
     authentication {
         jwt(azureAdProperties.providerName) {
-            realm = PropertiesConfig.applicationProperties.naisAppName
+            realm = PropertiesConfig.applicationProperties.appName
             verifier(
                 jwkProvider = jwkProvider,
                 issuer = openIdMetadata.issuer,

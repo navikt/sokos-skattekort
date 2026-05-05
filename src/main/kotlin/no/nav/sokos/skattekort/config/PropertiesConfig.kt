@@ -68,22 +68,14 @@ object PropertiesConfig {
         config.property("unleash").getAs<UnleashProperties>()
     }
 
-    fun getOrEmpty(key: String): String = config.propertyOrNull(key)?.getString() ?: ""
+    val isLocal: Boolean
+        get() = applicationProperties.isLocal
 
-    fun get(key: String): String = config.property(key).getString()
+    val isTest: Boolean
+        get() = applicationProperties.isTest
 
-    fun isLocal() = applicationProperties.isLocal
-
-    fun isTest() = applicationProperties.isTest
-
-    fun isProd() = applicationProperties.isProd
-
-    enum class Environment {
-        LOCAL,
-        TEST,
-        DEV,
-        PROD,
-    }
+    val isProd: Boolean
+        get() = applicationProperties.isProd
 
     @Serializable
     data class AzureAdProperties(
@@ -104,15 +96,6 @@ object PropertiesConfig {
         val bestillingOrgnr: String,
         val mqListenerEnabled: Boolean,
     ) {
-        val naisAppName: String get() = appName
-        val environment: Environment
-            get() =
-                when (profile) {
-                    Profile.LOCAL -> Environment.LOCAL
-                    Profile.TEST -> Environment.TEST
-                    Profile.DEV -> Environment.DEV
-                    Profile.PROD -> Environment.PROD
-                }
         val isLocal = profile == Profile.LOCAL
         val isTest = profile == Profile.TEST
         val isProd = profile == Profile.PROD

@@ -204,7 +204,7 @@ object JobTaskConfig {
     }
 
     init {
-        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+        if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     handleJobs = false

@@ -137,7 +137,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
         // SOKOS-DARE-POC skal kun brukes i test.
-        if (!PropertiesConfig.isProd()) {
+        if (!PropertiesConfig.isProd) {
             provide(UtsendingDareClientService::class)
         } else {
             provide<UtsendingDareClientService?> { null }
@@ -189,7 +189,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             }
         }
 
-        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+        if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             monitor.subscribe(ApplicationStopped) {
                 logger.info { "Closing database scheduler pools..." }
                 (DatabaseConfig.dataSourceScheduler as? HikariDataSource)?.close()

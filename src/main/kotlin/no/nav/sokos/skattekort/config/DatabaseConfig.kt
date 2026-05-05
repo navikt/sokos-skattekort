@@ -31,7 +31,7 @@ object DatabaseConfig {
     }
 
     init {
-        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+        if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     (dataSource as HikariDataSource).close()
@@ -67,7 +67,7 @@ object DatabaseConfig {
             maxLifetime = Duration.ofMinutes(30).toMillis()
 
             when {
-                !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {
+                !(PropertiesConfig.isLocal || PropertiesConfig.isTest) -> {
                     jdbcUrl = postgresProperties.jdbcUrl
                     logger.info { "Setting up PostgreSQL" }
                 }

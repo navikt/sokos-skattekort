@@ -4,7 +4,6 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.Audit
 import no.nav.sokos.skattekort.person.AuditRepository
@@ -15,19 +14,16 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.DBTestUtils
-import no.nav.sokos.skattekort.utils.MockHttpClient
 import no.nav.sokos.skattekort.utils.MockResponse
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
-import no.nav.sokos.skattekort.utils.azuredTokenClient
+import no.nav.sokos.skattekort.utils.mockPdlClientService
 
 class IdentifikatorEndringServiceTest :
     FunSpec({
         extensions(DbListener)
 
         fun createIdentifikatorEndringService(vararg responses: MockResponse): IdentifikatorEndringService {
-            val engine = MockHttpClient.getEngine(*responses)
-            val client = MockHttpClient.getClient(engine)
-            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val (_, pdlClientService) = mockPdlClientService(*responses)
             return IdentifikatorEndringService(
                 dataSource = DbListener.dataSource,
                 pdlClientService = pdlClientService,

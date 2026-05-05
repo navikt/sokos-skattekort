@@ -28,9 +28,10 @@ private const val BEHANDLINGSKATALOGNUMMER = "B749"
 
 class PdlClientService(
     private val httpClient: HttpClient = defaultHttpClient,
-    private val pdlUrl: String = PropertiesConfig.pdlProperties.pdlUrl,
     private val azuredTokenClient: AzuredTokenClient = AzuredTokenClient(defaultHttpClient, PropertiesConfig.pdlProperties.pdlScope),
 ) {
+    private val pdlUrl = PropertiesConfig.pdlProperties.pdlUrl
+
     suspend fun getIdenterBolk(identer: List<String>): Map<String, List<IdentInformasjon>> {
         val request = HentIdenterBolk(HentIdenterBolk.Variables(identer))
 

@@ -6,10 +6,9 @@ import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
 
 import no.nav.pdl.enums.IdentGruppe
-import no.nav.sokos.skattekort.utils.MockHttpClient
 import no.nav.sokos.skattekort.utils.MockResponse
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
-import no.nav.sokos.skattekort.utils.azuredTokenClient
+import no.nav.sokos.skattekort.utils.mockPdlClientService
 
 internal class PdlClientServiceTest :
     FunSpec({
@@ -18,9 +17,8 @@ internal class PdlClientServiceTest :
             responseBody: String,
             statusCode: HttpStatusCode = HttpStatusCode.OK,
         ): PdlClientService {
-            val engine = MockHttpClient.getEngine(MockResponse("/graphql", responseBody, statusCode))
-            val client = MockHttpClient.getClient(engine)
-            return PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val (_, pdlClientService) = mockPdlClientService(MockResponse("/graphql", responseBody, statusCode))
+            return pdlClientService
         }
 
         test("hent identer fra PDL gir respons med identer") {

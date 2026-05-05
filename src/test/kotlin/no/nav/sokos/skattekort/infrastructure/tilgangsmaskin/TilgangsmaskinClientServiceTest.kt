@@ -6,11 +6,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
 
-import no.nav.sokos.skattekort.utils.MockHttpClient
 import no.nav.sokos.skattekort.utils.MockResponse
 import no.nav.sokos.skattekort.utils.PathMatchType
-import no.nav.sokos.skattekort.utils.azuredTokenClient
 import no.nav.sokos.skattekort.utils.generateProblemDetailResponse
+import no.nav.sokos.skattekort.utils.mockTilgangsmaskinClientService
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 class TilgangsmaskinClientServiceTest :
@@ -21,9 +20,8 @@ class TilgangsmaskinClientServiceTest :
             responseBody: String = "",
             statusCode: HttpStatusCode = HttpStatusCode.NoContent,
         ): TilgangsmaskinClientService {
-            val engine = MockHttpClient.getEngine(MockResponse("/api/v1/ccf/kjerne/", responseBody, statusCode, PathMatchType.PREFIX))
-            val client = MockHttpClient.getClient(engine)
-            return TilgangsmaskinClientService(httpClient = client, tilgangsmaskinUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val (_, tilgangsmaskinClientService) = mockTilgangsmaskinClientService(MockResponse("/api/v1/ccf/kjerne/", responseBody, statusCode, PathMatchType.PREFIX))
+            return tilgangsmaskinClientService
         }
 
         test("should return statusCode 204 when saksbehandler has access") {

@@ -11,16 +11,14 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
-import no.nav.sokos.skattekort.utils.MockHttpClient
 import no.nav.sokos.skattekort.utils.MockResponse
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
-import no.nav.sokos.skattekort.utils.azuredTokenClient
 import no.nav.sokos.skattekort.utils.generateHentIdenterBolk
+import no.nav.sokos.skattekort.utils.mockPdlClientService
 
 class ForespoerselListenerTest :
     FunSpec({
@@ -30,9 +28,7 @@ class ForespoerselListenerTest :
         val forSystemBOQQueue = ActiveMQQueue("FOR_SYSTEM_BOQ")
 
         fun createForespoerselListener(vararg responses: MockResponse): ForespoerselListener {
-            val engine = MockHttpClient.getEngine(*responses)
-            val client = MockHttpClient.getClient(engine)
-            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val (_, pdlClientService) = mockPdlClientService(*responses)
             return ForespoerselListener(
                 connectionFactory = MQListener.connectionFactory,
                 forespoerselService =

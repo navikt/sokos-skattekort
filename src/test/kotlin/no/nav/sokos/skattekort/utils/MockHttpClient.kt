@@ -48,4 +48,9 @@ object MockHttpClient {
             install(ContentNegotiation) { json(jsonConfig) }
             expectSuccess = false
         }
+
+    fun create(vararg mockResponses: MockResponse): Pair<MockEngine, HttpClient> {
+        val engine = getEngine(*mockResponses)
+        return engine to getClient(engine)
+    }
 }

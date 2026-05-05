@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.person
 
-import kotlin.text.get
 import kotlinx.serialization.json.Json
 
 import io.kotest.core.spec.style.FunSpec
@@ -14,22 +13,18 @@ import no.nav.pdl.enums.IdentGruppe
 import no.nav.pdl.hentidenterbolk.HentIdenterBolkResult
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
 import no.nav.sokos.skattekort.infrastructure.pdl.GraphQLResponse
-import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
-import no.nav.sokos.skattekort.utils.MockHttpClient
 import no.nav.sokos.skattekort.utils.MockResponse
-import no.nav.sokos.skattekort.utils.azuredTokenClient
 import no.nav.sokos.skattekort.utils.generateHentIdenterBolk
+import no.nav.sokos.skattekort.utils.mockPdlClientService
 
 class PersonServiceTest :
     FunSpec({
         extensions(DbListener)
 
         fun createPersonService(vararg responses: MockResponse): PersonService {
-            val engine = MockHttpClient.getEngine(*responses)
-            val client = MockHttpClient.getClient(engine)
-            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val (_, pdlClientService) = mockPdlClientService(*responses)
             return PersonService(DbListener.dataSource, pdlClientService)
         }
 
@@ -190,16 +185,14 @@ class PersonServiceTest :
         test("getPersonIdAndCheckFoedselsnumreIsUpdated skal håndtere store mengder fnr med chunking") {
             val fnrList = (1..100).map { "1010100%04d".format(it) }
 
-            val engine = MockHttpClient.getEngine(MockResponse("/graphql", generateHentIdenterBolk(*fnrList.toTypedArray())))
-            val client = MockHttpClient.getClient(engine)
-            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val (pdlEngine, pdlClientService) = mockPdlClientService(MockResponse("/graphql", generateHentIdenterBolk(*fnrList.toTypedArray())))
             val personService = PersonService(DbListener.dataSource, pdlClientService)
 
             DbListener.loadDataSet("database/person/persondata.sql")
 
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM, 30)
 
-            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 4
+            pdlEngine.requestHistory.size shouldBe 4
             result.size shouldBe fnrList.size
             result.values.shouldNotContainNull()
         }

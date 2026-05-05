@@ -15,7 +15,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
-import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
@@ -26,10 +25,9 @@ import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.DBTestUtils
-import no.nav.sokos.skattekort.utils.MockHttpClient
 import no.nav.sokos.skattekort.utils.MockResponse
-import no.nav.sokos.skattekort.utils.azuredTokenClient
 import no.nav.sokos.skattekort.utils.generateHentIdenterBolk
+import no.nav.sokos.skattekort.utils.mockPdlClientService
 import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingId
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
@@ -40,11 +38,8 @@ class ForespoerselServiceTest :
         extensions(DbListener)
 
         fun createForespoerselService(vararg responses: MockResponse): ForespoerselService {
-            val engine = MockHttpClient.getEngine(*responses)
-            val client = MockHttpClient.getClient(engine)
-            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
-            val personService = PersonService(DbListener.dataSource, pdlClientService)
-            return ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
+            val (_, pdlClientService) = mockPdlClientService(*responses)
+            return ForespoerselService(DbListener.dataSource, PersonService(DbListener.dataSource, pdlClientService), UnleashIntegration())
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {

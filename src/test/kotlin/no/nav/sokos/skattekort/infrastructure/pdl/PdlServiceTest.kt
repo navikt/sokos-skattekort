@@ -15,16 +15,15 @@ import io.mockk.verify
 
 import no.nav.pdl.hentpersonbolk.Navn
 import no.nav.pdl.hentpersonbolk.Person
-import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
-import no.nav.sokos.skattekort.utils.MockHttpClient
 import no.nav.sokos.skattekort.utils.MockResponse
 import no.nav.sokos.skattekort.utils.PathMatchType
-import no.nav.sokos.skattekort.utils.azuredTokenClient
 import no.nav.sokos.skattekort.utils.generateHentPersonBolk
 import no.nav.sokos.skattekort.utils.generateProblemDetailResponse
+import no.nav.sokos.skattekort.utils.mockPdlClientService
+import no.nav.sokos.skattekort.utils.mockTilgangsmaskinClientService
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 class PdlServiceTest :
@@ -39,15 +38,21 @@ class PdlServiceTest :
         val ident = "12345678910"
         val saksbehandler = mockk<Saksbehandler> { every { this@mockk.ident } returns "Z123456" }
 
-        fun createPdlService(vararg responses: MockResponse): Pair<MockEngine, PdlService> {
-            val engine = MockHttpClient.getEngine(*responses)
-            val client = MockHttpClient.getClient(engine)
-            return engine to
+        fun createPdlService(
+            pdlResponses: List<MockResponse> = emptyList(),
+            tilgangsmaskinResponses: List<MockResponse> = emptyList(),
+        ): Triple<MockEngine, MockEngine, PdlService> {
+            val (pdlEngine, pdlClientService) = mockPdlClientService(*pdlResponses.toTypedArray())
+            val (tilgangsmaskinEngine, tilgangsmaskinClientService) = mockTilgangsmaskinClientService(*tilgangsmaskinResponses.toTypedArray())
+            return Triple(
+                pdlEngine,
+                tilgangsmaskinEngine,
                 PdlService(
-                    pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient),
-                    tilgangsmaskinClientService = TilgangsmaskinClientService(httpClient = client, tilgangsmaskinUrl = "http://localhost", azuredTokenClient = azuredTokenClient),
+                    pdlClientService = pdlClientService,
+                    tilgangsmaskinClientService = tilgangsmaskinClientService,
                     auditLogger = auditLogger,
-                )
+                ),
+            )
         }
 
         beforeTest {
@@ -63,83 +68,83 @@ class PdlServiceTest :
                         begrunnelse = "Du har ikke tilgang til brukere med fortrolig adresse",
                     )
 
-            val (engine, pdlService) =
+            val (pdlEngine, _, pdlService) =
                 createPdlService(
-                    MockResponse("/api/v1/ccf/kjerne/", Json.encodeToString(problemDetailResponse), HttpStatusCode.Forbidden, PathMatchType.PREFIX),
+                    tilgangsmaskinResponses = listOf(MockResponse("/api/v1/ccf/kjerne/", Json.encodeToString(problemDetailResponse), HttpStatusCode.Forbidden, PathMatchType.PREFIX)),
                 )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 0
+            pdlEngine.requestHistory.size shouldBe 0
 
             result.left shouldBe problemDetailResponse
         }
 
         test("returns right with formatted name when middle name is null") {
-            val (engine, pdlService) =
+            val (pdlEngine, tilgangsmaskinEngine, pdlService) =
                 createPdlService(
-                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
-                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann")))))),
+                    pdlResponses = listOf(MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann"))))))),
+                    tilgangsmaskinResponses = listOf(MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX)),
                 )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
-            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
+            tilgangsmaskinEngine.requestHistory.size shouldBe 1
+            pdlEngine.requestHistory.size shouldBe 1
 
             result.get() shouldBe "Ola Nordmann"
         }
 
         test("returns right with formatted name when middle name is present") {
-            val (engine, pdlService) =
+            val (pdlEngine, tilgangsmaskinEngine, pdlService) =
                 createPdlService(
-                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
-                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", "mellom", "Nordmann")))))),
+                    pdlResponses = listOf(MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", "mellom", "Nordmann"))))))),
+                    tilgangsmaskinResponses = listOf(MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX)),
                 )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
-            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
+            tilgangsmaskinEngine.requestHistory.size shouldBe 1
+            pdlEngine.requestHistory.size shouldBe 1
 
             result.get() shouldBe "Ola mellom Nordmann"
         }
 
         test("returns right with empty string when PDL returns person without any name entries") {
-            val (engine, pdlService) =
+            val (pdlEngine, tilgangsmaskinEngine, pdlService) =
                 createPdlService(
-                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
-                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, null))),
+                    pdlResponses = listOf(MockResponse("/graphql", generateHentPersonBolk(Pair(ident, null)))),
+                    tilgangsmaskinResponses = listOf(MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX)),
                 )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
-            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
+            tilgangsmaskinEngine.requestHistory.size shouldBe 1
+            pdlEngine.requestHistory.size shouldBe 1
 
             result.get() shouldBe ""
         }
 
         test("returns right with empty string when PDL response does not contain ident key") {
-            val (engine, pdlService) =
+            val (pdlEngine, tilgangsmaskinEngine, pdlService) =
                 createPdlService(
-                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
-                    MockResponse("/graphql", "{}"),
+                    pdlResponses = listOf(MockResponse("/graphql", "{}")),
+                    tilgangsmaskinResponses = listOf(MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX)),
                 )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
-            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
+            tilgangsmaskinEngine.requestHistory.size shouldBe 1
+            pdlEngine.requestHistory.size shouldBe 1
 
             result.get() shouldBe ""
         }
 
         test("always writes audit log before access check and PDL call") {
-            val (engine, pdlService) =
+            val (pdlEngine, tilgangsmaskinEngine, pdlService) =
                 createPdlService(
-                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
-                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann")))))),
+                    pdlResponses = listOf(MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann"))))))),
+                    tilgangsmaskinResponses = listOf(MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX)),
                 )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
-            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
+            tilgangsmaskinEngine.requestHistory.size shouldBe 1
+            pdlEngine.requestHistory.size shouldBe 1
 
             verify(exactly = 1) { auditLogger.auditLog(any()) }
 

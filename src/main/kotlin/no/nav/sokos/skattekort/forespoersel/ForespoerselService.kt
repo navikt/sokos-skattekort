@@ -12,6 +12,7 @@ import kotlinx.datetime.toKotlinLocalDateTime
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
@@ -32,8 +33,8 @@ private const val DELIMITER = ";"
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselService(
-    private val dataSource: DataSource,
-    private val personService: PersonService,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
+    private val personService: PersonService = PersonService(),
     private val featureToggles: UnleashIntegration,
 ) {
     fun taImotForespoersel(

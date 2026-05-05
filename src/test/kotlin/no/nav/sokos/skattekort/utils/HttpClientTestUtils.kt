@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.config
+package no.nav.sokos.skattekort.utils
 
 import java.net.ProxySelector
 
@@ -11,9 +11,11 @@ import mu.KotlinLogging
 import org.apache.hc.client5.http.impl.routing.SystemDefaultRoutePlanner
 import org.apache.hc.core5.util.TimeValue
 
+import no.nav.sokos.skattekort.config.jsonConfig
+
 private val logger = KotlinLogging.logger {}
 
-val httpClient: HttpClient by lazy {
+fun createTestHttpClient(): HttpClient =
     HttpClient(Apache5) {
         expectSuccess = false
         engine {
@@ -37,4 +39,3 @@ val httpClient: HttpClient by lazy {
             exponentialDelay()
         }
     }
-}

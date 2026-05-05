@@ -9,9 +9,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
 
-import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.listener.WiremockListener.generateProblemDetailResponse
+import no.nav.sokos.skattekort.utils.createTestHttpClient
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 class TilgangsmaskinClientServiceTest :
@@ -22,7 +22,7 @@ class TilgangsmaskinClientServiceTest :
 
         val tilgangsmaskinClientService: TilgangsmaskinClientService by lazy {
             TilgangsmaskinClientService(
-                httpClient = createHttpClient(),
+                httpClient = createTestHttpClient(),
                 tilgangsmaskinUrl = WiremockListener.wiremock.baseUrl(),
                 azuredTokenClient = WiremockListener.azuredTokenClient,
             )

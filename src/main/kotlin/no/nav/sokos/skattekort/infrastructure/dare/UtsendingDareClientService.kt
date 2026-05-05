@@ -12,16 +12,18 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.httpClient as defaultHttpClient
 import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
 private val logger = KotlinLogging.logger {}
 
 class UtsendingDareClientService(
-    private val httpClient: HttpClient,
-    private val darePocUrl: String,
-    private val azuredTokenClient: AzuredTokenClient,
+    private val httpClient: HttpClient = defaultHttpClient,
+    private val darePocUrl: String = PropertiesConfig.darePocProperties.darePocUrl,
+    private val azuredTokenClient: AzuredTokenClient = AzuredTokenClient(defaultHttpClient, PropertiesConfig.darePocProperties.darePocScope),
 ) {
     suspend fun sendSkattekort(skattekortDTO: SkattekortDTO) {
         val accessToken = azuredTokenClient.getSystemToken()

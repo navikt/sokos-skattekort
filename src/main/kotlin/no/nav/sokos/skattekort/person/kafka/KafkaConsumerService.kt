@@ -26,8 +26,8 @@ private const val POLL_DURATION_SECONDS = 10L
 
 @OptIn(ExperimentalAtomicApi::class)
 class KafkaConsumerService(
-    private val kafkaConfig: KafkaConfig,
-    private val identifikatorEndringService: IdentifikatorEndringService,
+    private val kafkaConfig: KafkaConfig = KafkaConfig(),
+    private val identifikatorEndringService: IdentifikatorEndringService = IdentifikatorEndringService(),
 ) : AutoCloseable {
     private val kafkaConsumer: KafkaConsumer<String, Personhendelse> = KafkaConsumer(kafkaConfig.properties)
     private val kafkaClientMetrics: KafkaClientMetrics = KafkaClientMetrics(kafkaConsumer)

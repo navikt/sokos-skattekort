@@ -5,6 +5,8 @@ import javax.sql.DataSource
 
 import kotlinx.coroutines.runBlocking
 
+import com.ibm.mq.jakarta.jms.MQQueue
+import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
 import jakarta.jms.MessageProducer
@@ -14,6 +16,9 @@ import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
+import no.nav.sokos.skattekort.config.DatabaseConfig
+import no.nav.sokos.skattekort.config.MQConfig
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
@@ -31,10 +36,10 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.oppdragz.SkattekortFixedRecordFormatter
 
 class UtsendingService(
-    private val dataSource: DataSource,
-    private val jmsConnectionFactory: ConnectionFactory,
-    private val leveransekoeOppdragZSkattekort: Queue,
-    private val leveransekoeOppdragZSkattekortStor: Queue,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
+    private val jmsConnectionFactory: ConnectionFactory = MQConfig.connectionFactory,
+    private val leveransekoeOppdragZSkattekort: Queue = MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort).apply { messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ },
+    private val leveransekoeOppdragZSkattekortStor: Queue = MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor).apply { messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ },
     private val featureToggles: UnleashIntegration,
     private val utsendingDareClientService: UtsendingDareClientService? = null,
 ) {

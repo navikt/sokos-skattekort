@@ -13,9 +13,9 @@ import no.nav.tilgangsmaskinen.ProblemDetailResponse
 private val logger = KotlinLogging.logger {}
 
 class PdlService(
-    private val pdlClientService: PdlClientService,
-    private val tilgangsmaskinClientService: TilgangsmaskinClientService,
-    private val auditLogger: AuditLogger,
+    private val pdlClientService: PdlClientService = PdlClientService(),
+    private val tilgangsmaskinClientService: TilgangsmaskinClientService = TilgangsmaskinClientService(),
+    private val auditLogger: AuditLogger = AuditLogger(),
 ) {
     suspend fun getPersonNavn(
         ident: String,

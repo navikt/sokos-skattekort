@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.skattekortbestilling
 
 import javax.sql.DataSource
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.forespoersel.Forsystem
@@ -15,7 +16,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
 class StatusService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
 ) {
     fun statusForespoeresel(
         fnr: String,

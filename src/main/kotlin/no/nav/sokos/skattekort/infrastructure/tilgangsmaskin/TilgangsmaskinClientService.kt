@@ -12,6 +12,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.httpClient as defaultHttpClient
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
@@ -19,9 +21,9 @@ import no.nav.tilgangsmaskinen.ProblemDetailResponse
 private val logger = KotlinLogging.logger {}
 
 class TilgangsmaskinClientService(
-    private val httpClient: HttpClient,
-    private val tilgangsmaskinUrl: String,
-    private val azuredTokenClient: AzuredTokenClient,
+    private val httpClient: HttpClient = defaultHttpClient,
+    private val tilgangsmaskinUrl: String = PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinUrl,
+    private val azuredTokenClient: AzuredTokenClient = AzuredTokenClient(defaultHttpClient, PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinScope),
 ) {
     suspend fun checkSaksbehandlerAccess(
         saksbehandlerIdent: String,

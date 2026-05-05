@@ -11,9 +11,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 
 import no.nav.pdl.enums.IdentGruppe
-import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
+import no.nav.sokos.skattekort.utils.createTestHttpClient
 
 internal class PdlClientServiceTest :
     FunSpec({
@@ -21,7 +21,7 @@ internal class PdlClientServiceTest :
 
         val pdlClientService: PdlClientService by lazy {
             PdlClientService(
-                httpClient = createHttpClient(),
+                httpClient = createTestHttpClient(),
                 pdlUrl = WiremockListener.wiremock.baseUrl(),
                 azuredTokenClient = WiremockListener.azuredTokenClient,
             )

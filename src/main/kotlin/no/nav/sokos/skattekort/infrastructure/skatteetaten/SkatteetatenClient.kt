@@ -19,6 +19,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
+import no.nav.sokos.skattekort.config.httpClient as defaultHttpClient
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.METRICS_NAMESPACE
 import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.bestillskattekort.BestillSkattekortRequest
@@ -27,9 +29,9 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSk
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 
 class SkatteetatenClient(
-    private val httpClient: HttpClient,
-    private val skatteetatenUrl: String,
-    private val maskinportenTokenClient: MaskinportenTokenClient,
+    private val httpClient: HttpClient = defaultHttpClient,
+    private val skatteetatenUrl: String = PropertiesConfig.skatteetatenProperties.skatteetatenUrl,
+    private val maskinportenTokenClient: MaskinportenTokenClient = MaskinportenTokenClient(),
 ) {
     suspend fun bestillSkattekort(request: BestillSkattekortRequest): BestillSkattekortResponse =
         circuitBreaker

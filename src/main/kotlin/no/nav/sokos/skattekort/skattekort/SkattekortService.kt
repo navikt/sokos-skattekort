@@ -7,6 +7,7 @@ import io.github.resilience4j.core.functions.Either
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.v1.SkattekortDTO
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
@@ -24,10 +25,10 @@ import no.nav.tilgangsmaskinen.ProblemDetailResponse
 private val logger = KotlinLogging.logger {}
 
 class SkattekortService(
-    private val dataSource: DataSource,
-    private val personService: PersonService,
-    private val tilgangsmaskinClientService: TilgangsmaskinClientService,
-    private val auditLogger: AuditLogger,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
+    private val personService: PersonService = PersonService(),
+    private val tilgangsmaskinClientService: TilgangsmaskinClientService = TilgangsmaskinClientService(),
+    private val auditLogger: AuditLogger = AuditLogger(),
 ) {
     suspend fun getSingleSkattekortForEachYear(
         fnr: String,

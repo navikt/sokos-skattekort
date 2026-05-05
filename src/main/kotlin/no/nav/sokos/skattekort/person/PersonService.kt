@@ -9,6 +9,7 @@ import kotlinx.datetime.toKotlinLocalDate
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -18,8 +19,8 @@ private const val CHUNKED_SIZE = 1000
 private val logger = KotlinLogging.logger { }
 
 class PersonService(
-    private val dataSource: DataSource,
-    private val pdlClientService: PdlClientService,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
+    private val pdlClientService: PdlClientService = PdlClientService(),
 ) {
     fun findPersonIdOrCreatePersonByFnr(
         fnr: Personidentifikator,

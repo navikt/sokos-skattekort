@@ -17,13 +17,13 @@ import io.mockk.verify
 
 import no.nav.pdl.hentpersonbolk.Navn
 import no.nav.pdl.hentpersonbolk.Person
-import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.listener.WiremockListener.generateProblemDetailResponse
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
+import no.nav.sokos.skattekort.utils.createTestHttpClient
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 class PdlServiceTest :
@@ -40,13 +40,13 @@ class PdlServiceTest :
             PdlService(
                 pdlClientService =
                     PdlClientService(
-                        httpClient = createHttpClient(),
+                        httpClient = createTestHttpClient(),
                         pdlUrl = WiremockListener.wiremock.baseUrl(),
                         azuredTokenClient = WiremockListener.azuredTokenClient,
                     ),
                 tilgangsmaskinClientService =
                     TilgangsmaskinClientService(
-                        httpClient = createHttpClient(),
+                        httpClient = createTestHttpClient(),
                         tilgangsmaskinUrl = WiremockListener.wiremock.baseUrl(),
                         azuredTokenClient = WiremockListener.azuredTokenClient,
                     ),

@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
@@ -27,7 +28,7 @@ import no.nav.sokos.skattekort.utsending.UtsendingRepository
 private val logger = KotlinLogging.logger {}
 
 class SkattekortDataService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
 ) {
     fun processSkattekortData() {
         runCatching {

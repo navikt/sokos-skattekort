@@ -27,11 +27,12 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.config.httpClient
 
 private val logger = KotlinLogging.logger {}
 
 class MaskinportenTokenClient(
-    private val client: HttpClient,
+    private val client: HttpClient = httpClient,
 ) {
     private val mutex = Mutex()
     private val timeLimit = Duration.ofSeconds(60)

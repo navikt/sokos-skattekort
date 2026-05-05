@@ -8,6 +8,7 @@ import kotlinx.datetime.toKotlinLocalDate
 
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.person.AuditRepository
@@ -25,9 +26,9 @@ private val logger = KotlinLogging.logger {}
 const val FOLKEREGISTERIDENTIFIKATOR = "FOLKEREGISTERIDENTIFIKATOR_V1"
 
 class IdentifikatorEndringService(
-    private val dataSource: DataSource,
-    private val pdlClientService: PdlClientService,
-    private val personService: PersonService,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
+    private val pdlClientService: PdlClientService = PdlClientService(),
+    private val personService: PersonService = PersonService(),
 ) {
     fun processIdentifikatorEndring(personHendelse: PersonHendelseDTO) {
         if (personHendelse.opplysningstype == FOLKEREGISTERIDENTIFIKATOR) {

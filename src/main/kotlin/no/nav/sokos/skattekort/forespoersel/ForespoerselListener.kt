@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort.forespoersel
 
+import com.ibm.mq.jakarta.jms.MQQueue
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSConsumer
 import jakarta.jms.JMSContext
@@ -7,15 +8,17 @@ import jakarta.jms.Message
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.MQConfig
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.util.TraceUtils
 
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselListener(
-    private val connectionFactory: ConnectionFactory,
+    private val connectionFactory: ConnectionFactory = MQConfig.connectionFactory,
     private val forespoerselService: ForespoerselService,
-    private val forespoerselQueue: Queue,
-    private val forespoerselBoqQueue: Queue,
+    private val forespoerselQueue: Queue = MQQueue(PropertiesConfig.mqProperties.fraForSystemQueue),
+    private val forespoerselBoqQueue: Queue = MQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ"),
 ) : AutoCloseable {
     private var jmsContext: JMSContext? = null
     private var jmsConsumer: JMSConsumer? = null

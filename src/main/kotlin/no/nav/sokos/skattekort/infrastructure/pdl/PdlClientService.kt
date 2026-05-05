@@ -13,10 +13,12 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.httpClient as defaultHttpClient
 import no.nav.pdl.HentIdenterBolk
 import no.nav.pdl.HentPersonBolk
 import no.nav.pdl.hentidenterbolk.IdentInformasjon
 import no.nav.pdl.hentpersonbolk.Person
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.security.AzuredTokenClient
 
@@ -25,9 +27,9 @@ private val logger = KotlinLogging.logger {}
 private const val BEHANDLINGSKATALOGNUMMER = "B749"
 
 class PdlClientService(
-    private val httpClient: HttpClient,
-    private val pdlUrl: String,
-    private val azuredTokenClient: AzuredTokenClient,
+    private val httpClient: HttpClient = defaultHttpClient,
+    private val pdlUrl: String = PropertiesConfig.pdlProperties.pdlUrl,
+    private val azuredTokenClient: AzuredTokenClient = AzuredTokenClient(defaultHttpClient, PropertiesConfig.pdlProperties.pdlScope),
 ) {
     suspend fun getIdenterBolk(identer: List<String>): Map<String, List<IdentInformasjon>> {
         val request = HentIdenterBolk(HentIdenterBolk.Variables(identer))

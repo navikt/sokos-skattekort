@@ -1,8 +1,6 @@
 package no.nav.sokos.skattekort.person
 
-import kotlin.time.Clock
-import kotlin.time.Instant
-import kotlin.time.toKotlinInstant
+import java.time.Instant
 
 import kotliquery.Row
 
@@ -12,7 +10,7 @@ data class Audit(
     val id: AuditId? = null,
     val personId: PersonId,
     val brukerId: String,
-    val opprettet: Instant = Clock.System.now(),
+    val opprettet: Instant = Instant.now(),
     val tag: AuditTag = AuditTag.OPPRETTET_PERSON,
     val informasjon: String?,
 ) {
@@ -20,7 +18,7 @@ data class Audit(
         id = AuditId(row.long("id")),
         personId = PersonId(row.long("person_id")),
         brukerId = row.string("bruker_id"),
-        opprettet = row.instant("opprettet").toKotlinInstant(),
+        opprettet = row.instant("opprettet"),
         tag = AuditTag.fromValue(row.string("tag")),
         informasjon = row.string("informasjon"),
     )
@@ -28,5 +26,5 @@ data class Audit(
 
 @JvmInline
 value class AuditId(
-    val id: Long,
+    val value: Long,
 )

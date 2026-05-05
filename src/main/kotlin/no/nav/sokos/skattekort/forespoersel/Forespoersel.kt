@@ -1,13 +1,12 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import kotlin.time.Clock
-import kotlin.time.Instant
+import java.time.Instant
 
 data class Forespoersel(
     val id: ForespoerselId? = null,
     val dataMottatt: String,
     val forsystem: Forsystem,
-    val opprettet: Instant = Clock.System.now(),
+    val opprettet: Instant = Instant.now(),
 )
 
 @JvmInline

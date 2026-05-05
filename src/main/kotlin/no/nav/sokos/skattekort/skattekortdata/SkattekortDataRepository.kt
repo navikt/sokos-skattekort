@@ -64,7 +64,7 @@ object SkattekortDataRepository {
                     opprettet = row.instant("opprettet"),
                     fnr = Personidentifikator(row.string("fnr")),
                     skattekortId = row.longOrNull("skattekort_id")?.let { SkattekortId(it) },
-                    type = BestillingsbatchType.valueOf(row.string("type")),
+                    type = row.stringOrNull("type")?.let { BestillingsbatchType.valueOf(it) },
                 )
             },
         )

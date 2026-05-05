@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import kotlin.time.toKotlinInstant
-
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -73,7 +71,7 @@ object ForespoerselRepository {
             id = ForespoerselId(row.long("id")),
             forsystem = Forsystem.fromValue(row.string("forsystem")),
             dataMottatt = row.string("data_mottatt"),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
+            opprettet = row.instant("opprettet"),
         )
     }
 }

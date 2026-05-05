@@ -2,12 +2,8 @@ package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
 import java.math.RoundingMode
-
-import kotlin.time.Clock
-import kotlin.time.Instant
-import kotlin.time.toKotlinInstant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toKotlinLocalDate
+import java.time.Instant
+import java.time.LocalDate
 
 import kotliquery.Row
 import mu.KotlinLogging
@@ -49,7 +45,7 @@ data class Skattekort(
     val inntektsaar: Int,
     val kilde: String,
     val resultatForSkattekort: ResultatForSkattekort,
-    val opprettet: Instant = Clock.System.now(),
+    val opprettet: Instant = Instant.now(),
     val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
     val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
 ) {
@@ -57,12 +53,12 @@ data class Skattekort(
         id = SkattekortId(row.long("id")),
         generertFra = row.longOrNull("generert_fra")?.let { SkattekortId(it) },
         personId = PersonId(row.long("person_id")),
-        utstedtDato = row.localDateOrNull("utstedt_dato")?.toKotlinLocalDate(),
+        utstedtDato = row.localDateOrNull("utstedt_dato"),
         identifikator = row.stringOrNull("identifikator"),
         inntektsaar = row.int("inntektsaar"),
         kilde = row.string("kilde"),
         resultatForSkattekort = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort")),
-        opprettet = row.instant("opprettet").toKotlinInstant(),
+        opprettet = row.instant("opprettet"),
         forskuddstrekkList = forskuddstrekkList,
         tilleggsopplysningList = tilleggsopplysningList,
     )

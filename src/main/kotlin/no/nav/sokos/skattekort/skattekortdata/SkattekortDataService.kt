@@ -60,7 +60,7 @@ class SkattekortDataService(
         tx: TransactionalSession,
         personId: PersonId,
         inntektsaar: Int,
-        type: BestillingsbatchType,
+        type: BestillingsbatchType?,
     ) {
         AbonnementRepository.findForsystemAndFnr(tx, personId, inntektsaar).forEach { (system, fnr) ->
             val forsystem =

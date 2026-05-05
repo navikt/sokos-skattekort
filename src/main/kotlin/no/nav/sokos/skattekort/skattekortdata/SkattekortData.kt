@@ -12,7 +12,7 @@ data class SkattekortData(
     val dataMottatt: String,
     val fnr: Personidentifikator,
     val opprettet: Instant,
-    val type: BestillingsbatchType,
+    val type: BestillingsbatchType? = null,
     val skattekortId: SkattekortId? = null,
 )
 

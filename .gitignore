@@ -44,3 +44,4 @@ defaults.properties
 privateKey
 .kotlin
 mqjms.log.*
+jdtls-data/

@@ -21,8 +21,8 @@ class UnleashIntegration(
     private val onForespoerselListenerChanged: (Boolean) -> Unit = {},
 ) {
     private val unleashClient: Unleash
-    private val appProperties = PropertiesConfig.getApplicationProperties()
-    private val unleashProps = PropertiesConfig.getUnleashProperties()
+    private val appProperties = PropertiesConfig.applicationProperties
+    private val unleashProps = PropertiesConfig.unleashProperties
 
     // Kill switcher:
     fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_UTSENDINGER_ENABLED)

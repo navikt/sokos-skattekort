@@ -55,7 +55,7 @@ object DatabaseConfig {
     }
 
     private fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
-        val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
+        val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.postgresProperties
         return HikariConfig().apply {
             poolName = poolname
             maximumPoolSize = 15

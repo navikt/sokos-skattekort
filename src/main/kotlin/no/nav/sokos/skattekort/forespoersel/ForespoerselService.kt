@@ -43,7 +43,7 @@ class ForespoerselService(
         runCatching {
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $message" }
 
-            val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+            val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
             val forespoerselInput =
                 when {
                     message.startsWith("<") -> return

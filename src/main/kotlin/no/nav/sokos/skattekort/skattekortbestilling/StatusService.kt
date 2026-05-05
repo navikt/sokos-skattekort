@@ -22,7 +22,7 @@ class StatusService(
         aar: Int,
         forsystem: String,
     ): Status {
-        val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        val kategoriMapper: Foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         if (!kategoriMapper.kanBestilleSkattekort(fnr)) {
             return Status.UGYLDIG_FNR
         }

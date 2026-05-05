@@ -1,9 +1,8 @@
 package no.nav.sokos.skattekort.skattekort
 
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
-
-import kotlin.time.Instant
 
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 
@@ -110,7 +109,7 @@ fun aDomainSkattekort(
     forskuddstrekkList = listOf(forskuddstrekk),
     personId = PersonId(personId),
     identifikator = "01410100001",
-    utstedtDato = kotlinx.datetime.LocalDate.parse("2021-01-01"),
+    utstedtDato = LocalDate.parse("2021-01-01"),
     kilde = "foo",
 )
 
@@ -231,8 +230,8 @@ fun aBatch(
         status = status,
         type = type,
         bestillingsreferanse = bestillingsreferanse,
-        oppdatert = Instant.DISTANT_PAST,
-        opprettet = Instant.DISTANT_PAST,
+        oppdatert = Instant.MIN,
+        opprettet = Instant.MIN,
         dataSendt = "",
     )
 

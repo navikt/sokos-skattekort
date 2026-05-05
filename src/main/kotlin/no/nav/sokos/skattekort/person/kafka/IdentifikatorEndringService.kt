@@ -4,7 +4,6 @@ import java.time.LocalDate
 import javax.sql.DataSource
 
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.toKotlinLocalDate
 
 import mu.KotlinLogging
 
@@ -81,7 +80,7 @@ class IdentifikatorEndringService(
                             tx,
                             Foedselsnummer(
                                 personId = id,
-                                gjelderFom = LocalDate.now().toKotlinLocalDate(),
+                                gjelderFom = LocalDate.now(),
                                 fnr = Personidentifikator(identifikasjonsnummer),
                             ),
                         )

@@ -13,7 +13,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
-    id("com.expediagroup.graphql") version "9.1.0"
+    id("com.expediagroup.graphql") version "9.2.0"
     id("org.openapi.generator") version "7.21.0"
 
     application
@@ -30,7 +30,7 @@ repositories {
 }
 
 val resilience4jVersion = "2.4.0"
-val ktorVersion = "3.4.2"
+val ktorVersion = "3.4.3"
 val nimbusVersion = "10.9"
 val logbackVersion = "1.5.32"
 val logstashVersion = "9.0"
@@ -46,11 +46,11 @@ val mockkVersion = "1.14.9"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "2.0.5"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "12.4.0"
+val flywayVersion = "12.5.0"
 val postgresVersion = "42.7.10"
 val activemqVersion = "2.53.0"
 val ibmmqVersion = "9.4.5.0"
-val opentelemetryVersion = "2.26.1-alpha"
+val opentelemetryVersion = "2.27.0-alpha"
 val swaggerRequestValidatorVersion = "2.46.1"
 val kafkaClientsVersion = "8.1.1-ce"
 val avroVersion = "1.12.1"

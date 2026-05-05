@@ -1,9 +1,7 @@
 package no.nav.sokos.skattekort.person
 
-import kotlinx.datetime.LocalDate
-import kotlinx.serialization.Serializable
+import java.time.LocalDate
 
-@Serializable
 data class Foedselsnummer(
     val id: FoedselsnummerId? = null,
     val personId: PersonId? = null,
@@ -11,13 +9,11 @@ data class Foedselsnummer(
     val fnr: Personidentifikator,
 )
 
-@Serializable
 @JvmInline
 value class FoedselsnummerId(
     val value: Long,
 )
 
-@Serializable
 @JvmInline
 value class Personidentifikator(
     val value: String,

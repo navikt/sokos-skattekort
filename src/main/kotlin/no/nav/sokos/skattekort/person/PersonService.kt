@@ -4,7 +4,6 @@ import java.time.LocalDate
 import javax.sql.DataSource
 
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.toKotlinLocalDate
 
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
@@ -100,7 +99,7 @@ class PersonService(
                                 tx,
                                 Foedselsnummer(
                                     personId = personId,
-                                    gjelderFom = LocalDate.now().toKotlinLocalDate(),
+                                    gjelderFom = LocalDate.now(),
                                     fnr = Personidentifikator(ident),
                                 ),
                             )

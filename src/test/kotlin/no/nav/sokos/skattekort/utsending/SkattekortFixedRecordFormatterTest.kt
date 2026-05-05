@@ -1,7 +1,8 @@
 package no.nav.sokos.skattekort.utsending
 
-import kotlin.time.Instant
-import kotlinx.datetime.LocalDate
+import java.time.Instant
+import java.time.LocalDate
+
 import kotlinx.serialization.json.Json
 
 import io.kotest.core.spec.style.FunSpec

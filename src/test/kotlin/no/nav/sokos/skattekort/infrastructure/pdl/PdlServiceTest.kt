@@ -2,12 +2,10 @@ package no.nav.sokos.skattekort.infrastructure.pdl
 
 import kotlinx.serialization.json.Json
 
-import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
-import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.ktor.client.engine.mock.MockEngine
 import io.ktor.http.HttpStatusCode
 import io.mockk.clearMocks
 import io.mockk.every
@@ -18,17 +16,19 @@ import io.mockk.verify
 import no.nav.pdl.hentpersonbolk.Navn
 import no.nav.pdl.hentpersonbolk.Person
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
-import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.listener.WiremockListener.generateProblemDetailResponse
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
-import no.nav.sokos.skattekort.utils.createTestHttpClient
+import no.nav.sokos.skattekort.utils.MockHttpClient
+import no.nav.sokos.skattekort.utils.MockResponse
+import no.nav.sokos.skattekort.utils.PathMatchType
+import no.nav.sokos.skattekort.utils.azuredTokenClient
+import no.nav.sokos.skattekort.utils.generateHentPersonBolk
+import no.nav.sokos.skattekort.utils.generateProblemDetailResponse
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 class PdlServiceTest :
     FunSpec({
-        extensions(listOf(WiremockListener))
 
         val messageSlot = slot<AuditLogg>()
         val auditLogger =
@@ -36,26 +36,19 @@ class PdlServiceTest :
                 every { auditLog(capture(messageSlot)) } returns Unit
             }
 
-        val pdlService: PdlService by lazy {
-            PdlService(
-                pdlClientService =
-                    PdlClientService(
-                        httpClient = createTestHttpClient(),
-                        pdlUrl = WiremockListener.wiremock.baseUrl(),
-                        azuredTokenClient = WiremockListener.azuredTokenClient,
-                    ),
-                tilgangsmaskinClientService =
-                    TilgangsmaskinClientService(
-                        httpClient = createTestHttpClient(),
-                        tilgangsmaskinUrl = WiremockListener.wiremock.baseUrl(),
-                        azuredTokenClient = WiremockListener.azuredTokenClient,
-                    ),
-                auditLogger = auditLogger,
-            )
-        }
-
         val ident = "12345678910"
         val saksbehandler = mockk<Saksbehandler> { every { this@mockk.ident } returns "Z123456" }
+
+        fun createPdlService(vararg responses: MockResponse): Pair<MockEngine, PdlService> {
+            val engine = MockHttpClient.getEngine(*responses)
+            val client = MockHttpClient.getClient(engine)
+            return engine to
+                PdlService(
+                    pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient),
+                    tilgangsmaskinClientService = TilgangsmaskinClientService(httpClient = client, tilgangsmaskinUrl = "http://localhost", azuredTokenClient = azuredTokenClient),
+                    auditLogger = auditLogger,
+                )
+        }
 
         beforeTest {
             clearMocks(auditLogger, answers = false, recordedCalls = true, childMocks = false)
@@ -70,65 +63,83 @@ class PdlServiceTest :
                         begrunnelse = "Du har ikke tilgang til brukere med fortrolig adresse",
                     )
 
-            WiremockListener.wiremockTilgangsmaskinStub(response = Json.encodeToString(problemDetailResponse), HttpStatusCode.Forbidden)
+            val (engine, pdlService) =
+                createPdlService(
+                    MockResponse("/api/v1/ccf/kjerne/", Json.encodeToString(problemDetailResponse), HttpStatusCode.Forbidden, PathMatchType.PREFIX),
+                )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            WiremockListener.wiremock.verify(0, postRequestedFor(urlEqualTo("/graphql")))
+            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 0
 
             result.left shouldBe problemDetailResponse
         }
 
         test("returns right with formatted name when middle name is null") {
-            WiremockListener.wiremockTilgangsmaskinStub()
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann"))))))
+            val (engine, pdlService) =
+                createPdlService(
+                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
+                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann")))))),
+                )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlPathMatching("/api/v1/ccf/kjerne/.*")))
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlEqualTo("/graphql")))
+            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
+            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
 
             result.get() shouldBe "Ola Nordmann"
         }
 
         test("returns right with formatted name when middle name is present") {
-            WiremockListener.wiremockTilgangsmaskinStub()
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", "mellom", "Nordmann"))))))
+            val (engine, pdlService) =
+                createPdlService(
+                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
+                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", "mellom", "Nordmann")))))),
+                )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlPathMatching("/api/v1/ccf/kjerne/.*")))
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlEqualTo("/graphql")))
+            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
+            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
 
             result.get() shouldBe "Ola mellom Nordmann"
         }
 
         test("returns right with empty string when PDL returns person without any name entries") {
-            WiremockListener.wiremockTilgangsmaskinStub()
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentPersonBolk(Pair(ident, null)))
+            val (engine, pdlService) =
+                createPdlService(
+                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
+                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, null))),
+                )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlPathMatching("/api/v1/ccf/kjerne/.*")))
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlEqualTo("/graphql")))
+            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
+            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
 
             result.get() shouldBe ""
         }
 
         test("returns right with empty string when PDL response does not contain ident key") {
-            WiremockListener.wiremockTilgangsmaskinStub()
-            WiremockListener.wiremockPDLStub("{}")
+            val (engine, pdlService) =
+                createPdlService(
+                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
+                    MockResponse("/graphql", "{}"),
+                )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlPathMatching("/api/v1/ccf/kjerne/.*")))
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlEqualTo("/graphql")))
+            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
+            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
 
             result.get() shouldBe ""
         }
 
         test("always writes audit log before access check and PDL call") {
-            WiremockListener.wiremockTilgangsmaskinStub()
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann"))))))
+            val (engine, pdlService) =
+                createPdlService(
+                    MockResponse("/api/v1/ccf/kjerne/", "", HttpStatusCode.NoContent, PathMatchType.PREFIX),
+                    MockResponse("/graphql", generateHentPersonBolk(Pair(ident, Person(listOf(Navn("Ola", null, "Nordmann")))))),
+                )
 
             val result = pdlService.getPersonNavn(ident, saksbehandler)
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlPathMatching("/api/v1/ccf/kjerne/.*")))
-            WiremockListener.wiremock.verify(1, postRequestedFor(urlEqualTo("/graphql")))
+            engine.requestHistory.count { it.url.encodedPath.startsWith("/api/v1/ccf/kjerne/") } shouldBe 1
+            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 1
 
             verify(exactly = 1) { auditLogger.auditLog(any()) }
 

@@ -6,8 +6,6 @@ import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.listener.WiremockListener.wiremockPDLStub
 import no.nav.sokos.skattekort.person.Audit
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
@@ -17,23 +15,20 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.DBTestUtils
+import no.nav.sokos.skattekort.utils.MockHttpClient
+import no.nav.sokos.skattekort.utils.MockResponse
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
-import no.nav.sokos.skattekort.utils.createTestHttpClient
+import no.nav.sokos.skattekort.utils.azuredTokenClient
 
 class IdentifikatorEndringServiceTest :
     FunSpec({
-        extensions(DbListener, WiremockListener)
+        extensions(DbListener)
 
-        val pdlClientService: PdlClientService by lazy {
-            PdlClientService(
-                httpClient = createTestHttpClient(),
-                pdlUrl = WiremockListener.wiremock.baseUrl(),
-                azuredTokenClient = WiremockListener.azuredTokenClient,
-            )
-        }
-
-        val identifikatorEndringService: IdentifikatorEndringService by lazy {
-            IdentifikatorEndringService(
+        fun createIdentifikatorEndringService(vararg responses: MockResponse): IdentifikatorEndringService {
+            val engine = MockHttpClient.getEngine(*responses)
+            val client = MockHttpClient.getClient(engine)
+            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            return IdentifikatorEndringService(
                 dataSource = DbListener.dataSource,
                 pdlClientService = pdlClientService,
                 personService = PersonService(DbListener.dataSource, pdlClientService),
@@ -44,7 +39,7 @@ class IdentifikatorEndringServiceTest :
             DbListener.loadDataSet("database/person/persondata.sql")
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
-            wiremockPDLStub(pdlResponse)
+            val identifikatorEndringService = createIdentifikatorEndringService(MockResponse("/graphql", pdlResponse))
 
             val hendelse = getPersonHendelseMockData()
             val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
@@ -67,7 +62,7 @@ class IdentifikatorEndringServiceTest :
             DbListener.loadDataSet("database/person/persondata.sql")
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
-            wiremockPDLStub(pdlResponse)
+            val identifikatorEndringService = createIdentifikatorEndringService(MockResponse("/graphql", pdlResponse))
 
             val hendelse =
                 getPersonHendelseMockData().copy(
@@ -92,6 +87,8 @@ class IdentifikatorEndringServiceTest :
         test("processIdentifikatorEndring ignorer med andre opplysningstype") {
             DbListener.loadDataSet("database/person/persondata.sql")
 
+            val identifikatorEndringService = createIdentifikatorEndringService()
+
             val hendelse =
                 getPersonHendelseMockData().copy(
                     endringstype = EndringstypeDTO.OPPHOERT,
@@ -108,7 +105,7 @@ class IdentifikatorEndringServiceTest :
             DbListener.loadDataSet("database/person/persondata.sql")
 
             val pdlResponse = readFile("/pdl/hentIdenterBolkOkUtenHistoriskResponse.json")
-            wiremockPDLStub(pdlResponse)
+            val identifikatorEndringService = createIdentifikatorEndringService(MockResponse("/graphql", pdlResponse))
 
             val hendelse = getPersonHendelseMockData()
             val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
@@ -121,6 +118,8 @@ class IdentifikatorEndringServiceTest :
 
         test("processIdentifikatorEndring ignorer med folkeregisteridentifikator ikke er FOLKEREGISTERIDENTIFIKATOR_V1") {
             DbListener.loadDataSet("database/person/persondata.sql")
+
+            val identifikatorEndringService = createIdentifikatorEndringService()
 
             val hendelse =
                 getPersonHendelseMockData().copy(

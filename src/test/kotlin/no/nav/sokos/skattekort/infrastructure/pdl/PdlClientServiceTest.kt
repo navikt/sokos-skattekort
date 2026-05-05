@@ -1,46 +1,30 @@
 package no.nav.sokos.skattekort.infrastructure.pdl
 
-import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
-import com.github.tomakehurst.wiremock.common.ContentTypes
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 
 import no.nav.pdl.enums.IdentGruppe
-import no.nav.sokos.skattekort.listener.WiremockListener
+import no.nav.sokos.skattekort.utils.MockHttpClient
+import no.nav.sokos.skattekort.utils.MockResponse
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
-import no.nav.sokos.skattekort.utils.createTestHttpClient
+import no.nav.sokos.skattekort.utils.azuredTokenClient
 
 internal class PdlClientServiceTest :
     FunSpec({
-        extensions(listOf(WiremockListener))
 
-        val pdlClientService: PdlClientService by lazy {
-            PdlClientService(
-                httpClient = createTestHttpClient(),
-                pdlUrl = WiremockListener.wiremock.baseUrl(),
-                azuredTokenClient = WiremockListener.azuredTokenClient,
-            )
+        fun createPdlClientService(
+            responseBody: String,
+            statusCode: HttpStatusCode = HttpStatusCode.OK,
+        ): PdlClientService {
+            val engine = MockHttpClient.getEngine(MockResponse("/graphql", responseBody, statusCode))
+            val client = MockHttpClient.getClient(engine)
+            return PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
         }
 
         test("hent identer fra PDL gir respons med identer") {
-
-            val identerFunnetOkResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
-
-            WiremockListener.wiremock.stubFor(
-                WireMock
-                    .post(urlEqualTo("/graphql"))
-                    .willReturn(
-                        aResponse()
-                            .withHeader(HttpHeaders.ContentType, ContentTypes.APPLICATION_JSON)
-                            .withStatus(HttpStatusCode.OK.value)
-                            .withBody(identerFunnetOkResponse),
-                    ),
-            )
+            val pdlClientService = createPdlClientService(readFile("/pdl/hentIdenterBolkOkResponse.json"))
 
             val response = pdlClientService.getIdenterBolk(listOf("12345678912", "01111953488", "40074203226"))
 
@@ -61,19 +45,7 @@ internal class PdlClientServiceTest :
         }
 
         test("hent identer fra PDL med tom array request gir PdlException") {
-
-            val identerFunnetFeilResponse = readFile("/pdl/hentIdenterBolkFeilResponse.json")
-
-            WiremockListener.wiremock.stubFor(
-                WireMock
-                    .post(urlEqualTo("/graphql"))
-                    .willReturn(
-                        aResponse()
-                            .withHeader(HttpHeaders.ContentType, ContentTypes.APPLICATION_JSON)
-                            .withStatus(HttpStatusCode.OK.value)
-                            .withBody(identerFunnetFeilResponse),
-                    ),
-            )
+            val pdlClientService = createPdlClientService(readFile("/pdl/hentIdenterBolkFeilResponse.json"))
 
             val exception =
                 shouldThrow<PdlException> {
@@ -84,19 +56,7 @@ internal class PdlClientServiceTest :
         }
 
         test("hent identer fra PDL uten accesstoken returnerer at clienten ikke er autentisert") {
-
-            val ikkeAutentisertResponse = readFile("/pdl/ikkeAutentisertResponse.json")
-
-            WiremockListener.wiremock.stubFor(
-                WireMock
-                    .post(urlEqualTo("/graphql"))
-                    .willReturn(
-                        aResponse()
-                            .withHeader(HttpHeaders.ContentType, ContentTypes.APPLICATION_JSON)
-                            .withStatus(HttpStatusCode.OK.value)
-                            .withBody(ikkeAutentisertResponse),
-                    ),
-            )
+            val pdlClientService = createPdlClientService(readFile("/pdl/ikkeAutentisertResponse.json"))
 
             val exception =
                 shouldThrow<PdlException> {

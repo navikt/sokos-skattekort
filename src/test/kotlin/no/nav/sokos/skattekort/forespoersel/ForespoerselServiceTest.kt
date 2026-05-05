@@ -17,7 +17,6 @@ import io.kotest.matchers.shouldBe
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
@@ -27,7 +26,10 @@ import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.DBTestUtils
-import no.nav.sokos.skattekort.utils.createTestHttpClient
+import no.nav.sokos.skattekort.utils.MockHttpClient
+import no.nav.sokos.skattekort.utils.MockResponse
+import no.nav.sokos.skattekort.utils.azuredTokenClient
+import no.nav.sokos.skattekort.utils.generateHentIdenterBolk
 import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingId
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
@@ -35,27 +37,19 @@ import no.nav.sokos.skattekort.utsending.UtsendingRepository
 @OptIn(ExperimentalTime::class)
 class ForespoerselServiceTest :
     FunSpec({
-        extensions(DbListener, WiremockListener)
+        extensions(DbListener)
 
-        val pdlClientService: PdlClientService by lazy {
-            PdlClientService(
-                httpClient = createTestHttpClient(),
-                pdlUrl = WiremockListener.wiremock.baseUrl(),
-                azuredTokenClient = WiremockListener.azuredTokenClient,
-            )
-        }
-
-        val personService: PersonService by lazy {
-            PersonService(DbListener.dataSource, pdlClientService)
-        }
-
-        val forespoerselService: ForespoerselService by lazy {
-            ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
+        fun createForespoerselService(vararg responses: MockResponse): ForespoerselService {
+            val engine = MockHttpClient.getEngine(*responses)
+            val client = MockHttpClient.getClient(engine)
+            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val personService = PersonService(DbListener.dataSource, pdlClientService)
+            return ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("01010112345")))
                 val osMessage = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(osMessage)
@@ -80,7 +74,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("12345678901", "23456789012"))
+                val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("12345678901", "23456789012")))
                 val osMessage = "OS;2025;12345678901;23456789012;"
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -118,7 +112,7 @@ class ForespoerselServiceTest :
 
         test("mot slutten av året skal vi også bestille for neste år") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("01010112345")))
                 val osMessage = "OS;2025;01010112345"
                 forespoerselService.taImotForespoersel(osMessage)
 
@@ -141,7 +135,7 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel skal parse message fra MANUELL og brukerId og oppretter forespoersel, abonnement, bestilling og utsending") {
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+            val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("01010112345")))
             val message = "MANUELL;2026;01010112345"
             val brukerId = "Z123456"
 
@@ -169,7 +163,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme person og årstall som en tidligere forespoersel, skal det opprette kun en bestilling") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("01010112345")))
                 val message1 = "OS;2025;01010112345"
                 val message2 = "MANUELL;2025;01010112345"
 
@@ -195,7 +189,7 @@ class ForespoerselServiceTest :
 
         test("taImotForespoersel med samme forsystem, person og årstall som en tidligere forespoersel, skal det kun audit logges dersom en utsending ikke er utført") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("01010112345")))
                 val message = "OS;2025;01010112345"
 
                 forespoerselService.taImotForespoersel(message)
@@ -221,6 +215,7 @@ class ForespoerselServiceTest :
         test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
             DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
+            val forespoerselService = createForespoerselService()
             val message = "OS;2025;01010112345"
 
             forespoerselService.taImotForespoersel(message)
@@ -244,7 +239,7 @@ class ForespoerselServiceTest :
 
         test("Skal ta i mot forespørsler fra databasetabell") {
             DbListener.loadDataSet("database/forespoersler/forespoersel_fra_tabell.sql")
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("19876543210"))
+            val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("19876543210")))
 
             forespoerselService.cronForespoerselInput()
             DbListener.dataSource.transaction { tx ->
@@ -272,7 +267,7 @@ class ForespoerselServiceTest :
 
         test("skal ikke kaste en PSQLException: ERROR: duplicate key value violates unique constraint") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val forespoerselService = createForespoerselService(MockResponse("/graphql", generateHentIdenterBolk("01010112345")))
 
                 val message = "OS;2025;01010112345"
                 val startLatch = CountDownLatch(1)
@@ -306,10 +301,8 @@ class ForespoerselServiceTest :
                 thread1.start()
                 thread2.start()
 
-                // Signal both threads to start simultaneously
                 startLatch.countDown()
 
-                // Wait for completion
                 completeLatch.await()
 
                 DbListener.dataSource.transaction { tx ->

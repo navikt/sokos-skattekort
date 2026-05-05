@@ -3,8 +3,6 @@ package no.nav.sokos.skattekort.person
 import kotlin.text.get
 import kotlinx.serialization.json.Json
 
-import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldNotContainNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -18,34 +16,32 @@ import no.nav.pdl.hentidenterbolk.IdentInformasjon
 import no.nav.sokos.skattekort.infrastructure.pdl.GraphQLResponse
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.listener.WiremockListener.generateHentIdenterBolk
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
-import no.nav.sokos.skattekort.utils.createTestHttpClient
+import no.nav.sokos.skattekort.utils.MockHttpClient
+import no.nav.sokos.skattekort.utils.MockResponse
+import no.nav.sokos.skattekort.utils.azuredTokenClient
+import no.nav.sokos.skattekort.utils.generateHentIdenterBolk
 
 class PersonServiceTest :
     FunSpec({
-        extensions(DbListener, WiremockListener)
+        extensions(DbListener)
 
-        val pdlClientService: PdlClientService by lazy {
-            PdlClientService(
-                httpClient = createTestHttpClient(),
-                pdlUrl = WiremockListener.wiremock.baseUrl(),
-                azuredTokenClient = WiremockListener.azuredTokenClient,
-            )
-        }
-
-        val personService by lazy {
-            PersonService(DbListener.dataSource, pdlClientService)
+        fun createPersonService(vararg responses: MockResponse): PersonService {
+            val engine = MockHttpClient.getEngine(*responses)
+            val client = MockHttpClient.getClient(engine)
+            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            return PersonService(DbListener.dataSource, pdlClientService)
         }
 
         test("Skal ikke kaste exception når det kommer inn en tom liste") {
+            val personService = createPersonService()
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(emptyList(), AUDIT_SYSTEM)
             result.size shouldBe 0
         }
 
         test("findOrCreatePersonByFnr skal returnere en person som er registrert") {
             val fnr = "10101000010"
+            val personService = createPersonService()
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.dataSource.transaction { tx ->
                 val (personId, opprettet) =
@@ -68,6 +64,7 @@ class PersonServiceTest :
 
         test("findOrCreatePersonByFnr skal returnere ny registrert person") {
             val fnr = "15467834260"
+            val personService = createPersonService()
             DbListener.loadDataSet("database/person/persondata.sql")
             DbListener.dataSource.transaction { tx ->
                 val (personId, opprettet) =
@@ -92,7 +89,7 @@ class PersonServiceTest :
             val fnrList = listOf("10101000010", "10101000011", "10101000012")
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
+            val personService = createPersonService(MockResponse("/graphql", generateHentIdenterBolk(*fnrList.toTypedArray())))
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
             result.size shouldBe 3
@@ -105,7 +102,7 @@ class PersonServiceTest :
             val fnrList = listOf("15467834260")
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
+            val personService = createPersonService(MockResponse("/graphql", generateHentIdenterBolk(*fnrList.toTypedArray())))
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
             result.size shouldBe 1
@@ -118,25 +115,29 @@ class PersonServiceTest :
             val fnrList = listOf(oldFnr)
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(
-                Json.encodeToString(
-                    GraphQLResponse(
-                        HentIdenterBolk.Result(
-                            hentIdenterBolk =
-                                listOf(
-                                    HentIdenterBolkResult(
-                                        ident = oldFnr,
-                                        identer =
-                                            listOf(
-                                                IdentInformasjon(newFnr, false, IdentGruppe.FOLKEREGISTERIDENT),
-                                                IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+            val personService =
+                createPersonService(
+                    MockResponse(
+                        "/graphql",
+                        Json.encodeToString(
+                            GraphQLResponse(
+                                HentIdenterBolk.Result(
+                                    hentIdenterBolk =
+                                        listOf(
+                                            HentIdenterBolkResult(
+                                                ident = oldFnr,
+                                                identer =
+                                                    listOf(
+                                                        IdentInformasjon(newFnr, false, IdentGruppe.FOLKEREGISTERIDENT),
+                                                        IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+                                                    ),
                                             ),
-                                    ),
+                                        ),
                                 ),
+                            ),
                         ),
                     ),
-                ),
-            )
+                )
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
             result[oldFnr] shouldNotBe null
@@ -156,7 +157,7 @@ class PersonServiceTest :
             val fnrList = listOf(existingFnr, newFnr)
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(newFnr))
+            val personService = createPersonService(MockResponse("/graphql", generateHentIdenterBolk(newFnr)))
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
             result.size shouldBe 2
@@ -169,16 +170,19 @@ class PersonServiceTest :
             val fnrList = listOf(invalidFnr)
             DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(
-                Json.encodeToString(
-                    GraphQLResponse(
-                        HentIdenterBolk.Result(
-                            hentIdenterBolk =
-                                listOf(),
+            val personService =
+                createPersonService(
+                    MockResponse(
+                        "/graphql",
+                        Json.encodeToString(
+                            GraphQLResponse(
+                                HentIdenterBolk.Result(
+                                    hentIdenterBolk = listOf(),
+                                ),
+                            ),
                         ),
                     ),
-                ),
-            )
+                )
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
             result[invalidFnr] shouldBe null
         }
@@ -186,12 +190,16 @@ class PersonServiceTest :
         test("getPersonIdAndCheckFoedselsnumreIsUpdated skal håndtere store mengder fnr med chunking") {
             val fnrList = (1..100).map { "1010100%04d".format(it) }
 
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
+            val engine = MockHttpClient.getEngine(MockResponse("/graphql", generateHentIdenterBolk(*fnrList.toTypedArray())))
+            val client = MockHttpClient.getClient(engine)
+            val pdlClientService = PdlClientService(httpClient = client, pdlUrl = "http://localhost", azuredTokenClient = azuredTokenClient)
+            val personService = PersonService(DbListener.dataSource, pdlClientService)
+
             DbListener.loadDataSet("database/person/persondata.sql")
 
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM, 30)
 
-            WiremockListener.wiremock.verify(4, postRequestedFor(urlEqualTo("/graphql")))
+            engine.requestHistory.count { it.url.encodedPath == "/graphql" } shouldBe 4
             result.size shouldBe fnrList.size
             result.values.shouldNotContainNull()
         }
@@ -204,25 +212,29 @@ class PersonServiceTest :
             DbListener.loadDataSet("database/person/persondata.sql")
 
             // Mock PDL-responsen til å si at oldFnr i dag peker til existingActiveIdent som ikke er historisk
-            WiremockListener.wiremockPDLStub(
-                Json.encodeToString(
-                    GraphQLResponse(
-                        HentIdenterBolk.Result(
-                            hentIdenterBolk =
-                                listOf(
-                                    HentIdenterBolkResult(
-                                        ident = oldFnr,
-                                        identer =
-                                            listOf(
-                                                IdentInformasjon(existingActiveIdent, false, IdentGruppe.FOLKEREGISTERIDENT),
-                                                IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+            val personService =
+                createPersonService(
+                    MockResponse(
+                        "/graphql",
+                        Json.encodeToString(
+                            GraphQLResponse(
+                                HentIdenterBolk.Result(
+                                    hentIdenterBolk =
+                                        listOf(
+                                            HentIdenterBolkResult(
+                                                ident = oldFnr,
+                                                identer =
+                                                    listOf(
+                                                        IdentInformasjon(existingActiveIdent, false, IdentGruppe.FOLKEREGISTERIDENT),
+                                                        IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+                                                    ),
                                             ),
-                                    ),
+                                        ),
                                 ),
+                            ),
                         ),
                     ),
-                ),
-            )
+                )
 
             val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 

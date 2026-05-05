@@ -57,7 +57,6 @@ val avroVersion = "1.12.1"
 val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "9.2.0"
-val wiremockVersion = "3.13.2"
 val unleashedVersion = "12.2.1"
 
 dependencies {
@@ -142,7 +141,6 @@ dependencies {
     testImplementation("org.apache.activemq:artemis-jakarta-server:$activemqVersion")
     testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
-    testImplementation("org.wiremock:wiremock:$wiremockVersion")
 }
 
 // Transitive dependencvy lz4-java is fixed only in fork at.yawk, therefore this reference

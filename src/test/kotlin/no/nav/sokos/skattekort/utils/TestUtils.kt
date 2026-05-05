@@ -9,52 +9,10 @@ import javax.sql.DataSource
 import kotlin.time.Duration.Companion.seconds
 
 import io.kotest.assertions.nondeterministic.eventuallyConfig
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.application.pluginOrNull
-import io.ktor.server.config.MapApplicationConfig
-import io.ktor.server.plugins.di.DI
-import io.ktor.server.plugins.di.DependencyConflictPolicy
-import io.ktor.server.plugins.di.DependencyConflictResult
-import io.ktor.server.plugins.di.DependencyInjectionConfig
-import io.ktor.server.plugins.di.dependencies
-import io.ktor.server.testing.ApplicationTestBuilder
-import io.ktor.server.testing.testApplication
-import io.mockk.mockk
-import jakarta.jms.ConnectionFactory
-import jakarta.jms.Queue
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
-import no.nav.security.mock.oauth2.MockOAuth2Server
-import no.nav.security.mock.oauth2.withMockOAuth2Server
-import no.nav.sokos.skattekort.DAREPOC_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.DAREPOC_URL
-import no.nav.sokos.skattekort.FORESPORSEL_BOQ_QUEUE
-import no.nav.sokos.skattekort.FORESPORSEL_QUEUE
-import no.nav.sokos.skattekort.LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT
-import no.nav.sokos.skattekort.LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR
-import no.nav.sokos.skattekort.PDL_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.PDL_URL
-import no.nav.sokos.skattekort.SKATTEETATEN_URL
-import no.nav.sokos.skattekort.TILGANGSMAKSIN_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.TILGANGSMASKIN_URL
-import no.nav.sokos.skattekort.config.PropertiesConfig
-import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
-import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.listener.WiremockListener
-import no.nav.sokos.skattekort.module
-import no.nav.sokos.skattekort.security.AzuredTokenClient
-import no.nav.sokos.skattekort.security.JWT_CLAIM_NAVIDENT
-import no.nav.sokos.skattekort.security.JWT_CLAIM_ROLES
-import no.nav.sokos.skattekort.security.JWT_CLAIM_SCOPES
-import no.nav.sokos.skattekort.security.MaskinportenTokenClient
-import no.nav.sokos.skattekort.security.Role
-import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 object TestUtils {
@@ -70,90 +28,6 @@ object TestUtils {
             .lines()
             .parallel()
             .collect(Collectors.joining("\n"))
-    }
-
-    var authServer: MockOAuth2Server? = null
-    var oboTokenWithNavIdent: String? = null
-    var m2mTokenWithNavIdent: String? = null
-
-    fun withFullTestApplication(thunk: suspend ApplicationTestBuilder.() -> Unit) =
-        withMockOAuth2Server {
-            authServer = this
-            oboTokenWithNavIdent =
-                this
-                    .issueToken(
-                        issuerId = "default",
-                        claims =
-                            mapOf(
-                                JWT_CLAIM_NAVIDENT to "aUser",
-                                JWT_CLAIM_SCOPES to Scope.entries.joinToString(" ") { it.value },
-                            ),
-                    ).serialize()
-            m2mTokenWithNavIdent =
-                this
-                    .issueToken(
-                        issuerId = "default",
-                        claims =
-                            mapOf(
-                                JWT_CLAIM_ROLES to Role.entries.map { it.value }.toTypedArray(),
-                            ),
-                    ).serialize()
-
-            testApplication {
-                application {
-                    configureTestModule(authServer!!)
-                }
-                startApplication()
-
-                client =
-                    createClient {
-                        install(ContentNegotiation) {
-                            json(
-                                jsonConfig,
-                            )
-                        }
-                    }
-                thunk()
-            }
-        }
-
-    fun Application.configureTestModule(authServer: MockOAuth2Server) {
-        if (pluginOrNull(DI) == null) {
-            install(DI) {
-                configureShutdownBehavior()
-            }
-
-            dependencies {
-                provide<String>(name = PDL_URL) { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = DAREPOC_URL) { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = SKATTEETATEN_URL) { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = TILGANGSMASKIN_URL) { WiremockListener.wiremock.baseUrl() }
-                provide { mockk<MaskinportenTokenClient>(relaxed = true) }
-                provide<AzuredTokenClient>(name = PDL_AZURED_TOKEN_CLIENT) {
-                    mockk<AzuredTokenClient>(relaxed = true)
-                }
-                provide<AzuredTokenClient>(name = TILGANGSMAKSIN_AZURED_TOKEN_CLIENT) {
-                    mockk<AzuredTokenClient>(relaxed = true)
-                }
-                provide<AzuredTokenClient>(name = DAREPOC_AZURED_TOKEN_CLIENT) {
-                    mockk<AzuredTokenClient>(relaxed = true)
-                }
-                provide { MQListener.connectionFactory }
-                provide<Queue>(name = FORESPORSEL_QUEUE) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
-                }
-                provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
-                    ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
-                }
-                provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
-                }
-                provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
-                }
-            }
-        }
-        module(testEnvironmentConfig(authServer))
     }
 
     fun runThisSql(query: String) {
@@ -207,39 +81,4 @@ object TestUtils {
     }
 
     fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
-
-    private fun testEnvironmentConfig(authServer: MockOAuth2Server): MapApplicationConfig =
-        MapApplicationConfig().apply {
-            put("APPLICATION_ENV", "TEST")
-
-            // Database properties
-            put("DB_USERNAME", DbListener.container.username)
-            put("DB_PASSWORD", DbListener.container.password)
-            put("DB_DATABASE", DbListener.container.databaseName)
-            put("DB_PORT", DbListener.container.firstMappedPort.toString())
-            put("DB_HOST", DbListener.container.host)
-            put("AZURE_APP_CLIENT_ID", "default")
-            put("AZURE_APP_WELL_KNOWN_URL", authServer.wellKnownUrl("default").toUrl().toString())
-        }
-
-    private fun DependencyInjectionConfig.configureShutdownBehavior() {
-        conflictPolicy =
-            DependencyConflictPolicy { _, _ ->
-                DependencyConflictResult.KeepPrevious
-            }
-
-        onShutdown = { dependencyKey, instance ->
-            when (instance) {
-                // Vi ønsker bare en DataSource i bruk for en hel test-kjøring, selv om flere tester start/stopper applikasjonen
-                // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
-                is DataSource -> {}
-
-                is ConnectionFactory -> {}
-
-                is AutoCloseable -> {
-                    instance.close()
-                }
-            }
-        }
-    }
 }

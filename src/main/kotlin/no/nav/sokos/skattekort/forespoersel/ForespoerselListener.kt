@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSConsumer
 import jakarta.jms.JMSContext
@@ -15,8 +14,8 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselListener(
     private val connectionFactory: ConnectionFactory,
     private val forespoerselService: ForespoerselService,
-    @Named("forespoerselQueue") private val forespoerselQueue: Queue,
-    @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
+    private val forespoerselQueue: Queue,
+    private val forespoerselBoqQueue: Queue,
 ) : AutoCloseable {
     private var jmsContext: JMSContext? = null
     private var jmsConsumer: JMSConsumer? = null

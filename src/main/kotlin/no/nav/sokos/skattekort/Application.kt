@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort
 
-import kotlinx.coroutines.runBlocking
-
 import com.ibm.mq.jakarta.jms.MQQueue
 import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import com.zaxxer.hikari.HikariDataSource
@@ -11,8 +9,6 @@ import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.server.plugins.di.dependencies
-import jakarta.jms.Queue
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -50,18 +46,6 @@ import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 import no.nav.sokos.skattekort.utsending.UtsendingService
 
-const val FORESPORSEL_QUEUE = "forespoerselQueue"
-const val FORESPORSEL_BOQ_QUEUE = "forespoerselBoqQueue"
-const val LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT = "leveransekoeOppdragZSkattekort"
-const val LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR = "leveransekoeOppdragZSkattekortStor"
-const val PDL_URL = "pdlUrl"
-const val PDL_AZURED_TOKEN_CLIENT = "pdlAzuredTokenClient"
-const val TILGANGSMASKIN_URL = "tilgangsmaskinUrl"
-const val TILGANGSMAKSIN_AZURED_TOKEN_CLIENT = "tilgangsmaksinAzuredTokenClient"
-const val SKATTEETATEN_URL = "skatteetatenUrl"
-const val DAREPOC_URL = "darePocUrl"
-const val DAREPOC_AZURED_TOKEN_CLIENT = "darePocAzuredTokenClient"
-
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::module).start(true)
 }
@@ -79,103 +63,88 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     DatabaseConfig.migrate()
 
-    dependencies {
-        provide { createHttpClient() } cleanup { client ->
-            client.close()
-        }
-        provide { DatabaseConfig.dataSource }
-        provide { KafkaConfig() }
-        provide { PropertiesConfig.unleashProperties }
-        provide { PropertiesConfig.applicationProperties }
-        provide(MaskinportenTokenClient::class)
-        provide(AuditLogger::class)
+    // Infrastructure
+    val httpClient = createHttpClient()
+    val dataSource = DatabaseConfig.dataSource
+    val kafkaConfig = KafkaConfig()
+    val connectionFactory = MQConfig.connectionFactory
+    val auditLogger = AuditLogger()
 
-        provide { MQConfig.connectionFactory }
-        provide<Queue>(name = FORESPORSEL_QUEUE) {
-            MQQueue(PropertiesConfig.mqProperties.fraForSystemQueue)
+    // MQ Queues
+    val forespoerselQueue = MQQueue(PropertiesConfig.mqProperties.fraForSystemQueue)
+    val forespoerselBoqQueue = MQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ")
+    val leveransekoeOppdragZSkattekort =
+        MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort).apply {
+            messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
         }
-        provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
-            MQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ")
+    val leveransekoeOppdragZSkattekortStor =
+        MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor).apply {
+            messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
         }
-        provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
-            val queue = MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort)
-            queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
-            queue
-        }
-        provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
-            val queue = MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor)
-            queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
-            queue
-        }
-        provide<String>(name = PDL_URL) { PropertiesConfig.pdlProperties.pdlUrl }
-        provide<AzuredTokenClient>(name = PDL_AZURED_TOKEN_CLIENT) {
-            AzuredTokenClient(createHttpClient(), PropertiesConfig.pdlProperties.pdlScope)
-        }
-        provide<String>(name = TILGANGSMASKIN_URL) { PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinUrl }
-        provide<AzuredTokenClient>(name = TILGANGSMAKSIN_AZURED_TOKEN_CLIENT) {
-            AzuredTokenClient(createHttpClient(), PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinScope)
-        }
-        provide<String>(name = SKATTEETATEN_URL) { PropertiesConfig.skatteetatenProperties.skatteetatenUrl }
-        provide<String>(name = DAREPOC_URL) { PropertiesConfig.darePocProperties.darePocUrl }
-        provide<AzuredTokenClient>(name = DAREPOC_AZURED_TOKEN_CLIENT) {
-            AzuredTokenClient(createHttpClient(), PropertiesConfig.darePocProperties.darePocScope)
-        }
-        provide(StatusService::class)
-        provide(PersonService::class)
-        provide(ForespoerselService::class)
-        provide(ForespoerselListener::class)
-        provide(UtsendingService::class)
-        provide(BestillingsbatchService::class)
-        provide(BestillingService::class)
-        provide(SkattekortDataService::class)
-        provide(SkatteetatenClient::class)
-        provide(SkattekortService::class)
-        provide(KafkaConsumerService::class)
-        provide(PdlClientService::class)
-        provide(PdlService::class)
-        provide(TilgangsmaskinClientService::class)
-        provide(IdentifikatorEndringService::class)
-        provide(MetricsService::class)
-        // SOKOS-DARE-POC skal kun brukes i test.
+
+    // Token clients
+    val maskinportenTokenClient = MaskinportenTokenClient(httpClient)
+    val pdlAzuredTokenClient = AzuredTokenClient(httpClient, PropertiesConfig.pdlProperties.pdlScope)
+    val tilgangsmaskinAzuredTokenClient = AzuredTokenClient(httpClient, PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinScope)
+    val darePocAzuredTokenClient = AzuredTokenClient(httpClient, PropertiesConfig.darePocProperties.darePocScope)
+
+    // Infrastructure clients
+    val pdlClientService = PdlClientService(httpClient, PropertiesConfig.pdlProperties.pdlUrl, pdlAzuredTokenClient)
+    val tilgangsmaskinClientService = TilgangsmaskinClientService(httpClient, PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinUrl, tilgangsmaskinAzuredTokenClient)
+    val skatteetatenClient = SkatteetatenClient(httpClient, PropertiesConfig.skatteetatenProperties.skatteetatenUrl, maskinportenTokenClient)
+    val utsendingDareClientService: UtsendingDareClientService? =
         if (!PropertiesConfig.isProd) {
-            provide(UtsendingDareClientService::class)
+            UtsendingDareClientService(httpClient, PropertiesConfig.darePocProperties.darePocUrl, darePocAzuredTokenClient)
         } else {
-            provide<UtsendingDareClientService?> { null }
+            null
         }
-        provide<UnleashIntegration> {
-            UnleashIntegration { enabled ->
-                val forespoerselListener: ForespoerselListener =
-                    runBlocking {
-                        this@module.dependencies.resolve()
-                    }
-                forespoerselListener.onOppdateringChanged(enabled)
-            }
+
+    // Domain services
+    val personService = PersonService(dataSource, pdlClientService)
+    val pdlService = PdlService(pdlClientService, tilgangsmaskinClientService, auditLogger)
+    val skattekortDataService = SkattekortDataService(dataSource)
+    val statusService = StatusService(dataSource)
+    val metricsService = MetricsService(dataSource)
+    val skattekortService = SkattekortService(dataSource, personService, tilgangsmaskinClientService, auditLogger)
+
+    // Circular dependency: UnleashIntegration <-> ForespoerselListener <-> ForespoerselService
+    lateinit var forespoerselListener: ForespoerselListener
+    val unleashIntegration =
+        UnleashIntegration { enabled ->
+            forespoerselListener.onOppdateringChanged(enabled)
         }
-    }
 
-    securityConfig()
-    routingConfig(applicationState)
+    val forespoerselService = ForespoerselService(dataSource, personService, unleashIntegration)
+    forespoerselListener = ForespoerselListener(connectionFactory, forespoerselService, forespoerselQueue, forespoerselBoqQueue)
+    val bestillingsbatchService = BestillingsbatchService(dataSource, skatteetatenClient, unleashIntegration)
+    val bestillingService = BestillingService(dataSource, skatteetatenClient, unleashIntegration)
+    val utsendingService = UtsendingService(dataSource, connectionFactory, leveransekoeOppdragZSkattekort, leveransekoeOppdragZSkattekortStor, unleashIntegration, utsendingDareClientService)
 
-    val unleashIntegration: UnleashIntegration by dependencies
-    val forespoerselListener: ForespoerselListener by dependencies
+    val identifikatorEndringService = IdentifikatorEndringService(dataSource, pdlClientService, personService)
+    val kafkaConsumerService = KafkaConsumerService(kafkaConfig, identifikatorEndringService)
+
     forespoerselListener.onOppdateringChanged(unleashIntegration.isForespoerselListenerEnabled())
 
-    if (PropertiesConfig.schedulerProperties.enabled) {
-        val bestillingService: BestillingService by dependencies
-        val bestillingsbatchService: BestillingsbatchService by dependencies
-        val utsendingService: UtsendingService by dependencies
-        val skattekortdataService: SkattekortDataService by dependencies
-        val metricsService: MetricsService by dependencies
-        val forespoerselService: ForespoerselService by dependencies
-        val skattekortService: SkattekortService by dependencies
+    securityConfig()
+    routingConfig(
+        applicationState = applicationState,
+        bestillingsbatchService = bestillingsbatchService,
+        forespoerselService = forespoerselService,
+        pdlService = pdlService,
+        personService = personService,
+        skattekortService = skattekortService,
+        statusService = statusService,
+        utsendingService = utsendingService,
+    )
 
+    if (PropertiesConfig.schedulerProperties.enabled) {
         val scheduler =
             JobTaskConfig
                 .scheduler(
                     bestillingService = bestillingService,
                     bestillingsbatchService = bestillingsbatchService,
                     utsendingService = utsendingService,
-                    skattekortdataService = skattekortdataService,
+                    skattekortdataService = skattekortDataService,
                     metricsService = metricsService,
                     forespoerselService = forespoerselService,
                     skattekortService = skattekortService,
@@ -200,7 +169,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val kafkaProperties = PropertiesConfig.kafkaProperties
     if (kafkaProperties.enabled) {
         applicationState.onReady = {
-            val kafkaConsumerService: KafkaConsumerService by dependencies
             launchBackgroundTask(applicationState) {
                 kafkaConsumerService.start(applicationState)
             }

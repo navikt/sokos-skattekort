@@ -5,7 +5,6 @@ import javax.sql.DataSource
 
 import kotlinx.coroutines.runBlocking
 
-import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext
 import jakarta.jms.MessageProducer
@@ -34,8 +33,8 @@ import no.nav.sokos.skattekort.utsending.oppdragz.SkattekortFixedRecordFormatter
 class UtsendingService(
     private val dataSource: DataSource,
     private val jmsConnectionFactory: ConnectionFactory,
-    @Named(value = "leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
-    @Named(value = "leveransekoeOppdragZSkattekortStor") private val leveransekoeOppdragZSkattekortStor: Queue,
+    private val leveransekoeOppdragZSkattekort: Queue,
+    private val leveransekoeOppdragZSkattekortStor: Queue,
     private val featureToggles: UnleashIntegration,
     private val utsendingDareClientService: UtsendingDareClientService? = null,
 ) {

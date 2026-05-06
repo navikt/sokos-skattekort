@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.api.model
 
 import kotlin.time.Instant
+import kotlin.time.toKotlinInstant
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.skattekortbestilling.Bestillingsbatch
@@ -29,8 +30,8 @@ data class BestillingsbatchDTO(
                 status = bestillingsbatch.status,
                 type = bestillingsbatch.type,
                 bestillingsreferanse = bestillingsbatch.bestillingsreferanse,
-                oppdatert = bestillingsbatch.oppdatert,
-                opprettet = bestillingsbatch.opprettet,
+                oppdatert = bestillingsbatch.oppdatert.toKotlinInstant(),
+                opprettet = bestillingsbatch.opprettet.toKotlinInstant(),
                 dataSendt = dataSendt,
                 dataMottatt = dataMottatt,
             )

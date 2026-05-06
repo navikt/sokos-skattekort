@@ -2,10 +2,7 @@ package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
 
-import kotlin.time.ExperimentalTime
-
 object Syntetisering {
-    @OptIn(ExperimentalTime::class)
     fun evtSyntetiserSkattekort(
         skattekort: Skattekort,
         id: SkattekortId,
@@ -59,7 +56,9 @@ object Syntetisering {
                 )
             }
 
-            else -> null
+            else -> {
+                null
+            }
         }
     }
 }

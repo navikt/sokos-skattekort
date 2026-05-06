@@ -2,8 +2,6 @@ package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
 
-import kotlin.time.ExperimentalTime
-
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainAll
@@ -13,7 +11,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 
 import no.nav.sokos.skattekort.person.PersonId
 
-@OptIn(ExperimentalTime::class)
 class SyntetiseringTest :
     FunSpec({
         test("Lag frikort for ikke trekkpliktige") {

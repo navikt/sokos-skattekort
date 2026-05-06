@@ -32,6 +32,12 @@ class ReglerForInntektsaarTest :
             }
         }
 
+        test("lovligeInntektsAarAaBestilleFraSkatteetaten uses current year after 15 December") {
+            withConstantNow(LocalDateTime.of(2026, 12, 15, 12, 0)) {
+                ReglerForInntektsaar.lovligeInntektsAarAaBestilleFraSkatteetaten() shouldBe listOf(2026, 2027)
+            }
+        }
+
         test("inntektsaarAaBestille filters to current year and later") {
             withConstantNow(LocalDateTime.of(2026, 6, 1, 12, 0)) {
                 ReglerForInntektsaar.inntektsaarAaBestille() shouldBe listOf(2026)

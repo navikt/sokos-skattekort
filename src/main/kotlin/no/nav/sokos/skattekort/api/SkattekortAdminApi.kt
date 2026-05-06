@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.api
 
+import kotlin.time.toJavaInstant
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -9,6 +11,7 @@ import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
+import no.nav.sokos.skattekort.api.model.AuditDTO
 import no.nav.sokos.skattekort.api.model.AuditResponse
 import no.nav.sokos.skattekort.api.model.BatchInsightRequest
 import no.nav.sokos.skattekort.api.model.BatchInsightResponse
@@ -37,7 +40,7 @@ fun Route.skattekortAdminApi(
         post("bestillingsbatcher") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<BatchInsightRequest>()
-            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom)
+            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom?.toJavaInstant(), request.tidspunktTom?.toJavaInstant())
             call.respond(
                 BatchInsightResponse(bestillingsbatcher),
             )
@@ -73,8 +76,8 @@ fun Route.skattekortAdminApi(
         post("auditLogg") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<FnrRequest>()
-            val audits = personService.getAuditLogs(request.fnr)
-            call.respond(AuditResponse(audits))
+            val auditDTOList = personService.getAuditLogs(request.fnr).map(::AuditDTO)
+            call.respond(AuditResponse(auditDTOList))
         }
         patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)

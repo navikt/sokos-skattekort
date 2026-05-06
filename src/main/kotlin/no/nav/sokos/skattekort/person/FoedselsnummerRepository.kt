@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.person
 
-import kotlinx.datetime.toJavaLocalDate
-
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
@@ -18,7 +16,7 @@ object FoedselsnummerRepository {
                 """.trimIndent(),
                 mapOf(
                     "personId" to foedselsnummer.personId?.value,
-                    "gjelderFom" to foedselsnummer.gjelderFom.toJavaLocalDate(),
+                    "gjelderFom" to foedselsnummer.gjelderFom,
                     "fnr" to foedselsnummer.fnr.value,
                 ),
             ),

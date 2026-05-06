@@ -30,6 +30,7 @@ import no.nav.sokos.skattekort.skattekort.aPerson
 import no.nav.sokos.skattekort.skattekort.afoedselsnummer
 import no.nav.sokos.skattekort.skattekort.anAbonnement
 import no.nav.sokos.skattekort.skattekort.databaseHas
+import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
@@ -69,7 +70,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -121,7 +122,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK_med_tomt_frikort.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -174,7 +175,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK_med_oppholdPaaSvalbard.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -262,7 +263,7 @@ class SkattekortDataServiceTest :
                 }
                 """.trimIndent()
 
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -348,7 +349,7 @@ class SkattekortDataServiceTest :
                   }
                 }
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
             skattekortDataService.processSkattekortData()
@@ -377,7 +378,7 @@ class SkattekortDataServiceTest :
                   }
                 }
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
         }
 
         test("processSkattekortData should persist all tilleggsopplysninger and synthesize skattekort") {
@@ -388,7 +389,7 @@ class SkattekortDataServiceTest :
             )
 
             val skattekortJson = readFile("/skatteetaten/skattekortData/skattekortopplysningerOK_med_alle_tilleggsopplysninger.json")
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -484,7 +485,7 @@ class SkattekortDataServiceTest :
                   "inntektsaar": 2025
                 }                
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -538,7 +539,7 @@ class SkattekortDataServiceTest :
                   "inntektsaar": 2025
                 }                
                 """.trimIndent()
-            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
 
             skattekortDataService.processSkattekortData()
 
@@ -601,6 +602,93 @@ class SkattekortDataServiceTest :
                             informasjon shouldBe "Prosentkort med default skattesatser for Svalbard syntetisert pga mottatt tilleggsinformasjon oppholdPaaSvalbard"
                         }
                     }
+                }
+            }
+        }
+
+        test("processSkattekortData should create only one utsending when two identical skattekort_data rows are processed") {
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(1L, fnr),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+            )
+
+            val skattekortJson =
+                """
+                {
+                  "arbeidstakeridentifikator": "$fnr",
+                  "resultatForSkattekort": "skattekortopplysningerOK",
+                  "inntektsaar": 2025,
+                  "skattekort": {
+                    "utstedtDato": "2025-11-01",
+                    "skattekortidentifikator": 10001,
+                    "forskuddstrekk": []
+                  }
+                }
+                """.trimIndent()
+
+            // Insert the same payload twice (duplicate skattekort_data)
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+
+            skattekortDataService.processSkattekortData()
+
+            val utsendinger = tx(UtsendingRepository::getAllUtsendinger)
+            utsendinger shouldNotBeNull {
+                size shouldBe 1
+                first() shouldNotBeNull {
+                    this.fnr.value shouldBe fnr
+                    inntektsaar shouldBe 2025
+                    forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                    failMessage shouldBe null
+                    failCount shouldBe 0
+                }
+            }
+        }
+
+        test("processSkattekortData should create one utsending OS_STOR for BESTILLING and one utsending OS for OPPDATERING") {
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(1L, fnr),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
+            )
+
+            val skattekortJson =
+                """
+                {
+                  "arbeidstakeridentifikator": "$fnr",
+                  "resultatForSkattekort": "skattekortopplysningerOK",
+                  "inntektsaar": 2025,
+                  "skattekort": {
+                    "utstedtDato": "2025-11-01",
+                    "skattekortidentifikator": 10001,
+                    "forskuddstrekk": []
+                  }
+                }
+                """.trimIndent()
+
+            // Insert the same payload twice (duplicate skattekort_data)
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.OPPDATERING) }
+
+            skattekortDataService.processSkattekortData()
+
+            val utsendinger = tx(UtsendingRepository::getAllUtsendinger)
+            utsendinger shouldNotBeNull {
+                size shouldBe 2
+                first() shouldNotBeNull {
+                    this.fnr.value shouldBe fnr
+                    inntektsaar shouldBe 2025
+                    forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET_STOR
+                    failMessage shouldBe null
+                    failCount shouldBe 0
+                }
+                last() shouldNotBeNull {
+                    this.fnr.value shouldBe fnr
+                    inntektsaar shouldBe 2025
+                    forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                    failMessage shouldBe null
+                    failCount shouldBe 0
                 }
             }
         }

@@ -1,9 +1,5 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import kotlin.time.ExperimentalTime
-import kotlin.time.toKotlinInstant
-import kotlinx.datetime.toKotlinLocalDate
-
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -87,7 +83,6 @@ object AbonnementRepository {
             },
         )
 
-    @OptIn(ExperimentalTime::class)
     private val mapToAbonnement: (Row) -> Abonnement = { row ->
         Abonnement(
             id = AbonnementId(row.long("id")),
@@ -96,7 +91,7 @@ object AbonnementRepository {
                     id = ForespoerselId(row.long("forespoersel_id")),
                     dataMottatt = "",
                     forsystem = Forsystem.fromValue(row.string("forsystem")),
-                    opprettet = row.instant("opprettet").toKotlinInstant(),
+                    opprettet = row.instant("opprettet"),
                 ),
             inntektsaar = row.int("inntektsaar"),
             person =
@@ -108,7 +103,7 @@ object AbonnementRepository {
                             id = FoedselsnummerId(row.long("id")),
                             personId = PersonId(row.long("person_id")),
                             fnr = Personidentifikator(row.string("fnr")),
-                            gjelderFom = row.localDate("gjelder_fom").toKotlinLocalDate(),
+                            gjelderFom = row.localDate("gjelder_fom"),
                         ),
                 ),
         )

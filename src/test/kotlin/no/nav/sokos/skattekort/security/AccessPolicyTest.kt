@@ -1,78 +1,102 @@
 package no.nav.sokos.skattekort.security
 
-import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 
 class AccessPolicyTest :
-    FunSpec({
-        test("ALLOWED_SCOPES should match Scope enum values") {
-            AccessPolicy.ALLOWED_SCOPES.toList().sorted() shouldContainExactly
-                Scope.entries.map { it.value }.sorted()
-        }
-
-        test("ALLOWED_ROLES should match Role enum values") {
-            AccessPolicy.ALLOWED_ROLES.toList().sorted() shouldContainExactly
-                Role.entries.map { it.value }.sorted()
-        }
-
-        context("hasRequiredScope") {
-            test("returns true when required scope is present and allowed") {
-                AccessPolicy.hasRequiredScope(
-                    scopes = listOf("other.scope", Scope.HENT_SKATTEKORT_SCOPE.value),
-                    requiredScope = Scope.HENT_SKATTEKORT_SCOPE.value,
-                ) shouldBe true
-            }
-
-            test("returns false when required scope is missing") {
-                AccessPolicy.hasRequiredScope(
-                    scopes = listOf("other.scope"),
-                    requiredScope = Scope.HENT_SKATTEKORT_SCOPE.value,
-                ) shouldBe false
-            }
-
-            test("returns false when required scope is not allowed even if present") {
-                AccessPolicy.hasRequiredScope(
-                    scopes = listOf("custom.read"),
-                    requiredScope = "custom.read",
-                ) shouldBe false
-            }
-
-            test("returns false when scopes list is empty") {
-                AccessPolicy.hasRequiredScope(
-                    scopes = emptyList(),
-                    requiredScope = Scope.HENT_SKATTEKORT_SCOPE.value,
-                ) shouldBe false
+    BehaviorSpec({
+        Given("tilgangspolicyens konfigurerte scopes") {
+            When("tillatte scopes sammenlignes med Scope-enum") {
+                Then("skal ALLOWED_SCOPES matche verdiene i Scope-enum") {
+                    AccessPolicy.ALLOWED_SCOPES.toList().sorted() shouldContainExactly
+                        Scope.entries.map { it.value }.sorted()
+                }
             }
         }
 
-        context("hasRequiredRole") {
-            test("returns true when required role is present and allowed") {
-                AccessPolicy.hasRequiredRole(
-                    roles = listOf("other.role", Role.HENT_SKATTEKORT_ROLE.value),
-                    requiredRole = Role.HENT_SKATTEKORT_ROLE.value,
-                ) shouldBe true
+        Given("tilgangspolicyens konfigurerte roller") {
+            When("tillatte roller sammenlignes med Role-enum") {
+                Then("skal ALLOWED_ROLES matche verdiene i Role-enum") {
+                    AccessPolicy.ALLOWED_ROLES.toList().sorted() shouldContainExactly
+                        Role.entries.map { it.value }.sorted()
+                }
+            }
+        }
+
+        Given("hasRequiredScope") {
+            When("påkrevd scope finnes og er tillatt") {
+                Then("skal true returneres") {
+                    AccessPolicy.hasRequiredScope(
+                        scopes = listOf("other.scope", Scope.HENT_SKATTEKORT_SCOPE.value),
+                        requiredScope = Scope.HENT_SKATTEKORT_SCOPE.value,
+                    ) shouldBe true
+                }
             }
 
-            test("returns false when required role is missing") {
-                AccessPolicy.hasRequiredRole(
-                    roles = listOf("other.role"),
-                    requiredRole = Role.HENT_SKATTEKORT_ROLE.value,
-                ) shouldBe false
+            When("påkrevd scope mangler") {
+                Then("skal false returneres") {
+                    AccessPolicy.hasRequiredScope(
+                        scopes = listOf("other.scope"),
+                        requiredScope = Scope.HENT_SKATTEKORT_SCOPE.value,
+                    ) shouldBe false
+                }
             }
 
-            test("returns false when required role is not allowed even if present") {
-                AccessPolicy.hasRequiredRole(
-                    roles = listOf("custom.role"),
-                    requiredRole = "custom.role",
-                ) shouldBe false
+            When("påkrevd scope finnes men ikke er tillatt") {
+                Then("skal false returneres") {
+                    AccessPolicy.hasRequiredScope(
+                        scopes = listOf("custom.read"),
+                        requiredScope = "custom.read",
+                    ) shouldBe false
+                }
             }
 
-            test("returns false when roles list is empty") {
-                AccessPolicy.hasRequiredRole(
-                    roles = emptyList(),
-                    requiredRole = Role.HENT_SKATTEKORT_ROLE.value,
-                ) shouldBe false
+            When("scope-listen er tom") {
+                Then("skal false returneres") {
+                    AccessPolicy.hasRequiredScope(
+                        scopes = emptyList(),
+                        requiredScope = Scope.HENT_SKATTEKORT_SCOPE.value,
+                    ) shouldBe false
+                }
+            }
+        }
+
+        Given("hasRequiredRole") {
+            When("påkrevd rolle finnes og er tillatt") {
+                Then("skal true returneres") {
+                    AccessPolicy.hasRequiredRole(
+                        roles = listOf("other.role", Role.HENT_SKATTEKORT_ROLE.value),
+                        requiredRole = Role.HENT_SKATTEKORT_ROLE.value,
+                    ) shouldBe true
+                }
+            }
+
+            When("påkrevd rolle mangler") {
+                Then("skal false returneres") {
+                    AccessPolicy.hasRequiredRole(
+                        roles = listOf("other.role"),
+                        requiredRole = Role.HENT_SKATTEKORT_ROLE.value,
+                    ) shouldBe false
+                }
+            }
+
+            When("påkrevd rolle finnes men ikke er tillatt") {
+                Then("skal false returneres") {
+                    AccessPolicy.hasRequiredRole(
+                        roles = listOf("custom.role"),
+                        requiredRole = "custom.role",
+                    ) shouldBe false
+                }
+            }
+
+            When("rolle-listen er tom") {
+                Then("skal false returneres") {
+                    AccessPolicy.hasRequiredRole(
+                        roles = emptyList(),
+                        requiredRole = Role.HENT_SKATTEKORT_ROLE.value,
+                    ) shouldBe false
+                }
             }
         }
     })

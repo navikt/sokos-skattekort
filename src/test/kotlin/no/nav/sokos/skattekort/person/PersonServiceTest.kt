@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
-import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldNotContainNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -24,7 +24,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.createTestHttpClient
 
 class PersonServiceTest :
-    FunSpec({
+    BehaviorSpec({
         extensions(DbListener, WiremockListener)
 
         val pdlClientService: PdlClientService by lazy {
@@ -39,205 +39,231 @@ class PersonServiceTest :
             PersonService(DbListener.dataSource, pdlClientService)
         }
 
-        test("Skal ikke kaste exception når det kommer inn en tom liste") {
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(emptyList(), AUDIT_SYSTEM)
-            result.size shouldBe 0
-        }
-
-        test("findOrCreatePersonByFnr skal returnere en person som er registrert") {
-            val fnr = "10101000010"
-            DbListener.loadDataSet("database/person/persondata.sql")
-            DbListener.dataSource.transaction { tx ->
-                val (personId, opprettet) =
-                    personService
-                        .findPersonIdOrCreatePersonByFnr(
-                            fnr = Personidentifikator(fnr),
-                            informasjon = "TEST",
-                            brukerId = AUDIT_SYSTEM,
-                            tx = tx,
-                        )
-                personId shouldNotBe null
-                opprettet shouldBe false
-
-                val auditList = AuditRepository.getAuditByPersonId(tx, personId)
-                auditList.size shouldBe 1
-                auditList.first().tag shouldBe AuditTag.OPPRETTET_PERSON
-                auditList.first().informasjon shouldBe "Person 10 opprettet"
-            }
-        }
-
-        test("findOrCreatePersonByFnr skal returnere ny registrert person") {
-            val fnr = "15467834260"
-            DbListener.loadDataSet("database/person/persondata.sql")
-            DbListener.dataSource.transaction { tx ->
-                val (personId, opprettet) =
-                    personService
-                        .findPersonIdOrCreatePersonByFnr(
-                            fnr = Personidentifikator(fnr),
-                            informasjon = "TEST",
-                            brukerId = AUDIT_SYSTEM,
-                            tx = tx,
-                        )
-                personId shouldNotBe null
-                opprettet shouldBe true
-
-                val auditList = AuditRepository.getAuditByPersonId(tx, personId)
-                auditList.size shouldBe 1
-                auditList.first().tag shouldBe AuditTag.OPPRETTET_PERSON
-                auditList.first().informasjon shouldBe "TEST"
-            }
-        }
-
-        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal returnere map med personId for eksisterende personer") {
-            val fnrList = listOf("10101000010", "10101000011", "10101000012")
-            DbListener.loadDataSet("database/person/persondata.sql")
-
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
-
-            result.size shouldBe 3
-            result.values.forEach { personId ->
-                personId shouldNotBe null
-            }
-        }
-
-        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal opprette nye personer fra PDL") {
-            val fnrList = listOf("15467834260")
-            DbListener.loadDataSet("database/person/persondata.sql")
-
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
-
-            result.size shouldBe 1
-            result[fnrList[0]] shouldNotBe null
-        }
-
-        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal oppdatere foedselsnummer når PDL returnerer ny ident") {
-            val oldFnr = "10101000098"
-            val newFnr = "10101000099"
-            val fnrList = listOf(oldFnr)
-            DbListener.loadDataSet("database/person/persondata.sql")
-
-            WiremockListener.wiremockPDLStub(
-                Json.encodeToString(
-                    GraphQLResponse(
-                        HentIdenterBolk.Result(
-                            hentIdenterBolk =
-                                listOf(
-                                    HentIdenterBolkResult(
-                                        ident = oldFnr,
-                                        identer =
-                                            listOf(
-                                                IdentInformasjon(newFnr, false, IdentGruppe.FOLKEREGISTERIDENT),
-                                                IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
-                                            ),
-                                    ),
-                                ),
-                        ),
-                    ),
-                ),
-            )
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
-
-            result[oldFnr] shouldNotBe null
-
-            DbListener.dataSource.transaction { tx ->
-                AuditRepository.getAuditByPersonId(tx, result[oldFnr]!!) shouldNotBeNull {
-                    size shouldBe 2
-                    this.any { it.tag == AuditTag.OPPRETTET_PERSON } shouldBe true
-                    this.any { it.tag == AuditTag.OPPDATERT_PERSONIDENTIFIKATOR } shouldBe true
+        Given("en tom liste med fødselsnumre") {
+            When("personId-er hentes og fødselsnumre sjekkes") {
+                Then("skal det returneres et tomt resultat uten exception") {
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(emptyList(), AUDIT_SYSTEM)
+                    result.size shouldBe 0
                 }
             }
         }
 
-        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal håndtere mix av eksisterende og nye personer") {
-            val existingFnr = "10101000010"
-            val newFnr = "15467834260"
-            val fnrList = listOf(existingFnr, newFnr)
-            DbListener.loadDataSet("database/person/persondata.sql")
+        Given("persondata er lastet i databasen for oppslag av person") {
+            When("personId hentes eller opprettes for en allerede registrert person") {
+                Then("skal eksisterende person returneres uten ny opprettelse") {
+                    val fnr = "10101000010"
+                    DbListener.loadDataSet("database/person/persondata.sql")
+                    DbListener.dataSource.transaction { tx ->
+                        val (personId, opprettet) =
+                            personService
+                                .findPersonIdOrCreatePersonByFnr(
+                                    fnr = Personidentifikator(fnr),
+                                    informasjon = "TEST",
+                                    brukerId = AUDIT_SYSTEM,
+                                    tx = tx,
+                                )
+                        personId shouldNotBe null
+                        opprettet shouldBe false
 
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(newFnr))
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
+                        val auditList = AuditRepository.getAuditByPersonId(tx, personId)
+                        auditList.size shouldBe 1
+                        auditList.first().tag shouldBe AuditTag.OPPRETTET_PERSON
+                        auditList.first().informasjon shouldBe "Person 10 opprettet"
+                    }
+                }
+            }
 
-            result.size shouldBe 2
-            result[existingFnr] shouldNotBe null
-            result[newFnr] shouldNotBe null
+            When("personId hentes eller opprettes for en ny person") {
+                Then("skal ny person opprettes og returneres") {
+                    val fnr = "15467834260"
+                    DbListener.loadDataSet("database/person/persondata.sql")
+                    DbListener.dataSource.transaction { tx ->
+                        val (personId, opprettet) =
+                            personService
+                                .findPersonIdOrCreatePersonByFnr(
+                                    fnr = Personidentifikator(fnr),
+                                    informasjon = "TEST",
+                                    brukerId = AUDIT_SYSTEM,
+                                    tx = tx,
+                                )
+                        personId shouldNotBe null
+                        opprettet shouldBe true
+
+                        val auditList = AuditRepository.getAuditByPersonId(tx, personId)
+                        auditList.size shouldBe 1
+                        auditList.first().tag shouldBe AuditTag.OPPRETTET_PERSON
+                        auditList.first().informasjon shouldBe "TEST"
+                    }
+                }
+            }
         }
 
-        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal returnere null for fnr som ikke fins i PDL") {
-            val invalidFnr = "00000000000"
-            val fnrList = listOf(invalidFnr)
-            DbListener.loadDataSet("database/person/persondata.sql")
+        Given("persondata er lastet i databasen for kontroll av fødselsnumre") {
+            When("alle oppgitte fødselsnumre allerede finnes som personer") {
+                Then("skal det returneres map med personId for alle eksisterende personer") {
+                    val fnrList = listOf("10101000010", "10101000011", "10101000012")
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-            WiremockListener.wiremockPDLStub(
-                Json.encodeToString(
-                    GraphQLResponse(
-                        HentIdenterBolk.Result(
-                            hentIdenterBolk =
-                                listOf(),
-                        ),
-                    ),
-                ),
-            )
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
-            result[invalidFnr] shouldBe null
-        }
+                    WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
-        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal håndtere store mengder fnr med chunking") {
-            val fnrList = (1..100).map { "1010100%04d".format(it) }
+                    result.size shouldBe 3
+                    result.values.forEach { personId ->
+                        personId shouldNotBe null
+                    }
+                }
+            }
 
-            WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
-            DbListener.loadDataSet("database/person/persondata.sql")
+            When("ukjent person finnes i PDL") {
+                Then("skal ny person opprettes fra PDL-data") {
+                    val fnrList = listOf("15467834260")
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM, 30)
+                    WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
-            WiremockListener.wiremock.verify(4, postRequestedFor(urlEqualTo("/graphql")))
-            result.size shouldBe fnrList.size
-            result.values.shouldNotContainNull()
-        }
+                    result.size shouldBe 1
+                    result[fnrList[0]] shouldNotBe null
+                }
+            }
 
-        test("getPersonIdAndCheckFoedselsnumreIsUpdated skal registrere gammelt fnr på eksisterende person id når ny ident allerede er registrert") {
-            val oldFnr = "10100000098" // Ikke i DB, vil slå opp i PDL
-            val existingActiveIdent = "10101000010" // Ligger allerede i DB via persondata.sql
-            val fnrList = listOf(oldFnr)
+            When("PDL returnerer en ny ident for et eksisterende fødselsnummer") {
+                Then("skal fødselsnummeret oppdateres og audit logges") {
+                    val oldFnr = "10101000098"
+                    val newFnr = "10101000099"
+                    val fnrList = listOf(oldFnr)
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-            DbListener.loadDataSet("database/person/persondata.sql")
-
-            // Mock PDL-responsen til å si at oldFnr i dag peker til existingActiveIdent som ikke er historisk
-            WiremockListener.wiremockPDLStub(
-                Json.encodeToString(
-                    GraphQLResponse(
-                        HentIdenterBolk.Result(
-                            hentIdenterBolk =
-                                listOf(
-                                    HentIdenterBolkResult(
-                                        ident = oldFnr,
-                                        identer =
-                                            listOf(
-                                                IdentInformasjon(existingActiveIdent, false, IdentGruppe.FOLKEREGISTERIDENT),
-                                                IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+                    WiremockListener.wiremockPDLStub(
+                        Json.encodeToString(
+                            GraphQLResponse(
+                                HentIdenterBolk.Result(
+                                    hentIdenterBolk =
+                                        listOf(
+                                            HentIdenterBolkResult(
+                                                ident = oldFnr,
+                                                identer =
+                                                    listOf(
+                                                        IdentInformasjon(newFnr, false, IdentGruppe.FOLKEREGISTERIDENT),
+                                                        IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+                                                    ),
                                             ),
-                                    ),
+                                        ),
                                 ),
+                            ),
                         ),
-                    ),
-                ),
-            )
+                    )
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
 
-            val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
+                    result[oldFnr] shouldNotBe null
 
-            result[oldFnr] shouldNotBe null
+                    DbListener.dataSource.transaction { tx ->
+                        AuditRepository.getAuditByPersonId(tx, result[oldFnr]!!) shouldNotBeNull {
+                            size shouldBe 2
+                            this.any { it.tag == AuditTag.OPPRETTET_PERSON } shouldBe true
+                            this.any { it.tag == AuditTag.OPPDATERT_PERSONIDENTIFIKATOR } shouldBe true
+                        }
+                    }
+                }
+            }
 
-            // Hent audits for å sjekke at logikken for "allerede registrert" ble kjørt
-            DbListener.dataSource.transaction { tx ->
-                val auditLogs = AuditRepository.getAuditByPersonId(tx, result[oldFnr]!!)
+            When("listen inneholder både eksisterende og nye personer") {
+                Then("skal både eksisterende og nye personId-er returneres") {
+                    val existingFnr = "10101000010"
+                    val newFnr = "15467834260"
+                    val fnrList = listOf(existingFnr, newFnr)
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-                auditLogs.shouldNotBeNull {
-                    // Sjekker at den nye grenen opprettet riktig OPPDATERT_PERSONIDENTIFIKATOR-audit
-                    this.any {
-                        it.tag == AuditTag.OPPDATERT_PERSONIDENTIFIKATOR &&
-                            it.informasjon == "Oppdatert gamle foedselsnummer: $oldFnr"
-                    } shouldBe true
+                    WiremockListener.wiremockPDLStub(generateHentIdenterBolk(newFnr))
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
+
+                    result.size shouldBe 2
+                    result[existingFnr] shouldNotBe null
+                    result[newFnr] shouldNotBe null
+                }
+            }
+
+            When("fødselsnummeret ikke finnes i PDL") {
+                Then("skal resultatet inneholde null for det fødselsnummeret") {
+                    val invalidFnr = "00000000000"
+                    val fnrList = listOf(invalidFnr)
+                    DbListener.loadDataSet("database/person/persondata.sql")
+
+                    WiremockListener.wiremockPDLStub(
+                        Json.encodeToString(
+                            GraphQLResponse(
+                                HentIdenterBolk.Result(
+                                    hentIdenterBolk =
+                                        listOf(),
+                                ),
+                            ),
+                        ),
+                    )
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
+                    result[invalidFnr] shouldBe null
+                }
+            }
+
+            When("mange fødselsnumre behandles med chunking") {
+                Then("skal alle personId-er returneres og PDL kalles i flere chunker") {
+                    val fnrList = (1..100).map { "1010100%04d".format(it) }
+
+                    WiremockListener.wiremockPDLStub(generateHentIdenterBolk(*fnrList.toTypedArray()))
+                    DbListener.loadDataSet("database/person/persondata.sql")
+
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM, 30)
+
+                    WiremockListener.wiremock.verify(4, postRequestedFor(urlEqualTo("/graphql")))
+                    result.size shouldBe fnrList.size
+                    result.values.shouldNotContainNull()
+                }
+            }
+
+            When("gammelt fødselsnummer peker til en ident som allerede er registrert") {
+                Then("skal gammelt fødselsnummer registreres på eksisterende personId") {
+                    val oldFnr = "10100000098" // Ikke i DB, vil slå opp i PDL
+                    val existingActiveIdent = "10101000010" // Ligger allerede i DB via persondata.sql
+                    val fnrList = listOf(oldFnr)
+
+                    DbListener.loadDataSet("database/person/persondata.sql")
+
+                    // Mock PDL-responsen til å si at oldFnr i dag peker til existingActiveIdent som ikke er historisk
+                    WiremockListener.wiremockPDLStub(
+                        Json.encodeToString(
+                            GraphQLResponse(
+                                HentIdenterBolk.Result(
+                                    hentIdenterBolk =
+                                        listOf(
+                                            HentIdenterBolkResult(
+                                                ident = oldFnr,
+                                                identer =
+                                                    listOf(
+                                                        IdentInformasjon(existingActiveIdent, false, IdentGruppe.FOLKEREGISTERIDENT),
+                                                        IdentInformasjon(oldFnr, true, IdentGruppe.FOLKEREGISTERIDENT),
+                                                    ),
+                                            ),
+                                        ),
+                                ),
+                            ),
+                        ),
+                    )
+
+                    val result = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(fnrList, AUDIT_SYSTEM)
+
+                    result[oldFnr] shouldNotBe null
+
+                    // Hent audits for å sjekke at logikken for "allerede registrert" ble kjørt
+                    DbListener.dataSource.transaction { tx ->
+                        val auditLogs = AuditRepository.getAuditByPersonId(tx, result[oldFnr]!!)
+
+                        auditLogs.shouldNotBeNull {
+                            // Sjekker at den nye grenen opprettet riktig OPPDATERT_PERSONIDENTIFIKATOR-audit
+                            this.any {
+                                it.tag == AuditTag.OPPDATERT_PERSONIDENTIFIKATOR &&
+                                    it.informasjon == "Oppdatert gamle foedselsnummer: $oldFnr"
+                            } shouldBe true
+                        }
+                    }
                 }
             }
         }

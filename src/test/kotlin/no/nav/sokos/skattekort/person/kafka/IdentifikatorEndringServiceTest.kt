@@ -1,7 +1,7 @@
 package no.nav.sokos.skattekort.person.kafka
 
 import io.kotest.assertions.withClue
-import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
@@ -21,7 +21,7 @@ import no.nav.sokos.skattekort.utils.TestUtils.readFile
 import no.nav.sokos.skattekort.utils.createTestHttpClient
 
 class IdentifikatorEndringServiceTest :
-    FunSpec({
+    BehaviorSpec({
         extensions(DbListener, WiremockListener)
 
         val pdlClientService: PdlClientService by lazy {
@@ -40,97 +40,111 @@ class IdentifikatorEndringServiceTest :
             )
         }
 
-        test("processIdentifikatorEndring oppdater person med ny folkeregisteridentifikator") {
-            DbListener.loadDataSet("database/person/persondata.sql")
+        Given("persondata er lastet og en gyldig identifikatorendring mottas") {
+            When("en opprettet folkeregisteridentifikator behandles") {
+                Then("skal personen oppdateres med ny folkeregisteridentifikator") {
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-            val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
-            wiremockPDLStub(pdlResponse)
+                    val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
+                    wiremockPDLStub(pdlResponse)
 
-            val hendelse = getPersonHendelseMockData()
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
+                    val hendelse = getPersonHendelseMockData()
+                    val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
 
-            identifikatorEndringService.processIdentifikatorEndring(hendelse)
-            DbListener.dataSource.transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, personidentifikator)!!
-                person.foedselsnummer.fnr shouldBe personidentifikator
+                    identifikatorEndringService.processIdentifikatorEndring(hendelse)
+                    DbListener.dataSource.transaction { tx ->
+                        val person = PersonRepository.findPersonByFnr(tx, personidentifikator)!!
+                        person.foedselsnummer.fnr shouldBe personidentifikator
 
-                val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
-                withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
-                auditMatcher(auditList[1], person)
+                        val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
+                        withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
+                        auditMatcher(auditList[1], person)
 
-                val bestillingList = DBTestUtils.getAllBestilling(tx)
-                withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
+                        val bestillingList = DBTestUtils.getAllBestilling(tx)
+                        withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
+                    }
+                }
+            }
+
+            When("en korrigert folkeregisteridentifikator behandles") {
+                Then("skal personen oppdateres med ny folkeregisteridentifikator") {
+                    DbListener.loadDataSet("database/person/persondata.sql")
+
+                    val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
+                    wiremockPDLStub(pdlResponse)
+
+                    val hendelse =
+                        getPersonHendelseMockData().copy(
+                            endringstype = EndringstypeDTO.KORRIGERT,
+                        )
+                    val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
+
+                    identifikatorEndringService.processIdentifikatorEndring(hendelse)
+                    DbListener.dataSource.transaction { tx ->
+                        val person = PersonRepository.findPersonByFnr(tx, personidentifikator)!!
+                        person.foedselsnummer.fnr shouldBe personidentifikator
+
+                        val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
+                        withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
+                        auditMatcher(auditList[1], person)
+
+                        val bestillingList = DBTestUtils.getAllBestilling(tx)
+                        withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
+                    }
+                }
             }
         }
 
-        test("processIdentifikatorEndring oppdater person med ny folkeregisteridentifikator (KORRIGERT)") {
-            DbListener.loadDataSet("database/person/persondata.sql")
+        Given("persondata er lastet og hendelsen ikke skal behandles videre") {
+            When("endringstypen er opphørt") {
+                Then("skal hendelsen ignoreres") {
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-            val pdlResponse = readFile("/pdl/hentIdenterBolkOkResponse.json")
-            wiremockPDLStub(pdlResponse)
+                    val hendelse =
+                        getPersonHendelseMockData().copy(
+                            endringstype = EndringstypeDTO.OPPHOERT,
+                        )
+                    val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
 
-            val hendelse =
-                getPersonHendelseMockData().copy(
-                    endringstype = EndringstypeDTO.KORRIGERT,
-                )
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
-
-            identifikatorEndringService.processIdentifikatorEndring(hendelse)
-            DbListener.dataSource.transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, personidentifikator)!!
-                person.foedselsnummer.fnr shouldBe personidentifikator
-
-                val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
-                withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
-                auditMatcher(auditList[1], person)
-
-                val bestillingList = DBTestUtils.getAllBestilling(tx)
-                withClue("Skal opprette 1 ny bestilling") { bestillingList.size shouldBe 1 }
+                    identifikatorEndringService.processIdentifikatorEndring(hendelse)
+                    DbListener.dataSource.transaction { tx ->
+                        PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                    }
+                }
             }
-        }
 
-        test("processIdentifikatorEndring ignorer med andre opplysningstype") {
-            DbListener.loadDataSet("database/person/persondata.sql")
+            When("PDL ikke finner historiske identer") {
+                Then("skal hendelsen ignoreres") {
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-            val hendelse =
-                getPersonHendelseMockData().copy(
-                    endringstype = EndringstypeDTO.OPPHOERT,
-                )
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
+                    val pdlResponse = readFile("/pdl/hentIdenterBolkOkUtenHistoriskResponse.json")
+                    wiremockPDLStub(pdlResponse)
 
-            identifikatorEndringService.processIdentifikatorEndring(hendelse)
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                    val hendelse = getPersonHendelseMockData()
+                    val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
+
+                    identifikatorEndringService.processIdentifikatorEndring(hendelse)
+                    DbListener.dataSource.transaction { tx ->
+                        PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                    }
+                }
             }
-        }
 
-        test("processIdentifikatorEndring ignorer med ingen historiske identer funnet fra PDL") {
-            DbListener.loadDataSet("database/person/persondata.sql")
+            When("opplysningstypen ikke er FOLKEREGISTERIDENTIFIKATOR_V1") {
+                Then("skal hendelsen ignoreres") {
+                    DbListener.loadDataSet("database/person/persondata.sql")
 
-            val pdlResponse = readFile("/pdl/hentIdenterBolkOkUtenHistoriskResponse.json")
-            wiremockPDLStub(pdlResponse)
+                    val hendelse =
+                        getPersonHendelseMockData().copy(
+                            opplysningstype = "ANNEN_IDENTIFIKATOR",
+                        )
+                    val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
 
-            val hendelse = getPersonHendelseMockData()
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
-
-            identifikatorEndringService.processIdentifikatorEndring(hendelse)
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
-            }
-        }
-
-        test("processIdentifikatorEndring ignorer med folkeregisteridentifikator ikke er FOLKEREGISTERIDENTIFIKATOR_V1") {
-            DbListener.loadDataSet("database/person/persondata.sql")
-
-            val hendelse =
-                getPersonHendelseMockData().copy(
-                    opplysningstype = "ANNEN_IDENTIFIKATOR",
-                )
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
-
-            identifikatorEndringService.processIdentifikatorEndring(hendelse)
-            DbListener.dataSource.transaction { tx ->
-                PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                    identifikatorEndringService.processIdentifikatorEndring(hendelse)
+                    DbListener.dataSource.transaction { tx ->
+                        PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                    }
+                }
             }
         }
     })

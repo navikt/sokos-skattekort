@@ -3,7 +3,7 @@ package no.nav.sokos.skattekort.forespoersel
 import java.time.LocalDateTime
 
 import io.kotest.assertions.nondeterministic.eventually
-import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -21,7 +21,7 @@ import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 import no.nav.sokos.skattekort.utils.createTestHttpClient
 
 class ForespoerselListenerTest :
-    FunSpec({
+    BehaviorSpec({
         extensions(listOf(MQListener, DbListener, WiremockListener))
 
         val forSystemQueue = ActiveMQQueue("FOR_SYSTEM")
@@ -54,83 +54,101 @@ class ForespoerselListenerTest :
             forespoerselListener.onOppdateringChanged(false)
         }
 
-        test("start() skal opprette JMS context og consumer") {
-            // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
-            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+        Given("listeneren er konfigurert for køene FOR_SYSTEM og FOR_SYSTEM_BOQ") {
+            When("oppdatering slås på") {
                 val fnr = "11111111111"
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
-
-                forespoerselListener.onOppdateringChanged(true)
-
                 val jmsMessage = "OS;2025;$fnr"
-                JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
 
-                eventually(eventuallyConfiguration) {
-                    DbListener.dataSource.transaction { session ->
-                        ForespoerselRepository.getAllForespoersel(session) shouldNotBeNull {
-                            size shouldBe 1
-                            first().dataMottatt shouldBe jmsMessage
+                Then("skal JMS context og consumer opprettes og meldingen behandles") {
+                    // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
+                    withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                        WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
+
+                        forespoerselListener.onOppdateringChanged(true)
+
+                        JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
+
+                        eventually(eventuallyConfiguration) {
+                            DbListener.dataSource.transaction { session ->
+                                ForespoerselRepository.getAllForespoersel(session) shouldNotBeNull {
+                                    size shouldBe 1
+                                    first().dataMottatt shouldBe jmsMessage
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            When("listeneren startes og deretter stoppes") {
+                val jmsMessage = "OS;2025;22222222222"
+
+                Then("skal JMS consumer og context lukkes slik at nye meldinger blir liggende i kø") {
+                    forespoerselListener.onOppdateringChanged(true)
+                    forespoerselListener.onOppdateringChanged(false)
+
+                    JmsTestUtil.assertAllQueuesAreEmpty()
+
+                    // Verifiser at listener ikke mottar meldinger etter stop
+                    JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
+
+                    eventually(eventuallyConfiguration) {
+                        DbListener.dataSource.transaction { session ->
+                            ForespoerselRepository.getAllForespoersel(session) shouldBe emptyList()
+                        }
+                    }
+                    JmsTestUtil.getMessages(forSystemQueue).size shouldBe 1
+                }
+            }
+        }
+
+        Given("listeneren allerede kjører") {
+            When("oppdatering slås på en gang til") {
+                val fnr = "55555555555"
+                val jmsMessage = "OS;2025;$fnr"
+
+                Then("skal det ikke opprettes en ny listener og meldinger skal fortsatt behandles") {
+                    // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
+                    withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
+                        WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
+
+                        forespoerselListener.onOppdateringChanged(enabled = true)
+
+                        forespoerselListener.onOppdateringChanged(enabled = true)
+
+                        // Listener skal fortsatt være kjørende og mottar meldinger
+                        JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
+
+                        eventually(eventuallyConfiguration) {
+                            DbListener.dataSource.transaction { session ->
+                                ForespoerselRepository.getAllForespoersel(session).any {
+                                    it.dataMottatt == jmsMessage
+                                } shouldBe true
+                            }
                         }
                     }
                 }
             }
         }
 
-        test("stop() skal lukke JMS consumer og context") {
-            forespoerselListener.onOppdateringChanged(true)
-            forespoerselListener.onOppdateringChanged(false)
+        Given("listeneren allerede er stoppet") {
+            When("oppdatering slås av en gang til") {
+                val jmsMessage = "OS;2025;66666666666"
 
-            JmsTestUtil.assertAllQueuesAreEmpty()
+                Then("skal det ikke skje noe og meldingen skal bli liggende i kø") {
+                    forespoerselListener.onOppdateringChanged(enabled = false)
 
-            // Verifiser at listener ikke mottar meldinger etter stop
-            val jmsMessage = "OS;2025;22222222222"
-            JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
+                    forespoerselListener.onOppdateringChanged(enabled = false)
 
-            eventually(eventuallyConfiguration) {
-                DbListener.dataSource.transaction { session ->
-                    ForespoerselRepository.getAllForespoersel(session) shouldBe emptyList()
-                }
-            }
-            JmsTestUtil.getMessages(forSystemQueue).size shouldBe 1
-        }
+                    JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
 
-        test("onOppdateringChanged() skal ikke gjøre noe når enabled er true og listener allerede kjører") {
-            // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
-            withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
-                val fnr = "55555555555"
-                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk(fnr))
-
-                forespoerselListener.onOppdateringChanged(enabled = true)
-
-                forespoerselListener.onOppdateringChanged(enabled = true)
-
-                // Listener skal fortsatt være kjørende og mottar meldinger
-                val jmsMessage = "OS;2025;$fnr"
-                JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
-
-                eventually(eventuallyConfiguration) {
-                    DbListener.dataSource.transaction { session ->
-                        ForespoerselRepository.getAllForespoersel(session).any {
-                            it.dataMottatt == jmsMessage
-                        } shouldBe true
+                    eventually(eventuallyConfiguration) {
+                        DbListener.dataSource.transaction { session ->
+                            ForespoerselRepository.getAllForespoersel(session) shouldBe emptyList()
+                        }
                     }
+                    JmsTestUtil.getMessages(forSystemQueue).size shouldBe 1
                 }
             }
-        }
-
-        test("onOppdateringChanged() skal ikke gjøre noe når enabled er false og listener allerede stoppet") {
-            forespoerselListener.onOppdateringChanged(enabled = false)
-
-            forespoerselListener.onOppdateringChanged(enabled = false)
-
-            val jmsMessage = "OS;2025;66666666666"
-            JmsTestUtil.sendMessage(msg = jmsMessage, queue = forSystemQueue)
-
-            eventually(eventuallyConfiguration) {
-                DbListener.dataSource.transaction { session ->
-                    ForespoerselRepository.getAllForespoersel(session) shouldBe emptyList()
-                }
-            }
-            JmsTestUtil.getMessages(forSystemQueue).size shouldBe 1
         }
     })

@@ -1,6 +1,6 @@
 package no.nav.sokos.skattekort.skattekorthenting
 
-import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.listener.DbListener
@@ -18,7 +18,7 @@ import no.nav.sokos.skattekort.skattekortbestilling.Status
 import no.nav.sokos.skattekort.skattekortbestilling.StatusService
 
 class StatusServiceTest :
-    FunSpec(
+    BehaviorSpec(
         {
             extensions(DbListener)
 
@@ -28,106 +28,158 @@ class StatusServiceTest :
                 )
             }
 
-            test("Ugyldig fnr. Skal ha status UGYLDIG_FNR") {
-                databaseHas()
+            Given("en forespørsel med ugyldig fødselsnummer") {
+                When("status forespørres") {
+                    databaseHas()
 
-                val status = statusService.statusForespoeresel(fnr = "abc", aar = 2025, forsystem = "TEST")
-                status shouldBe Status.UGYLDIG_FNR
+                    val status = statusService.statusForespoeresel(fnr = "abc", aar = 2025, forsystem = "TEST")
+
+                    Then("status er UGYLDIG_FNR") {
+                        status shouldBe Status.UGYLDIG_FNR
+                    }
+                }
             }
 
-            test("Gyldig fnr men person finnes ikke. Skal ha status IKKE_FORESPURT") {
-                databaseHas()
+            Given("en gyldig forespørsel der personen ikke finnes") {
+                When("status forespørres") {
+                    databaseHas()
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                status shouldBe Status.IKKE_FORESPURT
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
+
+                    Then("status er IKKE_FORESPURT") {
+                        status shouldBe Status.IKKE_FORESPURT
+                    }
+                }
             }
 
-            test("Person finnes, men ikke noe annet. Skal ha status IKKE_FORESPURT") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                )
+            Given("en person som finnes uten bestilling eller skattekort") {
+                When("status forespørres") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                    )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                status shouldBe Status.IKKE_FORESPURT
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
+
+                    Then("status er IKKE_FORESPURT") {
+                        status shouldBe Status.IKKE_FORESPURT
+                    }
+                }
             }
 
-            test("Person og en bestilling uten batch finnes. Skal ha status IKKE_BESTILT") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                    aBestilling(1L, "01010100001", 2025, null),
-                )
+            Given("en person med bestilling uten batch") {
+                When("status forespørres") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aBestilling(1L, "01010100001", 2025, null),
+                    )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                status shouldBe Status.IKKE_BESTILT
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
+
+                    Then("status er IKKE_BESTILT") {
+                        status shouldBe Status.IKKE_BESTILT
+                    }
+                }
             }
 
-            test("Person, bestilling og batch finnes. Skal ha status BESTILT") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                    aBestillingsbatch(1L, ref = "1234", status = NY, type = BESTILLING),
-                    aBestilling(1L, "01010100001", 2025, 1L),
-                )
+            Given("en person med bestilling og batch") {
+                When("status forespørres") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aBestillingsbatch(1L, ref = "1234", status = NY, type = BESTILLING),
+                        aBestilling(1L, "01010100001", 2025, 1L),
+                    )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                status shouldBe Status.BESTILT
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
+
+                    Then("status er BESTILT") {
+                        status shouldBe Status.BESTILT
+                    }
+                }
             }
 
-            test("Person og skattekort finnes. Skal ha status UGYLDIG_FORSYSTEM fordi forsystem ikke er i Forsystem-enum") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 1L, 2025),
-                )
+            Given("en person med skattekort og et ugyldig forsystem") {
+                When("status forespørres") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aSkattekort(1L, 1L, 2025),
+                    )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
-                status shouldBe Status.UGYLDIG_FORSYSTEM
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "TEST")
+
+                    Then("status er UGYLDIG_FORSYSTEM") {
+                        status shouldBe Status.UGYLDIG_FORSYSTEM
+                    }
+                }
             }
 
-            test("Person, skattekort og utsending finnes. Skal ha status VENTER_PAA_UTSENDING") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 1L, 2025),
-                    anUtsending("01010100001", 2025, forsystem = "OS"),
-                )
+            Given("en person med skattekort og utsending for riktig forsystem") {
+                When("status forespørres") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aSkattekort(1L, 1L, 2025),
+                        anUtsending("01010100001", 2025, forsystem = "OS"),
+                    )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
-                status shouldBe Status.VENTER_PAA_UTSENDING
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
+
+                    Then("status er VENTER_PAA_UTSENDING") {
+                        status shouldBe Status.VENTER_PAA_UTSENDING
+                    }
+                }
             }
 
-            test("Person og skattekort for året før finnes. Skal ha status IKKE_FORESPURT") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 1L, 2025),
-                )
+            Given("en person med skattekort for året før") {
+                When("status forespørres for neste år") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aSkattekort(1L, 1L, 2025),
+                    )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2026, forsystem = "OS")
-                status shouldBe Status.IKKE_FORESPURT
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2026, forsystem = "OS")
+
+                    Then("status er IKKE_FORESPURT") {
+                        status shouldBe Status.IKKE_FORESPURT
+                    }
+                }
             }
-            test("Person og skattekort finnes. Skal ha status SENDT_FORSYSTEM") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 1L, 2025),
-                )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
-                status shouldBe Status.SENDT_FORSYSTEM
+            Given("en person med skattekort uten utsending for forespurt forsystem") {
+                When("status forespørres") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aSkattekort(1L, 1L, 2025),
+                    )
+
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
+
+                    Then("status er SENDT_FORSYSTEM") {
+                        status shouldBe Status.SENDT_FORSYSTEM
+                    }
+                }
             }
-            test("Person, skattekort og utsending for et annet forsystem finnes. Skal ha status SENDT_FORSYSTEM") {
-                databaseHas(
-                    aPerson(1L),
-                    afoedselsnummer(1L, "01010100001"),
-                    aSkattekort(1L, 1L, 2025),
-                    anUtsending("01010100001", 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR"),
-                )
 
-                val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
-                status shouldBe Status.SENDT_FORSYSTEM
+            Given("en person med skattekort og utsending for et annet forsystem") {
+                When("status forespørres") {
+                    databaseHas(
+                        aPerson(1L),
+                        afoedselsnummer(1L, "01010100001"),
+                        aSkattekort(1L, 1L, 2025),
+                        anUtsending("01010100001", 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR"),
+                    )
+
+                    val status = statusService.statusForespoeresel(fnr = "01010100001", aar = 2025, forsystem = "OS")
+
+                    Then("status er SENDT_FORSYSTEM") {
+                        status shouldBe Status.SENDT_FORSYSTEM
+                    }
+                }
             }
         },
     )

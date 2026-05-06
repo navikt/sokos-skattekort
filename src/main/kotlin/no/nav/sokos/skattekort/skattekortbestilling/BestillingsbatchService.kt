@@ -1,10 +1,10 @@
 package no.nav.sokos.skattekort.skattekortbestilling
 
 import java.sql.BatchUpdateException
+import java.time.Duration
+import java.time.Instant
 import javax.sql.DataSource
 
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
@@ -138,7 +138,7 @@ class BestillingsbatchService(
     ) {
         val notFerdigBestilingsbatch = dataSource.transaction { tx -> BestillingsbatchRepository.getFirstNotFerdigBestillingsbatch(tx) }
 
-        if (notFerdigBestilingsbatch != null && notFerdigBestilingsbatch.opprettet.plus(RECENT_BATCH_GRACE_PERIOD) > Clock.System.now()) {
+        if (notFerdigBestilingsbatch != null && notFerdigBestilingsbatch.opprettet.plus(Duration.ofHours(RECENT_BATCH_GRACE_PERIOD)) > Instant.now()) {
             logger.error(marker = TEAM_LOGS_MARKER, exception) { errorMessage }
             logger.info { "$errorMessage. Feilen ignoreres foreløpig da det allerede finnes en vellykket bestillingsbatch fra den siste timen. Forsøker igjen ved neste kjøring." }
             return

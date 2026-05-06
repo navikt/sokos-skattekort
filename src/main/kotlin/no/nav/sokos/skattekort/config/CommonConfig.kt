@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.config
 
-import kotlin.time.Duration.Companion.hours
 import kotlinx.serialization.json.Json
 
 import com.auth0.jwt.JWT
@@ -37,7 +36,7 @@ import no.nav.sokos.skattekort.api.model.requestValidationUtsendingConfig
 import no.nav.sokos.skattekort.infrastructure.Metrics
 import no.nav.sokos.skattekort.security.TokenUtils
 
-val RECENT_BATCH_GRACE_PERIOD = 1.hours
+val RECENT_BATCH_GRACE_PERIOD = 1L
 val TEAM_LOGS_MARKER = MarkerFactory.getMarker("TEAM_LOGS")
 private const val X_KALLENDE_SYSTEM = "x-kallende-system"
 

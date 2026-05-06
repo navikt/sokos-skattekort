@@ -17,6 +17,7 @@ object UtsendingRepository {
                 """
                 INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
                 VALUES (:fnr, :inntektsaar, :forsystem)
+                ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
                 """.trimIndent(),
                 mapOf(
                     "fnr" to utsending.fnr.value,
@@ -41,7 +42,7 @@ object UtsendingRepository {
     fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> =
         tx.list(
             queryOf(
-                """SELECT * FROM utsendinger""".trimIndent(),
+                """SELECT * FROM utsendinger ORDER BY ID""".trimIndent(),
             ),
             extractor = { row -> Utsending(row) },
         )

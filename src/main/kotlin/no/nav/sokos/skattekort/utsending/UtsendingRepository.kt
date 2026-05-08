@@ -39,10 +39,17 @@ object UtsendingRepository {
         )
     }
 
-    fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> =
+    fun getAllUtsendinger(
+        tx: TransactionalSession,
+        limit: Int? = null,
+    ): List<Utsending> =
         tx.list(
             queryOf(
-                """SELECT * FROM utsendinger ORDER BY ID""".trimIndent(),
+                """
+                SELECT * FROM utsendinger ORDER BY id, fail_count 
+                ${if (limit != null) "LIMIT :limit" else ""}  
+                """.trimIndent(),
+                if (limit != null) mapOf("limit" to limit) else emptyMap(),
             ),
             extractor = { row -> Utsending(row) },
         )

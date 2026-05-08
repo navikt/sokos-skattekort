@@ -6,6 +6,7 @@ import com.ibm.msg.client.jakarta.wmq.WMQConstants
 import jakarta.jms.ConnectionFactory
 
 private const val UTF_8_WITH_PUA = 1208
+const val MQ_BATCH_SIZE = 200
 
 object MQConfig {
     val connectionFactory: ConnectionFactory by lazy {

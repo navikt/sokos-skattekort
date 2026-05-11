@@ -174,6 +174,24 @@ configurations.all {
                 useVersion("1.84")
                 because("Bouncy Castle Has Covert Timing Channel Vulnerability. Affected version >= 1.71, < 1.84")
             }
+            // Jetty HTTP Request Smuggling via Chunked Extension Quoted-String Parsing
+            // CVE-2026-2332, GHSA-355h-qmc2-wpwf
+            // Enforces minimum safe versions for Jetty dependencies
+            if (requested.group == "org.eclipse.jetty" && requested.name.startsWith("jetty-")) {
+                // For Jetty 9.4.x series: enforce >= 9.4.60
+                if (requested.version?.startsWith("9.4.") == true) {
+                    useVersion("9.4.60")
+                    because("Jetty has HTTP Request Smuggling via Chunked Extension Quoted-String Parsing. CVE-2026-2332, GHSA-355h-qmc2-wpwf. Affected version >= 9.4.0, < 9.4.60")
+                }
+                // For Jetty 11.x series: enforce >= 11.0.28 when available
+                // Note: As of May 2026, Jetty 11.0.28 is not yet released on Maven Central.
+                // Current version in use: 11.0.26 (via WireMock 3.13.2 in test dependencies only)
+                // Uncomment when 11.0.28 is available:
+                // if (requested.version?.startsWith("11.0.") == true) {
+                //     useVersion("11.0.28")
+                //     because("Jetty has HTTP Request Smuggling via Chunked Extension Quoted-String Parsing. CVE-2026-2332, GHSA-355h-qmc2-wpwf. Affected version >= 11.0.0, <= 11.0.27")
+                // }
+            }
         }
     }
 }

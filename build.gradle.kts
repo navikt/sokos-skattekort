@@ -164,11 +164,19 @@ configurations.all {
             }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http") {
                 useVersion("4.2.13.Final")
-                because("Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy leads to decompression bomb DoS. CVE-2026-42587, GHSA-f6hv-jmp6-3vwv. Affected version = 4.2.11.Final, patched in 4.2.13.Final")
+                because(
+                    "Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy " +
+                        "leads to decompression bomb DoS. CVE-2026-42587, GHSA-f6hv-jmp6-3vwv. " +
+                        "Affected version = 4.2.11.Final, patched in 4.2.13.Final",
+                )
             }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http2") {
                 useVersion("4.2.13.Final")
-                because("Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy leads to decompression bomb DoS. CVE-2026-42587, GHSA-f6hv-jmp6-3vwv. Affected version = 4.2.11.Final, patched in 4.2.13.Final")
+                because(
+                    "Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy " +
+                        "leads to decompression bomb DoS. CVE-2026-42587, GHSA-f6hv-jmp6-3vwv. " +
+                        "Affected version = 4.2.11.Final, patched in 4.2.13.Final",
+                )
             }
             if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
                 useVersion("1.84")

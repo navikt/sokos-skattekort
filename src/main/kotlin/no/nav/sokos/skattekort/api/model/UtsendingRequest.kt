@@ -19,6 +19,10 @@ data class UtsendingRequest(
 fun RequestValidationConfig.requestValidationUtsendingConfig() {
     validate<UtsendingRequest> { request ->
         when {
+            request.fnr.isEmpty() -> {
+                ValidationResult.Invalid("Listen av fnr kan ikke være tom. Den må inneholde minst ett fnr.")
+            }
+
             !allFnrAreValid(request.fnr) -> {
                 ValidationResult.Invalid("Minst en personIdent er ugyldig. Tillatt format er 11 siffer")
             }

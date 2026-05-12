@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.api
 
 import kotlin.time.toJavaInstant
 
+import io.github.resilience4j.core.functions.Either
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -21,8 +22,11 @@ import no.nav.sokos.skattekort.api.model.FnrRequest
 import no.nav.sokos.skattekort.api.model.NoekkelinformasjonResponse
 import no.nav.sokos.skattekort.api.model.UtsendingDTO
 import no.nav.sokos.skattekort.api.model.UtsendingResponse
+import no.nav.sokos.skattekort.api.model.WrappedWithErrorResponse
 import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
@@ -76,8 +80,14 @@ fun Route.skattekortAdminApi(
         post("auditLogg") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<FnrRequest>()
-            val auditDTOList = personService.getAuditLogs(request.fnr).map(::AuditDTO)
-            call.respond(AuditResponse(auditDTOList))
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
+            if (saksbehandler == null) {
+                call.respond(HttpStatusCode.Forbidden)
+            }
+            when (val result = personService.getAuditLogs(request.fnr, saksbehandler!!)) {
+                is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))
+                is Either.Right -> call.respond(WrappedWithErrorResponse(data = AuditResponse(result.get().map(::AuditDTO))))
+            }
         }
         patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)

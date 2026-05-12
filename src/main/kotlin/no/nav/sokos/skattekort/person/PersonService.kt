@@ -5,12 +5,16 @@ import javax.sql.DataSource
 
 import kotlinx.coroutines.runBlocking
 
+import io.github.resilience4j.core.functions.Either
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 private const val CHUNKED_SIZE = 1000
 
@@ -19,6 +23,7 @@ private val logger = KotlinLogging.logger { }
 class PersonService(
     private val dataSource: DataSource,
     private val pdlClientService: PdlClientService,
+    private val tilgangsmaskinClientService: TilgangsmaskinClientService,
 ) {
     fun findPersonIdOrCreatePersonByFnr(
         fnr: Personidentifikator,
@@ -123,12 +128,18 @@ class PersonService(
         AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, newFoedselsnummer.personId!!, "Oppdatert foedselsnummer: ${newFoedselsnummer.fnr.value}")
     }
 
-    fun getAuditLogs(fnr: String): List<Audit> {
+    suspend fun getAuditLogs(
+        fnr: String,
+        saksbehandler: Saksbehandler,
+    ): Either<ProblemDetailResponse, List<Audit>> {
+        tilgangsmaskinClientService.checkSaksbehandlerAccess(saksbehandler.ident, fnr)?.let { response ->
+            return Either.left(response)
+        }
         return dataSource.transaction { tx ->
             val personId =
                 PersonRepository.findPersonIdByFnr(tx, Personidentifikator(fnr))
-                    ?: return@transaction emptyList()
-            AuditRepository.getAuditByPersonId(tx, personId)
+                    ?: return@transaction Either.right(emptyList())
+            Either.right(AuditRepository.getAuditByPersonId(tx, personId))
         }
     }
 }

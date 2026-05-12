@@ -34,7 +34,7 @@ fun Application.routingConfig(
             val utsendingService: UtsendingService by dependencies
 
             skattekortAdminApi(bestillingsbatchService, personService, utsendingService, skattekortService)
-            skattekortApi(forespoerselService, statusService)
+            skattekortApi(forespoerselService, personService, statusService)
             skattekortPersonApi(skattekortService, pdlService)
         }
     }

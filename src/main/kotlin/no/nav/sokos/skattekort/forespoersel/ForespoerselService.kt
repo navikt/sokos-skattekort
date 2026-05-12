@@ -7,7 +7,6 @@ import javax.sql.DataSource
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.person.AuditRepository
@@ -39,22 +38,12 @@ class ForespoerselService(
         runCatching {
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $message" }
 
-            val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
             val forespoerselInput =
                 when {
                     message.startsWith("<") -> return
                     else -> parseCopybookMessage(message)
                 }.let { input ->
-                    input.copy(
-                        fnrList =
-                            input.fnrList.filter { fnr ->
-                                val kanBestilleSkattekort = foedselsnummerkategori.kanBestilleSkattekort(fnr)
-                                if (!kanBestilleSkattekort) {
-                                    logger.error(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
-                                }
-                                kanBestilleSkattekort
-                            },
-                    )
+                    input.copy(fnrList = personService.validateFoedselsnummer(input.fnrList))
                 }
 
             if (forespoerselInput.fnrList.isEmpty()) {

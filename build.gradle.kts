@@ -163,12 +163,12 @@ configurations.all {
                 because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
             }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http") {
-                useVersion("4.2.11.Final")
-                because("Netty: HTTP Request Smuggling via Chunked Extension Quoted-String Parsing. Affected version >= 4.2.0.Alpha1, < 4.2.10.Final")
+                useVersion("4.2.13.Final")
+                because("Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy leads to decompression bomb DoS >= 4.2.0.Alpha1, <= 4.2.12.Final")
             }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http2") {
-                useVersion("4.2.11.Final")
-                because("Netty HTTP/2 CONTINUATION Frame Flood DoS via Zero-Byte Frame Bypass. Affected version >= 4.2.0.Alpha1, < 4.2.10.Final")
+                useVersion("4.2.13.Final")
+                because("Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy leads to decompression bomb DoS >= 4.2.0.Alpha1, <= 4.2.12.Final")
             }
             if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
                 useVersion("1.84")

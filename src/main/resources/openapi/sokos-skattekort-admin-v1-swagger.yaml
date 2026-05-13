@@ -132,7 +132,7 @@ paths:
       description: |
         Returnerer audit-logg for oppgitt fødselsnummer.
         Responsen er pakket inn i et `WrappedWithErrorResponse`-objekt:
-        - Ved suksess settes `data` til en `AuditResponse` og `errorMessage` er `null`.
+        - Ved suksess settes `data` til en `AuditResponse`.
         - Ved manglende rettigheter settes `data` til en tom streng og `errorMessage`
           til en forklarende melding (HTTP 200).
       operationId: hentAuditLogg

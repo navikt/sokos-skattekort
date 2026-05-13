@@ -83,8 +83,9 @@ fun Route.skattekortAdminApi(
             val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
             if (saksbehandler == null) {
                 call.respond(HttpStatusCode.Forbidden)
+                return@post
             }
-            when (val result = personService.getAuditLogs(request.fnr, saksbehandler!!)) {
+            when (val result = personService.getAuditLogs(request.fnr, saksbehandler)) {
                 is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))
                 is Either.Right -> call.respond(WrappedWithErrorResponse(data = AuditResponse(result.get().map(::AuditDTO))))
             }

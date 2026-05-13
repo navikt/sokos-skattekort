@@ -132,9 +132,8 @@ paths:
       description: |
         Returnerer audit-logg for oppgitt fødselsnummer.
         Responsen er pakket inn i et `WrappedWithErrorResponse`-objekt:
-        - Ved suksess settes `data` til en `AuditResponse`.
-        - Ved manglende rettigheter settes `data` til en tom streng og `errorMessage`
-          til en forklarende melding (HTTP 200).
+        - `data` er alltid en `AuditResponse` (tom liste hvis kallet feiler pga. manglende rettigheter).
+        - `errorMessage` settes til en forklarende melding ved manglende rettigheter, ellers `null`.
       operationId: hentAuditLogg
       requestBody:
         required: true
@@ -149,9 +148,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/WrappedAuditResponse'
-                  - $ref: '#/components/schemas/WrappedAuditError'
+                $ref: '#/components/schemas/WrappedAuditResponse'
         400: { $ref: '#/components/responses/BadRequest' }
         401: { description: Ingen tilgang }
         403: { description: Mangler NAV-ident i token (saksbehandler kunne ikke utledes) }
@@ -203,18 +200,6 @@ components:
           type: string
           nullable: true
           example: null
-
-    WrappedAuditError:
-      type: object
-      required: [data, errorMessage]
-      properties:
-        data:
-          type: string
-          example: ''
-          description: Tom streng når kallet feiler pga. manglende rettigheter
-        errorMessage:
-          type: string
-          example: 'Mangler rettigheter til å se informasjon!'
     NoekkelinformasjonResponse:
       type: object
       required: [antallAvHver]

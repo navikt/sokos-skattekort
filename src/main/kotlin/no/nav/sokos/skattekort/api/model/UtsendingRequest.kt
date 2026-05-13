@@ -20,7 +20,7 @@ fun RequestValidationConfig.requestValidationUtsendingConfig() {
     validate<UtsendingRequest> { request ->
         when {
             request.fnr.isEmpty() -> {
-                ValidationResult.Invalid("Listen av fnr kan ikke være tom. Den må inneholde minst ett fnr.")
+                ValidationResult.Invalid("Listen med fnr kan ikke være tom. Den må inneholde minst ett fnr.")
             }
 
             !allFnrAreValid(request.fnr) -> {

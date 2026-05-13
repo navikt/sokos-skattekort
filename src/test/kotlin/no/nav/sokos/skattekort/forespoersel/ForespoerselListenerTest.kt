@@ -7,12 +7,14 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
@@ -41,7 +43,7 @@ class ForespoerselListenerTest :
                 forespoerselService =
                     ForespoerselService(
                         dataSource = DbListener.dataSource,
-                        personService = PersonService(DbListener.dataSource, pdlClientService),
+                        personService = PersonService(DbListener.dataSource, pdlClientService, tilgangsmaskinClientService = mockk<TilgangsmaskinClientService>(relaxed = true)),
                         featureToggles = UnleashIntegration(),
                     ),
                 forespoerselQueue = forSystemQueue,

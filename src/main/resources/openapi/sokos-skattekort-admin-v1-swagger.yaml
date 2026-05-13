@@ -131,7 +131,7 @@ paths:
       summary: Hent audit-logg for person
       description: |
         Returnerer audit-logg for oppgitt fødselsnummer.
-        Responsen er pakket inn i et `WrappedWithErrorResponse`-objekt:
+        Responsen er pakket inn i et `WrappedAuditResponse`-objekt:
         - `data` er alltid en `AuditResponse` (tom liste hvis kallet feiler pga. manglende rettigheter).
         - `errorMessage` settes til en forklarende melding ved manglende rettigheter, ellers `null`.
       operationId: hentAuditLogg

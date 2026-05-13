@@ -10,6 +10,7 @@ import io.kotest.matchers.collections.shouldNotContainNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.mockk
 
 import no.nav.pdl.HentIdenterBolk
 import no.nav.pdl.enums.IdentGruppe
@@ -18,6 +19,7 @@ import no.nav.pdl.hentidenterbolk.IdentInformasjon
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.pdl.GraphQLResponse
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.listener.WiremockListener.generateHentIdenterBolk
@@ -36,7 +38,7 @@ class PersonServiceTest :
         }
 
         val personService by lazy {
-            PersonService(DbListener.dataSource, pdlClientService)
+            PersonService(DbListener.dataSource, pdlClientService, mockk<TilgangsmaskinClientService>(relaxed = true))
         }
 
         test("Skal ikke kaste exception når det kommer inn en tom liste") {

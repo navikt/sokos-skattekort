@@ -162,6 +162,10 @@ configurations.all {
                 useVersion("3.1.1")
                 because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
             }
+            if (requested.group == "io.netty" && requested.name == "netty-codec") {
+                useVersion("4.1.133.Final")
+                because("Lz4FrameDecoder allocates a ByteBuf of size decompressedLength (up to 32 MB per block) before LZ4 runs. A peer only needs a 21-byte header plus compressedLength payload bytes - 22 bytes if compressedLength == 1 - to force that allocation. CVE-2026-42583 >= 4.2.0.Alpha1, <= 4.2.12.Final")
+            }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http") {
                 useVersion("4.2.13.Final")
                 because("Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy leads to decompression bomb DoS >= 4.2.0.Alpha1, <= 4.2.12.Final")

@@ -92,7 +92,7 @@ class BestillingFeiletRegel : Regel {
 class SkattekortManglerRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.skattekort.isEmpty()
 
-    override fun status(): Status = Status.MANGLER_SKATTEKORT
+    override fun status(): Status = Status.IKKE_FORESPURT
 }
 
 class UgyldigForsystemRegel : Regel {

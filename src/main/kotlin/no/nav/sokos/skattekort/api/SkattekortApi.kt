@@ -18,7 +18,7 @@ import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
 import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
-import no.nav.sokos.skattekort.skattekortbestilling.StatusService
+import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
 
 private val logger = KotlinLogging.logger { }
 

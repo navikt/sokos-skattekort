@@ -14,8 +14,8 @@ import no.nav.sokos.skattekort.skattekort.anUtsending
 import no.nav.sokos.skattekort.skattekort.databaseHas
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus.NY
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType.BESTILLING
-import no.nav.sokos.skattekort.skattekortbestilling.Status
-import no.nav.sokos.skattekort.skattekortbestilling.StatusService
+import no.nav.sokos.skattekort.skattekortbestilling.status.Status
+import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
 
 class StatusServiceTest :
     FunSpec(

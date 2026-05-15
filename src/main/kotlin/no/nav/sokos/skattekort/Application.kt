@@ -42,7 +42,7 @@ import no.nav.sokos.skattekort.security.AzuredTokenClient
 import no.nav.sokos.skattekort.security.MaskinportenTokenClient
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
-import no.nav.sokos.skattekort.skattekortbestilling.StatusService
+import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
 import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.util.audit.AuditLogger

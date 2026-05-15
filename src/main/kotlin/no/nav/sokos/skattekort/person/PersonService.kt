@@ -9,7 +9,9 @@ import io.github.resilience4j.core.functions.Either
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.security.Saksbehandler
@@ -140,6 +142,17 @@ class PersonService(
                 PersonRepository.findPersonIdByFnr(tx, Personidentifikator(fnr))
                     ?: return@transaction Either.right(emptyList())
             Either.right(AuditRepository.getAuditByPersonId(tx, personId))
+        }
+    }
+
+    fun validateFoedselsnummer(fnrList: List<String>): List<String> {
+        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        return fnrList.filter { fnr ->
+            foedselsnummerkategori.kanBestilleSkattekort(fnr).also { valid ->
+                if (!valid) {
+                    logger.error(marker = TEAM_LOGS_MARKER) { "fjernet fnr som ikke kan bestilles fra kallet: $fnr" }
+                }
+            }
         }
     }
 }

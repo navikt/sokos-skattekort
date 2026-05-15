@@ -162,13 +162,27 @@ configurations.all {
                 useVersion("3.1.1")
                 because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
             }
+            if (requested.group == "io.netty" && requested.name == "netty-codec") {
+                useVersion("4.1.133.Final")
+                because(
+                    "Lz4FrameDecoder allocates a ByteBuf of size decompressedLength (up to 32 MB per block) before LZ4 runs. A peer only needs a 21-byte header plus compressedLength payload bytes - 22 bytes if compressedLength == 1 - to force that allocation. CVE-2026-42583 >= 4.2.0.Alpha1, <= 4.2.12.Final",
+                )
+            }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http") {
-                useVersion("4.2.11.Final")
-                because("Netty: HTTP Request Smuggling via Chunked Extension Quoted-String Parsing. Affected version >= 4.2.0.Alpha1, < 4.2.10.Final")
+                useVersion("4.2.13.Final")
+                because("Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy leads to decompression bomb DoS >= 4.2.0.Alpha1, <= 4.2.12.Final")
             }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http2") {
-                useVersion("4.2.11.Final")
-                because("Netty HTTP/2 CONTINUATION Frame Flood DoS via Zero-Byte Frame Bypass. Affected version >= 4.2.0.Alpha1, < 4.2.10.Final")
+                useVersion("4.2.13.Final")
+                because("Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy leads to decompression bomb DoS >= 4.2.0.Alpha1, <= 4.2.12.Final")
+            }
+            if (requested.group == "io.netty" && requested.name == "netty-transport-native-epoll") {
+                useVersion("4.2.13.Final")
+                because("CVE-2026-42577 >= 4.2.0.Alpha1, <= 4.2.12.Final")
+            }
+            if (requested.group == "org.bouncycastle" && requested.name == "bcpkix-jdk18on") {
+                useVersion("1.84")
+                because("CVE-2026-5588: Use of a Broken or Risky Cryptographic Algorithm vulnerability in Legion of the Bouncy Castle Inc. BC-JAVA bcpkix on all (pkix modules). >= 1.49, < 1.84")
             }
             if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
                 useVersion("1.84")

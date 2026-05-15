@@ -2,9 +2,15 @@ package no.nav.sokos.skattekort.skattekorthenting
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.clearAllMocks
+import io.mockk.coEvery
+import io.mockk.mockk
 
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.DbListener.dataSource
+import no.nav.sokos.skattekort.listener.WiremockListener.generateProblemDetailResponse
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekort.aBestilling
 import no.nav.sokos.skattekort.skattekort.aBestillingsbatch
 import no.nav.sokos.skattekort.skattekort.aPerson
@@ -22,23 +28,45 @@ class StatusServiceTest :
         {
             extensions(DbListener)
 
+            val tilgangsmaskinClientService = mockk<TilgangsmaskinClientService>(relaxed = true)
             val statusService: StatusService by lazy {
                 StatusService(
                     dataSource,
+                    tilgangsmaskinClientService = tilgangsmaskinClientService,
                 )
+            }
+
+            val saksbehandler = Saksbehandler(ident = "Z123456")
+
+            beforeTest {
+                clearAllMocks()
+                coEvery {
+                    tilgangsmaskinClientService.checkSaksbehandlerAccess(any(), any())
+                } returns null
+            }
+
+            test("Skjermet person, skal returnere SKJERMET") {
+                coEvery {
+                    tilgangsmaskinClientService.checkSaksbehandlerAccess(any(), any())
+                } returns
+                    generateProblemDetailResponse("x123456", "12345678910")
+                databaseHas()
+
+                val status = statusService.statusForespoeresel(fnr = "01410112345", aar = 2025, forsystem = "TEST", saksbehandler = saksbehandler)
+                status shouldBe Status.SKJERMET
             }
 
             test("Ugyldig fnr. Skal ha status UGYLDIG_FNR") {
                 databaseHas()
 
-                val status = statusService.statusForespoeresel(fnr = "abc", aar = 2025, forsystem = "TEST")
+                val status = statusService.statusForespoeresel(fnr = "abc", aar = 2025, forsystem = "TEST", saksbehandler)
                 status shouldBe Status.UGYLDIG_FNR
             }
 
             test("Gyldig fnr men person finnes ikke. Skal ha status IKKE_FORESPURT") {
                 databaseHas()
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST", saksbehandler)
                 status shouldBe Status.IKKE_FORESPURT
             }
 
@@ -48,7 +76,7 @@ class StatusServiceTest :
                     afoedselsnummer(1L, "01410100001"),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST", saksbehandler)
                 status shouldBe Status.IKKE_FORESPURT
             }
 
@@ -59,7 +87,7 @@ class StatusServiceTest :
                     aBestilling(1L, "01410100001", 2025, null),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST", saksbehandler)
                 status shouldBe Status.IKKE_BESTILT
             }
 
@@ -71,7 +99,7 @@ class StatusServiceTest :
                     aBestilling(1L, "01410100001", 2025, 1L),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST", saksbehandler)
                 status shouldBe Status.BESTILT
             }
 
@@ -82,7 +110,7 @@ class StatusServiceTest :
                     aSkattekort(1L, 1L, 2025),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "TEST", saksbehandler)
                 status shouldBe Status.UGYLDIG_FORSYSTEM
             }
 
@@ -94,7 +122,7 @@ class StatusServiceTest :
                     anUtsending("01410100001", 2025, forsystem = "OS"),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS", saksbehandler)
                 status shouldBe Status.VENTER_PAA_UTSENDING
             }
 
@@ -105,7 +133,7 @@ class StatusServiceTest :
                     aSkattekort(1L, 1L, 2025),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2026, forsystem = "OS")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2026, forsystem = "OS", saksbehandler)
                 status shouldBe Status.IKKE_FORESPURT
             }
             test("Person og skattekort finnes. Skal ha status SENDT_FORSYSTEM") {
@@ -115,7 +143,7 @@ class StatusServiceTest :
                     aSkattekort(1L, 1L, 2025),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS", saksbehandler)
                 status shouldBe Status.SENDT_FORSYSTEM
             }
             test("Person, skattekort og utsending for et annet forsystem finnes. Skal ha status SENDT_FORSYSTEM") {
@@ -126,7 +154,7 @@ class StatusServiceTest :
                     anUtsending("01410100001", 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR"),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS")
+                val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS", saksbehandler)
                 status shouldBe Status.SENDT_FORSYSTEM
             }
         },

@@ -45,13 +45,14 @@ fun Route.skattekortApi(
         post("status") {
             call.requireScope(Scope.STATUS_SCOPE)
             val request = call.receive<ForespoerselRequest>()
-            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) } ?: return@post call.respond(HttpStatusCode.Unauthorized)
 
             logger.info(marker = TEAM_LOGS_MARKER) {
-                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler?.ident}"
+                "skattekortApi - Mottatt forespørsel: $request på vegne av ${saksbehandler.ident}"
             }
+
             call.respond(
-                StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem)),
+                StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)),
             )
         }
     }

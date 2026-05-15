@@ -55,6 +55,7 @@ fun Route.skattekortApi(
 
         post("bestillingbulk/{forsystem}/{inntektsaar}") {
             call.requireScope(Scope.ADMIN_SCOPE)
+
             val forsystem = call.parameters["forsystem"]
             val inntektsaar = call.parameters["inntektsaar"]
             val fnrSet =
@@ -87,7 +88,7 @@ fun Route.skattekortApi(
                 )
             }
 
-            call.respond(HttpStatusCode.OK)
+            call.respond(HttpStatusCode.Accepted)
 
             CoroutineScope(Dispatchers.IO).launch {
                 fnrSet.forEach { fnr ->

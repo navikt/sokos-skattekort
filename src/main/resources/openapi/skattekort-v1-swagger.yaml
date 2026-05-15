@@ -85,7 +85,7 @@ paths:
                 02020212345
                 03030312345
       responses:
-        '200':
+        '202':
           description: Bulkbestilling mottatt
         '400':
           description: Ugyldig request

@@ -159,13 +159,11 @@ class SkattekortApiTest :
 
         test("bestillingbulk skal returnere 200 OK for gyldig request") {
             WiremockListener.wiremockPDLStub(
-                WiremockListener.generateHentIdenterBolk("16836895413"),
-            )
-            WiremockListener.wiremockPDLStub(
-                WiremockListener.generateHentIdenterBolk("24864999049"),
-            )
-            WiremockListener.wiremockPDLStub(
-                WiremockListener.generateHentIdenterBolk("03030312345"),
+                WiremockListener.generateHentIdenterBolk(
+                    "16836895413",
+                    "24864999049",
+                    "03030312345",
+                ),
             )
 
             TestUtils.withFullTestApplication {
@@ -178,10 +176,9 @@ class SkattekortApiTest :
                     }
 
                 eventually(eventuallyConfiguration) {
+                    response.status shouldBe HttpStatusCode.Accepted
                     val validationReport = response.validationReport(validator, HttpMethod.Post, bulkPath, validFnrs, contentType)
-
                     validationReport.hasErrors() shouldBe false
-                    response.status shouldBe HttpStatusCode.OK
 
                     DbListener.dataSource.transaction { tx ->
                         ForespoerselRepository.getAllForespoersel(tx).size shouldBe 3

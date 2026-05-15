@@ -4,8 +4,12 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.DbListener.dataSource
@@ -45,6 +49,8 @@ class StatusServiceTest :
                 } returns null
             }
 
+            afterTest { unmockkObject(PropertiesConfig) }
+
             test("Skjermet person, skal returnere SKJERMET") {
                 coEvery {
                     tilgangsmaskinClientService.checkSaksbehandlerAccess(any(), any())
@@ -54,6 +60,22 @@ class StatusServiceTest :
 
                 val status = statusService.statusForespoeresel(fnr = "01410112345", aar = 2025, forsystem = "TEST", saksbehandler = saksbehandler)
                 status shouldBe Status.SKJERMET
+            }
+
+            test("Gyldig fnr men kan ikke bstille") {
+                mockkObject(PropertiesConfig)
+                every { PropertiesConfig.getApplicationProperties().gyldigeFnr } returns "KUNSTIGE_FNR"
+
+                val status = statusService.statusForespoeresel(fnr = "01410112345", aar = 2025, forsystem = "TEST", saksbehandler = saksbehandler)
+                status shouldBe Status.KUNSTIG_FNR
+            }
+
+            test("Ikke ekte fnr i prodlikt miljø") {
+                mockkObject(PropertiesConfig)
+                every { PropertiesConfig.getApplicationProperties().gyldigeFnr } returns "GYLDIGE"
+
+                val status = statusService.statusForespoeresel(fnr = "01410112345", aar = 2025, forsystem = "TEST", saksbehandler = saksbehandler)
+                status shouldBe Status.UGYLDIG_FNR
             }
 
             test("Ugyldig fnr. Skal ha status UGYLDIG_FNR") {

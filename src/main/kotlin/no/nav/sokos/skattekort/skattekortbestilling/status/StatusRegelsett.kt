@@ -54,7 +54,7 @@ class StatusRegelsett(
 }
 
 class UgyldigFnrForDetteMiljoeRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.KUNSTIGE_FNR.erGyldig(ctx.fnr)
+    override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr).erGyldig(ctx.fnr)
 
     override fun status(): Status = Status.UGYLDIG_FNR
 }
@@ -99,7 +99,7 @@ class UgyldigForsystemRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean {
         try {
             Forsystem.fromValue(ctx.forsystem)
-        } catch (e: NoSuchElementException) {
+        } catch (_: NoSuchElementException) {
             return true
         }
         return false

@@ -62,7 +62,7 @@ class StatusServiceTest :
                 status shouldBe Status.SKJERMET
             }
 
-            test("Gyldig fnr men kan ikke bstille") {
+            test("Gyldig fnr men kan ikke bestille") {
                 mockkObject(PropertiesConfig)
                 every { PropertiesConfig.getApplicationProperties().gyldigeFnr } returns "KUNSTIGE_FNR"
 

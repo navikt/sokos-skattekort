@@ -9,6 +9,7 @@ on:
         type: choice
         options:
           - dev
+          - q1
 
 env:
   TZ: Europe/Oslo

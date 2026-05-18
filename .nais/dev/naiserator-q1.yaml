@@ -89,7 +89,7 @@ spec:
           ports:
             - port: 1413
         - host: okonomi-unleash-api.nav.cloud.nais.io
-        - host: pdl-api.dev-fss-pub.nais.io
+        - host: pdl-api-q1.dev-fss-pub.nais.io
         - host: api-test.sits.no
   maskinporten:
     enabled: true

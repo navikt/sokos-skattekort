@@ -14,7 +14,7 @@ import no.nav.sokos.skattekort.infrastructure.pdl.PdlService
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
-import no.nav.sokos.skattekort.skattekortbestilling.StatusService
+import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
 import no.nav.sokos.skattekort.utsending.UtsendingService
 
 fun Application.routingConfig(

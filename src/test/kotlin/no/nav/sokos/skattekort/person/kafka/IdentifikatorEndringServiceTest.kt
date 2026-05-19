@@ -3,9 +3,11 @@ package no.nav.sokos.skattekort.person.kafka
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
 
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.listener.WiremockListener.wiremockPDLStub
@@ -36,7 +38,7 @@ class IdentifikatorEndringServiceTest :
             IdentifikatorEndringService(
                 dataSource = DbListener.dataSource,
                 pdlClientService = pdlClientService,
-                personService = PersonService(DbListener.dataSource, pdlClientService),
+                personService = PersonService(DbListener.dataSource, pdlClientService, mockk<TilgangsmaskinClientService>(relaxed = true)),
             )
         }
 

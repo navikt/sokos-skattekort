@@ -1,19 +1,17 @@
-package no.nav.sokos.skattekort
+package no.nav.sokos.skattekort.utils
 
-import jakarta.jms.JMSContext.AUTO_ACKNOWLEDGE
-import jakarta.jms.JMSContext.SESSION_TRANSACTED
+import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
 
 import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.listener.MQListener.allQueues
 
 object JmsTestUtil {
     fun sendMessage(
         msg: String,
         queue: Queue,
     ) {
-        MQListener.jmsContext.createContext(SESSION_TRANSACTED).use { context ->
+        MQListener.jmsContext.createContext(JMSContext.SESSION_TRANSACTED).use { context ->
             val message = context.createTextMessage(msg)
             val producer = context.createProducer()
             producer.send(queue, message)
@@ -22,7 +20,7 @@ object JmsTestUtil {
     }
 
     fun getMessages(queue: Queue): List<String> =
-        MQListener.jmsContext.createContext(AUTO_ACKNOWLEDGE).use { context ->
+        MQListener.jmsContext.createContext(JMSContext.AUTO_ACKNOWLEDGE).use { context ->
             val consumer = context.createConsumer(queue)
             val messages = mutableListOf<String>()
             var msg: Message? = consumer.receive(100)
@@ -35,7 +33,7 @@ object JmsTestUtil {
         }
 
     fun assertQueueIsEmpty(queue: Queue) {
-        MQListener.jmsContext.createContext(AUTO_ACKNOWLEDGE).use { context ->
+        MQListener.jmsContext.createContext(JMSContext.AUTO_ACKNOWLEDGE).use { context ->
             val browser = context.createBrowser(queue)
             if (browser.enumeration.hasMoreElements()) {
                 throw AssertionError("Fant flere meldinger i active mq")
@@ -45,9 +43,9 @@ object JmsTestUtil {
     }
 
     fun assertAllQueuesAreEmpty() {
-        MQListener.jmsContext.createContext(AUTO_ACKNOWLEDGE).use { context ->
+        MQListener.jmsContext.createContext(JMSContext.AUTO_ACKNOWLEDGE).use { context ->
             val results: List<String> =
-                allQueues.mapNotNull { queue: Queue ->
+                MQListener.allQueues.mapNotNull { queue: Queue ->
                     val browser = context.createBrowser(queue)
                     if (browser.enumeration.hasMoreElements()) {
                         "Fant melding i kø " + queue.queueName

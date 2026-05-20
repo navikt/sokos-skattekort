@@ -27,6 +27,8 @@ fun MockOAuth2Server.mockAuthConfig(): PropertiesConfig.AzureAdProperties =
     PropertiesConfig.AzureAdProperties(
         clientId = "default",
         wellKnownUrl = wellKnownUrl("default").toString(),
+        tenantId = "default",
+        clientSecret = "default",
         providerName = AUTH_PROVIDER_NAME,
     )
 

@@ -21,8 +21,8 @@ class UnleashIntegration(
     private val onForespoerselListenerChanged: (Boolean) -> Unit = {},
 ) {
     private val unleashClient: Unleash
-    private val appProperties = PropertiesConfig.getApplicationProperties()
-    private val unleashProps = PropertiesConfig.getUnleashProperties()
+    private val appProperties = PropertiesConfig.applicationProperties
+    private val unleashProps = PropertiesConfig.unleashProperties
 
     // Kill switcher:
     fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_UTSENDINGER_ENABLED)
@@ -40,7 +40,7 @@ class UnleashIntegration(
     fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED)
 
     init {
-        if (appProperties.environment == PropertiesConfig.Environment.TEST) {
+        if (appProperties.isTest) {
             unleashClient =
                 FakeUnleash().also { fakeUnleash ->
                     fakeUnleash.enable(SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED)
@@ -55,7 +55,7 @@ class UnleashIntegration(
             val config =
                 UnleashConfig
                     .builder()
-                    .appName(appProperties.naisAppName)
+                    .appName(appProperties.appName)
                     .instanceId(appProperties.podName)
                     .unleashAPI(unleashProps.unleashAPI + "/api/")
                     .apiKey(unleashProps.apiKey)

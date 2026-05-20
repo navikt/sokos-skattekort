@@ -9,19 +9,19 @@ private const val UTF_8_WITH_PUA = 1208
 
 object MQConfig {
     val connectionFactory: ConnectionFactory by lazy {
-        initConnectionFactory(PropertiesConfig.getMQProperties())
+        initConnectionFactory(PropertiesConfig.mqProperties)
     }
 
     fun initConnectionFactory(properties: PropertiesConfig.MQProperties) =
         MQConnectionFactory().apply {
             transportType = WMQConstants.WMQ_CM_CLIENT
-            queueManager = properties.mqQueueManagerName
+            queueManager = properties.queueManagerName
             hostName = properties.hostname
             port = properties.port
-            channel = properties.mqChannelName
+            channel = properties.channelName
             ccsid = UTF_8_WITH_PUA
             clientReconnectOptions = WMQConstants.WMQ_CLIENT_RECONNECT_Q_MGR
-            setStringProperty(WMQConstants.WMQ_APPLICATIONNAME, PropertiesConfig.getApplicationProperties().naisAppName)
+            setStringProperty(WMQConstants.WMQ_APPLICATIONNAME, PropertiesConfig.applicationProperties.appName)
             setIntProperty(WMQConstants.JMS_IBM_ENCODING, MQConstants.MQENC_NATIVE)
             setIntProperty(WMQConstants.JMS_IBM_CHARACTER_SET, UTF_8_WITH_PUA)
 

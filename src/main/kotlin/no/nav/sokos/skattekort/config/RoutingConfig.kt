@@ -19,7 +19,7 @@ import no.nav.sokos.skattekort.utsending.UtsendingService
 
 fun Application.routingConfig(
     applicationState: ApplicationState,
-    azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties(),
+    azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.azureAdProperties,
 ) {
     routing {
         internalNaisRoutes(applicationState)

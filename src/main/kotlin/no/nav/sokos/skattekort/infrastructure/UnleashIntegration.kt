@@ -9,13 +9,13 @@ import io.getunleash.util.UnleashConfig
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 
-private const val SOKOS_SKATTEKORT_OPPDATERINGER_ENABLED = "sokos-skattekort.oppdateringer.enabled"
-private const val SOKOS_SKATTEKORT_BEVISFORSENDING_ENABLED = "sokos-skattekort.bevisforsending.enabled"
-private const val SOKOS_SKATTEKORT_FORESPOERSELINPUT_ENABLED = "sokos-skattekort.forespoerselinput.enabled"
-private const val SOKOS_SKATTEKORT_LAGRE_MOTTATTE_BESTILLINGER_ENABLED = "sokos-skattekort.lagre-mottatte-bestillinger.enabled"
-private const val SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED = "sokos-skattekort.forespoersel-listener.enabled"
-private const val SOKOS_SKATTEKORT_UTSENDINGER_ENABLED = "sokos-skattekort.utsendinger.enabled"
-private const val SOKOS_SKATTEKORT_BESTILLINGER_ENABLED = "sokos-skattekort.bestillinger.enabled"
+private const val TOGGLE_BESTILLINGER_SUFFIX = "bestillinger.enabled"
+private const val TOGGLE_UTSENDINGER_SUFFIX = "utsendinger.enabled"
+private const val TOGGLE_OPPDATERINGER_SUFFIX = "oppdateringer.enabled"
+private const val TOGGLE_BEVISFORSENDING_SUFFIX = "bevisforsending.enabled"
+private const val TOGGLE_FORESPOERSELINPUT_SUFFIX = "forespoerselinput.enabled"
+private const val TOGGLE_LAGRE_MOTTATTE_BESTILLINGER_SUFFIX = "lagre-mottatte-bestillinger.enabled"
+private const val TOGGLE_FORESPOERSEL_LISTENER_SUFFIX = "forespoersel-listener.enabled"
 
 class UnleashIntegration(
     private val onForespoerselListenerChanged: (Boolean) -> Unit = {},
@@ -24,32 +24,34 @@ class UnleashIntegration(
     private val appProperties = PropertiesConfig.getApplicationProperties()
     private val unleashProps = PropertiesConfig.getUnleashProperties()
 
+    private fun toggleName(suffix: String) = "${appProperties.naisAppName}.$suffix"
+
     // Kill switcher:
-    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_UTSENDINGER_ENABLED)
+    fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_UTSENDINGER_SUFFIX))
 
-    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_BESTILLINGER_ENABLED)
+    fun isBestillingerEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_BESTILLINGER_SUFFIX))
 
-    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_OPPDATERINGER_ENABLED)
+    fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_OPPDATERINGER_SUFFIX))
 
-    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_BEVISFORSENDING_ENABLED)
+    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_BEVISFORSENDING_SUFFIX))
 
-    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_FORESPOERSELINPUT_ENABLED)
+    fun isForespoerselInputEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_FORESPOERSELINPUT_SUFFIX))
 
-    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_LAGRE_MOTTATTE_BESTILLINGER_ENABLED)
+    fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_LAGRE_MOTTATTE_BESTILLINGER_SUFFIX))
 
-    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled(SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED)
+    fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_FORESPOERSEL_LISTENER_SUFFIX))
 
     init {
         if (appProperties.environment == PropertiesConfig.Environment.TEST) {
             unleashClient =
                 FakeUnleash().also { fakeUnleash ->
-                    fakeUnleash.enable(SOKOS_SKATTEKORT_FORESPOERSEL_LISTENER_ENABLED)
-                    fakeUnleash.enable(SOKOS_SKATTEKORT_UTSENDINGER_ENABLED)
-                    fakeUnleash.enable(SOKOS_SKATTEKORT_BESTILLINGER_ENABLED)
-                    fakeUnleash.enable(SOKOS_SKATTEKORT_OPPDATERINGER_ENABLED)
-                    fakeUnleash.enable(SOKOS_SKATTEKORT_BEVISFORSENDING_ENABLED)
-                    fakeUnleash.enable(SOKOS_SKATTEKORT_FORESPOERSELINPUT_ENABLED)
-                    fakeUnleash.disable(SOKOS_SKATTEKORT_LAGRE_MOTTATTE_BESTILLINGER_ENABLED)
+                    fakeUnleash.enable(toggleName(TOGGLE_FORESPOERSEL_LISTENER_SUFFIX))
+                    fakeUnleash.enable(toggleName(TOGGLE_UTSENDINGER_SUFFIX))
+                    fakeUnleash.enable(toggleName(TOGGLE_BESTILLINGER_SUFFIX))
+                    fakeUnleash.enable(toggleName(TOGGLE_OPPDATERINGER_SUFFIX))
+                    fakeUnleash.enable(toggleName(TOGGLE_BEVISFORSENDING_SUFFIX))
+                    fakeUnleash.enable(toggleName(TOGGLE_FORESPOERSELINPUT_SUFFIX))
+                    fakeUnleash.disable(toggleName(TOGGLE_LAGRE_MOTTATTE_BESTILLINGER_SUFFIX))
                 }
         } else {
             val config =

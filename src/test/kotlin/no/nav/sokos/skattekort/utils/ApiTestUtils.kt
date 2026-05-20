@@ -16,11 +16,12 @@ object ApiTestUtils {
         method: HttpMethod,
         path: String,
         content: String,
+        contentType: ContentType = ContentType.Application.Json,
     ): ValidationReport =
         validator.validate(
             SimpleRequest
                 .Builder(method.value, path)
-                .withHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                .withHeader(HttpHeaders.ContentType, contentType.toString())
                 .withHeader(HttpHeaders.Authorization, "Bearer test")
                 .withBody(content)
                 .build(),

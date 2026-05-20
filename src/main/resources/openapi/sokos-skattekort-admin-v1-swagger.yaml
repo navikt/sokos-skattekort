@@ -129,7 +129,11 @@ paths:
     post:
       tags: [skattekort-admin]
       summary: Hent audit-logg for person
-      description: Returnerer audit-logg for oppgitt fødselsnummer
+      description: |
+        Returnerer audit-logg for oppgitt fødselsnummer.
+        Responsen er pakket inn i et `WrappedAuditResponse`-objekt:
+        - `data` er alltid en `AuditResponse` (tom liste hvis kallet feiler pga. manglende rettigheter).
+        - `errorMessage` settes til en forklarende melding ved manglende rettigheter, ellers `null`.
       operationId: hentAuditLogg
       requestBody:
         required: true
@@ -144,13 +148,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuditResponse'
+                $ref: '#/components/schemas/WrappedAuditResponse'
         400: { $ref: '#/components/responses/BadRequest' }
         401: { description: Ingen tilgang }
+        403: { description: Mangler NAV-ident i token (saksbehandler kunne ikke utledes) }
         500: { $ref: '#/components/responses/ServerError' }
       security:
         - Bearer: []
-          
   /noekkelinformasjon:
     get:
       tags: [ skattekort-admin ]
@@ -186,6 +190,16 @@ components:
           schema:
             $ref: '#/components/schemas/ApiError'
   schemas:
+    WrappedAuditResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AuditResponse'
+        errorMessage:
+          type: string
+          nullable: true
+          example: null
     NoekkelinformasjonResponse:
       type: object
       required: [antallAvHver]

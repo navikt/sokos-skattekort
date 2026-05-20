@@ -1,0 +1,54 @@
+{
+  "id": 228920,
+  "kilde": "skatteetaten",
+  "personId": 17,
+  "opprettet": "2026-05-20T12:30:59.851978+00:00",
+  "generertFra": null,
+  "inntektsaar": 2026,
+  "utstedtDato": "2026-05-12",
+  "identifikator": "188715",
+  "forskuddstrekkList": [
+    {
+      "type": "trekktabell",
+      "trekkode": "loennFraHovedarbeidsgiver",
+      "prosentSats": 43.00,
+      "tabellNummer": "9090",
+      "frikortBeloep": null,
+      "antallMndForTrekk": 10.5
+    },
+    {
+      "type": "trekkprosent",
+      "trekkode": "loennFraBiarbeidsgiver",
+      "prosentSats": 43.00,
+      "tabellNummer": null,
+      "frikortBeloep": null,
+      "antallMndForTrekk": null
+    },
+    {
+      "type": "trekkprosent",
+      "trekkode": "loennFraNAV",
+      "prosentSats": 43.00,
+      "tabellNummer": null,
+      "frikortBeloep": null,
+      "antallMndForTrekk": null
+    },
+    {
+      "type": "trekkprosent",
+      "trekkode": "ufoeretrygdFraNAV",
+      "prosentSats": 43.00,
+      "tabellNummer": null,
+      "frikortBeloep": null,
+      "antallMndForTrekk": null
+    },
+    {
+      "type": "trekkprosent",
+      "trekkode": "ufoereytelserFraAndre",
+      "prosentSats": 43.00,
+      "tabellNummer": null,
+      "frikortBeloep": null,
+      "antallMndForTrekk": null
+    }
+  ],
+  "resultatForSkattekort": "skattekortopplysningerOK",
+  "tilleggsopplysningList": []
+}

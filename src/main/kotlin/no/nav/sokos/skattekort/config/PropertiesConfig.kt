@@ -249,6 +249,7 @@ object PropertiesConfig {
         LOCAL,
         TEST,
         DEV,
+        Q1,
         PROD,
     }
 

@@ -6,6 +6,7 @@ import java.time.Year
 import kotlinx.serialization.json.Json
 
 import com.atlassian.oai.validator.OpenApiInteractionValidator
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.shouldBe
@@ -28,6 +29,7 @@ import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.ApiTestUtils.validationReport
 import no.nav.sokos.skattekort.utils.TestUtils
+import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 import no.nav.sokos.skattekort.utils.TestUtils.oboTokenWithNavIdent
 
 class SkattekortApiTest :
@@ -40,6 +42,9 @@ class SkattekortApiTest :
                 .build()
 
         val inntektsaar = Year.now().value
+        val forsystem = Forsystem.OPPDRAGSSYSTEMET.value
+        val validFnrs = "01010112345\n02020212345\n03030312345"
+        val bulkPath = "$BASE_PATH_SKATTEKORT/bestillingbulk/$forsystem/$inntektsaar"
 
         test("bestille skattekort skal returnere 201 Created") {
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
@@ -149,6 +154,95 @@ class SkattekortApiTest :
                 DbListener.dataSource.transaction { tx ->
                     ForespoerselRepository.getAllForespoersel(tx) shouldBe emptyList()
                 }
+            }
+        }
+
+        test("bestillingbulk skal returnere 200 OK for gyldig request") {
+            WiremockListener.wiremockPDLStub(
+                WiremockListener.generateHentIdenterBolk(
+                    "16836895413",
+                    "24864999049",
+                    "03030312345",
+                ),
+            )
+
+            TestUtils.withFullTestApplication {
+                val contentType = ContentType.Text.Plain
+                val response =
+                    client.post(bulkPath) {
+                        header(HttpHeaders.ContentType, contentType)
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        setBody(validFnrs)
+                    }
+
+                eventually(eventuallyConfiguration) {
+                    response.status shouldBe HttpStatusCode.Accepted
+                    val validationReport = response.validationReport(validator, HttpMethod.Post, bulkPath, validFnrs, contentType)
+                    validationReport.hasErrors() shouldBe false
+
+                    DbListener.dataSource.transaction { tx ->
+                        ForespoerselRepository.getAllForespoersel(tx).size shouldBe 3
+                    }
+                }
+            }
+        }
+
+        test("bestillingbulk skal returnere 400 når body er tom") {
+            TestUtils.withFullTestApplication {
+                val response =
+                    client.post(bulkPath) {
+                        header(HttpHeaders.ContentType, ContentType.Text.Plain)
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        setBody("")
+                    }
+
+                response.status shouldBe HttpStatusCode.BadRequest
+
+                val apiError = response.body<ApiError>()
+                apiError.status shouldBe HttpStatusCode.BadRequest.value
+                apiError.error shouldBe HttpStatusCode.BadRequest.description
+                apiError.message shouldBe "Mangler FNR"
+                apiError.path shouldBe bulkPath
+            }
+        }
+
+        test("bestillingbulk skal returnere 400 ved ugyldig forsystem") {
+            val ugyldigPath = "$BASE_PATH_SKATTEKORT/bestillingbulk/UGYLDIG/$inntektsaar"
+
+            TestUtils.withFullTestApplication {
+                val response =
+                    client.post(ugyldigPath) {
+                        header(HttpHeaders.ContentType, ContentType.Text.Plain)
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        setBody(validFnrs)
+                    }
+
+                response.status shouldBe HttpStatusCode.BadRequest
+
+                val apiError = response.body<ApiError>()
+                apiError.status shouldBe HttpStatusCode.BadRequest.value
+                val gyldigeForsystemVerdier = Forsystem.entries.filterNot { it == Forsystem.OPPDRAGSSYSTEMET_STOR }.joinToString { it.value }
+                apiError.message shouldBe "forsystem er ugyldig. Gyldige verdier er: $gyldigeForsystemVerdier"
+            }
+        }
+
+        test("bestillingbulk skal returnere 400 ved ugyldig inntektsaar") {
+            val gammeltAar = Year.now().minusYears(2).value
+            val ugyldigPath = "$BASE_PATH_SKATTEKORT/bestillingbulk/$forsystem/$gammeltAar"
+
+            TestUtils.withFullTestApplication {
+                val response =
+                    client.post(ugyldigPath) {
+                        header(HttpHeaders.ContentType, ContentType.Text.Plain)
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        setBody(validFnrs)
+                    }
+
+                response.status shouldBe HttpStatusCode.BadRequest
+
+                val apiError = response.body<ApiError>()
+                apiError.status shouldBe HttpStatusCode.BadRequest.value
+                apiError.message shouldBe "inntektsår er ugyldig. Gyldig årstall er mellom ${Year.now().value - 1} og ${Year.now().value}"
             }
         }
     })

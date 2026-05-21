@@ -1,5 +1,5 @@
 ---
-applyTo: "**/test/**/*.kt"
+applyTo: "**/src/test/**/*.kt"
 ---
 
 # Testing essentials

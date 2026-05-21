@@ -48,6 +48,61 @@ paths:
                 $ref: '#/components/schemas/ApiError'
       security:
         - BearerAuth: [ ]
+  /bestillingbulk/{forsystem}/{inntektsaar}:
+    post:
+      tags:
+        - skattekort
+      summary: Bestille skattekort i bulk
+      description: |
+        Oppretter bulkbestilling av skattekort for flere personer.
+        Request body skal være tekst der hvert fødselsnummer står på egen linje.
+      operationId: bestillingBulk
+      parameters:
+        - name: forsystem
+          in: path
+          required: true
+          description: Kildesystem for bestillingen
+          schema:
+            type: string
+            example: "OS"
+        - name: inntektsaar
+          in: path
+          required: true
+          description: Inntektsåret det bestilles skattekort for
+          schema:
+            type: integer
+            format: int32
+            example: 2025
+      requestBody:
+        required: true
+        description: Liste med FNR, ett per linje
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: |
+                01010112345
+                02020212345
+                03030312345
+      responses:
+        '202':
+          description: Bulkbestilling mottatt
+        '400':
+          description: Ugyldig request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Ingen tilgang
+        '500':
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - BearerAuth: [ ]
 
   /status:
     post:

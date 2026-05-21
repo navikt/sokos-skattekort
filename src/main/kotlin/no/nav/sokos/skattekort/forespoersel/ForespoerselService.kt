@@ -2,17 +2,11 @@ package no.nav.sokos.skattekort.forespoersel
 
 import java.sql.BatchUpdateException
 import java.time.LocalDate
-import java.time.LocalDateTime
 import javax.sql.DataSource
-
-import kotlin.time.ExperimentalTime
-import kotlinx.datetime.Month
-import kotlinx.datetime.toKotlinLocalDateTime
 
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.person.AuditRepository
@@ -21,6 +15,7 @@ import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
@@ -43,22 +38,12 @@ class ForespoerselService(
         runCatching {
             logger.info(marker = TEAM_LOGS_MARKER) { "Motta forespørsel på skattekort: $message" }
 
-            val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
             val forespoerselInput =
                 when {
                     message.startsWith("<") -> return
                     else -> parseCopybookMessage(message)
                 }.let { input ->
-                    input.copy(
-                        fnrList =
-                            input.fnrList.filter { fnr ->
-                                val kanBestilleSkattekort = foedselsnummerkategori.kanBestilleSkattekort(fnr)
-                                if (!kanBestilleSkattekort) {
-                                    logger.error(marker = TEAM_LOGS_MARKER) { "fjernet ugyldig fnr fra kall: $fnr" }
-                                }
-                                kanBestilleSkattekort
-                            },
-                    )
+                    input.copy(fnrList = personService.validateFoedselsnummer(input.fnrList))
                 }
 
             if (forespoerselInput.fnrList.isEmpty()) {
@@ -69,9 +54,12 @@ class ForespoerselService(
             val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(forespoerselInput.fnrList, saksbehandler?.ident)
             dataSource.transaction { tx ->
                 handleForespoersel(tx, message, forespoerselInput, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
-                if (skalLagesForNesteAarOgsaa(forespoerselInput)) {
+                if (forespoerselInput.forsystem == Forsystem.OPPDRAGSSYSTEMET_STOR) return@transaction
+
+                val skalLagesForNesteAarOgsaa = ReglerForInntektsaar.lovligeInntektsAarAaBestilleFraSkatteetaten().contains(forespoerselInput.inntektsaar + 1)
+                if (skalLagesForNesteAarOgsaa) {
                     val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
-                    handleForespoersel(tx, message, forespoerselForNesteAar, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
+                    handleForespoersel(tx, forespoerselForNesteAar.getMessage(), forespoerselForNesteAar, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
                 }
             }
         }.onFailure { exception ->
@@ -81,14 +69,6 @@ class ForespoerselService(
         }
     }
 
-    private fun skalLagesForNesteAarOgsaa(forespoerselInput: ForespoerselInput): Boolean {
-        val now = LocalDateTime.now().toKotlinLocalDateTime()
-        val thisYear = now.year
-        // TODO Bruke ReglerforInntektsaar
-        return (forespoerselInput.inntektsaar == thisYear && now.month == Month.DECEMBER && now.day >= 15)
-    }
-
-    @OptIn(ExperimentalTime::class)
     private fun handleForespoersel(
         tx: TransactionalSession,
         message: String,
@@ -227,10 +207,4 @@ class ForespoerselService(
             }
         }
     }
-
-    data class ForespoerselInput(
-        val forsystem: Forsystem,
-        val inntektsaar: Int,
-        val fnrList: List<String>,
-    )
 }

@@ -2,8 +2,6 @@ package no.nav.sokos.skattekort.skattekorthenting
 
 import java.time.LocalDateTime
 
-import kotlin.time.ExperimentalTime
-
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
@@ -62,7 +60,6 @@ import no.nav.sokos.skattekort.skattekortdata.SkattekortDataRepository
 import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
-@OptIn(ExperimentalTime::class)
 class BestillingServiceTest :
     FunSpec({
         extensions(DbListener)

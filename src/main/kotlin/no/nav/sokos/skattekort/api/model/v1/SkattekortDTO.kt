@@ -4,6 +4,8 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.person.PersonId
@@ -26,7 +28,7 @@ data class SkattekortDTO(
     val tilleggsopplysningList: List<String> = emptyList(),
 ) {
     constructor(skattekort: Skattekort) : this(
-        utstedtDato = skattekort.utstedtDato,
+        utstedtDato = skattekort.utstedtDato?.toKotlinLocalDate(),
         inntektsaar = skattekort.inntektsaar,
         resultatForSkattekort = skattekort.resultatForSkattekort.value,
         forskuddstrekkList =
@@ -74,7 +76,7 @@ data class SkattekortDTO(
     ): Skattekort =
         Skattekort(
             personId = personId,
-            utstedtDato = utstedtDato,
+            utstedtDato = utstedtDato?.toJavaLocalDate(),
             identifikator = identifikator,
             kilde = kilde.value,
             inntektsaar = this.inntektsaar,

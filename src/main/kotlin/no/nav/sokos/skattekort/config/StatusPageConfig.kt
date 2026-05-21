@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.config
 import java.sql.BatchUpdateException
 
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
@@ -42,7 +41,6 @@ fun StatusPagesConfig.statusPageConfig() {
     }
 }
 
-@OptIn(ExperimentalTime::class)
 private fun createApiError(
     status: HttpStatusCode,
     message: String?,
@@ -59,7 +57,6 @@ private fun createApiError(
         ),
     )
 
-@OptIn(ExperimentalTime::class)
 @Serializable
 data class ApiError(
     val timestamp: @Contextual Instant,

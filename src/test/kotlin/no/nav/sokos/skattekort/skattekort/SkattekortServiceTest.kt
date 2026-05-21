@@ -35,6 +35,7 @@ class SkattekortServiceTest :
                     PersonService(
                         dataSource = DbListener.dataSource,
                         pdlClientService = mockk(),
+                        tilgangsmaskinClientService = tilgangsmaskinClientService,
                     ),
                 auditLogger = mockAuditLogger,
                 tilgangsmaskinClientService = tilgangsmaskinClientService,

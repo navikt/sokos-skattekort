@@ -2,22 +2,14 @@ package no.nav.sokos.skattekort.skattekort
 
 import java.math.BigDecimal
 import java.math.RoundingMode
-
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
-import kotlin.time.toKotlinInstant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toKotlinLocalDate
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import java.time.Instant
+import java.time.LocalDate
 
 import kotliquery.Row
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.skattekort.Prosentkort
 
 enum class ResultatForSkattekort(
     val value: String,
@@ -44,53 +36,48 @@ enum class ResultatForSkattekort(
     }
 }
 
-@Serializable
-data class Skattekort
-    @OptIn(ExperimentalTime::class)
+data class Skattekort(
+    val id: SkattekortId? = null,
+    val generertFra: SkattekortId? = null,
+    val personId: PersonId,
+    val utstedtDato: LocalDate?,
+    val identifikator: String?,
+    val inntektsaar: Int,
+    val kilde: String,
+    val resultatForSkattekort: ResultatForSkattekort,
+    val opprettet: Instant = Instant.now(),
+    val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
+    val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
+) {
+    constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
+        id = SkattekortId(row.long("id")),
+        generertFra = row.longOrNull("generert_fra")?.let { SkattekortId(it) },
+        personId = PersonId(row.long("person_id")),
+        utstedtDato = row.localDateOrNull("utstedt_dato"),
+        identifikator = row.stringOrNull("identifikator"),
+        inntektsaar = row.int("inntektsaar"),
+        kilde = row.string("kilde"),
+        resultatForSkattekort = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort")),
+        opprettet = row.instant("opprettet"),
+        forskuddstrekkList = forskuddstrekkList,
+        tilleggsopplysningList = tilleggsopplysningList,
+    )
+
     constructor(
-        val id: SkattekortId? = null,
-        val generertFra: SkattekortId? = null,
-        val personId: PersonId,
-        val utstedtDato: LocalDate?,
-        @SerialName("skattekortidentifikator") val identifikator: String?,
-        val inntektsaar: Int,
-        val kilde: String,
-        val resultatForSkattekort: ResultatForSkattekort,
-        val opprettet: Instant = Clock.System.now(),
-        @SerialName("forskuddstrekk") val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
-        val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
-    ) {
-        @OptIn(ExperimentalTime::class)
-        constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
-            id = SkattekortId(row.long("id")),
-            generertFra = row.longOrNull("generert_fra")?.let { SkattekortId(it) },
-            personId = PersonId(row.long("person_id")),
-            utstedtDato = row.localDateOrNull("utstedt_dato")?.toKotlinLocalDate(),
-            identifikator = row.stringOrNull("identifikator"),
-            inntektsaar = row.int("inntektsaar"),
-            kilde = row.string("kilde"),
-            resultatForSkattekort = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort")),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
-            forskuddstrekkList = forskuddstrekkList,
-            tilleggsopplysningList = tilleggsopplysningList,
-        )
+        personId: PersonId,
+        arbeidstaker: Arbeidstaker,
+    ) : this(
+        personId = personId,
+        utstedtDato = arbeidstaker.skattekort?.utstedtDato?.let(LocalDate::parse),
+        identifikator = arbeidstaker.skattekort?.skattekortidentifikator?.toString(),
+        inntektsaar = arbeidstaker.inntektsaar,
+        kilde = SkattekortKilde.SKATTEETATEN.value,
+        resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
+        forskuddstrekkList = arbeidstaker.skattekort?.forskuddstrekk?.map(Forskuddstrekk::create) ?: emptyList(),
+        tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
+    )
+}
 
-        constructor(
-            personId: PersonId,
-            arbeidstaker: Arbeidstaker,
-        ) : this(
-            personId = personId,
-            utstedtDato = arbeidstaker.skattekort?.utstedtDato?.let(LocalDate::parse),
-            identifikator = arbeidstaker.skattekort?.skattekortidentifikator?.toString(),
-            inntektsaar = arbeidstaker.inntektsaar,
-            kilde = SkattekortKilde.SKATTEETATEN.value,
-            resultatForSkattekort = ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort),
-            forskuddstrekkList = arbeidstaker.skattekort?.forskuddstrekk?.map(Forskuddstrekk::create) ?: emptyList(),
-            tilleggsopplysningList = arbeidstaker.tilleggsopplysning?.map { Tilleggsopplysning.fromValue(it) } ?: emptyList(),
-        )
-    }
-
-@Serializable
 @JvmInline
 value class SkattekortId(
     val value: Long,

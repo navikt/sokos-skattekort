@@ -1,8 +1,5 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import kotlin.time.ExperimentalTime
-import kotlin.time.toKotlinInstant
-
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -43,21 +40,7 @@ object ForespoerselRepository {
             mapToForespoersel,
         )
 
-    fun findById(
-        tx: TransactionalSession,
-        id: Long,
-    ): Forespoersel? =
-        tx.single(
-            queryOf(
-                """
-                SELECT * FROM forespoersler WHERE id = :id
-                """.trimIndent(),
-                mapOf("id" to id),
-            ),
-            mapToForespoersel,
-        )
-
-    fun getAllForespoerselInput(tx: TransactionalSession): List<ForespoerselService.ForespoerselInput> =
+    fun getAllForespoerselInput(tx: TransactionalSession): List<ForespoerselInput> =
         tx.list(
             queryOf(
                 """
@@ -75,21 +58,20 @@ object ForespoerselRepository {
         )
     }
 
-    private val mapToForespoerselInput: (Row) -> ForespoerselService.ForespoerselInput = { row ->
-        ForespoerselService.ForespoerselInput(
+    private val mapToForespoerselInput: (Row) -> ForespoerselInput = { row ->
+        ForespoerselInput(
             forsystem = Forsystem.fromValue(row.string("forsystem")),
             inntektsaar = row.int("inntektsaar"),
             fnrList = listOf(row.string("fnr")),
         )
     }
 
-    @OptIn(ExperimentalTime::class)
     private val mapToForespoersel: (Row) -> Forespoersel = { row ->
         Forespoersel(
             id = ForespoerselId(row.long("id")),
             forsystem = Forsystem.fromValue(row.string("forsystem")),
             dataMottatt = row.string("data_mottatt"),
-            opprettet = row.instant("opprettet").toKotlinInstant(),
+            opprettet = row.instant("opprettet"),
         )
     }
 }

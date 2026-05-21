@@ -1,0 +1,126 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: sokos-skattekort-q1
+  namespace: okonomi
+  labels:
+    team: okonomi
+spec:
+  image: "{{{ image }}}"
+  port: 8080
+  replicas:
+    min: 1
+    max: 2
+    cpuThresholdPercentage: 75
+  liveness:
+    path: /internal/isAlive
+    initialDelay: 5
+    timeout: 5
+    periodSeconds: 5
+    failureThreshold: 30
+  readiness:
+    path: /internal/isReady
+    initialDelay: 5
+    periodSeconds: 5
+    timeout: 5
+  resources:
+    limits:
+      memory: 4096Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  ingresses:
+    - https://sokos-skattekort-q1.intern.dev.nav.no
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - NAVident
+  accessPolicy:
+    inbound:
+      rules:
+        - application: azure-token-generator
+          namespace: nais
+          permissions:
+            scopes:
+              - "bestille-scope"
+              - "hent-skattekort-scope"
+              - "hent-navn-scope"
+              - "status-scope"
+              - "opprett-scope"
+              - "admin-scope"
+            roles:
+              - "bestille-role"
+              - "hent-skattekort-role"
+              - "hent-navn-role"
+        - application: sokos-dare-poc
+          permissions:
+            roles:
+              - "bestille-role"
+        - application: testnav-dolly-proxy-trygdeetaten
+          cluster: dev-fss
+          namespace: dolly
+          permissions:
+            roles:
+              - "opprett-role"
+              - "hent-skattekort-role"
+        # Det MÅ gis tilgang til testnav-dolly-proxy for at testnav-dolly-proxy-trygdeetaten kan hente data fra sokos-skattekort.
+        - application: testnav-dolly-proxy
+          cluster: dev-fss
+          namespace: dolly
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
+        - application: populasjonstilgangskontroll
+          namespace: tilgangsmaskin
+        - application: sokos-dare-poc
+      external:
+        - host: mqls02.preprod.local
+          ports:
+            - port: 1413
+        - host: okonomi-unleash-api.nav.cloud.nais.io
+        - host: pdl-api-q1.dev-fss-pub.nais.io
+        - host: api-test.sits.no
+  maskinporten:
+    enabled: true
+    scopes:
+      consumes:
+        - name: "skatteetaten:skattekorttilarbeidsgiver"
+  kafka:
+    pool: nav-dev
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_18
+        diskAutoresize: true
+        pointInTimeRecovery: true
+        tier: db-f1-micro
+        databases:
+          - name: sokos-skattekort-q1
+            envVarPrefix: DB
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "off"
+          - name: "pgaudit.log"
+            value: "write,ddl,role"
+          - name: "pgaudit.log_parameter"
+            value: "off"
+          - name: "cloudsql.logical_decoding"
+            value: "on"
+  envFrom:
+    - secret: sokos-skattekort-secrets
+    - secret: sokos-skattekort-unleash-api-token
+
+  env:
+    - name: APPLICATION_ENV
+      value: Q1
+

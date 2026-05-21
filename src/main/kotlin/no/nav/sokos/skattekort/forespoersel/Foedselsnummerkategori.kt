@@ -1,6 +1,6 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import kotlinx.datetime.LocalDate
+import java.time.LocalDate
 
 enum class Foedselsnummerkategori(
     val value: String,
@@ -47,13 +47,10 @@ private fun isDateParseable(
     dayOffset: Int = 0,
     monthOffset: Int = 0,
 ): Boolean =
-    try {
-        LocalDate(
-            year = fnr.substring(4, 6).toInt(),
-            month = fnr.substring(2, 4).toInt() - monthOffset,
-            day = fnr.take(2).toInt() - dayOffset,
+    runCatching {
+        LocalDate.of(
+            fnr.substring(4, 6).toInt(),
+            fnr.substring(2, 4).toInt() - monthOffset,
+            fnr.take(2).toInt() - dayOffset,
         )
-        true
-    } catch (_: IllegalArgumentException) {
-        false
-    }
+    }.isSuccess

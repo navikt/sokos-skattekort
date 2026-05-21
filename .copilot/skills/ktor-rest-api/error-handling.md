@@ -30,7 +30,7 @@ fun StatusPagesConfig.statusPageConfig() {
                 is AuthenticationException -> createApiError(HttpStatusCode.Unauthorized, cause.message, call)
                 is AuthorizationException -> createApiError(HttpStatusCode.Forbidden, cause.message, call)
                 is BatchUpdateException -> createApiError(HttpStatusCode.InternalServerError, "En teknisk feil har oppstått. Ta kontakt med utviklerne, detaljer er logget til TEAM LOGS", call)
-                else -> createApiError(HttpStatusCode.InternalServerError, cause.message ?: "En teknisk feil har oppstått", call)
+                else -> createApiError(HttpStatusCode.InternalServerError, cause.message ?: "En teknisk feil har oppstått. Ta kontakt med utviklerne", call)
             }
         call.respond(responseStatus, apiError)
     }

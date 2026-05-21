@@ -103,15 +103,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:3.4.0")
     implementation("io.ktor:ktor-server-content-negotiation:3.4.0")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.0")
-
-    // Exposed
-    implementation("org.jetbrains.exposed:exposed-core:1.0.0")
-    implementation("org.jetbrains.exposed:exposed-dao:1.0.0")
-    implementation("org.jetbrains.exposed:exposed-jdbc:1.0.0")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.0.0")
-
-    // Koin
-    implementation("io.insert-koin:koin-ktor:4.2.0")
+    implementation("io.ktor:ktor-server-di:3.4.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")

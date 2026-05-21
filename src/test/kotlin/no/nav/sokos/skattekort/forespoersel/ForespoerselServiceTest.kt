@@ -1,10 +1,9 @@
 package no.nav.sokos.skattekort.forespoersel
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
-
-import kotlin.time.ExperimentalTime
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
@@ -13,10 +12,13 @@ import io.kotest.matchers.collections.shouldContainAllIgnoringFields
 import io.kotest.matchers.maps.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.mockk.mockk
 
 import no.nav.sokos.skattekort.config.createHttpClient
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
+import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.person.AuditRepository
@@ -28,11 +30,11 @@ import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.DBTestUtils
+import no.nav.sokos.skattekort.utils.DateUtils.toLocalDate
 import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingId
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
-@OptIn(ExperimentalTime::class)
 class ForespoerselServiceTest :
     FunSpec({
         extensions(DbListener, WiremockListener)
@@ -46,7 +48,7 @@ class ForespoerselServiceTest :
         }
 
         val personService: PersonService by lazy {
-            PersonService(DbListener.dataSource, pdlClientService)
+            PersonService(DbListener.dataSource, pdlClientService, mockk<TilgangsmaskinClientService>(relaxed = true))
         }
 
         val forespoerselService: ForespoerselService by lazy {
@@ -81,7 +83,7 @@ class ForespoerselServiceTest :
         test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending") {
             withConstantNow(LocalDateTime.parse("2025-04-12T00:00:00")) {
                 WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("12345678901", "23456789012"))
-                val osMessage = "OS;2025;12345678901;23456789012;"
+                val osMessage = "OS;2026;12345678901;23456789012;"
                 forespoerselService.taImotForespoersel(osMessage)
 
                 DbListener.dataSource.transaction { tx ->
@@ -92,15 +94,47 @@ class ForespoerselServiceTest :
                     assertSoftly {
                         forespoerselList shouldNotBeNull {
                             size shouldBe 1
-                            shouldContainAllIgnoringFields(
-                                listOf(
-                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
-                                    Forespoersel(dataMottatt = "", forsystem = Forsystem.OPPDRAGSSYSTEMET_STOR),
-                                ),
-                                Forespoersel::id,
-                                Forespoersel::opprettet,
-                                Forespoersel::dataMottatt,
-                            )
+                            first() shouldNotBeNull {
+                                id shouldBe ForespoerselId(1)
+                                dataMottatt shouldBe osMessage
+                                forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET_STOR
+                                opprettet.toLocalDate() shouldBe LocalDate.now()
+                            }
+                        }
+                        abonnementList shouldNotBeNull {
+                            size shouldBe 2
+                        }
+                        bestillingList shouldNotBeNull {
+                            size shouldBe 2
+                        }
+                        utsendingList shouldNotBeNull {
+                            size shouldBe 0
+                        }
+                    }
+                }
+            }
+        }
+
+        test("taImotForespoersel skal parse melding fra OS med flere bestillinger, og opprette forespoersel, abonnement, bestilling og utsending etter 15.12") {
+            withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("12345678901", "23456789012"))
+                val osMessage = "OS;2026;12345678901;23456789012;"
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    assertSoftly {
+                        forespoerselList shouldNotBeNull {
+                            size shouldBe 1
+                            first() shouldNotBeNull {
+                                id shouldBe ForespoerselId(1)
+                                dataMottatt shouldBe osMessage
+                                forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET_STOR
+                                opprettet shouldNotBe null
+                            }
                         }
                         abonnementList shouldNotBeNull {
                             size shouldBe 2
@@ -124,8 +158,21 @@ class ForespoerselServiceTest :
 
                 DbListener.dataSource.transaction { tx ->
                     val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)
-                    forespoerselList.size shouldBe 2
-                    forespoerselList.first().forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                    forespoerselList shouldNotBeNull {
+                        size shouldBe 2
+                        first() shouldNotBeNull {
+                            id shouldBe ForespoerselId(1)
+                            dataMottatt shouldBe osMessage
+                            forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                            opprettet shouldNotBe null
+                        }
+                        last() shouldNotBeNull {
+                            id shouldBe ForespoerselId(2)
+                            dataMottatt shouldBe "OS;2026;01010112345"
+                            forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                            opprettet shouldNotBe null
+                        }
+                    }
 
                     val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
                     abonnementList.size shouldBe 2

@@ -1,7 +1,5 @@
 package no.nav.sokos.skattekort.skattekort
 
-import kotlinx.datetime.toJavaLocalDate
-
 import kotliquery.Query
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -26,7 +24,7 @@ object SkattekortRepository {
                         mapOf(
                             "generertFra" to skattekort.generertFra?.value,
                             "personId" to skattekort.personId.value,
-                            "utstedtDato" to skattekort.utstedtDato?.toJavaLocalDate(),
+                            "utstedtDato" to skattekort.utstedtDato,
                             "identifikator" to skattekort.identifikator,
                             "inntektsaar" to skattekort.inntektsaar,
                             "kilde" to skattekort.kilde,
@@ -141,11 +139,11 @@ object SkattekortRepository {
                     ),
                 ),
                 extractor = { row ->
-                    val ft = Forskuddstrekk.create(row)
-                    if (ft.requiresAdminRole() && !adminRole) {
+                    val forskuddstrekk = Forskuddstrekk.create(row)
+                    if (forskuddstrekk.requiresAdminRole() && !adminRole) {
                         null
                     } else {
-                        ft
+                        forskuddstrekk
                     }
                 },
             )

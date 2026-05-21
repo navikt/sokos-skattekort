@@ -1,5 +1,8 @@
 package no.nav.sokos.skattekort.api
 
+import kotlin.time.toJavaInstant
+
+import io.github.resilience4j.core.functions.Either
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -9,6 +12,7 @@ import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
+import no.nav.sokos.skattekort.api.model.AuditDTO
 import no.nav.sokos.skattekort.api.model.AuditResponse
 import no.nav.sokos.skattekort.api.model.BatchInsightRequest
 import no.nav.sokos.skattekort.api.model.BatchInsightResponse
@@ -18,8 +22,11 @@ import no.nav.sokos.skattekort.api.model.FnrRequest
 import no.nav.sokos.skattekort.api.model.NoekkelinformasjonResponse
 import no.nav.sokos.skattekort.api.model.UtsendingDTO
 import no.nav.sokos.skattekort.api.model.UtsendingResponse
+import no.nav.sokos.skattekort.api.model.WrappedWithErrorResponse
 import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
+import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
@@ -37,7 +44,7 @@ fun Route.skattekortAdminApi(
         post("bestillingsbatcher") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<BatchInsightRequest>()
-            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom, request.tidspunktTom)
+            val bestillingsbatcher = bestillingsbatchService.getBestillingsbatches(request.tidspunktFom?.toJavaInstant(), request.tidspunktTom?.toJavaInstant())
             call.respond(
                 BatchInsightResponse(bestillingsbatcher),
             )
@@ -73,8 +80,15 @@ fun Route.skattekortAdminApi(
         post("auditLogg") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val request = call.receive<FnrRequest>()
-            val audits = personService.getAuditLogs(request.fnr)
-            call.respond(AuditResponse(audits))
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) }
+            if (saksbehandler == null) {
+                call.respond(HttpStatusCode.Forbidden)
+                return@post
+            }
+            when (val result = personService.getAuditLogs(request.fnr, saksbehandler)) {
+                is Either.Left -> call.respond(WrappedWithErrorResponse(data = AuditResponse(emptyList()), errorMessage = "Mangler rettigheter til å se informasjon!"))
+                is Either.Right -> call.respond(WrappedWithErrorResponse(data = AuditResponse(result.get().map(::AuditDTO))))
+            }
         }
         patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)

@@ -1,7 +1,9 @@
 package no.nav.sokos.skattekort.api.model.v2
 
 import kotlin.time.Instant
+import kotlin.time.toKotlinInstant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.serialization.Serializable
 
 import no.nav.sokos.skattekort.api.model.v1.ForskuddstrekkDTO
@@ -68,10 +70,11 @@ data class SkattekortDTO(
         identifikator = skattekort.identifikator,
         inntektsaar = skattekort.inntektsaar,
         kilde = SkattekortKilde.fromValue(skattekort.kilde),
-        opprettet = skattekort.opprettet,
+        opprettet = skattekort.opprettet.toKotlinInstant(),
         resultatForSkattekort = skattekort.resultatForSkattekort.value,
         tilleggsopplysningList = skattekort.tilleggsopplysningList.map { it.value },
-        utstedtDato = skattekort.utstedtDato,
+        utstedtDato = skattekort.utstedtDato?.toKotlinLocalDate(),
     )
+
     constructor(skattekort: Skattekort) : this(skattekort, null)
 }

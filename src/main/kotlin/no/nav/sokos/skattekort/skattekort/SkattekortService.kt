@@ -16,6 +16,7 @@ import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
@@ -40,6 +41,7 @@ class SkattekortService(
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
     ): Either<ProblemDetailResponse, List<Skattekort>> {
+        val adminRole = false
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
         saksbehandler?.let {
             tilgangsmaskinClientService.checkSaksbehandlerAccess(it.ident, fnr)?.let { response ->
@@ -53,19 +55,18 @@ class SkattekortService(
             auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har søkt etter skattekort for bruker"))
         }
 
-        return Either.right(
-            dataSource
-                .transaction { tx ->
-                    val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
-                    SkattekortRepository
-                        .findAllByPersonId(
-                            tx,
-                            person.id!!,
-                            inntektsaar,
-                            adminRole = false,
-                        )
-                }.toList(),
-        )
+        val skattekortList =
+            dataSource.transaction { tx ->
+                val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
+                SkattekortRepository
+                    .findAllByPersonId(
+                        tx,
+                        personIdList = listOf(person.id!!),
+                        inntektsaarList = inntektsaar?.let { listOf(it) } ?: alleLovligeInntektsaarAaHenteSkattekortFor(),
+                    )
+            }
+
+        return Either.right(skattekortList)
     }
 
     fun createManualSkattekort(

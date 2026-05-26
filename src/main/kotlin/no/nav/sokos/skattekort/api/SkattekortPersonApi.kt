@@ -39,14 +39,18 @@ fun Route.skattekortPersonApi(
                     skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler)
                 }
             when (skattekortAnswer) {
-                is Either.Left -> throw AuthorizationException("Mangler rettigheter til å se informasjon!")
-                is Either.Right ->
+                is Either.Left -> {
+                    throw AuthorizationException("Mangler rettigheter til å se informasjon!")
+                }
+
+                is Either.Right -> {
                     call.respond(
                         skattekortAnswer.get().map {
                             no.nav.sokos.skattekort.api.model.v1
                                 .SkattekortDTO(it)
                         },
                     )
+                }
             }
         }
 

@@ -101,13 +101,17 @@ class ForespoerselService(
                 forespoerselId = forespoerselId,
                 inntektsaar = forespoerselInput.inntektsaar,
                 personId = personId.value,
-            ) ?: throw IllegalStateException("Kunne ikke lage abonnement")
+            )
 
-            val skattekort =
-                SkattekortRepository
-                    .findAllByPersonId(tx, personId, forespoerselInput.inntektsaar, adminRole = false)
+            val skattekortList =
+                SkattekortRepository.findAllByPersonId(
+                    tx,
+                    personIdList = listOf(personId),
+                    inntektsaarList = listOf(forespoerselInput.inntektsaar),
+                    showOnlyLatest = true,
+                )
 
-            if (skattekort.isEmpty()) {
+            if (skattekortList.isEmpty()) {
                 val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
                 if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
                 if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, forespoerselInput.inntektsaar) == null) {

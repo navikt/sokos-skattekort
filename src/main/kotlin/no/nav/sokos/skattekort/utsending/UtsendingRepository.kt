@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.utsending
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
+import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.Personidentifikator
@@ -11,14 +12,17 @@ object UtsendingRepository {
     fun insert(
         tx: TransactionalSession,
         utsending: Utsending,
-    ): Long? =
-        tx.updateAndReturnGeneratedKey(
+    ): Long? {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
+            VALUES (:fnr, :inntektsaar, :forsystem)
+            ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
+            """.trimIndent()
+        return tx.updateAndReturnGeneratedKey(
             queryOf(
-                """
-                INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
-                VALUES (:fnr, :inntektsaar, :forsystem)
-                ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "fnr" to utsending.fnr.value,
                     "inntektsaar" to utsending.inntektsaar,
@@ -26,26 +30,32 @@ object UtsendingRepository {
                 ),
             ),
         )
+    }
 
     fun delete(
         tx: TransactionalSession,
         id: UtsendingId,
     ) {
+        @Language("PostgreSQL")
+        val sql =
+            "DELETE FROM utsendinger WHERE id = :id".trimIndent()
         tx.update(
             queryOf(
-                """DELETE FROM utsendinger WHERE id = :id""".trimIndent(),
+                sql,
                 mapOf("id" to id.value),
             ),
         )
     }
 
-    fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> =
-        tx.list(
-            queryOf(
-                """SELECT * FROM utsendinger ORDER BY ID""".trimIndent(),
-            ),
+    fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> {
+        @Language("PostgreSQL")
+        val sql =
+            "SELECT * FROM utsendinger ORDER BY ID".trimIndent()
+        return tx.list(
+            queryOf(sql),
             extractor = { row -> Utsending(row) },
         )
+    }
 
     fun increaseFailCount(
         tx: TransactionalSession,
@@ -53,14 +63,17 @@ object UtsendingRepository {
         failMessage: String,
     ) {
         maybeId?.let { id ->
+            @Language("PostgreSQL")
+            val sql =
+                """
+                UPDATE utsendinger SET
+                fail_count = fail_count + 1,
+                fail_message = :fail_message
+                WHERE id = :id
+                """.trimIndent()
             tx.update(
                 queryOf(
-                    """
-                    UPDATE utsendinger SET
-                    fail_count = fail_count + 1,
-                    fail_message = :fail_message
-                    WHERE id = :id
-                    """.trimIndent(),
+                    sql,
                     mapOf(
                         "id" to id.value,
                         "fail_message" to failMessage,
@@ -75,13 +88,16 @@ object UtsendingRepository {
         fnr: Personidentifikator,
         inntektsaar: Int,
         forsystem: Forsystem,
-    ): Utsending? =
-        tx.single(
+    ): Utsending? {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger
+            WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
+            """.trimIndent()
+        return tx.single(
             queryOf(
-                """
-                SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger 
-                WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "fnr" to fnr.value,
                     "inntektsaar" to inntektsaar,
@@ -90,16 +106,19 @@ object UtsendingRepository {
             ),
             extractor = { row -> Utsending(row) },
         )
+    }
 
-    fun getSecondsSinceEarliestUnsentUtsending(tx: TransactionalSession): Double =
-        tx.single(
-            queryOf(
-                """
-                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(opprettet), NOW())) as earliest_opprettet FROM utsendinger
-                """.trimIndent(),
-            ),
+    fun getSecondsSinceEarliestUnsentUtsending(tx: TransactionalSession): Double {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(opprettet), NOW())) as earliest_opprettet FROM utsendinger
+            """.trimIndent()
+        return tx.single(
+            queryOf(sql),
             extractor = { row -> row.double("earliest_opprettet") },
         ) ?: error("Should always return a number")
+    }
 
     fun lagreBevis(
         tx: TransactionalSession,
@@ -108,11 +127,14 @@ object UtsendingRepository {
         fnr: Personidentifikator,
         copybook: String,
     ) {
+        @Language("PostgreSQL")
+        val sql =
+            """INSERT INTO bevis_sending
+                |(skattekort_id, forsystem, fnr, sending) VALUES (:id, :forsystem, :fnr, :sending)
+            """.trimMargin()
         tx.update(
             queryOf(
-                """INSERT INTO bevis_sending
-                    |(skattekort_id, forsystem, fnr, sending) VALUES (:id, :forsystem, :fnr, :sending)
-                """.trimMargin(),
+                sql,
                 mapOf(
                     "id" to id.value,
                     "forsystem" to forsystem.value,
@@ -124,10 +146,11 @@ object UtsendingRepository {
     }
 
     fun slettGamleBevis(tx: TransactionalSession) {
+        @Language("PostgreSQL")
+        val sql =
+            "DELETE FROM bevis_sending WHERE opprettet < now() - interval '7 days'"
         tx.update(
-            queryOf(
-                """DELETE FROM bevis_sending WHERE opprettet < now() - interval '7 days'""",
-            ),
+            queryOf(sql),
         )
     }
 }

@@ -81,48 +81,40 @@ val config = serverConfig {
 ### build.gradle.kts Configuration
 
 ```kotlin
-// Check for latest versions: https://kotlinlang.org/docs/releases.html
+// Match this repository's build.gradle.kts plugin IDs and version variables
 plugins {
-    kotlin("jvm") version "2.3.10"
-    kotlin("plugin.serialization") version "2.3.10"
-    id("io.ktor.plugin") version "3.4.0"
-    id("org.jetbrains.kotlinx.kover") version "0.9.7"
-    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    kotlin("jvm") version "2.3.21"
+    kotlin("plugin.serialization") version "2.3.21"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
+    id("org.jetbrains.kotlinx.kover") version "0.9.8"
+    id("io.github.androa.gradle.plugin.avro") version "0.0.12"
+
+    application
 }
 
-group = "com.example"
-version = "1.0.0"
-
-kotlin {
-    jvmToolchain(21)
-}
+val ktorVersion = "3.4.3"
+val kotestVersion = "6.1.11"
+val mockkVersion = "1.14.9"
+val kotlinxSerializationVersion = "1.11.0"
 
 dependencies {
     // Ktor
-    implementation("io.ktor:ktor-server-core:3.4.0")
-    implementation("io.ktor:ktor-server-netty:3.4.0")
-    implementation("io.ktor:ktor-server-content-negotiation:3.4.0")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.0")
-    implementation("io.ktor:ktor-server-di:3.4.0")
+    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-di:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$kotlinxSerializationVersion")
 
     // Testing
-    testImplementation("io.kotest:kotest-runner-junit5:6.1.4")
-    testImplementation("io.kotest:kotest-assertions-core:6.1.4")
-    testImplementation("io.kotest:kotest-property:6.1.4")
-    testImplementation("io.mockk:mockk:1.14.9")
-    testImplementation("io.ktor:ktor-server-test-host:3.4.0")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
+    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
+    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.mockk:mockk:$mockkVersion")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
-}
-
-detekt {
-    config.setFrom(files("config/detekt/detekt.yml"))
-    buildUponDefaultConfig = true
 }
 ```

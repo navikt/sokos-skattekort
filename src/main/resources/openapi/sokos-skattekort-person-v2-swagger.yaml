@@ -49,6 +49,13 @@ paths:
                 $ref: '#/components/schemas/ApiError'
         401:
           description: Ingen tilgang
+        403:
+          description: Mangler nødvendig scope/rolle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+                
         500:
           description: Annen feil
           content:
@@ -77,6 +84,13 @@ paths:
                 $ref: '#/components/schemas/ApiError'
         401:
           description: Ingen tilgang
+        403:
+          description: Mangler nødvendig scope/rolle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+                  
         500:
           description: Annen feil
           content:
@@ -124,6 +138,12 @@ paths:
                 $ref: '#/components/schemas/ApiError'
         401:
           description: Ingen tilgang
+        403:
+          description: Mangler nødvendig scope/rolle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'                  
         500:
           description: Annen feil
           content:
@@ -217,42 +237,52 @@ components:
     SkattekortResponseDTO:
       type: object
       properties:
-        forskuddstrekkList:
-          type: array
-          items:
-            $ref: '#/components/schemas/ForskuddstrekkDTO'
-        id: 
-          type: number
+        fnr:
+          type: string
+          nullable: true
+        id:
+          type: integer
+          format: int64
         identifikator:
           type: string
+          nullable: true
         inntektsaar:
           type: integer
           format: year
-        kilde: 
+        kilde:
           type: string
+          enum: [ ... fyll inn fra SkattekortKilde ... ]
         opprettet:
           type: string
+          format: date-time
         resultatForSkattekort:
           type: string
-          description: Resultat for skattekort
+          nullable: true
           enum:
             - skattekortopplysningerOK
             - ikkeSkattekort
             - ikkeTrekkplikt
             - utgaattDnummerSkattekortForFoedselsnummerErLevert
+        forskuddstrekkList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForskuddstrekkDTO'
         tilleggsopplysningList:
           type: array
           items:
             type: string
-            enum:
-              - oppholdPaaSvalbard
-              - kildeskattPaaPensjon
-              - oppholdITiltakssone
-            nullable: true
+            enum: [ oppholdPaaSvalbard, kildeskattPaaPensjon, oppholdITiltakssone ]
         utstedtDato:
           type: string
           format: date
           nullable: true
+      required:
+        - id
+        - inntektsaar
+        - kilde
+        - opprettet
+        - forskuddstrekkList
+        
     ForskuddstrekkDTO:
       type: object
       properties:
@@ -325,7 +355,6 @@ components:
       properties:
         data:
           type: string
-          nullable: false
         errorMessage:
           type: string
           nullable: true

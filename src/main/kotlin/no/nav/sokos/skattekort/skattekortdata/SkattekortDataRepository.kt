@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.skattekortdata
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
+import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortId
@@ -14,13 +15,16 @@ object SkattekortDataRepository {
         inntektsaar: Int,
         fnr: String,
         type: BestillingsbatchType,
-    ): Long? =
-        tx.run(
+    ): Long? {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr, type)
+            VALUES ((CAST (:dataMottatt AS JSON)), :inntektsaar, :fnr, :type)
+            """.trimIndent()
+        return tx.run(
             queryOf(
-                """
-                INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr, type)
-                VALUES ((CAST (:dataMottatt AS JSON)), :inntektsaar, :fnr, :type)
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "dataMottatt" to dataMottatt,
                     "inntektsaar" to inntektsaar,
@@ -29,17 +33,21 @@ object SkattekortDataRepository {
                 ),
             ).asUpdateAndReturnGeneratedKey,
         )
+    }
 
     fun updateSkattekortId(
         tx: TransactionalSession,
         id: Long,
         skattekortId: Long,
     ) {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            UPDATE skattekort_data SET skattekort_id = :skattekortId WHERE id = :id
+            """.trimIndent()
         tx.update(
             queryOf(
-                """
-                UPDATE skattekort_data SET skattekort_id = :skattekortId WHERE id = :id
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "skattekortId" to skattekortId,
                     "id" to id,
@@ -48,14 +56,15 @@ object SkattekortDataRepository {
         )
     }
 
-    fun getUnprocessedSkattekortData(tx: TransactionalSession): List<SkattekortData> =
-        tx.list(
-            queryOf(
-                """
-                SELECT id, inntektsaar, data_mottatt, opprettet, fnr, skattekort_id, type FROM skattekort_data 
-                WHERE skattekort_id is null
-                """.trimIndent(),
-            ),
+    fun getUnprocessedSkattekortData(tx: TransactionalSession): List<SkattekortData> {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            SELECT id, inntektsaar, data_mottatt, opprettet, fnr, skattekort_id, type FROM skattekort_data
+            WHERE skattekort_id is null
+            """.trimIndent()
+        return tx.list(
+            queryOf(sql),
             extractor = { row ->
                 SkattekortData(
                     id = SkattekortDataId(row.long("id")),
@@ -68,4 +77,5 @@ object SkattekortDataRepository {
                 )
             },
         )
+    }
 }

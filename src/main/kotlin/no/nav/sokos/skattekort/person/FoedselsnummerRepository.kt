@@ -2,18 +2,22 @@ package no.nav.sokos.skattekort.person
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
+import org.intellij.lang.annotations.Language
 
 object FoedselsnummerRepository {
     fun insert(
         tx: TransactionalSession,
         foedselsnummer: Foedselsnummer,
-    ): Long? =
-        tx.updateAndReturnGeneratedKey(
+    ): Long? {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
+            VALUES (:personId, :gjelderFom, :fnr)
+            """.trimIndent()
+        return tx.updateAndReturnGeneratedKey(
             queryOf(
-                """
-                INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr) 
-                VALUES (:personId, :gjelderFom, :fnr)
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "personId" to foedselsnummer.personId?.value,
                     "gjelderFom" to foedselsnummer.gjelderFom,
@@ -21,37 +25,45 @@ object FoedselsnummerRepository {
                 ),
             ),
         )
+    }
 
     fun insertByExistingFnr(
         tx: TransactionalSession,
         fnr: String,
         existingFnr: String,
-    ): Long? =
-        tx.updateAndReturnGeneratedKey(
+    ): Long? {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
+            SELECT person_id, gjelder_fom - INTERVAL '1 day', :fnr FROM foedselsnumre WHERE fnr = :existingFnr
+            """.trimIndent()
+        return tx.updateAndReturnGeneratedKey(
             queryOf(
-                """
-                INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr) 
-                SELECT person_id, gjelder_fom - INTERVAL '1 day', :fnr FROM foedselsnumre WHERE fnr = :existingFnr
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "fnr" to fnr,
                     "existingFnr" to existingFnr,
                 ),
             ),
         )
+    }
 
     fun findPersonIdByFnrList(
         tx: TransactionalSession,
         fnrList: List<String>,
     ): Map<String, PersonId?> {
+        @Language("PostgreSQL")
+        val sql =
+            """
+            SELECT person_id, fnr FROM foedselsnumre
+            WHERE fnr = ANY(?)
+            """.trimIndent()
         val resultMap =
             tx
                 .list(
                     queryOf(
-                        """
-                        SELECT person_id, fnr FROM foedselsnumre
-                        WHERE fnr = ANY(?)
-                        """.trimIndent(),
+                        sql,
                         fnrList.toTypedArray(),
                     ),
                     extractor = { row ->

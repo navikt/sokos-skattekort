@@ -326,7 +326,7 @@ class SkattekortpersonApiV1Test :
                     DbListener.dataSource.transaction { tx ->
                         val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
                         opprettetPerson.shouldNotBeNull()
-                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, opprettetPerson.id!!, 2026, false)
+                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, listOf(opprettetPerson.id!!), listOf(2026), false)
                         nyeSkattekort.size shouldBe 2
                     }
                 } catch (e: Exception) {
@@ -363,7 +363,7 @@ class SkattekortpersonApiV1Test :
                     DbListener.dataSource.transaction { tx ->
                         val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
                         opprettetPerson.shouldNotBeNull()
-                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, opprettetPerson.id!!, 2026, false)
+                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, listOf(opprettetPerson.id!!), listOf(2026), false)
                         nyeSkattekort shouldNotBeNull {
                             size shouldBe 2
                             first() shouldNotBeNull {
@@ -516,7 +516,7 @@ class SkattekortpersonApiV1Test :
                     DbListener.dataSource.transaction { tx ->
                         val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01410112345"))
                         opprettetPerson.shouldNotBeNull()
-                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, opprettetPerson.id!!, 2026, false)
+                        val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, listOf(opprettetPerson.id!!), listOf(2026), false)
                         nyeSkattekort.size shouldBe 1
                     }
                 } catch (e: Exception) {

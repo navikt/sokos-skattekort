@@ -5,7 +5,8 @@ import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
 
-import kotliquery.Row
+import kotlinx.serialization.Serializable
+
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
@@ -49,20 +50,6 @@ data class Skattekort(
     val forskuddstrekkList: List<Forskuddstrekk> = emptyList(),
     val tilleggsopplysningList: List<Tilleggsopplysning> = emptyList(),
 ) {
-    constructor(row: Row, forskuddstrekkList: List<Forskuddstrekk>, tilleggsopplysningList: List<Tilleggsopplysning>) : this(
-        id = SkattekortId(row.long("id")),
-        generertFra = row.longOrNull("generert_fra")?.let { SkattekortId(it) },
-        personId = PersonId(row.long("person_id")),
-        utstedtDato = row.localDateOrNull("utstedt_dato"),
-        identifikator = row.stringOrNull("identifikator"),
-        inntektsaar = row.int("inntektsaar"),
-        kilde = row.string("kilde"),
-        resultatForSkattekort = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort")),
-        opprettet = row.instant("opprettet"),
-        forskuddstrekkList = forskuddstrekkList,
-        tilleggsopplysningList = tilleggsopplysningList,
-    )
-
     constructor(
         personId: PersonId,
         arbeidstaker: Arbeidstaker,
@@ -94,35 +81,6 @@ sealed interface Forskuddstrekk {
     fun requiresAdminRole(): Boolean = trekkode().requiresAdminRole
 
     companion object {
-        fun create(row: Row): Forskuddstrekk {
-            val type = ForskuddstrekkType.from(row.string("type"))
-            return when (type) {
-                ForskuddstrekkType.FRIKORT -> {
-                    Frikort(
-                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
-                        frikortBeloep = row.intOrNull("frikort_beloep"),
-                    )
-                }
-
-                ForskuddstrekkType.PROSENTKORT -> {
-                    Prosentkort(
-                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
-                        prosentSats = row.bigDecimal("prosentsats").setScale(2, RoundingMode.HALF_UP),
-                        antallMndForTrekk = row.bigDecimalOrNull("antall_mnd_for_trekk")?.setScale(1, RoundingMode.HALF_UP),
-                    )
-                }
-
-                ForskuddstrekkType.TABELLKORT -> {
-                    Tabellkort(
-                        trekkode = Trekkode.fromValue(row.string("trekk_kode")),
-                        tabellNummer = row.string("tabell_nummer"),
-                        prosentSats = row.bigDecimal("prosentsats").setScale(2, RoundingMode.HALF_UP),
-                        antallMndForTrekk = row.bigDecimal("antall_mnd_for_trekk").setScale(1, RoundingMode.HALF_UP),
-                    )
-                }
-            }
-        }
-
         fun create(forskuddstrekk: no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk): Forskuddstrekk {
             val type = klassifiserType(forskuddstrekk)
             return when (type) {
@@ -253,5 +211,71 @@ enum class Trekkode(
 
     companion object {
         fun fromValue(kode: String): Trekkode = entries.find { it.value == kode } ?: error("Ukjent trekkode: $kode")
+    }
+}
+
+@Serializable
+data class SkattekortJson(
+    val id: Long,
+    val generertFra: Long? = null,
+    val personId: Long,
+    val utstedtDato: String? = null,
+    val identifikator: String? = null,
+    val inntektsaar: Int,
+    val kilde: String,
+    val resultatForSkattekort: String,
+    val opprettet: String,
+    val forskuddstrekkList: List<ForskuddstrekkJson> = emptyList(),
+    val tilleggsopplysningList: List<String> = emptyList(),
+)
+
+@Serializable
+data class ForskuddstrekkJson(
+    val type: String,
+    val trekkode: String,
+    val frikortBeloep: Int? = null,
+    val tabellNummer: String? = null,
+    val prosentSats: Double? = null,
+    val antallMndForTrekk: Double? = null,
+)
+
+fun SkattekortJson.toDomain(): Skattekort =
+    Skattekort(
+        id = SkattekortId(id),
+        generertFra = generertFra?.let { SkattekortId(it) },
+        personId = PersonId(personId),
+        utstedtDato = utstedtDato?.let { LocalDate.parse(it) },
+        identifikator = identifikator,
+        inntektsaar = inntektsaar,
+        kilde = kilde,
+        resultatForSkattekort = ResultatForSkattekort.fromValue(resultatForSkattekort),
+        opprettet = Instant.parse(opprettet),
+        forskuddstrekkList = forskuddstrekkList.map { it.toDomain() },
+        tilleggsopplysningList = tilleggsopplysningList.map { Tilleggsopplysning.fromValue(it) },
+    )
+
+fun ForskuddstrekkJson.toDomain(): Forskuddstrekk {
+    val type = Forskuddstrekk.Companion.ForskuddstrekkType.from(type)
+    return when (type) {
+        Forskuddstrekk.Companion.ForskuddstrekkType.FRIKORT ->
+            Frikort(
+                trekkode = Trekkode.fromValue(trekkode),
+                frikortBeloep = frikortBeloep,
+            )
+
+        Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT ->
+            Prosentkort(
+                trekkode = Trekkode.fromValue(trekkode),
+                prosentSats = prosentSats!!.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
+                antallMndForTrekk = antallMndForTrekk?.toBigDecimal()?.setScale(1, RoundingMode.HALF_UP),
+            )
+
+        Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT ->
+            Tabellkort(
+                trekkode = Trekkode.fromValue(trekkode),
+                tabellNummer = tabellNummer!!,
+                prosentSats = prosentSats!!.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
+                antallMndForTrekk = antallMndForTrekk!!.toBigDecimal().setScale(1, RoundingMode.HALF_UP),
+            )
     }
 }

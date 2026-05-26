@@ -56,7 +56,7 @@ class SkattekortDataServiceTest :
 
             val skattekort: List<Skattekort> =
                 tx {
-                    SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true)
+                    SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true)
                 }
             skattekort.shouldBeEmpty()
         }
@@ -74,7 +74,7 @@ class SkattekortDataServiceTest :
 
             skattekortDataService.processSkattekortData()
 
-            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
             val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
             val skattekortDataList = tx(SkattekortDataRepository::getUnprocessedSkattekortData)
 
@@ -126,7 +126,7 @@ class SkattekortDataServiceTest :
 
             skattekortDataService.processSkattekortData()
 
-            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
             val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
             val skattekortDataList = tx(SkattekortDataRepository::getUnprocessedSkattekortData)
 
@@ -179,7 +179,7 @@ class SkattekortDataServiceTest :
 
             skattekortDataService.processSkattekortData()
 
-            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
             val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
             val auditList = tx { AuditRepository.getAuditByPersonId(it, PersonId(1)) }
             val skattekortDataList = tx(SkattekortDataRepository::getUnprocessedSkattekortData)
@@ -267,7 +267,7 @@ class SkattekortDataServiceTest :
 
             skattekortDataService.processSkattekortData()
 
-            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
             val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
             val auditList = tx { AuditRepository.getAuditByPersonId(it, PersonId(1)) }
             val skattekortDataList = tx(SkattekortDataRepository::getUnprocessedSkattekortData)
@@ -393,7 +393,7 @@ class SkattekortDataServiceTest :
 
             skattekortDataService.processSkattekortData()
 
-            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
             val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
             val auditList = tx { AuditRepository.getAuditByPersonId(it, PersonId(1)) }
             val skattekortDataList = tx(SkattekortDataRepository::getUnprocessedSkattekortData)
@@ -489,7 +489,7 @@ class SkattekortDataServiceTest :
 
             skattekortDataService.processSkattekortData()
 
-            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
             val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
             val skattekortDataList = tx(SkattekortDataRepository::getUnprocessedSkattekortData)
 
@@ -543,7 +543,7 @@ class SkattekortDataServiceTest :
 
             skattekortDataService.processSkattekortData()
 
-            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, PersonId(1), 2025, adminRole = true) }
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
             val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
             val auditList = tx { AuditRepository.getAuditByPersonId(it, PersonId(1)) }
             val skattekortDataList = tx(SkattekortDataRepository::getUnprocessedSkattekortData)

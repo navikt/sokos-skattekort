@@ -149,7 +149,7 @@ class StatusContext(
     val skattekort: List<Skattekort> by lazy {
         val p = person ?: return@lazy emptyList()
         dataSource.transaction { tx ->
-            SkattekortRepository.findAllByPersonId(tx, p.id!!, aar, adminRole = false)
+            SkattekortRepository.findAllByPersonId(tx, listOf(p.id!!), listOf(aar), adminRole = false)
         }
     }
 

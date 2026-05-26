@@ -136,7 +136,7 @@ class UtsendingService(
         inntektsaar: Int,
     ) {
         val person = PersonRepository.findPersonByFnr(tx, fnr)
-        val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, person?.id!!, inntektsaar, adminRole = false)
+        val skattekort: Skattekort = SkattekortRepository.findAllByPersonId(tx, listOf(person?.id!!), listOf(inntektsaar), showOnlyLatest = true, adminRole = false).first()
         runBlocking {
             utsendingDareClientService?.sendSkattekort(
                 skattekortDTO =
@@ -161,7 +161,7 @@ class UtsendingService(
         try {
             val person = PersonRepository.findPersonByFnr(tx, fnr)
             personId = person?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
-            val skattekort: Skattekort = SkattekortRepository.findLatestByPersonId(tx, personId, inntektsaar, adminRole = false)
+            val skattekort: Skattekort = SkattekortRepository.findAllByPersonId(tx, listOf(personId), listOf(inntektsaar), showOnlyLatest = true, adminRole = false).first()
             val copybook = SkattekortFixedRecordFormatter(skattekort, fnr.value).format()
 
             if (featureToggles.isBevisForSendingEnabled()) {

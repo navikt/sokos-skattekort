@@ -1,11 +1,12 @@
 package no.nav.sokos.skattekort.skattekort
 
+import kotlinx.serialization.json.Json
+
 import kotliquery.Query
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar.alleLovligeInntektsaarAaHenteSkattekortFor
 
 object SkattekortRepository {
     fun insert(
@@ -98,88 +99,71 @@ object SkattekortRepository {
 
     fun findAllByPersonId(
         tx: TransactionalSession,
-        personId: PersonId,
-        inntektsaar: Int?,
-        adminRole: Boolean,
+        personIdList: List<PersonId>,
+        inntektsaarList: List<Int>,
+        showOnlyLatest: Boolean = false,
+        adminRole: Boolean = false,
     ): List<Skattekort> {
-        val hentFor = if (inntektsaar != null) listOf(inntektsaar) else alleLovligeInntektsaarAaHenteSkattekortFor()
-        val inParams = List(hentFor.size) { idx -> ":inntektsaar$idx" }.joinToString(", ")
-        val paramMap = hentFor.mapIndexed { idx, value -> "inntektsaar$idx" to value }.toMap() + ("personId" to personId.value)
-
-        return tx.list(
-            queryOf(
-                """
-                SELECT * FROM skattekort 
-                WHERE person_id = :personId AND inntektsaar IN ($inParams)
-                ORDER BY opprettet DESC, id DESC
-                """.trimIndent(),
-                paramMap,
-            ),
-            extractor = { row ->
-                val id = SkattekortId(row.long("id"))
-                Skattekort(row, findAllForskuddstrekkBySkattekortId(tx, id, adminRole = adminRole), findAllTilleggsopplysningBySkattekortId(tx, id, adminRole))
-            },
-        )
+        val personIdParamList = List(personIdList.size) { idx -> ":personId$idx" }.joinToString(", ")
+        val inntektsaarParamList = List(inntektsaarList.size) { idx -> ":inntektsaar$idx" }.joinToString(", ")
+        val paramMap = personIdList.mapIndexed { idx, pid -> "personId$idx" to pid.value }.toMap() + inntektsaarList.mapIndexed { idx, i -> "inntektsaar$idx" to i }.toMap()
+        val distinctQuery = if (showOnlyLatest) "DISTINCT ON (s.person_id)" else ""
+        return tx
+            .list(
+                queryOf(
+                    """            
+                    SELECT $distinctQuery jsonb_build_object(
+                                   'id', s.id,
+                                   'generertFra', s.generert_fra,
+                                   'personId', s.person_id,
+                                   'utstedtDato', s.utstedt_dato,
+                                   'identifikator', s.identifikator,
+                                   'inntektsaar', s.inntektsaar,
+                                   'kilde', s.kilde,
+                                   'resultatForSkattekort', s.resultatForSkattekort,
+                                   'opprettet', s.opprettet,
+                                   'forskuddstrekkList',
+                                   COALESCE(
+                                           (SELECT jsonb_agg(jsonb_build_object(
+                                                   'type', f.type,
+                                                   'trekkode', f.trekk_kode,
+                                                   'frikortBeloep', f.frikort_beloep,
+                                                   'tabellNummer', f.tabell_nummer,
+                                                   'prosentSats', f.prosentsats,
+                                                   'antallMndForTrekk', f.antall_mnd_for_trekk))
+                                            FROM forskuddstrekk f
+                                            WHERE f.skattekort_id = s.id),
+                                           '[]'::jsonb
+                                   ),
+                                   'tilleggsopplysningList',
+                                   COALESCE(
+                                           (SELECT jsonb_agg(t.opplysning)
+                                            FROM skattekort_tilleggsopplysning t
+                                            WHERE t.skattekort_id = s.id),
+                                           '[]'::jsonb
+                                   )
+                           ) AS skattekort_json
+                    FROM skattekort s
+                    WHERE s.person_id IN ($personIdParamList)
+                      AND s.inntektsaar IN ($inntektsaarParamList)
+                    ORDER BY s.person_id, s.opprettet DESC, s.id DESC;            
+                    """.trimIndent(),
+                    paramMap,
+                ),
+            ) { row -> Json.decodeFromString<SkattekortJson>(row.string("skattekort_json")).toDomain() }
+            .let { skattekortList ->
+                if (adminRole) {
+                    skattekortList
+                } else {
+                    skattekortList.map { skattekort ->
+                        skattekort.copy(
+                            forskuddstrekkList = skattekort.forskuddstrekkList.filter { !it.requiresAdminRole() },
+                            tilleggsopplysningList = skattekort.tilleggsopplysningList.filter { !it.requiresAdminRole },
+                        )
+                    }
+                }
+            }
     }
-
-    fun findAllForskuddstrekkBySkattekortId(
-        tx: TransactionalSession,
-        id: SkattekortId,
-        adminRole: Boolean,
-    ): List<Forskuddstrekk> =
-        tx
-            .list(
-                queryOf(
-                    """
-                    SELECT * FROM forskuddstrekk 
-                    WHERE skattekort_id = :skattekortId
-                    """.trimIndent(),
-                    mapOf(
-                        "skattekortId" to id.value,
-                    ),
-                ),
-                extractor = { row ->
-                    val forskuddstrekk = Forskuddstrekk.create(row)
-                    if (forskuddstrekk.requiresAdminRole() && !adminRole) {
-                        null
-                    } else {
-                        forskuddstrekk
-                    }
-                },
-            )
-
-    private fun findAllTilleggsopplysningBySkattekortId(
-        tx: TransactionalSession,
-        id: SkattekortId,
-        adminRole: Boolean,
-    ): List<Tilleggsopplysning> =
-        tx
-            .list(
-                queryOf(
-                    """
-                    SELECT * FROM skattekort_tilleggsopplysning 
-                    WHERE skattekort_id = :skattekortId
-                    """.trimIndent(),
-                    mapOf(
-                        "skattekortId" to id.value,
-                    ),
-                ),
-                extractor = { row ->
-                    val to = Tilleggsopplysning.fromValue(row.string("opplysning"))
-                    if (to.requiresAdminRole && !adminRole) {
-                        null
-                    } else {
-                        to
-                    }
-                },
-            )
-
-    fun findLatestByPersonId(
-        tx: TransactionalSession,
-        personId: PersonId,
-        inntektsaar: Int,
-        adminRole: Boolean,
-    ): Skattekort = findAllByPersonId(tx, personId, inntektsaar, adminRole).first()
 
     fun getAllIdByInntektsaar(
         tx: TransactionalSession,

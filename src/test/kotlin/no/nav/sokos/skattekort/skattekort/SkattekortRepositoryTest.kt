@@ -3,20 +3,16 @@ package no.nav.sokos.skattekort.skattekort
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import kotliquery.TransactionalSession
 
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 class SkattekortRepositoryTest :
     FunSpec({
         extensions(DbListener)
-
-        fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
 
         test("Hent riktig skattekort når det finnes mange") {
             databaseHas(
@@ -79,9 +75,9 @@ class SkattekortRepositoryTest :
                     opprettet = LocalDateTime.parse("2025-12-19T16:37:45.751951"),
                 ),
             )
-            shouldThrow<NoSuchElementException> { tx { SkattekortRepository.findLatestByPersonId(it, PersonId(1), 2027, adminRole = false) } }
-            tx { SkattekortRepository.findLatestByPersonId(it, PersonId(1), 2026, false) }.id!!.value shouldBe 8732414
-            tx { SkattekortRepository.findLatestByPersonId(it, PersonId(1), 2025, false) }.id!!.value shouldBe 10016224
+            tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2027), showOnlyLatest = true, adminRole = false) } shouldBe emptyList()
+            tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2026), showOnlyLatest = true, adminRole = false) }.first().id!!.value shouldBe 8732414
+            tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), showOnlyLatest = true, adminRole = false) }.first().id!!.value shouldBe 10016224
         }
         test("Hent riktig skattekort når to skattekort har samme opprettet-tidspunkt") {
             databaseHas(
@@ -104,6 +100,6 @@ class SkattekortRepositoryTest :
                     opprettet = LocalDateTime.parse("2025-12-19T15:52:47.833756"),
                 ),
             )
-            tx { SkattekortRepository.findLatestByPersonId(it, PersonId(1), 2025, false) }.id!!.value shouldBe 10016224
+            tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), showOnlyLatest = true, adminRole = false) }.first().id!!.value shouldBe 10016224
         }
     })

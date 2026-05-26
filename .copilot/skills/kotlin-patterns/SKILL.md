@@ -43,8 +43,8 @@ Idiomatic conventions for this codebase. Detailed examples live in the sub-files
 - [navikt/kotliquery](https://github.com/navikt/kotliquery) for database access — our fork of Kotliquery
 
 ### 🚫 Never
-- ORM frameworks (Exposed, Spring Data, Hibernate, etc.) unless explicitly specified — use navikt/kotliquery
-- IOC/DI frameworks (Koin, Spring, Dagger, etc.) unless explicitly specified — use manual constructor injection
+- Introduce new ORM frameworks (Exposed, Spring Data, Hibernate, etc.) unless explicitly specified — prefer [navikt/kotliquery](https://github.com/navikt/kotliquery) for database access
+- Introduce new DI frameworks (Koin, Spring, Dagger, etc.) unless explicitly specified
 - `runBlocking` in production code
 - `GlobalScope.launch`
 - `!!` without a preceding null check

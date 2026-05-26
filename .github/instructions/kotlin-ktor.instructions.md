@@ -11,7 +11,7 @@ Ktor backend service on NAIS (not Rapids & Rivers, not Spring Boot). For tests s
 All config access via `PropertiesConfig` singleton. See the `kotlin-app-config` skill for full HOCON layering and `@Serializable` data-class pattern.
 
 ```kotlin
-val appName = PropertiesConfig.Configuration().naisAppName
+val appName = PropertiesConfig.getApplicationProperties().naisAppName
 ```
 
 ## Ktor routing

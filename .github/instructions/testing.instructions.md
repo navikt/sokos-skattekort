@@ -1,5 +1,5 @@
 ---
-applyTo: "**/test/**/*.kt"
+applyTo: "**/src/test/**/*.kt"
 ---
 
 # Testing essentials
@@ -18,9 +18,9 @@ For full patterns, examples, and MockK/matchers cheat sheets, invoke the **`kote
 
 ## File conventions
 
-- Unit tests: `.../service/unit/*Test.kt`
-- Integration tests: `.../service/integration/*IntegrationTest.kt`, `.../database/*Test.kt`
-- SQL fixtures: `src/test/resources/SQLscript/*.sql`
+- Test files: `src/test/kotlin/no/nav/sokos/skattekort/...`
+- Unit and integration tests should follow the existing package structure under `src/test/kotlin/no/nav/sokos/skattekort/...`
+- SQL fixtures: `src/test/resources/database/**`
 
 ## Coverage audit — do this before drawing conclusions
 

@@ -2,83 +2,90 @@
 
 ## Database integration tests
 
-Use a `TestListener` that manages a TestContainers database instance. Example pattern:
+Use `DbListener` as a Kotest extension — it manages a TestContainers PostgreSQL instance and automatically truncates all tables after each test. Example pattern:
 
 ```kotlin
-internal class MyServiceIntegrationTest : BehaviorSpec({
-    extensions(DBListener)
-    beforeEach { CircuitBreakerManager.circuitBreaker.reset() }
+internal class MyServiceIntegrationTest : FunSpec({
+    extensions(DbListener, WiremockListener)
 
-    val dbService = MyDatabaseService(DBListener.dataSource)
+    val dbService = MyDatabaseService(DbListener.dataSource)
 
-    Given("2 ubehandlede oppføringer i databasen") {
-        DBListener.clearDB()
-        DBListener.loadInitScript("SQLscript/two-pending-entries.sql")
+    test("behandler 2 ubehandlede oppføringer") {
+        DbListener.loadDataSet("database/my-service/two-pending-entries.sql")
+        WiremockListener.wiremock.stubFor(
+            WireMock.post(WireMock.urlEqualTo("/api/submit"))
+                .willReturn(WireMock.aResponse().withStatus(200).withBody(successResponse("ref-123")))
+        )
 
         val entries = dbService.getAllPending()
         entries.shouldHaveSize(2)
 
-        When("ekstern tjeneste svarer med OK") {
-            val httpClient = MockHttpClient.client(
-                MockResponse(Endpoint.SUBMIT, successResponse("ref-123"), HttpStatusCode.OK),
-            )
-            val externalClient = ExternalClient("", httpClient, mockk(relaxed = true))
-            val results = MyService(externalClient, dbService).processAll(entries)
+        val results = MyService(dbService).processAll(entries)
 
-            Then("alle oppføringer skal være behandlet") {
-                results.shouldHaveSize(2)
-                dbService.getAllPending().shouldBeEmpty()
-            }
-        }
+        results.shouldHaveSize(2)
+        dbService.getAllPending().shouldBeEmpty()
     }
 })
 ```
 
-### Typical DBListener API
+### Typical DbListener API
 
 | Helper | Purpose |
 |---|---|
-| `extensions(DBListener)` | Registers TestContainers PostgreSQL |
-| `DBListener.dataSource` | `HikariDataSource` with Flyway migrations applied |
-| `DBListener.clearDB()` | `TRUNCATE ... RESTART IDENTITY CASCADE` |
-| `DBListener.loadInitScript("SQLscript/...")` | Loads fixture from `src/test/resources/` |
+| `extensions(DbListener)` | Registers TestContainers PostgreSQL |
+| `DbListener.dataSource` | `DataSource` with Flyway migrations applied |
+| `DbListener.loadDataSet("database/...")` | Loads SQL fixture from `src/test/resources/` |
 
-Always `clearDB()` before `loadInitScript(...)` inside each `Given` — listener state leaks between scenarios otherwise.
+`DbListener` truncates all tables (except `flyway_schema_history`) automatically in `afterEach` — no manual cleanup is needed.
 
 ## SFTP integration tests
 
 ```kotlin
-internal class FtpServiceIntegrationTest : BehaviorSpec({
+internal class FtpServiceIntegrationTest : FunSpec({
     extensions(SftpListener)
     // ...
 })
 ```
 
-## Mock HTTP clients
+## Mock HTTP clients (WiremockListener)
 
-Build a mock HTTP client that matches by endpoint path and optionally installs plugins (e.g. circuit breaker) so tests exercise production wiring:
+Use `WiremockListener` to stub external HTTP services. The listener resets all stubs after each test:
 
 ```kotlin
-val client = MockHttpClient.client(
-    MockResponse(Endpoint.SUBMIT, successResponse("ref-123"), HttpStatusCode.OK),
-    MockResponse(Endpoint.STATUS, statusResponse(), HttpStatusCode.OK),
-)
+internal class MyApiTest : FunSpec({
+    extensions(DbListener, WiremockListener)
+
+    test("ekstern tjeneste svarer med OK") {
+        WiremockListener.wiremock.stubFor(
+            WireMock.post(WireMock.urlPathMatching("/api/v1/.*"))
+                .willReturn(
+                    WireMock.aResponse()
+                        .withHeader(HttpHeaders.ContentType, ContentTypes.APPLICATION_JSON)
+                        .withStatus(HttpStatusCode.OK.value)
+                        .withBody(successResponse("ref-123"))
+                )
+        )
+        // ... test body
+    }
+})
 ```
 
 For unit tests that don't need HTTP wiring, mock the client class directly:
 
 ```kotlin
 val externalClientMock = mockk<ExternalClient> {
-    coEvery { submit(any(), any()) } returns mockHttpResponse(body = successResponse("123"))
+    coEvery { submit(any(), any()) } returns mockk(relaxed = true)
 }
 ```
 
 ## Circuit breaker
 
-Every test that eventually reaches an external HTTP client with a circuit breaker must reset it — otherwise state leaks between tests:
+Circuit breakers are registered in `Metrics.circuitBreakerRegistry`. To reset the circuit breaker for a specific client in tests, access it via the registry:
 
 ```kotlin
-beforeEach { CircuitBreakerManager.circuitBreaker.reset() }
+beforeEach {
+    Metrics.circuitBreakerRegistry.circuitBreaker("skatteetaten").reset()
+}
 ```
 
 When an open breaker is expected (e.g. after multiple error responses), verify with `coVerify(exactly = 1) { ... }` that further calls were suppressed.

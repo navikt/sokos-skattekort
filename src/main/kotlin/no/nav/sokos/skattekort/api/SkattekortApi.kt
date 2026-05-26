@@ -15,11 +15,13 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.api.model.DetailStatusResponse
 import no.nav.sokos.skattekort.api.model.ForespoerselRequest
 import no.nav.sokos.skattekort.api.model.StatusResponse
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.person.PersonService
+import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requirePermission
 import no.nav.sokos.skattekort.security.AuthorizationGuard.requireScope
@@ -109,6 +111,34 @@ fun Route.skattekortApi(
 
             call.respond(
                 StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)),
+            )
+        }
+
+        post("statuser") {
+            call.requireScope(Scope.STATUS_SCOPE)
+            val saksbehandler = call.getNavIdentOrNull()?.let { Saksbehandler(it) } ?: return@post call.respond(HttpStatusCode.Forbidden)
+            val fnrSet =
+                call
+                    .receive<ByteArray>()
+                    .toString(Charsets.UTF_8)
+                    .lineSequence()
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .toSet()
+                    .ifEmpty {
+                        throw RequestValidationException(
+                            value = "FNR",
+                            reasons = listOf("Mangler FNR"),
+                        )
+                    }
+            logger.info(marker = TEAM_LOGS_MARKER) {
+                "skattekortApi - Mottatt statusforespørsel på vegne av ${saksbehandler.ident}"
+            }
+            call.respond(
+                DetailStatusResponse(
+                    statusService
+                        .statusForespoersler(fnrSet.map { Personidentifikator(it) }),
+                ),
             )
         }
     }

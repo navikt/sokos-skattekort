@@ -147,6 +147,9 @@ class PersonService(
 
     fun validateFoedselsnummer(fnrList: List<String>): List<String> {
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        fnrList.map { fnr ->
+            Pair(fnr, foedselsnummerkategori.kanBestilleSkattekort(fnr))
+        }
         return fnrList.filter { fnr ->
             foedselsnummerkategori.kanBestilleSkattekort(fnr).also { valid ->
                 if (!valid) {

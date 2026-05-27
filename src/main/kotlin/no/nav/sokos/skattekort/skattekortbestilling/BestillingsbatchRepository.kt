@@ -5,7 +5,6 @@ import java.time.Instant
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 object BestillingsbatchRepository {
     fun insert(
@@ -14,7 +13,7 @@ object BestillingsbatchRepository {
         dataSendt: String,
         type: BestillingsbatchType,
     ): Long {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |INSERT INTO bestillingsbatcher (bestillingsreferanse, data_sendt, type)
@@ -36,7 +35,7 @@ object BestillingsbatchRepository {
         tx: TransactionalSession,
         type: BestillingsbatchType,
     ): List<Bestillingsbatch> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |SELECT *
@@ -89,7 +88,7 @@ object BestillingsbatchRepository {
     }
 
     fun getDefaultBatchInsightResults(tx: TransactionalSession): Map<Bestillingsbatch, String?> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |SELECT id,
@@ -126,7 +125,7 @@ object BestillingsbatchRepository {
         tx: TransactionalSession,
         bestillingsbatchId: Long,
     ): Bestillingsbatch? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |SELECT id,
@@ -154,7 +153,7 @@ object BestillingsbatchRepository {
         bestillingsbatchId: Long,
         status: BestillingsbatchStatus,
     ) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |UPDATE bestillingsbatcher
@@ -177,7 +176,7 @@ object BestillingsbatchRepository {
         batchId: Long,
         dataMottatt: String,
     ) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |UPDATE bestillingsbatcher
@@ -196,7 +195,7 @@ object BestillingsbatchRepository {
     }
 
     fun getFirstNotFerdigBestillingsbatch(tx: TransactionalSession): Bestillingsbatch? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             |SELECT id,
@@ -219,7 +218,7 @@ object BestillingsbatchRepository {
         tx: TransactionalSession,
         id: Long,
     ): Int {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |UPDATE bestillingsbatcher
@@ -240,7 +239,7 @@ object BestillingsbatchRepository {
     }
 
     fun getIncompleteBatches(tx: TransactionalSession): List<Bestillingsbatch> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |SELECT id,

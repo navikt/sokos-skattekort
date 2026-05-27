@@ -59,11 +59,8 @@ val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "9.2.0"
 val wiremockVersion = "3.13.2"
 val unleashedVersion = "12.2.1"
-val annotationsVersion = "23.0.0"
 
 dependencies {
-
-    compileOnly("org.jetbrains:annotations:$annotationsVersion")
 
     // Ktor server
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")

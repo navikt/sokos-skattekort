@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.forespoersel
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 object ForespoerselRepository {
     fun insert(
@@ -11,7 +10,7 @@ object ForespoerselRepository {
         forsystem: Forsystem,
         dataMottatt: String,
     ): Long {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             INSERT INTO forespoersler (forsystem, data_mottatt)
@@ -33,7 +32,7 @@ object ForespoerselRepository {
         count: Int = 1000,
         offset: Int = 0,
     ): List<Forespoersel> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT * FROM forespoersler
@@ -50,7 +49,7 @@ object ForespoerselRepository {
     }
 
     fun getAllForespoerselInput(tx: TransactionalSession): List<ForespoerselInput> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT * FROM forespoersel_input
@@ -62,7 +61,7 @@ object ForespoerselRepository {
     }
 
     fun deleteAllForespoerselInput(tx: TransactionalSession) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             "DELETE FROM forespoersel_input"
         tx.update(

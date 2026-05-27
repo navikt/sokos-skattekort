@@ -5,7 +5,6 @@ import kotlin.time.toKotlinInstant
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
@@ -16,7 +15,7 @@ object BestillingRepository {
         tx: TransactionalSession,
         maxYear: Int,
     ): List<Bestilling> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT b.* FROM bestillinger b
@@ -35,7 +34,7 @@ object BestillingRepository {
     }
 
     fun getAllBestillingsForAdmin(tx: TransactionalSession): List<Bestilling> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT b.* FROM bestillinger b
@@ -50,7 +49,7 @@ object BestillingRepository {
         tx: TransactionalSession,
         bestilling: Bestilling,
     ): Long? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |INSERT INTO bestillinger (person_id, inntektsaar, fnr)
@@ -75,7 +74,7 @@ object BestillingRepository {
         bestillingsbatchId: Long?,
     ) {
         if (bestillingsIds.isEmpty()) return
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             UPDATE bestillinger
@@ -93,7 +92,7 @@ object BestillingRepository {
         fnrList: List<String>,
         batchId: Long,
     ) = run {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             DELETE FROM bestillinger
@@ -116,7 +115,7 @@ object BestillingRepository {
         personId: PersonId,
         inntektsaar: Int,
     ): Bestilling? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT * FROM bestillinger
@@ -138,7 +137,7 @@ object BestillingRepository {
         tx: TransactionalSession,
         batchId: Long,
     ) = run {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT * FROM bestillinger
@@ -156,7 +155,7 @@ object BestillingRepository {
     }
 
     fun getEarliestUnsentBestillingTime(tx: TransactionalSession): Double {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
@@ -169,7 +168,7 @@ object BestillingRepository {
     }
 
     fun getEarliestSentBestillingTime(tx: TransactionalSession): Double {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
@@ -185,7 +184,7 @@ object BestillingRepository {
         tx: TransactionalSession,
         batchId: Long,
     ): List<PersonId> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT person_id FROM bestillinger

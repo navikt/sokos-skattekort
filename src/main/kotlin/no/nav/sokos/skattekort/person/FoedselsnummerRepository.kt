@@ -2,14 +2,13 @@ package no.nav.sokos.skattekort.person
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 object FoedselsnummerRepository {
     fun insert(
         tx: TransactionalSession,
         foedselsnummer: Foedselsnummer,
     ): Long? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
@@ -32,7 +31,7 @@ object FoedselsnummerRepository {
         fnr: String,
         existingFnr: String,
     ): Long? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
@@ -53,7 +52,7 @@ object FoedselsnummerRepository {
         tx: TransactionalSession,
         fnrList: List<String>,
     ): Map<String, PersonId?> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT person_id, fnr FROM foedselsnumre

@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.person
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 object AuditRepository {
     fun insert(
@@ -12,7 +11,7 @@ object AuditRepository {
         informasjon: String,
         brukerId: String? = null,
     ): Long? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             INSERT INTO person_audit(person_id, tag, bruker_id, informasjon)
@@ -38,7 +37,7 @@ object AuditRepository {
         informasjon: String,
         brukerId: String? = null,
     ) = run {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             INSERT INTO person_audit(person_id, tag, bruker_id, informasjon)
@@ -61,7 +60,7 @@ object AuditRepository {
         tx: TransactionalSession,
         personId: PersonId,
     ): List<Audit> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT id, person_id, bruker_id, opprettet, tag, informasjon

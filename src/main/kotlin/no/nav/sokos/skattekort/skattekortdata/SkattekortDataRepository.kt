@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.skattekortdata
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortId
@@ -16,7 +15,7 @@ object SkattekortDataRepository {
         fnr: String,
         type: BestillingsbatchType,
     ): Long? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             INSERT INTO skattekort_data (data_mottatt, inntektsaar, fnr, type)
@@ -40,7 +39,7 @@ object SkattekortDataRepository {
         id: Long,
         skattekortId: Long,
     ) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             UPDATE skattekort_data SET skattekort_id = :skattekortId WHERE id = :id
@@ -57,7 +56,7 @@ object SkattekortDataRepository {
     }
 
     fun getUnprocessedSkattekortData(tx: TransactionalSession): List<SkattekortData> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT id, inntektsaar, data_mottatt, opprettet, fnr, skattekort_id, type FROM skattekort_data

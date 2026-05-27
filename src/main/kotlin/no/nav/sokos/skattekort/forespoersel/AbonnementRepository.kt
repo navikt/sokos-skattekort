@@ -3,7 +3,6 @@ package no.nav.sokos.skattekort.forespoersel
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.person.Foedselsnummer
 import no.nav.sokos.skattekort.person.FoedselsnummerId
@@ -18,7 +17,7 @@ object AbonnementRepository {
         inntektsaar: Int,
         personId: Long,
     ): Long? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
@@ -37,7 +36,7 @@ object AbonnementRepository {
     }
 
     fun getAllAbonnementer(tx: TransactionalSession): List<Abonnement> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             |SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.inntektsaar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
@@ -63,7 +62,7 @@ object AbonnementRepository {
         personId: PersonId,
         inntektsaar: Int,
     ): List<Pair<Forsystem, Personidentifikator>> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT DISTINCT f.forsystem as forsystem,

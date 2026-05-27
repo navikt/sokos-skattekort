@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.utsending
 
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.Personidentifikator
@@ -13,7 +12,7 @@ object UtsendingRepository {
         tx: TransactionalSession,
         utsending: Utsending,
     ): Long? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
@@ -36,7 +35,7 @@ object UtsendingRepository {
         tx: TransactionalSession,
         id: UtsendingId,
     ) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             "DELETE FROM utsendinger WHERE id = :id".trimIndent()
         tx.update(
@@ -48,7 +47,7 @@ object UtsendingRepository {
     }
 
     fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             "SELECT * FROM utsendinger ORDER BY ID".trimIndent()
         return tx.list(
@@ -63,7 +62,7 @@ object UtsendingRepository {
         failMessage: String,
     ) {
         maybeId?.let { id ->
-            @Language("PostgreSQL")
+            // language=SQL
             val sql =
                 """
                 UPDATE utsendinger SET
@@ -89,7 +88,7 @@ object UtsendingRepository {
         inntektsaar: Int,
         forsystem: Forsystem,
     ): Utsending? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger
@@ -109,7 +108,7 @@ object UtsendingRepository {
     }
 
     fun getSecondsSinceEarliestUnsentUtsending(tx: TransactionalSession): Double {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(opprettet), NOW())) as earliest_opprettet FROM utsendinger
@@ -127,7 +126,7 @@ object UtsendingRepository {
         fnr: Personidentifikator,
         copybook: String,
     ) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """INSERT INTO bevis_sending
                 |(skattekort_id, forsystem, fnr, sending) VALUES (:id, :forsystem, :fnr, :sending)
@@ -146,7 +145,7 @@ object UtsendingRepository {
     }
 
     fun slettGamleBevis(tx: TransactionalSession) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             "DELETE FROM bevis_sending WHERE opprettet < now() - interval '7 days'"
         tx.update(

@@ -5,7 +5,6 @@ import java.time.LocalDate
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.util.SQLUtils.advisoryKeysFromString
 
@@ -14,7 +13,7 @@ object PersonRepository {
         tx: TransactionalSession,
         fnr: Personidentifikator,
     ): PersonId? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |SELECT distinct p.id
@@ -33,7 +32,7 @@ object PersonRepository {
         tx: TransactionalSession,
         personId: PersonId,
     ): Person {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
@@ -60,7 +59,7 @@ object PersonRepository {
         tx: TransactionalSession,
         fnr: Personidentifikator,
     ): Person? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
@@ -90,7 +89,7 @@ object PersonRepository {
     ): Long? {
         val (k1, k2) = advisoryKeysFromString(fnr.value)
 
-        @Language("PostgreSQL")
+        // language=SQL
         val advisoryLockSql =
             "SELECT pg_advisory_xact_lock(:k1, :k2)"
         tx.execute(
@@ -100,7 +99,7 @@ object PersonRepository {
             ),
         )
 
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
         |WITH existing_foedselsnummer AS (
@@ -152,7 +151,7 @@ object PersonRepository {
         tx: TransactionalSession,
         personId: PersonId,
     ) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
                 |UPDATE personer

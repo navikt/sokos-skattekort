@@ -5,7 +5,6 @@ import kotlinx.serialization.json.Json
 import kotliquery.Query
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.intellij.lang.annotations.Language
 
 import no.nav.sokos.skattekort.person.PersonId
 
@@ -14,7 +13,7 @@ object SkattekortRepository {
         tx: TransactionalSession,
         skattekort: Skattekort,
     ): Long {
-        @Language("PostgreSQL")
+        // language=SQL
         val insertSkattekortSql =
             """
             INSERT INTO skattekort (generert_fra, person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
@@ -37,7 +36,7 @@ object SkattekortRepository {
                 ),
             )
         if (skattekort.forskuddstrekkList.isNotEmpty()) {
-            @Language("PostgreSQL")
+            // language=SQL
             val insertForskuddstrekkSql =
                 """
                 INSERT INTO forskuddstrekk (skattekort_id, trekk_kode, type, frikort_beloep, tabell_nummer, prosentsats, antall_mnd_for_trekk)
@@ -87,7 +86,7 @@ object SkattekortRepository {
             )
         }
         if (skattekort.tilleggsopplysningList.isNotEmpty()) {
-            @Language("PostgreSQL")
+            // language=SQL
             val insertTilleggsopplysningSql =
                 """
                 INSERT INTO skattekort_tilleggsopplysning (skattekort_id, opplysning)
@@ -178,7 +177,7 @@ object SkattekortRepository {
         tx: TransactionalSession,
         inntektsaar: Int,
     ): List<Long> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT id FROM skattekort WHERE inntektsaar = :inntektsaar ORDER BY id;
@@ -193,7 +192,7 @@ object SkattekortRepository {
         tx: TransactionalSession,
         skattekortIdList: List<Long>,
     ) {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql = "DELETE FROM skattekort WHERE id = :skattekortId"
         tx.batchPreparedNamedStatement(
             sql,
@@ -204,7 +203,7 @@ object SkattekortRepository {
     }
 
     fun getSecondsSinceLatestSkattekortOpprettet(tx: TransactionalSession): Double? {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql = "SELECT EXTRACT(EPOCH FROM NOW() - MAX(opprettet)) AS sekunder_siden_siste_skattekort FROM skattekort"
         return tx.single(
             queryOf(sql),
@@ -213,7 +212,7 @@ object SkattekortRepository {
     }
 
     fun numberOfSkattekortByResultatForSkattekortMetrics(tx: TransactionalSession): Map<ResultatForSkattekort, Int> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT resultatForSkattekort, COUNT(1) AS antall 
@@ -232,7 +231,7 @@ object SkattekortRepository {
     }
 
     fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<String, Int> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT trekk_kode, COUNT(1) AS antall 
@@ -252,7 +251,7 @@ object SkattekortRepository {
     }
 
     fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<Tilleggsopplysning, Int> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT opplysning, COUNT(skattekort_id) AS antall 
@@ -272,7 +271,7 @@ object SkattekortRepository {
     }
 
     fun numberOfFrikortMedUtenBeloepsgrense(tx: TransactionalSession): Map<String, Int> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT 
@@ -301,7 +300,7 @@ object SkattekortRepository {
     }
 
     fun getNoekkelinformasjon(tx: TransactionalSession): Map<String, Int> {
-        @Language("PostgreSQL")
+        // language=SQL
         val sql =
             """
             SELECT inntektsaar::text AS key, COUNT(1) AS antall FROM skattekort GROUP BY inntektsaar

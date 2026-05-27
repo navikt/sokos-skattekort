@@ -12,56 +12,68 @@ object PersonRepository {
     fun findPersonIdByFnr(
         tx: TransactionalSession,
         fnr: Personidentifikator,
-    ): PersonId? =
-        tx.single(
+    ): PersonId? {
+        // language=SQL
+        val sql =
+            """
+                |SELECT distinct p.id
+                |FROM personer p INNER JOIN foedselsnumre f ON p.id = f.person_id
+                |WHERE f.fnr = :fnr;
+            """.trimMargin()
+        return tx.single(
             queryOf(
-                """
-                    |SELECT distinct p.id 
-                    |FROM personer p INNER JOIN foedselsnumre f ON p.id = f.person_id 
-                    |WHERE f.fnr = :fnr;
-                """.trimMargin(),
+                sql,
                 mapOf("fnr" to fnr.value),
             ),
         ) { row -> PersonId(row.long("id")) }
+    }
 
     fun findPersonById(
         tx: TransactionalSession,
         personId: PersonId,
-    ): Person =
-        tx.single(
+    ): Person {
+        // language=SQL
+        val sql =
+            """
+                |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
+                |FROM personer p
+                |LEFT JOIN LATERAL (
+                |   SELECT id, gjelder_fom, fnr
+                |   FROM foedselsnumre
+                |   WHERE person_id = p.id
+                |   ORDER BY gjelder_fom DESC, id DESC
+                |   LIMIT 1
+                |) pf ON TRUE
+                |WHERE p.id = :personId
+            """.trimMargin()
+        return tx.single(
             queryOf(
-                """
-                    |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
-                    |FROM personer p 
-                    |LEFT JOIN LATERAL (
-                    |   SELECT id, gjelder_fom, fnr
-                    |   FROM foedselsnumre
-                    |   WHERE person_id = p.id
-                    |   ORDER BY gjelder_fom DESC, id DESC
-                    |   LIMIT 1
-                    |) pf ON TRUE
-                    |WHERE p.id = :personId
-                """.trimMargin(),
+                sql,
                 mapOf("personId" to personId.value),
             ),
             extractor = mapToPerson,
         )!!
+    }
 
     fun findPersonByFnr(
         tx: TransactionalSession,
         fnr: Personidentifikator,
-    ): Person? =
-        tx.single(
+    ): Person? {
+        // language=SQL
+        val sql =
+            """
+                |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
+                |FROM personer p JOIN foedselsnumre pf ON p.id = pf.person_id
+                |WHERE pf.fnr = :fnr
+            """.trimMargin()
+        return tx.single(
             queryOf(
-                """
-                    |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
-                    |FROM personer p JOIN foedselsnumre pf ON p.id = pf.person_id 
-                    |WHERE pf.fnr = :fnr
-                """.trimMargin(),
+                sql,
                 mapOf("fnr" to fnr.value),
             ),
             extractor = mapToPerson,
         )
+    }
 
     /**
      * pg_advisory_xact_lock acquires a transaction-scoped advisory lock in PostgreSQL.
@@ -76,46 +88,53 @@ object PersonRepository {
         brukerId: String? = null,
     ): Long? {
         val (k1, k2) = advisoryKeysFromString(fnr.value)
+
+        // language=SQL
+        val advisoryLockSql =
+            "SELECT pg_advisory_xact_lock(:k1, :k2)"
         tx.execute(
             queryOf(
-                "SELECT pg_advisory_xact_lock(:k1, :k2)",
+                advisoryLockSql,
                 mapOf("k1" to k1, "k2" to k2),
             ),
         )
 
+        // language=SQL
+        val sql =
+            """
+        |WITH existing_foedselsnummer AS (
+        |   SELECT person_id FROM foedselsnumre WHERE fnr = :fnr
+        |),
+        |inserted_person AS (
+        |   INSERT INTO personer (flagget)
+        |   SELECT :flagget
+        |   WHERE NOT EXISTS (SELECT 1 FROM existing_foedselsnummer)
+        |   RETURNING id AS person_id
+        |),
+        |resolved_person AS (
+        |   SELECT COALESCE(
+        |     (SELECT person_id FROM inserted_person),
+        |     (SELECT person_id FROM existing_foedselsnummer)
+        |   ) AS person_id
+        |),
+        |upserted_foedselsnummer AS (
+        |   INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
+        |   SELECT person_id, :gjelderFom, :fnr
+        |   FROM resolved_person
+        |   ON CONFLICT (fnr) DO NOTHING
+        |   RETURNING person_id
+        |),
+        |audit_insert AS (
+        |   INSERT INTO person_audit(person_id, bruker_id, opprettet, tag, informasjon)
+        |   SELECT person_id, :brukerId, now(), :tag, :informasjon
+        |   FROM inserted_person
+        |   RETURNING person_id
+        |)
+        |SELECT person_id FROM resolved_person;
+            """.trimMargin()
         return tx.single(
             queryOf(
-                """
-            |WITH existing_foedselsnummer AS (
-            |   SELECT person_id FROM foedselsnumre WHERE fnr = :fnr
-            |),
-            |inserted_person AS (
-            |   INSERT INTO personer (flagget)
-            |   SELECT :flagget
-            |   WHERE NOT EXISTS (SELECT 1 FROM existing_foedselsnummer)
-            |   RETURNING id AS person_id
-            |),
-            |resolved_person AS (
-            |   SELECT COALESCE(
-            |     (SELECT person_id FROM inserted_person),
-            |     (SELECT person_id FROM existing_foedselsnummer)
-            |   ) AS person_id
-            |),
-            |upserted_foedselsnummer AS (
-            |   INSERT INTO foedselsnumre (person_id, gjelder_fom, fnr)
-            |   SELECT person_id, :gjelderFom, :fnr
-            |   FROM resolved_person
-            |   ON CONFLICT (fnr) DO NOTHING
-            |   RETURNING person_id
-            |),
-            |audit_insert AS (
-            |   INSERT INTO person_audit(person_id, bruker_id, opprettet, tag, informasjon)
-            |   SELECT person_id, :brukerId, now(), :tag, :informasjon
-            |   FROM inserted_person
-            |   RETURNING person_id
-            |)
-            |SELECT person_id FROM resolved_person;
-                """.trimMargin(),
+                sql,
                 mapOf(
                     "fnr" to fnr.value,
                     "flagget" to false,
@@ -131,16 +150,21 @@ object PersonRepository {
     fun flaggPerson(
         tx: TransactionalSession,
         personId: PersonId,
-    ) = tx.execute(
-        queryOf(
+    ) {
+        // language=SQL
+        val sql =
             """
-                    |UPDATE personer 
-                    |SET flagget = true
-                    |WHERE id = :personId
-            """.trimMargin(),
-            mapOf("personId" to personId.value),
-        ),
-    )
+                |UPDATE personer
+                |SET flagget = true
+                |WHERE id = :personId
+            """.trimMargin()
+        tx.execute(
+            queryOf(
+                sql,
+                mapOf("personId" to personId.value),
+            ),
+        )
+    }
 
     private val mapToPerson: (Row) -> Person = { row ->
         Person(

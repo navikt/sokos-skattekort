@@ -79,7 +79,7 @@ fun Route.skattekortPersonApi(
                     skattekortService.getSingleSkattekortForEachYear(request.fnr, request.inntektsaar, saksbehandler)
                 }
             when (skattekortAnswer) {
-                is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))
+                is Either.Left -> call.respond(WrappedWithErrorResponse(data = emptyList<SkattekortDTO>(), errorMessage = "Mangler rettigheter til å se informasjon!"))
                 is Either.Right -> call.respond(WrappedWithErrorResponse(data = skattekortAnswer.get().map(::SkattekortDTO)))
             }
         }

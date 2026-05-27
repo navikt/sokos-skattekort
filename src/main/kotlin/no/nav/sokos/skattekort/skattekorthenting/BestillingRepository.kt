@@ -14,42 +14,51 @@ object BestillingRepository {
     fun getAllBestilling(
         tx: TransactionalSession,
         maxYear: Int,
-    ): List<Bestilling> =
-        tx.list(
+    ): List<Bestilling> {
+        // language=SQL
+        val sql =
+            """
+            SELECT b.* FROM bestillinger b
+            WHERE b.inntektsaar <= :maxYear
+            AND b.inntektsaar = (SELECT MIN(b2.inntektsaar) FROM bestillinger b2 WHERE b2.bestillingsbatch_id IS NULL)
+            AND b.bestillingsbatch_id IS NULL
+            LIMIT 1000
+            """.trimIndent()
+        return tx.list(
             queryOf(
-                """
-                SELECT b.* FROM bestillinger b
-                WHERE b.inntektsaar <= :maxYear
-                AND b.inntektsaar = (SELECT MIN(b2.inntektsaar) FROM bestillinger b2 WHERE b2.bestillingsbatch_id IS NULL)
-                AND b.bestillingsbatch_id IS NULL
-                LIMIT 1000
-                """.trimIndent(),
+                sql,
                 mapOf("maxYear" to maxYear),
             ),
             extractor = mapToBestilling,
         )
+    }
 
-    fun getAllBestillingsForAdmin(tx: TransactionalSession): List<Bestilling> =
-        tx.list(
-            queryOf(
-                """
-                SELECT b.* FROM bestillinger b
-                """.trimIndent(),
-            ),
+    fun getAllBestillingsForAdmin(tx: TransactionalSession): List<Bestilling> {
+        // language=SQL
+        val sql =
+            """
+            SELECT b.* FROM bestillinger b
+            """.trimIndent()
+        return tx.list(
+            queryOf(sql),
             extractor = mapToBestilling,
         )
+    }
 
     fun insert(
         tx: TransactionalSession,
         bestilling: Bestilling,
-    ): Long? =
-        tx.updateAndReturnGeneratedKey(
+    ): Long? {
+        // language=SQL
+        val sql =
+            """
+                |INSERT INTO bestillinger (person_id, inntektsaar, fnr)
+                |VALUES (:personId, :inntektsaar, :fnr)
+                |ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
+            """.trimMargin()
+        return tx.updateAndReturnGeneratedKey(
             queryOf(
-                """
-                    |INSERT INTO bestillinger (person_id, inntektsaar, fnr) 
-                    |VALUES (:personId, :inntektsaar, :fnr) 
-                    |ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
-                """.trimMargin(),
+                sql,
                 mapOf(
                     "personId" to bestilling.personId.value,
                     "inntektsaar" to bestilling.inntektsaar,
@@ -57,6 +66,7 @@ object BestillingRepository {
                 ),
             ),
         )
+    }
 
     fun updateBestillingsWithBatchId(
         tx: TransactionalSession,
@@ -64,12 +74,15 @@ object BestillingRepository {
         bestillingsbatchId: Long?,
     ) {
         if (bestillingsIds.isEmpty()) return
-        tx.batchPreparedNamedStatement(
+        // language=SQL
+        val sql =
             """
             UPDATE bestillinger
             SET bestillingsbatch_id = :bestillingsbatchId
             WHERE id = :id
-            """.trimIndent(),
+            """.trimIndent()
+        tx.batchPreparedNamedStatement(
+            sql,
             bestillingsIds.map { mapOf("id" to it, "bestillingsbatchId" to bestillingsbatchId) },
         )
     }
@@ -78,31 +91,39 @@ object BestillingRepository {
         tx: TransactionalSession,
         fnrList: List<String>,
         batchId: Long,
-    ) = tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
-        """
-        DELETE FROM bestillinger
-            WHERE bestillingsbatch_id = :bestillingsbatchId
-            AND fnr = :fnr
-        """.trimIndent(),
-        fnrList.map { fnr ->
-            mapOf(
-                "bestillingsbatchId" to batchId,
-                "fnr" to fnr,
-            )
-        },
-    )
+    ) = run {
+        // language=SQL
+        val sql =
+            """
+            DELETE FROM bestillinger
+                WHERE bestillingsbatch_id = :bestillingsbatchId
+                AND fnr = :fnr
+            """.trimIndent()
+        tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+            sql,
+            fnrList.map { fnr ->
+                mapOf(
+                    "bestillingsbatchId" to batchId,
+                    "fnr" to fnr,
+                )
+            },
+        )
+    }
 
     fun findByPersonIdAndInntektsaar(
         tx: TransactionalSession,
         personId: PersonId,
         inntektsaar: Int,
-    ): Bestilling? =
-        tx.single(
+    ): Bestilling? {
+        // language=SQL
+        val sql =
+            """
+            SELECT * FROM bestillinger
+            WHERE person_id = :personId AND inntektsaar = :inntektsaar
+            """.trimIndent()
+        return tx.single(
             queryOf(
-                """
-                SELECT * FROM bestillinger
-                WHERE person_id = :personId AND inntektsaar = :inntektsaar
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "personId" to personId.value,
                     "inntektsaar" to inntektsaar,
@@ -110,55 +131,68 @@ object BestillingRepository {
             ),
             extractor = mapToBestilling,
         )
+    }
 
     fun getAllBestillingsInBatch(
         tx: TransactionalSession,
         batchId: Long,
-    ) = tx.list(
-        queryOf(
+    ) = run {
+        // language=SQL
+        val sql =
             """
             SELECT * FROM bestillinger
             WHERE bestillingsbatch_id = :bestillingsbatchId
-            """.trimIndent(),
-            mapOf(
-                "bestillingsbatchId" to batchId,
-            ),
-        ),
-        extractor = mapToBestilling,
-    )
-
-    fun getEarliestUnsentBestillingTime(tx: TransactionalSession): Double =
-        tx.single(
+            """.trimIndent()
+        tx.list(
             queryOf(
-                """
-                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
-                WHERE bestillingsbatch_id IS NULL
-                """.trimIndent(),
+                sql,
+                mapOf(
+                    "bestillingsbatchId" to batchId,
+                ),
             ),
+            extractor = mapToBestilling,
+        )
+    }
+
+    fun getEarliestUnsentBestillingTime(tx: TransactionalSession): Double {
+        // language=SQL
+        val sql =
+            """
+            SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
+            WHERE bestillingsbatch_id IS NULL
+            """.trimIndent()
+        return tx.single(
+            queryOf(sql),
             extractor = { row -> row.double("earliest_oppdatert") },
         ) ?: error("Should always return something")
+    }
 
-    fun getEarliestSentBestillingTime(tx: TransactionalSession): Double =
-        tx.single(
-            queryOf(
-                """
-                SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
-                WHERE bestillingsbatch_id IS NOT NULL
-                """.trimIndent(),
-            ),
+    fun getEarliestSentBestillingTime(tx: TransactionalSession): Double {
+        // language=SQL
+        val sql =
+            """
+            SELECT EXTRACT(EPOCH FROM NOW() - COALESCE(MIN(oppdatert), NOW())) as earliest_oppdatert FROM bestillinger
+            WHERE bestillingsbatch_id IS NOT NULL
+            """.trimIndent()
+        return tx.single(
+            queryOf(sql),
             extractor = { row -> row.double("earliest_oppdatert") },
         ) ?: error("Should always return something")
+    }
 
     fun hentResterendeBestillinger(
         tx: TransactionalSession,
         batchId: Long,
-    ): List<PersonId> =
-        tx.list(
+    ): List<PersonId> {
+        // language=SQL
+        val sql =
+            """
+            SELECT person_id FROM bestillinger
+            WHERE bestillingsbatch_id = :bestillingsbatchId
+            """.trimIndent()
+        return tx.list(
             queryOf(
-                """
-                SELECT person_id FROM bestillinger
-                WHERE bestillingsbatch_id = :bestillingsbatchId
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "bestillingsbatchId" to batchId,
                 ),
@@ -167,6 +201,7 @@ object BestillingRepository {
                 PersonId(row.long("person_id"))
             },
         )
+    }
 
     val mapToBestilling: (Row) -> Bestilling = { row ->
         Bestilling(

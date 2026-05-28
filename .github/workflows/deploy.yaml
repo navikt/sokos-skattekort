@@ -38,7 +38,7 @@ jobs:
     permissions:
       contents: write
     name: Submit dependency graph
-    uses: navikt/mob-gha-workflows/.github/workflows/gradle-dependency-submission.yaml@chore/java_version
+    uses: navikt/mob-gha-workflows/.github/workflows/gradle-dependency-submission.yaml@main
 
   build-push-image-dev:
     permissions:

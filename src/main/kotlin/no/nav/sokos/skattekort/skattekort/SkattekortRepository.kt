@@ -331,7 +331,6 @@ object SkattekortRepository {
                 queryOf(
                     """
                     select sok.fnr /*                                                       */ as fnr,
-                     sum(case when f.id is not null then 1 else 0 end) > 0 /*               */ as har_forespoersel,
                      string_agg(distinct concat(f.forsystem, a.inntektsaar::text), ', ') /* */ as abonnementer
                      sum(case when sminus1.id is not null then 1 else 0 end) > 0 /*         */ as skattekort_last_year,
                      sum(case when s.id is not null then 1 else 0 end) > 0 /*               */ as skattekort_this_year,
@@ -339,7 +338,6 @@ object SkattekortRepository {
                          from (values  $valuesClause) as sok(fnr)
                     left join foedselsnumre fnr on fnr.fnr = sok.fnr
                     left join abonnementer a on a.person_id = fnr.person_id
-                    left join forespoersler f on f.id = a.forespoersel_id
                     left join skattekort sminus1 on sminus1.person_id = fnr.person_id and sminus1.inntektsaar = extract(year from current_date)::int - 1
                     left join skattekort s on s.person_id = fnr.person_id
                     left join skattekort splus1 on splus1.person_id = fnr.person_id and splus1.inntektsaar = extract(year from current_date)::int + 1
@@ -354,7 +352,6 @@ object SkattekortRepository {
 
     private val mapToDetailStatus: (Row) -> DetailStatus = { row ->
         DetailStatus(
-            harForespoersel = row.boolean("forespoersel"),
             abonnements = row.stringOrNull("abonnements")?.split(", ")?.toList() ?: emptyList(),
             skattekortLastYear = row.boolean("skattekort_last_year"),
             skattekortThisYear = row.boolean("skattekort_this_year"),

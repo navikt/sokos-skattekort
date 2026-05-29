@@ -340,7 +340,7 @@ object SkattekortRepository {
                     left join abonnementer a on a.person_id = fnr.person_id
                     left join forespoersler f on f.id = a.forespoersel_id
                     left join skattekort sminus1 on sminus1.person_id = fnr.person_id and sminus1.inntektsaar = extract(year from current_date)::int - 1
-                    left join skattekort s on s.person_id = fnr.person_id
+                    left join skattekort s on s.person_id = fnr.person_id and s.inntektsaar = extract(year from current_date)::int
                     left join skattekort splus1 on splus1.person_id = fnr.person_id and splus1.inntektsaar = extract(year from current_date)::int + 1
 
                     group by SOK.fnr;

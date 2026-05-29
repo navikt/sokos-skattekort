@@ -22,7 +22,6 @@ import no.nav.sokos.skattekort.security.Role
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekort.SkattekortService
-import no.nav.sokos.skattekort.util.audit.AuditLogg
 
 fun Route.skattekortPersonApi(
     skattekortService: SkattekortService,
@@ -92,7 +91,7 @@ fun Route.skattekortPersonApi(
 
             val reqeust: FnrRequest = call.receive()
             when (val result = pdlService.getPersonNavn(reqeust.fnr, saksbehandler)) {
-                is Either.Left -> call.respond(WrappedWithErrorResponse(data = emptyList<AuditLogg>(), errorMessage = "Mangler rettigheter til å se informasjon!"))
+                is Either.Left -> call.respond(WrappedWithErrorResponse(data = "", errorMessage = "Mangler rettigheter til å se informasjon!"))
                 is Either.Right -> call.respond(WrappedWithErrorResponse(data = result.get()))
             }
         }

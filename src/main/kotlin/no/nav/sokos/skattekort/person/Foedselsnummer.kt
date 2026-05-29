@@ -17,4 +17,8 @@ value class FoedselsnummerId(
 @JvmInline
 value class Personidentifikator(
     val value: String,
-)
+) {
+    init {
+        require(value.matches(Regex("^\\d{11}$"))) { "Personidentifikator må være 11 siffer" }
+    }
+}

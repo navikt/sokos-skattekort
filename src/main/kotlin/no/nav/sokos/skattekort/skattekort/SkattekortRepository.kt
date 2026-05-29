@@ -323,21 +323,22 @@ object SkattekortRepository {
             return emptyMap()
         }
 
-        val valuesClause = fnrs.indices.map { Personidentifikator::value }.joinToString(", ") { idx -> "(:fnr$idx" }
-        val paramMap = fnrs.mapIndexed { idx, value -> "fnr$idx" to value.value }.toMap()
-
+        val valuesClause = fnrs.indices.joinToString(", ") { idx -> "(:fnr$idx)" }
+        val paramMap = fnrs.mapIndexed { idx, personidentifikator -> "fnr$idx" to personidentifikator.value }.toMap()
         return tx
             .list(
                 queryOf(
+                    // language=PostgreSQL
                     """
-                    select sok.fnr /*                                                       */ as fnr,
-                     string_agg(distinct concat(f.forsystem, a.inntektsaar::text), ', ') /* */ as abonnementer
-                     sum(case when sminus1.id is not null then 1 else 0 end) > 0 /*         */ as skattekort_last_year,
-                     sum(case when s.id is not null then 1 else 0 end) > 0 /*               */ as skattekort_this_year,
-                     sum(case when splus1.id is not null then 1 else 0 end) > 0 /*          */ as skattekort_next_year,
+                    select sok.fnr /*                                                  */ as fnr,
+                     string_agg(distinct concat(f.forsystem, a.inntektsaar::text), ', ')  as abonnements,
+                     sum(case when sminus1.id is not null then 1 else 0 end) > 0 /*    */ as skattekort_last_year,
+                     sum(case when s.id is not null then 1 else 0 end) > 0 /*          */ as skattekort_this_year,
+                     sum(case when splus1.id is not null then 1 else 0 end) > 0 /*     */ as skattekort_next_year
                          from (values  $valuesClause) as sok(fnr)
                     left join foedselsnumre fnr on fnr.fnr = sok.fnr
                     left join abonnementer a on a.person_id = fnr.person_id
+                    left join forespoersler f on f.id = a.forespoersel_id
                     left join skattekort sminus1 on sminus1.person_id = fnr.person_id and sminus1.inntektsaar = extract(year from current_date)::int - 1
                     left join skattekort s on s.person_id = fnr.person_id
                     left join skattekort splus1 on splus1.person_id = fnr.person_id and splus1.inntektsaar = extract(year from current_date)::int + 1

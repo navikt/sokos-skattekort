@@ -134,6 +134,16 @@ fun Route.skattekortApi(
             logger.info(marker = TEAM_LOGS_MARKER) {
                 "skattekortApi - Mottatt statusforespørsel på vegne av ${saksbehandler.ident}"
             }
+
+            val invalidFnrList = fnrSet.filterNot { it.matches(Regex("\\d{11}")) }
+
+            if (invalidFnrList.isNotEmpty()) {
+                throw RequestValidationException(
+                    value = fnrSet,
+                    reasons = listOf("Ugyldige FNR funnet. Antall: ${invalidFnrList.size}. Verdier: $invalidFnrList"),
+                )
+            }
+
             call.respond(
                 DetailStatusResponse(
                     statusService

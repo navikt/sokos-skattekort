@@ -26,5 +26,8 @@ class StatusService(
         return StatusRegelsett(dataSource).evaluate(fnr, aar, forsystem)
     }
 
-    fun statusForespoersler(fnr: Collection<Personidentifikator>): Map<String, DetailStatus> = dataSource.transaction { tx -> SkattekortRepository.getDetailStatus(tx, fnr) }
+    fun statusForespoersler(fnr: Collection<Personidentifikator>): Map<String, DetailStatus> =
+        dataSource.transaction { tx ->
+            SkattekortRepository.getDetailStatus(tx, fnr)
+        }
 }

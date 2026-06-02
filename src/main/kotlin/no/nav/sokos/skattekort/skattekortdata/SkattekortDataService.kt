@@ -36,9 +36,9 @@ class SkattekortDataService(
                 val skattekortData = SkattekortDataRepository.getUnprocessedSkattekortData(tx).map { data -> Triple(data.id, data.type, Json.decodeFromString<Arbeidstaker>(data.dataMottatt)) }
                 skattekortData.forEach { (id, type, arbeidstaker) ->
                     val personId =
-                        PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: this.run {
+                        PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {
                             logger.error(marker = TEAM_LOGS_MARKER) { "Fant ikke person for fnr ${arbeidstaker.arbeidstakeridentifikator}" }
-                            return@transaction
+                            return@forEach
                         }
                     val inntektsaar = arbeidstaker.inntektsaar
                     val skattekort = Skattekort(personId, arbeidstaker)

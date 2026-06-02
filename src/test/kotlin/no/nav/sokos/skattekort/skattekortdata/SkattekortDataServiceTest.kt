@@ -646,6 +646,63 @@ class SkattekortDataServiceTest :
             }
         }
 
+        test("processSkattekortData should process remaining items in batch when one FNR is unknown") {
+            // Reproduserer bug: return@transaction avbrøt hele loopen ved ukjent FNR,
+            // slik at påfølgende gyldige innslag aldri ble behandlet.
+            val unknownFnr = "99999999999"
+
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(1L, fnr),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+            )
+
+            val skattekortJson =
+                """
+                {
+                  "arbeidstakeridentifikator": "$fnr",
+                  "resultatForSkattekort": "skattekortopplysningerOK",
+                  "inntektsaar": 2025,
+                  "skattekort": {
+                    "utstedtDato": "2025-11-01",
+                    "skattekortidentifikator": 10001,
+                    "forskuddstrekk": []
+                  }
+                }
+                """.trimIndent()
+            val unknownSkattekortJson =
+                """
+                {
+                  "arbeidstakeridentifikator": "$unknownFnr",
+                  "resultatForSkattekort": "skattekortopplysningerOK",
+                  "inntektsaar": 2025,
+                  "skattekort": {
+                    "utstedtDato": "2025-11-01",
+                    "skattekortidentifikator": 20002,
+                    "forskuddstrekk": []
+                  }
+                }
+                """.trimIndent()
+
+            // Ukjent FNR legges inn FØRST — skal trigge feilhåndteringen
+            tx { SkattekortDataRepository.insert(it, unknownSkattekortJson, 2025, unknownFnr, BestillingsbatchType.BESTILLING) }
+            // Gyldig FNR legges inn ETTERPÅ — skal fortsatt bli behandlet
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+
+            skattekortDataService.processSkattekortData()
+
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
+            val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
+
+            assertSoftly {
+                skattekortList shouldHaveSize 1
+                skattekortList.first().personId shouldBe PersonId(1L)
+
+                utsendingList shouldHaveSize 1
+                utsendingList.first().fnr.value shouldBe fnr
+            }
+        }
+
         test("processSkattekortData should create one utsending OS_STOR for BESTILLING and one utsending OS for OPPDATERING") {
             databaseHas(
                 aPerson(1L),

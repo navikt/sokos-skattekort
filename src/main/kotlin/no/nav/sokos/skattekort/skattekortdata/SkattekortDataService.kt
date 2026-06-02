@@ -33,7 +33,10 @@ class SkattekortDataService(
     fun processSkattekortData() {
         runCatching {
             dataSource.transaction { tx ->
-                val skattekortData = SkattekortDataRepository.getUnprocessedSkattekortData(tx).map { data -> Triple(data.id, data.type, Json.decodeFromString<Arbeidstaker>(data.dataMottatt)) }
+                val skattekortData =
+                    SkattekortDataRepository.getUnprocessedSkattekortData(tx)
+                        .sortedBy { it.id.value }
+                        .map { data -> Triple(data.id, data.type, Json.decodeFromString<Arbeidstaker>(data.dataMottatt)) }
                 skattekortData.forEach { (id, type, arbeidstaker) ->
                     val personId =
                         PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {

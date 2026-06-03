@@ -12,7 +12,7 @@ import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.security.auth.SecurityProtocol
 
 class KafkaConfig(
-    private val kafkaProperties: PropertiesConfig.KafkaProperties = PropertiesConfig.getKafkaProperties(),
+    private val kafkaProperties: PropertiesConfig.KafkaProperties = PropertiesConfig.kafkaProperties,
 ) {
     val topic: String by lazy {
         kafkaProperties.topic

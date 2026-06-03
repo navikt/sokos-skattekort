@@ -39,11 +39,11 @@ object MQListener : BeforeSpecListener, AfterTestListener {
         ActiveMQConnectionFactory("vm:localhost?create=false")
     }
 
-    val forespoerselQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
-    val forespoerselBoqQueue: Queue = ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+    val forespoerselQueue: Queue = ActiveMQQueue(PropertiesConfig.mqProperties.fraForSystemQueue)
+    val forespoerselBoqQueue: Queue = ActiveMQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ")
 
-    val utsendingsQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
-    val utsendingStorQueue: Queue = ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+    val utsendingsQueue: Queue = ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort)
+    val utsendingStorQueue: Queue = ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor)
     val allQueues: List<Queue> = listOf(forespoerselQueue, utsendingsQueue, utsendingStorQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }

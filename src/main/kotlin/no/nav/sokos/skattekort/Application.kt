@@ -24,6 +24,7 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.createHttpClient
+import no.nav.sokos.skattekort.config.loadEnvironmentConfig
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
@@ -72,9 +73,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     applicationLifecycleConfig(applicationState)
     commonConfig()
 
-    PropertiesConfig.initEnvConfig(applicationConfig)
-    val applicationProperties = PropertiesConfig.getApplicationProperties()
-    logger.info { "Application started with environment: ${applicationProperties.environment}" }
+    PropertiesConfig.load(applicationConfig.loadEnvironmentConfig())
+    val applicationProperties = PropertiesConfig.applicationProperties
+    logger.info { "Application started with environment: ${applicationProperties.profile}" }
 
     DatabaseConfig.migrate()
 
@@ -84,40 +85,40 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         }
         provide { DatabaseConfig.dataSource }
         provide { KafkaConfig() }
-        provide { PropertiesConfig.getUnleashProperties() }
-        provide { PropertiesConfig.getApplicationProperties() }
+        provide { PropertiesConfig.unleashProperties }
+        provide { PropertiesConfig.applicationProperties }
         provide(MaskinportenTokenClient::class)
         provide(AuditLogger::class)
 
         provide { MQConfig.connectionFactory }
         provide<Queue>(name = FORESPORSEL_QUEUE) {
-            MQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+            MQQueue(PropertiesConfig.mqProperties.fraForSystemQueue)
         }
         provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
-            MQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+            MQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ")
         }
         provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
-            val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+            val queue = MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort)
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
         provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
-            val queue = MQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+            val queue = MQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor)
             queue.messageBodyStyle = WMQConstants.WMQ_MESSAGE_BODY_MQ
             queue
         }
-        provide<String>(name = PDL_URL) { PropertiesConfig.getPdlProperties().pdlUrl }
+        provide<String>(name = PDL_URL) { PropertiesConfig.pdlProperties.pdlUrl }
         provide<AzuredTokenClient>(name = PDL_AZURED_TOKEN_CLIENT) {
-            AzuredTokenClient(createHttpClient(), PropertiesConfig.getPdlProperties().pdlScope)
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.pdlProperties.pdlScope)
         }
-        provide<String>(name = TILGANGSMASKIN_URL) { PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinUrl }
+        provide<String>(name = TILGANGSMASKIN_URL) { PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinUrl }
         provide<AzuredTokenClient>(name = TILGANGSMAKSIN_AZURED_TOKEN_CLIENT) {
-            AzuredTokenClient(createHttpClient(), PropertiesConfig.getTilgangsmaskinProperties().tilgangsmaskinScope)
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinScope)
         }
-        provide<String>(name = SKATTEETATEN_URL) { PropertiesConfig.getSkatteetatenProperties().skatteetatenUrl }
-        provide<String>(name = DAREPOC_URL) { PropertiesConfig.getDarePocProperties().darePocUrl }
+        provide<String>(name = SKATTEETATEN_URL) { PropertiesConfig.skatteetatenProperties.skatteetatenUrl }
+        provide<String>(name = DAREPOC_URL) { PropertiesConfig.darePocProperties.darePocUrl }
         provide<AzuredTokenClient>(name = DAREPOC_AZURED_TOKEN_CLIENT) {
-            AzuredTokenClient(createHttpClient(), PropertiesConfig.getDarePocProperties().darePocScope)
+            AzuredTokenClient(createHttpClient(), PropertiesConfig.darePocProperties.darePocScope)
         }
         provide(StatusService::class)
         provide(PersonService::class)
@@ -136,7 +137,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
         // SOKOS-DARE-POC skal kun brukes i test.
-        if (!PropertiesConfig.isProd()) {
+        if (!PropertiesConfig.isProd) {
             provide(UtsendingDareClientService::class)
         } else {
             provide<UtsendingDareClientService?> { null }
@@ -159,7 +160,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.onOppdateringChanged(unleashIntegration.isForespoerselListenerEnabled())
 
-    if (PropertiesConfig.SchedulerProperties().enabled) {
+    if (PropertiesConfig.schedulerProperties.enabled) {
         val bestillingService: BestillingService by dependencies
         val bestillingsbatchService: BestillingsbatchService by dependencies
         val utsendingService: UtsendingService by dependencies
@@ -188,7 +189,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             }
         }
 
-        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+        if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             monitor.subscribe(ApplicationStopped) {
                 logger.info { "Closing database scheduler pools..." }
                 (DatabaseConfig.dataSourceScheduler as? HikariDataSource)?.close()
@@ -196,7 +197,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         }
     }
 
-    val kafkaProperties = PropertiesConfig.getKafkaProperties()
+    val kafkaProperties = PropertiesConfig.kafkaProperties
     if (kafkaProperties.enabled) {
         applicationState.onReady = {
             val kafkaConsumerService: KafkaConsumerService by dependencies

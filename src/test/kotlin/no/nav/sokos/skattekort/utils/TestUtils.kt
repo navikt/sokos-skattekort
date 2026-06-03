@@ -140,16 +140,16 @@ object TestUtils {
                 }
                 provide { MQListener.connectionFactory }
                 provide<Queue>(name = FORESPORSEL_QUEUE) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                    ActiveMQQueue(PropertiesConfig.mqProperties.fraForSystemQueue)
                 }
                 provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
-                    ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+                    ActiveMQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ")
                 }
                 provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+                    ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort)
                 }
                 provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+                    ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor)
                 }
             }
         }

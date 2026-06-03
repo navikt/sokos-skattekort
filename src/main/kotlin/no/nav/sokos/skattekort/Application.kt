@@ -156,8 +156,9 @@ fun Application.module(
         }
     }
 
-    securityConfig(azureAdProperties = azureAdProperties ?: PropertiesConfig.azureAdProperties)
-    routingConfig(applicationState)
+    val effectiveAzureAdProperties = azureAdProperties ?: PropertiesConfig.azureAdProperties
+    securityConfig(azureAdProperties = effectiveAzureAdProperties)
+    routingConfig(applicationState, azureAdProperties = effectiveAzureAdProperties)
 
     val unleashIntegration: UnleashIntegration by dependencies
     val forespoerselListener: ForespoerselListener by dependencies

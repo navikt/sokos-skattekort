@@ -80,7 +80,7 @@ fun Application.module(
     val applicationProperties = PropertiesConfig.applicationProperties
     logger.info { "Application started with environment: ${applicationProperties.profile}" }
 
-    if (applicationProperties.isProd) DatabaseConfig.migrate()
+    if (!applicationProperties.isLocal && !applicationProperties.isTest) DatabaseConfig.migrate()
 
     dependencies {
         provide { createHttpClient() } cleanup { client ->

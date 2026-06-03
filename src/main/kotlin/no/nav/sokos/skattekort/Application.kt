@@ -68,7 +68,10 @@ fun main() {
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
+fun Application.module(
+    applicationConfig: ApplicationConfig = environment.config,
+    azureAdProperties: PropertiesConfig.AzureAdProperties? = null,
+) {
     val applicationState = ApplicationState()
     applicationLifecycleConfig(applicationState)
     commonConfig()
@@ -77,7 +80,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val applicationProperties = PropertiesConfig.applicationProperties
     logger.info { "Application started with environment: ${applicationProperties.profile}" }
 
-    DatabaseConfig.migrate()
+    if (applicationProperties.isProd) DatabaseConfig.migrate()
 
     dependencies {
         provide { createHttpClient() } cleanup { client ->
@@ -153,7 +156,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         }
     }
 
-    securityConfig()
+    securityConfig(azureAdProperties = azureAdProperties ?: PropertiesConfig.azureAdProperties)
     routingConfig(applicationState)
 
     val unleashIntegration: UnleashIntegration by dependencies

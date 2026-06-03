@@ -124,6 +124,7 @@ object TestUtils {
             }
 
             dependencies {
+                provide<DataSource> { DbListener.dataSource }
                 provide<String>(name = PDL_URL) { WiremockListener.wiremock.baseUrl() }
                 provide<String>(name = DAREPOC_URL) { WiremockListener.wiremock.baseUrl() }
                 provide<String>(name = SKATTEETATEN_URL) { WiremockListener.wiremock.baseUrl() }
@@ -153,7 +154,15 @@ object TestUtils {
                 }
             }
         }
-        module(testEnvironmentConfig(authServer))
+        val testAzureAdProperties =
+            PropertiesConfig.AzureAdProperties(
+                clientId = "default",
+                wellKnownUrl = authServer.wellKnownUrl("default").toUrl().toString(),
+                tenantId = "test",
+                clientSecret = "test",
+                providerName = "default",
+            )
+        module(testEnvironmentConfig(authServer), testAzureAdProperties)
     }
 
     fun runThisSql(query: String) {

@@ -204,8 +204,7 @@ fun ApplicationConfig.loadEnvironmentConfig(): ApplicationConfig {
     val environment = environmentName?.lowercase()?.substringBefore("-") ?: "local"
 
     val environmentConfig = ApplicationConfig("application-$environment.conf")
-    return environmentConfig overriding this overriding hoconConfig
-}
+    return this overriding environmentConfig overriding hoconConfig
 
 infix fun ApplicationConfig.overriding(other: ApplicationConfig): ApplicationConfig = this.withFallback(other)
 

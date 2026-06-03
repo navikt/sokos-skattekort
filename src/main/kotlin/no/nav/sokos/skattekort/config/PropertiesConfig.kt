@@ -209,6 +209,7 @@ infix fun ApplicationConfig.overriding(other: ApplicationConfig): ApplicationCon
 enum class Profile {
     LOCAL,
     DEV,
+    Q1,
     TEST,
     PROD,
 }

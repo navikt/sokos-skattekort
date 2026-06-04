@@ -21,7 +21,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 private val logger = KotlinLogging.logger {}
 
 object DbListener : BeforeSpecListener, AfterEachListener {
-    private val postgresProperties = PropertiesConfig.getPostgresProperties()
+    private val postgresProperties = PropertiesConfig.postgresProperties
     val container: PostgreSQLContainer<Nothing> =
         PostgreSQLContainer<Nothing>("postgres:latest").apply {
             withReuse(false)

@@ -46,7 +46,7 @@ class BestillingsbatchService(
                 bestillSkattekortRequest(
                     inntektsaar = bestillingList.first().inntektsaar,
                     fnr = bestillingList.map { it.fnr }.distinct(),
-                    bestillingOrgnr = PropertiesConfig.getApplicationProperties().bestillingOrgnr,
+                    bestillingOrgnr = PropertiesConfig.applicationProperties.bestillingOrgnr,
                 )
             val response = runBlocking { skatteetatenClient.bestillSkattekort(request) }
 

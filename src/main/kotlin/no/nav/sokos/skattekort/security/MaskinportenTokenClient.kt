@@ -36,7 +36,7 @@ class MaskinportenTokenClient(
     private val mutex = Mutex()
     private val timeLimit = Duration.ofSeconds(60)
     private val tokenCache = AtomicReference<AccessToken?>(null)
-    private val maskinportenProperties: PropertiesConfig.MaskinportenProperties = PropertiesConfig.getMaskinportenProperties()
+    private val maskinportenProperties: PropertiesConfig.MaskinportenProperties = PropertiesConfig.maskinportenProperties
 
     suspend fun getAccessToken(): String =
         mutex.withLock {

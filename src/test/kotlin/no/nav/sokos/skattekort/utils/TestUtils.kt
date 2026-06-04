@@ -124,6 +124,7 @@ object TestUtils {
             }
 
             dependencies {
+                provide<DataSource> { DbListener.dataSource }
                 provide<String>(name = PDL_URL) { WiremockListener.wiremock.baseUrl() }
                 provide<String>(name = DAREPOC_URL) { WiremockListener.wiremock.baseUrl() }
                 provide<String>(name = SKATTEETATEN_URL) { WiremockListener.wiremock.baseUrl() }
@@ -140,20 +141,28 @@ object TestUtils {
                 }
                 provide { MQListener.connectionFactory }
                 provide<Queue>(name = FORESPORSEL_QUEUE) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                    ActiveMQQueue(PropertiesConfig.mqProperties.fraForSystemQueue)
                 }
                 provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
-                    ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+                    ActiveMQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ")
                 }
                 provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+                    ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort)
                 }
                 provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+                    ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor)
                 }
             }
         }
-        module(testEnvironmentConfig(authServer))
+        val testAzureAdProperties =
+            PropertiesConfig.AzureAdProperties(
+                clientId = "default",
+                wellKnownUrl = authServer.wellKnownUrl("default").toUrl().toString(),
+                tenantId = "test",
+                clientSecret = "test",
+                providerName = "default",
+            )
+        module(testEnvironmentConfig(authServer), testAzureAdProperties)
     }
 
     fun runThisSql(query: String) {

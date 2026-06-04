@@ -21,10 +21,10 @@ class UnleashIntegration(
     private val onForespoerselListenerChanged: (Boolean) -> Unit = {},
 ) {
     private val unleashClient: Unleash
-    private val appProperties = PropertiesConfig.getApplicationProperties()
-    private val unleashProps = PropertiesConfig.getUnleashProperties()
+    private val appProperties = PropertiesConfig.applicationProperties
+    private val unleashProps = PropertiesConfig.unleashProperties
 
-    private fun toggleName(suffix: String) = "${appProperties.naisAppName}.$suffix"
+    private fun toggleName(suffix: String) = "${appProperties.appName}.$suffix"
 
     // Kill switcher:
     fun isUtsendingEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_UTSENDINGER_SUFFIX))
@@ -42,7 +42,7 @@ class UnleashIntegration(
     fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_FORESPOERSEL_LISTENER_SUFFIX))
 
     init {
-        if (appProperties.environment == PropertiesConfig.Environment.TEST) {
+        if (appProperties.isTest) {
             unleashClient =
                 FakeUnleash().also { fakeUnleash ->
                     fakeUnleash.enable(toggleName(TOGGLE_FORESPOERSEL_LISTENER_SUFFIX))
@@ -57,7 +57,7 @@ class UnleashIntegration(
             val config =
                 UnleashConfig
                     .builder()
-                    .appName(appProperties.naisAppName)
+                    .appName(appProperties.appName)
                     .instanceId(appProperties.podName)
                     .unleashAPI(unleashProps.unleashAPI + "/api/")
                     .apiKey(unleashProps.apiKey)

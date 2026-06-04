@@ -8,7 +8,6 @@ import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
 import io.kotest.extensions.testcontainers.toDataSource
 import kotliquery.queryOf
-import mu.KotlinLogging
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.ext.ScriptUtils
@@ -17,8 +16,6 @@ import org.testcontainers.jdbc.JdbcDatabaseDelegate
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
-
-private val logger = KotlinLogging.logger {}
 
 object DbListener : BeforeSpecListener, AfterEachListener {
     private val postgresProperties = PropertiesConfig.postgresProperties

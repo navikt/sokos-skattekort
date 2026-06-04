@@ -117,7 +117,7 @@ class ForespoerselService(
             if (skattekortList.isEmpty()) {
                 val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
                 if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+                val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
                 if (foedselsnummerkategori.kanBestilleSkattekort(fnr) && !forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, forespoerselInput.inntektsaar) == null) {
                     BestillingRepository.insert(
                         tx = tx,

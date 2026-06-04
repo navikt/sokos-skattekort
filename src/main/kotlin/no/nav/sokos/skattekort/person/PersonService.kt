@@ -148,9 +148,9 @@ class PersonService(
     fun validateFoedselsnummer(fnrList: List<String>): List<String> {
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
         return fnrList.filter { fnr ->
-            foedselsnummerkategori.kanBestilleSkattekort(fnr).also { valid ->
+            foedselsnummerkategori.erGyldig(fnr).also { valid ->
                 if (!valid) {
-                    logger.error(marker = TEAM_LOGS_MARKER) { "fjernet fnr som ikke kan bestilles fra kallet: $fnr" }
+                    logger.error(marker = TEAM_LOGS_MARKER) { "fjernet fnr som ikke er gyldig fra kallet: $fnr" }
                 }
             }
         }

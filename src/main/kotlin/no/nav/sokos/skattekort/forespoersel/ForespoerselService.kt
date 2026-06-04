@@ -7,6 +7,7 @@ import javax.sql.DataSource
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.person.AuditRepository
@@ -22,6 +23,7 @@ import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
+import no.nav.sokos.skattekort.utsending.UtsendingService
 
 private const val DELIMITER = ";"
 private val logger = KotlinLogging.logger { }
@@ -29,6 +31,7 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselService(
     private val dataSource: DataSource,
     private val personService: PersonService,
+    private val utsendingService: UtsendingService,
     private val featureToggles: UnleashIntegration,
 ) {
     fun taImotForespoersel(
@@ -114,7 +117,8 @@ class ForespoerselService(
             if (skattekortList.isEmpty()) {
                 val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
                 if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, forespoerselInput.inntektsaar) == null) {
+                val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+                if (foedselsnummerkategori.kanBestilleSkattekort(fnr) && !forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, forespoerselInput.inntektsaar) == null) {
                     BestillingRepository.insert(
                         tx = tx,
                         bestilling =

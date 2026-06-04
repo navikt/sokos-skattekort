@@ -64,7 +64,7 @@ class StatusServiceTest :
 
             test("Gyldig fnr men kan ikke bestille") {
                 mockkObject(PropertiesConfig)
-                every { PropertiesConfig.getApplicationProperties().gyldigeFnr } returns "KUNSTIGE_FNR"
+                every { PropertiesConfig.applicationProperties } returns mockk { every { gyldigeFnr } returns "KUNSTIGE_FNR" }
 
                 val status = statusService.statusForespoeresel(fnr = "01410112345", aar = 2025, forsystem = "TEST", saksbehandler = saksbehandler)
                 status shouldBe Status.KUNSTIG_FNR
@@ -72,7 +72,7 @@ class StatusServiceTest :
 
             test("Ikke ekte fnr i prodlikt miljø") {
                 mockkObject(PropertiesConfig)
-                every { PropertiesConfig.getApplicationProperties().gyldigeFnr } returns "GYLDIGE"
+                every { PropertiesConfig.applicationProperties } returns mockk { every { gyldigeFnr } returns "GYLDIGE" }
 
                 val status = statusService.statusForespoeresel(fnr = "01410112345", aar = 2025, forsystem = "TEST", saksbehandler = saksbehandler)
                 status shouldBe Status.UGYLDIG_FNR

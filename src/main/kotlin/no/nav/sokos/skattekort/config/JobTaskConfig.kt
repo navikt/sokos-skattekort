@@ -60,7 +60,7 @@ object JobTaskConfig {
         bestillingService: BestillingService,
         bestillingsbatchService: BestillingsbatchService,
         skattekortdataService: SkattekortDataService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
         return Tasks
@@ -82,7 +82,7 @@ object JobTaskConfig {
 
     fun recurringSendUtsendingTask(
         utsendingService: UtsendingService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
     ): RecurringTask<String> {
         val startTime = LocalDateTime.now()
         return Tasks
@@ -107,7 +107,7 @@ object JobTaskConfig {
     fun recurringHentOppdaterteSkattekortBatchTask(
         bestillingService: BestillingService,
         bestillingsbatchService: BestillingsbatchService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
         return Tasks
@@ -128,7 +128,7 @@ object JobTaskConfig {
 
     fun recurringFetchMetricsTask(
         metricsService: MetricsService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
         return Tasks
@@ -148,7 +148,7 @@ object JobTaskConfig {
 
     fun recurringDeleteSkattekort(
         skattekortService: SkattekortService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
         return Tasks
@@ -168,7 +168,7 @@ object JobTaskConfig {
 
     fun recurringFetchForespoerselInputTask(
         forespoerselService: ForespoerselService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.SchedulerProperties(),
+        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
     ): RecurringTask<String> {
         val showLogLocalTime = LocalDateTime.now()
 
@@ -204,7 +204,7 @@ object JobTaskConfig {
     }
 
     init {
-        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+        if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     handleJobs = false

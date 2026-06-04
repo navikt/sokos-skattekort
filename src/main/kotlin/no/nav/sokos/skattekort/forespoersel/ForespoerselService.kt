@@ -23,7 +23,6 @@ import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
-import no.nav.sokos.skattekort.utsending.UtsendingService
 
 private const val DELIMITER = ";"
 private val logger = KotlinLogging.logger { }
@@ -31,7 +30,6 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselService(
     private val dataSource: DataSource,
     private val personService: PersonService,
-    private val utsendingService: UtsendingService,
     private val featureToggles: UnleashIntegration,
 ) {
     fun taImotForespoersel(

@@ -199,6 +199,7 @@ fun ApplicationConfig.loadEnvironmentConfig(): ApplicationConfig {
     val hoconConfig = HoconApplicationConfig(ConfigFactory.load())
     val environmentName =
         System.getenv("APPLICATION_ENV")
+            ?: System.getProperty("APPLICATION_ENV")
             ?: System.getenv("NAIS_CLUSTER_NAME")
             ?: System.getProperty("NAIS_CLUSTER_NAME")
     val environment = environmentName?.lowercase()?.substringBefore("-") ?: "local"

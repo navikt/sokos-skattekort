@@ -37,7 +37,7 @@ flowchart TD
     1. Denne workflow trigges når kode pushes i `main` branch
 3. [Build/test PR](.github/workflows/build-pr.yaml) -> For å bygge og teste alle PR som blir opprettet og gjør en sjekk på branch prefix og title
     1. Denne workflow kjøres kun når det opprettes pull requester
-4. [Security](.github/workflows/codeql-trivy-scan.yaml) -> For å skanne kode og docker image for sårbarheter. Kjøres hver morgen kl 06:00
+4. [Security](.github/workflows/codeql-scan.yaml) -> For å skanne kode for sårbarheter. Kjøres hver morgen kl 06:00
     1. Denne kjøres når [Deploy application](.github/workflows/deploy.yaml) har kjørt ferdig
 5. [Deploy application manual](.github/workflows/manual-deploy.yaml) -> For å deploye applikasjonen manuelt til ulike miljøer
     1. Denne workflow trigges manuelt basert på branch og miljø
@@ -78,7 +78,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten for aktuell bestillingsreferanse) --> 
+    BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten for aktuell bestillingsreferanse) -->
     SVAR{Responskode} -->|200|OK -->|For hver Bestilling|SK{Har vi fått skattekort?} -->|Ja|L(Lagre Skattekort i databasen) -->
 SLETT(Slett bestilling som vi har fått skattekort for) -->
 OPPRETT(Opprett Utsending for hvert forsystem som abonnerer på fnr og inntektsår)
@@ -125,9 +125,8 @@ flowchart TD
     S -->|Ja| S2[Status: Har Skattekort]
     A -->|Nei| S3[Status: Aldri forespurt]
     BB -->|Nei| B{Finnes Bestilling?} -->|Ja| S5[Status: Venter på at Batchtoget skal gå]
-    B -->|Nei| S4["Feil som må håndteres: 
+    B -->|Nei| S4["Feil som må håndteres:
                     Vi har et abonnnement, men har ikke skattekort
 og heller ikke planlagt å bestille det"]
 
 ```
-

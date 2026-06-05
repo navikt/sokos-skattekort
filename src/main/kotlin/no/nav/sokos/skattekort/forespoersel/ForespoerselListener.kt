@@ -17,7 +17,7 @@ class ForespoerselListener(
     private val forespoerselService: ForespoerselService,
     @Named("forespoerselQueue") private val forespoerselQueue: Queue,
     @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
-) : AutoCloseable {
+) {
     private var jmsContext: JMSContext? = null
     private var jmsConsumer: JMSConsumer? = null
 
@@ -72,9 +72,5 @@ class ForespoerselListener(
             enabled && !isRunning -> start()
             !enabled && isRunning -> stop()
         }
-    }
-
-    override fun close() {
-        stop()
     }
 }

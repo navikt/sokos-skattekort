@@ -68,10 +68,7 @@ fun main() {
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.module(
-    applicationConfig: ApplicationConfig = environment.config,
-    azureAdProperties: PropertiesConfig.AzureAdProperties? = null,
-) {
+fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
     val applicationState = ApplicationState()
     applicationLifecycleConfig(applicationState)
     commonConfig()
@@ -79,8 +76,7 @@ fun Application.module(
     PropertiesConfig.load(applicationConfig.loadEnvironmentConfig())
     val applicationProperties = PropertiesConfig.applicationProperties
     logger.info { "Application started with environment: ${applicationProperties.profile}" }
-
-    if (!applicationProperties.isLocal && !applicationProperties.isTest) DatabaseConfig.migrate()
+    DatabaseConfig.migrate()
 
     dependencies {
         provide { createHttpClient() } cleanup { client ->
@@ -156,9 +152,8 @@ fun Application.module(
         }
     }
 
-    val effectiveAzureAdProperties = azureAdProperties ?: PropertiesConfig.azureAdProperties
-    securityConfig(azureAdProperties = effectiveAzureAdProperties)
-    routingConfig(applicationState, azureAdProperties = effectiveAzureAdProperties)
+    securityConfig()
+    routingConfig(applicationState)
 
     val unleashIntegration: UnleashIntegration by dependencies
     val forespoerselListener: ForespoerselListener by dependencies

@@ -7,6 +7,7 @@ import javax.sql.DataSource
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.person.AuditRepository
@@ -114,7 +115,8 @@ class ForespoerselService(
             if (skattekortList.isEmpty()) {
                 val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
                 if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                if (!forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, forespoerselInput.inntektsaar) == null) {
+                val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
+                if (foedselsnummerkategori.kanBestilleSkattekort(fnr) && !forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, forespoerselInput.inntektsaar) == null) {
                     BestillingRepository.insert(
                         tx = tx,
                         bestilling =

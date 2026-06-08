@@ -162,6 +162,14 @@ configurations.all {
                 useVersion("3.1.1")
                 because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
             }
+            if (requested.group == "io.netty" && requested.name == "netty-transport-native-epoll") {
+                useVersion("4.2.13.Final")
+                because(
+                    "Netty epoll transport denial of service via RST on half-closed TCP connection. " +
+                        "CVE-2026-42577, GHSA-rwm7-x88c-3g2p. " +
+                        "Affected version = 4.2.12.Final, patched in 4.2.13.Final",
+                )
+            }
             if (requested.group == "io.netty" && requested.name == "netty-codec-http") {
                 useVersion("4.2.13.Final")
                 because(

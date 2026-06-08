@@ -18,13 +18,13 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 object DbListener : BeforeSpecListener, AfterEachListener {
-    private val postgresProperties = PropertiesConfig.postgresProperties
+    private val testConfig = PropertiesConfig.config
     val container: PostgreSQLContainer<Nothing> =
         PostgreSQLContainer<Nothing>("postgres:latest").apply {
             withReuse(false)
-            withUsername(postgresProperties.username)
-            withPassword(postgresProperties.password)
-            withDatabaseName(postgresProperties.name)
+            withUsername(testConfig.property("postgres.username").getString())
+            withPassword(testConfig.property("postgres.password").getString())
+            withDatabaseName(testConfig.property("postgres.name").getString())
             waitingFor(Wait.defaultWaitStrategy())
             start()
         }

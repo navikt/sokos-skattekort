@@ -8,6 +8,7 @@ import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.HoconApplicationConfig
 import io.ktor.server.config.getAs
+import io.ktor.server.config.tryGetString
 import io.ktor.server.config.withFallback
 
 object PropertiesConfig {
@@ -15,18 +16,15 @@ object PropertiesConfig {
         private set
 
     fun load(applicationConfig: ApplicationConfig) {
-        if (!::config.isInitialized) {
-            config = applicationConfig
-        }
+        config = applicationConfig
     }
 
     val applicationProperties by lazy {
         config.property("application").getAs<ApplicationProperties>()
     }
 
-    val azureAdProperties by lazy {
-        config.property("azureAd").getAs<AzureAdProperties>()
-    }
+    val azureAdProperties: AzureAdProperties
+        get() = config.property("azureAd").getAs<AzureAdProperties>()
 
     val postgresProperties by lazy {
         config.property("postgres").getAs<PostgresProperties>()
@@ -196,19 +194,20 @@ object PropertiesConfig {
 }
 
 fun ApplicationConfig.loadEnvironmentConfig(): ApplicationConfig {
-    val hoconConfig = HoconApplicationConfig(ConfigFactory.load())
     val environmentName =
         System.getenv("APPLICATION_ENV")
             ?: System.getProperty("APPLICATION_ENV")
             ?: System.getenv("NAIS_CLUSTER_NAME")
             ?: System.getProperty("NAIS_CLUSTER_NAME")
+            ?: this.tryGetString("APPLICATION_ENV")
+
     val environment = environmentName?.lowercase()?.substringBefore("-") ?: "local"
+    val environmentConfig = ConfigFactory.parseResources("application-$environment.conf")
+    val systemConfig = ConfigFactory.systemEnvironment().withFallback(ConfigFactory.systemProperties()).withFallback(environmentConfig)
+    val applicationConfig = ConfigFactory.parseMap(this.toMap())
 
-    val environmentConfig = ApplicationConfig("application-$environment.conf")
-    return this overriding environmentConfig overriding hoconConfig
+    return HoconApplicationConfig(systemConfig.withFallback(applicationConfig).resolve())
 }
-
-infix fun ApplicationConfig.overriding(other: ApplicationConfig): ApplicationConfig = this.withFallback(other)
 
 enum class Profile {
     LOCAL,

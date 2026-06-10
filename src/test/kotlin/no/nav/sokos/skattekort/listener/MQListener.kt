@@ -4,6 +4,7 @@ import io.kotest.core.listeners.AfterTestListener
 import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
+import io.ktor.server.config.ApplicationConfig
 import jakarta.jms.JMSContext
 import jakarta.jms.Queue
 import org.apache.activemq.artemis.api.core.SimpleString
@@ -16,9 +17,9 @@ import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory
 import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
-import no.nav.sokos.skattekort.config.PropertiesConfig
 
 object MQListener : BeforeSpecListener, AfterTestListener {
+    private val testConfig = ApplicationConfig("application-test.conf")
     private val server: EmbeddedActiveMQ =
         EmbeddedActiveMQ()
             .setConfiguration(
@@ -39,11 +40,11 @@ object MQListener : BeforeSpecListener, AfterTestListener {
         ActiveMQConnectionFactory("vm:localhost?create=false")
     }
 
-    val forespoerselQueue: Queue = ActiveMQQueue(PropertiesConfig.mqProperties.fraForSystemQueue)
-    val forespoerselBoqQueue: Queue = ActiveMQQueue("${PropertiesConfig.mqProperties.fraForSystemQueue}_BOQ")
+    val forespoerselQueue: Queue = ActiveMQQueue(testConfig.property("mq.fraForSystemQueue").getString())
+    val forespoerselBoqQueue: Queue = ActiveMQQueue("${testConfig.property("mq.fraForSystemQueue").getString()}_BOQ")
 
-    val utsendingsQueue: Queue = ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekort)
-    val utsendingStorQueue: Queue = ActiveMQQueue(PropertiesConfig.mqProperties.leveransekoeOppdragZSkattekortStor)
+    val utsendingsQueue: Queue = ActiveMQQueue(testConfig.property("mq.leveransekoeOppdragZSkattekort").getString())
+    val utsendingStorQueue: Queue = ActiveMQQueue(testConfig.property("mq.leveransekoeOppdragZSkattekortStor").getString())
     val allQueues: List<Queue> = listOf(forespoerselQueue, utsendingsQueue, utsendingStorQueue)
 
     val jmsContext: JMSContext by lazy { connectionFactory.createContext() }

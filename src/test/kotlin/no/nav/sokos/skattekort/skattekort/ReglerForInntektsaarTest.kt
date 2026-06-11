@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.skattekort
 
 import java.time.LocalDateTime
+import java.time.LocalDateTime.now
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
@@ -8,6 +9,27 @@ import io.kotest.matchers.shouldBe
 
 class ReglerForInntektsaarTest :
     FunSpec({
+        test("skalBestilleForNesteAarOgsaa if current year after 15.12.") {
+            withConstantNow(LocalDateTime.of(now().year, 12, 15, 12, 0)) {
+                ReglerForInntektsaar.skalBestilleForNesteAarOgsaa(now().year) shouldBe true
+            }
+        }
+        test("Not skalBestilleForNesteAarOgsaa if current year before 15.12.") {
+            withConstantNow(LocalDateTime.of(now().year, 12, 14, 12, 0)) {
+                ReglerForInntektsaar.skalBestilleForNesteAarOgsaa(now().year) shouldBe false
+            }
+        }
+        test("Not skalBestilleForNesteAarOgsaa if last year after 15.12.") {
+            withConstantNow(LocalDateTime.of(now().year, 12, 15, 0, 0)) {
+                ReglerForInntektsaar.skalBestilleForNesteAarOgsaa(now().year - 1) shouldBe false
+            }
+        }
+        test("Not skalBestilleForNesteAarOgsaa if last year before 15.12.") {
+            withConstantNow(LocalDateTime.of(now().year, 1, 1, 12, 0)) {
+                ReglerForInntektsaar.skalBestilleForNesteAarOgsaa(now().year - 1) shouldBe false
+            }
+        }
+
         test("maxInntektsaar returns current year before Dec 15") {
             withConstantNow(LocalDateTime.of(2026, 12, 14, 12, 0)) {
                 ReglerForInntektsaar.maxInntektsaar() shouldBe 2026

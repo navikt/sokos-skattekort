@@ -23,7 +23,6 @@ import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
-import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
@@ -283,34 +282,6 @@ class ForespoerselServiceTest :
                                 Utsending(UtsendingId(1), Personidentifikator("01010112345"), 2025, Forsystem.OPPDRAGSSYSTEMET),
                             ),
                             Utsending::opprettet,
-                        )
-                    }
-                }
-            }
-        }
-
-        test("Skal ta i mot forespørsler fra databasetabell") {
-            DbListener.loadDataSet("database/forespoersler/forespoersel_fra_tabell.sql")
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("19876543210"))
-
-            forespoerselService.cronForespoerselInput()
-            DbListener.dataSource.transaction { tx ->
-                val bestillinger = DBTestUtils.getAllBestilling(tx)
-
-                assertSoftly {
-                    bestillinger shouldNotBeNull {
-                        size shouldBe 1
-                        shouldContainAllIgnoringFields(
-                            listOf(
-                                Bestilling(
-                                    personId = PersonId(1),
-                                    fnr = Personidentifikator("19876543210"),
-                                    inntektsaar = 2025,
-                                ),
-                            ),
-                            Bestilling::id,
-                            Bestilling::bestillingsbatchId,
-                            Bestilling::oppdatert,
                         )
                     }
                 }

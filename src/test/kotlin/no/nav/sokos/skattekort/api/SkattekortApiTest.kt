@@ -162,8 +162,8 @@ class SkattekortApiTest :
         test("bestillingbulk skal returnere 200 OK for gyldig request") {
             WiremockListener.wiremockPDLStub(
                 WiremockListener.generateHentIdenterBolk(
-                    "16836895413",
-                    "24864999049",
+                    "01010112345",
+                    "02020212345",
                     "03030312345",
                 ),
             )

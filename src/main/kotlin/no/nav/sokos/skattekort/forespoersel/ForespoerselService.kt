@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.forespoersel
 
-import java.sql.BatchUpdateException
 import java.time.LocalDate
 import javax.sql.DataSource
 
@@ -25,6 +24,7 @@ import no.nav.sokos.skattekort.utsending.Utsending
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
 private const val DELIMITER = ";"
+private const val CHUNKED_SIZE = 1000
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselService(
@@ -32,6 +32,9 @@ class ForespoerselService(
     private val personService: PersonService,
     private val featureToggles: UnleashIntegration,
 ) {
+    private typealias BestillingCount = Int
+    private typealias UtsendingCount = Int
+
     fun taImotForespoersel(
         message: String,
         saksbehandler: Saksbehandler? = null,
@@ -46,6 +49,12 @@ class ForespoerselService(
                 }.let { input ->
                     input.copy(fnrList = personService.validateFoedselsnummer(input.fnrList))
                 }
+
+            val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
+            if (forSentAaBestille) {
+                logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
+                return
+            }
 
             if (forespoerselInput.fnrList.isEmpty()) {
                 logger.error { "Ingen data blir lagret i forespørseler pga. ugyldig fnr" }
@@ -84,67 +93,96 @@ class ForespoerselService(
                 dataMottatt = message,
             )
 
-        var bestillingCount = 0
-        var utsendingCount = 0
+        val foedselsnumreWithPersonIdList = foedselsnumreWithPersonIdMap.mapNotNull { (fnr, personId) -> personId?.let { fnr to it } }
 
-        forespoerselInput.fnrList.forEach { fnr ->
-            val personId = foedselsnumreWithPersonIdMap[fnr] ?: return@forEach
-            AuditRepository.insert(
-                tx,
-                tag = AuditTag.MOTTATT_FORESPOERSEL,
-                personId,
-                informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
-                brukerId = brukerId,
-            )
-
-            AbonnementRepository.insert(
+        foedselsnumreWithPersonIdList.chunked(CHUNKED_SIZE).forEach { chunk ->
+            val personIdList = chunk.map { it.second }
+            AbonnementRepository.insertBatch(
                 tx = tx,
                 forespoerselId = forespoerselId,
                 inntektsaar = forespoerselInput.inntektsaar,
-                personId = personId.value,
+                personIdList = personIdList,
             )
 
-            val skattekortList =
-                SkattekortRepository.findAllByPersonId(
-                    tx,
-                    personIdList = listOf(personId),
-                    inntektsaarList = listOf(forespoerselInput.inntektsaar),
-                    showOnlyLatest = true,
-                )
-
-            if (skattekortList.isEmpty()) {
-                val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
-                if (forSentAaBestille) logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
-                if (foedselsnummerkategori.kanBestilleSkattekort(fnr) && !forSentAaBestille && BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, forespoerselInput.inntektsaar) == null) {
-                    BestillingRepository.insert(
-                        tx = tx,
-                        bestilling =
-                            Bestilling(
-                                personId = personId,
-                                fnr = Personidentifikator(fnr),
-                                inntektsaar = forespoerselInput.inntektsaar,
-                            ),
-                    )
-                    bestillingCount++
-                }
-            } else {
-                // Skattekort finnes
-                val utsending = UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem)
-                if (utsending != null) {
-                    logger.info {
-                        "Utsending eksisterer allerede for personId: ${personId.value}, inntektsår: ${forespoerselInput.inntektsaar}, forsystem: ${forespoerselInput.forsystem.name} hopper over opprettelse av utsending"
-                    }
-                } else {
-                    UtsendingRepository.insert(tx, Utsending(null, Personidentifikator(fnr), forespoerselInput.inntektsaar, forespoerselInput.forsystem))
-                    utsendingCount++
-                }
-            }
+            AuditRepository.insertBatch(
+                tx,
+                tag = AuditTag.MOTTATT_FORESPOERSEL,
+                personIdList = personIdList,
+                informasjon = "Mottatt forespørsel: $forespoerselId, forsystem: ${forespoerselInput.forsystem.name} på skattekort",
+                brukerId = brukerId,
+            )
         }
+        val (bestillingCount, utsendingCount) =
+            handleSkattekortAndUtsending(
+                tx,
+                inntektsaar = forespoerselInput.inntektsaar,
+                forsystem = forespoerselInput.forsystem,
+                foedselsnumreWithPersonIdList = foedselsnumreWithPersonIdList,
+            )
 
         logger.info {
             "ForespoerselId: $forespoerselId med total: ${forespoerselInput.fnrList.size} abonnement(er), $bestillingCount bestilling(er), $utsendingCount utsending(er) for inntektsår: ${forespoerselInput.inntektsaar}"
         }
+    }
+
+    private fun handleSkattekortAndUtsending(
+        tx: TransactionalSession,
+        inntektsaar: Int,
+        forsystem: Forsystem,
+        foedselsnumreWithPersonIdList: List<Pair<String, PersonId>>,
+    ): Pair<BestillingCount, UtsendingCount> {
+        val skattekortPersonIds =
+            SkattekortRepository
+                .findAllByPersonId(
+                    tx,
+                    personIdList = foedselsnumreWithPersonIdList.map { it.second },
+                    inntektsaarList = listOf(inntektsaar),
+                    showOnlyLatest = true,
+                ).map { it.personId }
+                .toSet()
+
+        val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
+
+        val bestillingCount =
+            if (personIdWithoutSkattekort.isNotEmpty()) {
+                val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
+                val (kanBestilles, kanIkkeBestilles) = personIdWithoutSkattekort.partition { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
+                if (kanBestilles.isNotEmpty()) {
+                    kanBestilles.chunked(CHUNKED_SIZE).forEach { chunk ->
+                        BestillingRepository.insertBatch(
+                            tx = tx,
+                            bestillingList =
+                                chunk.map { bestilling ->
+                                    Bestilling(
+                                        personId = bestilling.second,
+                                        fnr = Personidentifikator(bestilling.first),
+                                        inntektsaar = inntektsaar,
+                                    )
+                                },
+                        )
+                    }
+                }
+                if (kanIkkeBestilles.isNotEmpty()) {
+                    logger.warn { "Fødselsnummer som ikke kan bestille skattekort funnet, sjekk TEAM LOGS" }
+                    logger.warn(marker = TEAM_LOGS_MARKER) { "Fødselsnummer som ikke kan bestille skattekort funnet: ${kanIkkeBestilles.joinToString { it.first }}" }
+                }
+                kanBestilles.size
+            } else {
+                0
+            }
+
+        if (personIdWithSkattekort.isNotEmpty()) {
+            personIdWithSkattekort.chunked(CHUNKED_SIZE).forEach { chunk ->
+                UtsendingRepository.insertBatch(
+                    tx,
+                    utsendingList =
+                        chunk.map { utsending ->
+                            Utsending(null, Personidentifikator(utsending.first), inntektsaar, forsystem)
+                        },
+                )
+            }
+        }
+        return Pair(bestillingCount, personIdWithSkattekort.size)
     }
 
     private fun forSentAaBestille(inntektsaar: Int): Boolean {
@@ -167,50 +205,7 @@ class ForespoerselService(
         return ForespoerselInput(
             forsystem = forsystem,
             inntektsaar = inntektsaar,
-            fnrList = parts.drop(2).map { it },
+            fnrList = parts.drop(2),
         )
-    }
-
-    fun cronForespoerselInput() {
-        if (!featureToggles.isForespoerselInputEnabled()) return
-        val forespoerselInput: List<ForespoerselInput> =
-            dataSource.transaction { tx ->
-                val returverdi = ForespoerselRepository.getAllForespoerselInput(tx)
-                ForespoerselRepository.deleteAllForespoerselInput(tx)
-                returverdi
-            }
-
-        forespoerselInput.forEach { input ->
-            var i = 0
-            while (i < 5) {
-                try {
-                    try {
-                        assert(input.fnrList.first().length == 11)
-
-                        val foedselsnumreWithPersonIdMap = personService.getPersonIdAndCheckFoedselsnumreIsUpdated(input.fnrList)
-                        dataSource.transaction { tx ->
-                            val message = "${input.forsystem};${input.inntektsaar};${input.fnrList.first()}"
-                            handleForespoersel(tx, message, input, foedselsnumreWithPersonIdMap, null)
-                        }
-                        break
-                    } catch (_: NumberFormatException) {
-                        logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke et gyldig tall/fødselsnummer" }
-                        logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
-                        break
-                    } catch (_: AssertionError) {
-                        logger.error(marker = TEAM_LOGS_MARKER) { "'${input.fnrList.first()}' er ikke 11 siffer langt/fødselsnummer" }
-                        logger.error("Ugyldig fødselsnummer funnet under import, logget i TEAM LOGS")
-                        break
-                    }
-                } catch (e: BatchUpdateException) {
-                    logger.error(marker = TEAM_LOGS_MARKER, e) { "Exception under håndtering av forespoersel fra database: ${e.message}" }
-                    logger.error("Exception under håndtering av forespoersel fra database, detaljer er logget til TEAM LOGS")
-                    i++
-                } catch (e: Exception) {
-                    logger.error("Exception under håndtering av forespoersel fra database: ${e.message}", e)
-                    i++
-                }
-            }
-        }
     }
 }

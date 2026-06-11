@@ -8,10 +8,10 @@ import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortId
 
 object UtsendingRepository {
-    fun insert(
+    fun insertBatch(
         tx: TransactionalSession,
-        utsending: Utsending,
-    ): Long? {
+        utsendingList: List<Utsending>,
+    ) = run {
         // language=SQL
         val sql =
             """
@@ -19,15 +19,15 @@ object UtsendingRepository {
             VALUES (:fnr, :inntektsaar, :forsystem)
             ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
             """.trimIndent()
-        return tx.updateAndReturnGeneratedKey(
-            queryOf(
-                sql,
+        tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+            sql,
+            utsendingList.map { utsending ->
                 mapOf(
                     "fnr" to utsending.fnr.value,
                     "inntektsaar" to utsending.inntektsaar,
                     "forsystem" to utsending.forsystem.value,
-                ),
-            ),
+                )
+            },
         )
     }
 

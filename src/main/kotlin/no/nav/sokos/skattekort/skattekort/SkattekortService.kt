@@ -118,13 +118,16 @@ class SkattekortService(
                 SkattekortRepository.insert(tx, syntetisertSkattekort)
             }
             AbonnementRepository.findForsystemAndFnr(tx, personId, skattekortDTO.inntektsaar).forEach { (system, fnr) ->
-                UtsendingRepository.insert(
+                UtsendingRepository.insertBatch(
                     tx,
-                    Utsending(
-                        inntektsaar = skattekortDTO.inntektsaar,
-                        fnr = fnr,
-                        forsystem = system,
-                    ),
+                    utsendingList =
+                        listOf(
+                            Utsending(
+                                inntektsaar = skattekortDTO.inntektsaar,
+                                fnr = fnr,
+                                forsystem = system,
+                            ),
+                        ),
                 )
             }
         }

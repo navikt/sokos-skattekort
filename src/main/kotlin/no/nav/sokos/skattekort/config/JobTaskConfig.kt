@@ -52,7 +52,6 @@ object JobTaskConfig {
                 recurringSendUtsendingTask(utsendingService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, bestillingsbatchService),
                 recurringFetchMetricsTask(metricsService),
-                recurringFetchForespoerselInputTask(forespoerselService),
                 recurringDeleteSkattekort(skattekortService),
             ).build()
 
@@ -161,31 +160,6 @@ object JobTaskConfig {
                     withTracerId {
                         showLog(showLogLocalTime, instance, context)
                         skattekortService.deleteSkattekortForYear()
-                    }
-                }
-            }
-    }
-
-    fun recurringFetchForespoerselInputTask(
-        forespoerselService: ForespoerselService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
-    ): RecurringTask<String> {
-        val showLogLocalTime = LocalDateTime.now()
-
-        return Tasks
-            .recurring(
-                JOB_TASK_FORESPOERSEL_INPUT,
-                cron(schedulerProperties.cronForespoerselInput),
-                String::class.java,
-            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                if (handleJobs) {
-                    withTracerId {
-                        try {
-                            showLog(showLogLocalTime, instance, context)
-                            forespoerselService.cronForespoerselInput()
-                        } catch (_: Exception) {
-                            // Spis exception for å ta kontroll over logging
-                        }
                     }
                 }
             }

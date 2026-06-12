@@ -171,19 +171,22 @@ class ForespoerselService(
                 0
             }
 
-        if (personIdWithSkattekort.isNotEmpty()) {
-            personIdWithSkattekort.chunked(CHUNKED_SIZE).forEach { chunk ->
-                UtsendingRepository.insertBatch(
-                    tx,
-                    utsendingList =
-                        chunk.map { utsending ->
-                            Utsending(null, Personidentifikator(utsending.first), inntektsaar, forsystem)
-                        },
-                )
+        val utsendingCount =
+            if (personIdWithSkattekort.isNotEmpty()) {
+                personIdWithSkattekort.chunked(CHUNKED_SIZE).sumOf { chunk ->
+                    UtsendingRepository.insertBatch(
+                        tx,
+                        utsendingList =
+                            chunk.map { (fnr, _) ->
+                                Utsending(null, Personidentifikator(fnr), inntektsaar, forsystem)
+                            },
+                    ).size
+                }
+            } else {
+                0
             }
-        }
-        return Pair(bestillingCount, personIdWithSkattekort.size)
-    }
+
+        return Pair(bestillingCount, utsendingCount)
 
     private fun forSentAaBestille(inntektsaar: Int): Boolean {
         // Skatteetatens regel er at man kan bestille skattekort for året før frem til 01.07.

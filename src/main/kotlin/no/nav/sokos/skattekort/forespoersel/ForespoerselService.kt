@@ -8,7 +8,6 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
@@ -30,7 +29,6 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselService(
     private val dataSource: DataSource,
     private val personService: PersonService,
-    private val featureToggles: UnleashIntegration,
 ) {
     private typealias BestillingCount = Int
     private typealias UtsendingCount = Int
@@ -50,8 +48,7 @@ class ForespoerselService(
                     input.copy(fnrList = personService.validateFoedselsnummer(input.fnrList))
                 }
 
-            val forSentAaBestille = forSentAaBestille(forespoerselInput.inntektsaar)
-            if (forSentAaBestille) {
+            if (forSentAaBestille(forespoerselInput.inntektsaar)) {
                 logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
                 return
             }
@@ -132,57 +129,61 @@ class ForespoerselService(
         foedselsnumreWithPersonIdList: List<Pair<String, PersonId>>,
     ): Pair<BestillingCount, UtsendingCount> {
         val skattekortPersonIds =
-            SkattekortRepository
-                .findAllByPersonId(
-                    tx,
-                    personIdList = foedselsnumreWithPersonIdList.map { it.second },
-                    inntektsaarList = listOf(inntektsaar),
-                    showOnlyLatest = true,
-                ).map { it.personId }
-                .toSet()
+            foedselsnumreWithPersonIdList
+                .chunked(CHUNKED_SIZE)
+                .flatMap { chunk ->
+                    SkattekortRepository
+                        .findAllByPersonId(
+                            tx,
+                            personIdList = chunk.map { it.second },
+                            inntektsaarList = listOf(inntektsaar),
+                            showOnlyLatest = true,
+                        ).map { it.personId }
+                }.toSet()
 
         val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
+        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
 
-        val bestillingCount =
-            if (personIdWithoutSkattekort.isNotEmpty()) {
-                val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
-                val (kanBestilles, kanIkkeBestilles) = personIdWithoutSkattekort.partition { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
-                if (kanBestilles.isNotEmpty()) {
-                    kanBestilles.chunked(CHUNKED_SIZE).forEach { chunk ->
-                        BestillingRepository.insertBatch(
-                            tx = tx,
-                            bestillingList =
-                                chunk.map { bestilling ->
-                                    Bestilling(
-                                        personId = bestilling.second,
-                                        fnr = Personidentifikator(bestilling.first),
-                                        inntektsaar = inntektsaar,
-                                    )
-                                },
-                        )
-                    }
-                }
-                if (kanIkkeBestilles.isNotEmpty()) {
-                    logger.warn { "Fødselsnummer som ikke kan bestille skattekort funnet, sjekk TEAM LOGS" }
-                    logger.warn(marker = TEAM_LOGS_MARKER) { "Fødselsnummer som ikke kan bestille skattekort funnet: ${kanIkkeBestilles.joinToString { it.first }}" }
-                }
-                kanBestilles.size
-            } else {
-                0
+        val (kanBestilles, kanIkkeBestilles) =
+            personIdWithoutSkattekort.partition { (fnr, _) ->
+                foedselsnummerkategori.kanBestilleSkattekort(fnr)
             }
 
-        if (personIdWithSkattekort.isNotEmpty()) {
-            personIdWithSkattekort.chunked(CHUNKED_SIZE).forEach { chunk ->
-                UtsendingRepository.insertBatch(
-                    tx,
-                    utsendingList =
-                        chunk.map { utsending ->
-                            Utsending(null, Personidentifikator(utsending.first), inntektsaar, forsystem)
-                        },
-                )
+        if (kanIkkeBestilles.isNotEmpty()) {
+            logger.warn { "Fødselsnummer som ikke kan bestille skattekort funnet, sjekk TEAM LOGS" }
+            logger.warn(marker = TEAM_LOGS_MARKER) {
+                "Fødselsnummer som ikke kan bestille skattekort funnet: ${kanIkkeBestilles.joinToString { it.first }}"
             }
         }
-        return Pair(bestillingCount, personIdWithSkattekort.size)
+
+        val bestillingCount =
+            kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->
+                BestillingRepository
+                    .insertBatch(
+                        tx = tx,
+                        bestillingList =
+                            chunk.map { (fnr, personId) ->
+                                Bestilling(
+                                    personId = personId,
+                                    fnr = Personidentifikator(fnr),
+                                    inntektsaar = inntektsaar,
+                                )
+                            },
+                    ).size
+            }
+
+        val utsendingCount =
+            personIdWithSkattekort.chunked(CHUNKED_SIZE).sumOf { chunk ->
+                UtsendingRepository
+                    .insertBatch(
+                        tx,
+                        utsendingList =
+                            chunk.map { utsending ->
+                                Utsending(null, Personidentifikator(utsending.first), inntektsaar, forsystem)
+                            },
+                    ).size
+            }
+        return Pair(bestillingCount, utsendingCount)
     }
 
     private fun forSentAaBestille(inntektsaar: Int): Boolean {

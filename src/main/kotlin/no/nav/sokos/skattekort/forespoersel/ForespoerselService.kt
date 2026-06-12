@@ -57,10 +57,15 @@ class ForespoerselService(
                 handleForespoersel(tx, message, forespoerselInput, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
                 if (forespoerselInput.forsystem == Forsystem.OPPDRAGSSYSTEMET_STOR) return@transaction
 
-                val skalLagesForNesteAarOgsaa = ReglerForInntektsaar.lovligeInntektsAarAaBestilleFraSkatteetaten().contains(forespoerselInput.inntektsaar + 1)
-                if (skalLagesForNesteAarOgsaa) {
+                if (ReglerForInntektsaar.skalBestilleForNesteAarOgsaa(forespoerselInput.inntektsaar)) {
                     val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
-                    handleForespoersel(tx, forespoerselForNesteAar.getMessage(), forespoerselForNesteAar, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
+                    handleForespoersel(
+                        tx,
+                        forespoerselForNesteAar.getMessage(),
+                        forespoerselForNesteAar,
+                        foedselsnumreWithPersonIdMap,
+                        saksbehandler?.ident,
+                    )
                 }
             }
         }.onFailure { exception ->

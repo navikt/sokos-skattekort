@@ -178,6 +178,12 @@ configurations.all {
                         "Affected version = 4.2.11.Final, patched in 4.2.13.Final",
                 )
             }
+            if (requested.group == "io.netty" && requested.name == "netty-handler") {
+                useVersion("4.2.15.Final")
+                because(
+                    "Netty: netty-handler vulnerabilities CVE-2026-44249 and CVE-2026-45416 are fixed in 4.2.15.Final",
+                )
+            }
             if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
                 useVersion("1.84")
                 because("Bouncy Castle Has Covert Timing Channel Vulnerability. Affected version >= 1.71, < 1.84")

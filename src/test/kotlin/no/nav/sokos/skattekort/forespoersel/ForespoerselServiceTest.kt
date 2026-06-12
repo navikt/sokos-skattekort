@@ -16,7 +16,6 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.mockk
 
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
@@ -51,7 +50,7 @@ class ForespoerselServiceTest :
         }
 
         val forespoerselService: ForespoerselService by lazy {
-            ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
+            ForespoerselService(DbListener.dataSource, personService)
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {

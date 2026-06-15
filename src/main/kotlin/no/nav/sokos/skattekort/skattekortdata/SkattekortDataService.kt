@@ -68,15 +68,13 @@ class SkattekortDataService(
                     system == Forsystem.OPPDRAGSSYSTEMET_STOR && type == BestillingsbatchType.OPPDATERING -> Forsystem.OPPDRAGSSYSTEMET
                     else -> system
                 }
-            UtsendingRepository.insertBatch(
+            UtsendingRepository.insert(
                 tx,
-                utsendingList =
-                    listOf(
-                        Utsending(
-                            inntektsaar = inntektsaar,
-                            fnr = fnr,
-                            forsystem = forsystem,
-                        ),
+                utsending =
+                    Utsending(
+                        inntektsaar = inntektsaar,
+                        fnr = fnr,
+                        forsystem = forsystem,
                     ),
             )
         }

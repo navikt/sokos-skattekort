@@ -52,9 +52,19 @@ object BestillingRepository {
         // language=SQL
         val sql =
             """
-            INSERT INTO bestillinger (person_id, inntektsaar, fnr)
-            VALUES (:personId, :inntektsaar, :fnr)
-            ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
+            WITH ins AS (
+                INSERT INTO bestillinger (person_id, inntektsaar, fnr)
+                VALUES (:personId, :inntektsaar, :fnr)
+                ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
+                RETURNING id
+            )
+            SELECT id FROM ins
+            UNION ALL
+            SELECT id FROM bestillinger
+            WHERE person_id = :personId
+              AND fnr = :fnr
+              AND inntektsaar = :inntektsaar
+              AND NOT EXISTS (SELECT 1 FROM ins)
             """.trimIndent()
         tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
             sql,

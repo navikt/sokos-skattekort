@@ -11,24 +11,38 @@ object UtsendingRepository {
     fun insertBatch(
         tx: TransactionalSession,
         utsendingList: List<Utsending>,
-    ) = run {
+    ): List<Long> {
+        if (utsendingList.isEmpty()) return emptyList()
         // language=SQL
         val sql =
-            """
-            INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
-            VALUES (:fnr, :inntektsaar, :forsystem)
-            ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
+            """        
+            WITH ins AS (            
+                INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
+                VALUES (:fnr, :inntektsaar, :forsystem) 
+                ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING 
+                RETURNING id        
+            )        
+            SELECT id FROM ins        
+            UNION ALL        
+            SELECT id FROM utsendinger        
+            WHERE fnr = :fnr          
+                AND inntektsaar = :inntektsaar          
+                AND forsystem = :forsystem          
+                AND NOT EXISTS (SELECT 1 FROM ins)        
             """.trimIndent()
-        tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
-            sql,
-            utsendingList.map { utsending ->
-                mapOf(
-                    "fnr" to utsending.fnr.value,
-                    "inntektsaar" to utsending.inntektsaar,
-                    "forsystem" to utsending.forsystem.value,
-                )
-            },
-        )
+        return utsendingList.flatMap { utsending ->
+            tx.list(
+                queryOf(
+                    sql,
+                    mapOf(
+                        "fnr" to utsending.fnr.value,
+                        "inntektsaar" to utsending.inntektsaar,
+                        "forsystem" to utsending.forsystem.value,
+                    ),
+                ),
+                extractor = { row -> row.long("id") },
+            )
+        }
     }
 
     fun delete(

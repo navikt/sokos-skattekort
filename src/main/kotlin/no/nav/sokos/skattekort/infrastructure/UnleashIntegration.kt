@@ -14,7 +14,7 @@ private const val TOGGLE_UTSENDINGER_SUFFIX = "utsendinger.enabled"
 private const val TOGGLE_OPPDATERINGER_SUFFIX = "oppdateringer.enabled"
 private const val TOGGLE_BEVISFORSENDING_SUFFIX = "bevisforsending.enabled"
 private const val TOGGLE_LAGRE_MOTTATTE_BESTILLINGER_SUFFIX = "lagre-mottatte-bestillinger.enabled"
-private const val TOGGLE_FORESPOERSEL_LISTENER_SUFFIX = "forespoersel-listeener.enabled"
+private const val TOGGLE_FORESPOERSEL_LISTENER_SUFFIX = "forespoersel-listener.enabled"
 
 class UnleashIntegration(
     private val onForespoerselListenerChanged: (Boolean) -> Unit = {},

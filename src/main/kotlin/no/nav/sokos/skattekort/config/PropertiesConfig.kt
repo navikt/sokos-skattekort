@@ -130,6 +130,7 @@ object PropertiesConfig {
         val cronHentSkattekort: String,
         val cronHentOppdaterte: String,
         val cronFetchMetrics: String,
+        val cronForespoerselInput: String,
         val cronDeleteSkattekort: String,
     )
 

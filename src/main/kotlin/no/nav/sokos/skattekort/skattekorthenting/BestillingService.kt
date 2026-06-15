@@ -146,7 +146,7 @@ class BestillingService(
                             AuditRepository.insertBatch(
                                 tx = tx,
                                 tag = AuditTag.BESTILLING_ETTERLATT,
-                                personIds = personer,
+                                personIdList = personer,
                                 informasjon = "Bestilling var etterlatt etter mottak av data i batch $batchId",
                             )
                         }

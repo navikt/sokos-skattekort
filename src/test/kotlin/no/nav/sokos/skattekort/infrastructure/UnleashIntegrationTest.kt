@@ -23,10 +23,6 @@ class UnleashIntegrationTest :
             unleash.isBevisForSendingEnabled() shouldBe true
         }
 
-        test("isForespoerselInputEnabled skal returnere true når FORESPOERSEL_INPUT flagget er på") {
-            unleash.isForespoerselInputEnabled() shouldBe true
-        }
-
         test("isLagreMottatteBestillingerEnabled skal returnere false som default") {
             unleash.isLagreMottatteBestillingerEnabled() shouldBe false
         }

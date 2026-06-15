@@ -12,7 +12,6 @@ import com.github.kagkarlsson.scheduler.task.helper.Tasks
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.forespoersel.ForespoerselService
 import no.nav.sokos.skattekort.infrastructure.MetricsService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
@@ -27,7 +26,6 @@ private const val JOB_TASK_SEND_BESTILLING_BATCH = "sendBestilling"
 private const val JOB_TASK_SEND_UTSENDING_BATCH = "sendUtsending"
 private const val JOB_TASK_HENT_OPPDATERTE_SKATTEKORT_BATCH = "hentOppdaterteSkattekort"
 private const val JOB_TASK_FETCH_METRICS = "fetchMetrics"
-private const val JOB_TASK_FORESPOERSEL_INPUT = "forespoerselInput"
 private const val JOB_TASK_DELETE_SKATTEKORT = "deleteSkattekort"
 
 object JobTaskConfig {
@@ -39,7 +37,6 @@ object JobTaskConfig {
         utsendingService: UtsendingService,
         skattekortdataService: SkattekortDataService,
         metricsService: MetricsService,
-        forespoerselService: ForespoerselService,
         skattekortService: SkattekortService,
         dataSource: DataSource,
     ): Scheduler =
@@ -52,7 +49,6 @@ object JobTaskConfig {
                 recurringSendUtsendingTask(utsendingService),
                 recurringHentOppdaterteSkattekortBatchTask(bestillingService, bestillingsbatchService),
                 recurringFetchMetricsTask(metricsService),
-                recurringFetchForespoerselInputTask(forespoerselService),
                 recurringDeleteSkattekort(skattekortService),
             ).build()
 
@@ -161,31 +157,6 @@ object JobTaskConfig {
                     withTracerId {
                         showLog(showLogLocalTime, instance, context)
                         skattekortService.deleteSkattekortForYear()
-                    }
-                }
-            }
-    }
-
-    fun recurringFetchForespoerselInputTask(
-        forespoerselService: ForespoerselService,
-        schedulerProperties: PropertiesConfig.SchedulerProperties = PropertiesConfig.schedulerProperties,
-    ): RecurringTask<String> {
-        val showLogLocalTime = LocalDateTime.now()
-
-        return Tasks
-            .recurring(
-                JOB_TASK_FORESPOERSEL_INPUT,
-                cron(schedulerProperties.cronForespoerselInput),
-                String::class.java,
-            ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
-                if (handleJobs) {
-                    withTracerId {
-                        try {
-                            showLog(showLogLocalTime, instance, context)
-                            forespoerselService.cronForespoerselInput()
-                        } catch (_: Exception) {
-                            // Spis exception for å ta kontroll over logging
-                        }
                     }
                 }
             }

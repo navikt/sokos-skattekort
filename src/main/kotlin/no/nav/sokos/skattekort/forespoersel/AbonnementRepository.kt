@@ -11,27 +11,27 @@ import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
 
 object AbonnementRepository {
-    fun insert(
+    fun insertBatch(
         tx: TransactionalSession,
         forespoerselId: Long,
         inntektsaar: Int,
-        personId: Long,
-    ): Long? {
+        personIdList: List<PersonId>,
+    ) = run {
         // language=SQL
         val sql =
             """
-            |INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
-            |VALUES (:forespoerselId, :personId, :inntektsaar)
-            """.trimMargin()
-        return tx.updateAndReturnGeneratedKey(
-            queryOf(
-                sql,
+            INSERT INTO abonnementer (forespoersel_id, person_id, inntektsaar)
+            VALUES (:forespoerselId, :personId, :inntektsaar)
+            """.trimIndent()
+        tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+            sql,
+            personIdList.map { personId ->
                 mapOf(
                     "forespoerselId" to forespoerselId,
-                    "personId" to personId,
+                    "personId" to personId.value,
                     "inntektsaar" to inntektsaar,
-                ),
-            ),
+                )
+            },
         )
     }
 
@@ -39,18 +39,18 @@ object AbonnementRepository {
         // language=SQL
         val sql =
             """
-            |SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.inntektsaar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
-            |FROM abonnementer fs
-            |LEFT JOIN forespoersler f ON f.id = fs.forespoersel_id
-            |LEFT JOIN personer p ON p.id = fs.person_id
-            |LEFT JOIN LATERAL (
-            |   SELECT id, gjelder_fom, fnr
-            |   FROM foedselsnumre
-            |   WHERE person_id = p.id
-            |   ORDER BY gjelder_fom DESC, id DESC
-            |   LIMIT 1
-            |) pf ON TRUE
-            """.trimMargin()
+            SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.inntektsaar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
+            FROM abonnementer fs
+            LEFT JOIN forespoersler f ON f.id = fs.forespoersel_id
+            LEFT JOIN personer p ON p.id = fs.person_id
+            LEFT JOIN LATERAL (
+               SELECT id, gjelder_fom, fnr
+               FROM foedselsnumre
+               WHERE person_id = p.id
+               ORDER BY gjelder_fom DESC, id DESC
+               LIMIT 1
+            ) pf ON TRUE
+            """.trimIndent()
         return tx.list(
             queryOf(sql),
             mapToAbonnement,

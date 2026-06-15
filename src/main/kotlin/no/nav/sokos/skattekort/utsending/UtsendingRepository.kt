@@ -8,41 +8,27 @@ import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.SkattekortId
 
 object UtsendingRepository {
-    fun insertBatch(
+    fun insert(
         tx: TransactionalSession,
-        utsendingList: List<Utsending>,
-    ): List<Long> {
-        if (utsendingList.isEmpty()) return emptyList()
+        utsending: Utsending,
+    ): Long? {
         // language=SQL
         val sql =
-            """        
-            WITH ins AS (            
-                INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
-                VALUES (:fnr, :inntektsaar, :forsystem) 
-                ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING 
-                RETURNING id        
-            )        
-            SELECT id FROM ins        
-            UNION ALL        
-            SELECT id FROM utsendinger        
-            WHERE fnr = :fnr          
-                AND inntektsaar = :inntektsaar          
-                AND forsystem = :forsystem          
-                AND NOT EXISTS (SELECT 1 FROM ins)        
+            """
+            INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
+            VALUES (:fnr, :inntektsaar, :forsystem)
+            ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
             """.trimIndent()
-        return utsendingList.flatMap { utsending ->
-            tx.list(
-                queryOf(
-                    sql,
-                    mapOf(
-                        "fnr" to utsending.fnr.value,
-                        "inntektsaar" to utsending.inntektsaar,
-                        "forsystem" to utsending.forsystem.value,
-                    ),
+        return tx.updateAndReturnGeneratedKey(
+            queryOf(
+                sql,
+                mapOf(
+                    "fnr" to utsending.fnr.value,
+                    "inntektsaar" to utsending.inntektsaar,
+                    "forsystem" to utsending.forsystem.value,
                 ),
-                extractor = { row -> row.long("id") },
-            )
-        }
+            ),
+        )
     }
 
     fun delete(

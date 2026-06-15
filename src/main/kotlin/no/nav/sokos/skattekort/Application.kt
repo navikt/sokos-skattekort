@@ -165,7 +165,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         val utsendingService: UtsendingService by dependencies
         val skattekortdataService: SkattekortDataService by dependencies
         val metricsService: MetricsService by dependencies
-        val forespoerselService: ForespoerselService by dependencies
         val skattekortService: SkattekortService by dependencies
 
         val scheduler =
@@ -176,7 +175,6 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                     utsendingService = utsendingService,
                     skattekortdataService = skattekortdataService,
                     metricsService = metricsService,
-                    forespoerselService = forespoerselService,
                     skattekortService = skattekortService,
                     dataSource = DatabaseConfig.dataSourceScheduler,
                 ).also { it.start() }

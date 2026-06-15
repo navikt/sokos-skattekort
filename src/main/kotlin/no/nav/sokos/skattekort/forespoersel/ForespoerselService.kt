@@ -163,31 +163,32 @@ class ForespoerselService(
 
         val bestillingCount =
             kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->
-                BestillingRepository
-                    .insertBatch(
-                        tx = tx,
-                        bestillingList =
-                            chunk.map { (fnr, personId) ->
+                chunk
+                    .map { (fnr, personId) ->
+                        BestillingRepository.insert(
+                            tx = tx,
+                            bestilling =
                                 Bestilling(
                                     personId = personId,
                                     fnr = Personidentifikator(fnr),
                                     inntektsaar = inntektsaar,
-                                )
-                            },
-                    ).size
+                                ),
+                        )
+                    }.size
             }
 
         val utsendingCount =
             personIdWithSkattekort.chunked(CHUNKED_SIZE).sumOf { chunk ->
-                UtsendingRepository
-                    .insertBatch(
-                        tx,
-                        utsendingList =
-                            chunk.map { utsending ->
-                                Utsending(null, Personidentifikator(utsending.first), inntektsaar, forsystem)
-                            },
-                    ).size
+                chunk
+                    .map { (fnr, _) ->
+                        UtsendingRepository
+                            .insert(
+                                tx,
+                                utsending = Utsending(null, Personidentifikator(fnr), inntektsaar, forsystem),
+                            )
+                    }.size
             }
+
         return Pair(bestillingCount, utsendingCount)
     }
 

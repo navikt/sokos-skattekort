@@ -45,36 +45,26 @@ object BestillingRepository {
         )
     }
 
-    fun insertBatch(
+    fun insert(
         tx: TransactionalSession,
-        bestillingList: List<Bestilling>,
-    ) = run {
+        bestilling: Bestilling,
+    ): Long? {
         // language=SQL
         val sql =
             """
-            WITH ins AS (
-                INSERT INTO bestillinger (person_id, inntektsaar, fnr)
-                VALUES (:personId, :inntektsaar, :fnr)
-                ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
-                RETURNING id
-            )
-            SELECT id FROM ins
-            UNION ALL
-            SELECT id FROM bestillinger
-            WHERE person_id = :personId
-              AND fnr = :fnr
-              AND inntektsaar = :inntektsaar
-              AND NOT EXISTS (SELECT 1 FROM ins)
-            """.trimIndent()
-        tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
-            sql,
-            bestillingList.map { bestilling ->
+                |INSERT INTO bestillinger (person_id, inntektsaar, fnr)
+                |VALUES (:personId, :inntektsaar, :fnr)
+                |ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
+            """.trimMargin()
+        return tx.updateAndReturnGeneratedKey(
+            queryOf(
+                sql,
                 mapOf(
                     "personId" to bestilling.personId.value,
                     "inntektsaar" to bestilling.inntektsaar,
                     "fnr" to bestilling.fnr.value,
-                )
-            },
+                ),
+            ),
         )
     }
 

@@ -67,7 +67,7 @@ class StatusServiceTest :
                 every { PropertiesConfig.applicationProperties } returns mockk { every { gyldigeFnr } returns "KUNSTIGE_FNR" }
 
                 val status = statusService.statusForespoeresel(fnr = "01410112345", aar = 2025, forsystem = "TEST", saksbehandler = saksbehandler)
-                status shouldBe Status.KUNSTIG_FNR
+                status shouldBe Status.IKKE_FORESPURT
             }
 
             test("Ikke ekte fnr i prodlikt miljø") {

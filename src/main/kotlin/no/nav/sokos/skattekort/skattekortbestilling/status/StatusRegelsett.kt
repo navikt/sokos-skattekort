@@ -31,7 +31,6 @@ class StatusRegelsett(
     val regler =
         listOf(
             UgyldigFnrForDetteMiljoeRegel(),
-            KanIkkeBestilleFraSkatteetatenForKunstigFnrRegel(),
             IkkeForespurtRegel(),
             IkkeBestiltRegel(),
             BestiltRegel(),
@@ -57,12 +56,6 @@ class UgyldigFnrForDetteMiljoeRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr).erGyldig(ctx.fnr)
 
     override fun status(): Status = Status.UGYLDIG_FNR
-}
-
-class KanIkkeBestilleFraSkatteetatenForKunstigFnrRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr).kanBestilleSkattekort(ctx.fnr)
-
-    override fun status(): Status = Status.KUNSTIG_FNR
 }
 
 class IkkeForespurtRegel : Regel {

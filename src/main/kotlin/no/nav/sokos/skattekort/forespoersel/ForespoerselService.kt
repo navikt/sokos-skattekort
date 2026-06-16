@@ -149,17 +149,10 @@ class ForespoerselService(
         val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
 
-        val (kanBestilles, kanIkkeBestilles) =
+        val (kanBestilles) =
             personIdWithoutSkattekort.partition { (fnr, _) ->
                 foedselsnummerkategori.kanBestilleSkattekort(fnr)
             }
-
-        if (kanIkkeBestilles.isNotEmpty()) {
-            logger.warn { "Fødselsnummer som ikke kan bestille skattekort funnet, sjekk TEAM LOGS" }
-            logger.warn(marker = TEAM_LOGS_MARKER) {
-                "Fødselsnummer som ikke kan bestille skattekort funnet: ${kanIkkeBestilles.joinToString { it.first }}"
-            }
-        }
 
         val bestillingCount =
             kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->

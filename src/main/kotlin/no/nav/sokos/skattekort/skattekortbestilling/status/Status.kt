@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.skattekortbestilling.status
 
 enum class Status {
     IKKE_FORESPURT,
-    KUNSTIG_FNR,
     UGYLDIG_FNR,
     IKKE_BESTILT,
     BESTILT,

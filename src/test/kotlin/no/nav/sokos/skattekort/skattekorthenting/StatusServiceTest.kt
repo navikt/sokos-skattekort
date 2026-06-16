@@ -166,7 +166,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS", saksbehandler)
-                status shouldBe Status.SENDT_FORSYSTEM
+                status shouldBe Status.FERDIG_BEHANDLET
             }
             test("Person, skattekort og utsending for et annet forsystem finnes. Skal ha status SENDT_FORSYSTEM") {
                 databaseHas(
@@ -177,7 +177,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = "01410100001", aar = 2025, forsystem = "OS", saksbehandler)
-                status shouldBe Status.SENDT_FORSYSTEM
+                status shouldBe Status.FERDIG_BEHANDLET
             }
         },
     )

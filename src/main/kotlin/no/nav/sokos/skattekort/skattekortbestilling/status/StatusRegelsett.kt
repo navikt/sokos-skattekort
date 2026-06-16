@@ -30,15 +30,15 @@ class StatusRegelsett(
 ) {
     val regler =
         listOf(
-            UgyldigFnrForDetteMiljoeRegel(),
-            IkkeForespurtRegel(),
-            IkkeBestiltRegel(),
-            BestiltRegel(),
-            BestillingFeiletRegel(),
-            SkattekortManglerRegel(),
-            UgyldigForsystemRegel(),
-            VenterPaaUtsendingRegel(),
-            SendtForsystemRegel(),
+            UgyldigFnrForDetteMiljoeRegel,
+            IkkeForespurtRegel,
+            IkkeBestiltRegel,
+            BestiltRegel,
+            BestillingFeiletRegel,
+            SkattekortManglerRegel,
+            UgyldigForsystemRegel,
+            VenterPaaUtsendingRegel,
+            FerdigBehandletRegel,
         )
 
     fun evaluate(
@@ -52,43 +52,43 @@ class StatusRegelsett(
     }
 }
 
-class UgyldigFnrForDetteMiljoeRegel : Regel {
+private object UgyldigFnrForDetteMiljoeRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr).erGyldig(ctx.fnr)
 
     override fun status(): Status = Status.UGYLDIG_FNR
 }
 
-class IkkeForespurtRegel : Regel {
+private object IkkeForespurtRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = (ctx.person == null)
 
     override fun status(): Status = Status.IKKE_FORESPURT
 }
 
-class IkkeBestiltRegel : Regel {
+private object IkkeBestiltRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.bestilling != null && ctx.bestilling?.bestillingsbatchId == null
 
     override fun status(): Status = Status.IKKE_BESTILT
 }
 
-class BestiltRegel : Regel {
+private object BestiltRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.bestillingsbatch?.status == BestillingsbatchStatus.NY
 
     override fun status(): Status = Status.BESTILT
 }
 
-class BestillingFeiletRegel : Regel {
+private object BestillingFeiletRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.bestillingsbatch?.status == BestillingsbatchStatus.FEILET
 
     override fun status(): Status = Status.FEILET_I_BESTILLING
 }
 
-class SkattekortManglerRegel : Regel {
+private object SkattekortManglerRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.skattekort.isEmpty()
 
     override fun status(): Status = Status.IKKE_FORESPURT
 }
 
-class UgyldigForsystemRegel : Regel {
+private object UgyldigForsystemRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean {
         try {
             Forsystem.fromValue(ctx.forsystem)
@@ -101,16 +101,16 @@ class UgyldigForsystemRegel : Regel {
     override fun status(): Status = Status.UGYLDIG_FORSYSTEM
 }
 
-class VenterPaaUtsendingRegel : Regel {
+private object VenterPaaUtsendingRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.utsending != null
 
     override fun status(): Status = Status.VENTER_PAA_UTSENDING
 }
 
-class SendtForsystemRegel : Regel {
+private object FerdigBehandletRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.utsending == null
 
-    override fun status(): Status = Status.SENDT_FORSYSTEM
+    override fun status(): Status = Status.FERDIG_BEHANDLET
 }
 
 class StatusContext(

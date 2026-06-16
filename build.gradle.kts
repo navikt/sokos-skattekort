@@ -162,27 +162,9 @@ configurations.all {
                 useVersion("3.1.1")
                 because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
             }
-            if (requested.group == "io.netty" && requested.name == "netty-codec-http") {
-                useVersion("4.2.13.Final")
-                because(
-                    "Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy " +
-                        "leads to decompression bomb DoS. CVE-2026-42587, GHSA-f6hv-jmp6-3vwv. " +
-                        "Affected version = 4.2.11.Final, patched in 4.2.13.Final",
-                )
-            }
-            if (requested.group == "io.netty" && requested.name == "netty-codec-http2") {
-                useVersion("4.2.13.Final")
-                because(
-                    "Netty: HttpContentDecompressor maxAllocation bypass when Content-Encoding set to br/zstd/snappy " +
-                        "leads to decompression bomb DoS. CVE-2026-42587, GHSA-f6hv-jmp6-3vwv. " +
-                        "Affected version = 4.2.11.Final, patched in 4.2.13.Final",
-                )
-            }
-            if (requested.group == "io.netty" && requested.name == "netty-handler") {
+            if (requested.group == "io.netty") {
                 useVersion("4.2.15.Final")
-                because(
-                    "Netty: netty-handler vulnerabilities CVE-2026-44249 and CVE-2026-45416 are fixed in 4.2.15.Final",
-                )
+                because("Netty CVE remediation: CVE-2026-45536, CVE-2026-42577, CVE-2026-47244 and CVE-2026-48043")
             }
             if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
                 useVersion("1.84")

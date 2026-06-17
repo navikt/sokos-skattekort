@@ -1,16 +1,15 @@
 package no.nav.sokos.skattekort.skattekortbestilling.status
 
 enum class Status {
-    IKKE_FORESPURT,
     UGYLDIG_FNR,
+    UGYLDIG_FORSYSTEM,
+    SKJERMET,
+    IKKE_FORESPURT,
     IKKE_BESTILT,
     BESTILT,
-    VENTER_PAA_MANUELT_SKATTEKORT,
     FEILET_I_BESTILLING,
-    SKJERMET,
-    VENTER_PAA_UTSENDING,
-    UGYLDIG_FORSYSTEM,
-    UKJENT,
+    VENTER_UTSENDING,
     ABONNERER,
     ABONNERER_IKKE,
+    UKJENT,
 }

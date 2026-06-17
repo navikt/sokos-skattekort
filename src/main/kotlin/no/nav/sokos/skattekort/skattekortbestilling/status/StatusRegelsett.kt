@@ -49,7 +49,6 @@ class StatusRegelsett(
         forsystem: String,
     ): Status {
         val ctx = StatusContext(fnr, aar, forsystem, dataSource)
-        val foo = regler.filter { it.applies(ctx) }.toList()
         return regler.firstOrNull { it.applies(ctx) }?.status()
             ?: Status.UKJENT
     }
@@ -101,7 +100,7 @@ private object BestillingFeiletRegel : Regel {
 private object VenterPaaUtsendingRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean = ctx.utsending != null
 
-    override fun status(): Status = Status.VENTER_PAA_UTSENDING
+    override fun status(): Status = Status.VENTER_UTSENDING
 }
 
 private object AbonnererRegel : Regel {

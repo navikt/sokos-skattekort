@@ -118,7 +118,7 @@ flowchart LR
     SJEKK_ABONNEMENT -->|Ja| ABONNERER
     SJEKK_SKATTEKORT -->|Nei| SJEKK_BESTILLING{Finnes bestilling?}
     SJEKK_BESTILLING -->|Ja| SJEKK_BATCH{Finnes batch?}
-    SJEKK_BATCH -->|Ja| VENTER_SVAR[Venter på svar fra Skatteetaten]
-    SJEKK_BATCH -->|Nei| VENTER_BATCH[Venter på at Batchtoget skal gå]
+    SJEKK_BATCH -->|Ja| BESTILT
+    SJEKK_BATCH -->|Nei| IKKE_BESTILT
     SJEKK_BESTILLING -->|Nei| SJEKK_ABONNEMENT
 ```

@@ -1,13 +1,11 @@
 ## Funksjonell workflow
 
 ```mermaid
-flowchart TD
-    Start --> ArenaBestilling
+flowchart LR
     Start --> OppdragZBestilling
     Start --> PocBestilling
-    ArenaBestilling -- JMS - bestilling i XML - format --> SkattekortbestillingsService
     OppdragZBestilling -- JMS - bestilling i copybook - format --> SkattekortbestillingsService
-    PocBestilling -- JMS - bestilling i copybook - format --> SkattekortbestillingsService
+    PocBestilling -- Kaller REST-endepunkt --> SkattekortbestillingsService
     SkattekortbestillingsService -- bestilling --> BestDb[(BestDb)]
     SkattekortbestillingsService -- systeminteresse --> person[(person)]
     BestDb -- Samler opp og batcher bestillinger --> Bestiller
@@ -42,24 +40,10 @@ flowchart TD
 5. [Deploy application manual](.github/workflows/manual-deploy.yaml) -> For å deploye applikasjonen manuelt til ulike miljøer
     1. Denne workflow trigges manuelt basert på branch og miljø
 
-### Statemaskin for bestillinger
-
-#### bestilling
-
-```mermaid
-stateDiagram-v2
-    [*] --> ny
-    ny --> bestilt
-    bestilt --> ?
-    note right of ?: Avhenger av design på nytt API
-    ? --> mottatt
-    note right of mottatt: Bestillingen kan slettes etter at skattekort er mottatt ok
-```
-
 ## Prosess 1: Motta forespørsler og opprette Personer, Abonnementer, Bestillinger og Utsendinger
 
 ```mermaid
-flowchart TD
+flowchart LR
     Start(Start) --> FNR{Finnes \nperson?}
     FNR -->|Nei| OPPRETT_PERSONID --> OPPRETT_ABONNEMENT
     FNR -->|Ja| OPPRETT_ABONNEMENT --> SJEKK_SKATTEKORT{Har Skattekort?}
@@ -79,7 +63,7 @@ flowchart TD
 ## Prosess 3: Hent skattekort fra skatteetaten
 
 ```mermaid
-flowchart TD
+flowchart LR
     BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten) -->
     SVAR{Responskode} -->|200 OK|OK -->|For hvert mottatte skattekort| L(Lagre Skattekort i skattekortdata) 
 
@@ -119,7 +103,7 @@ flowchart TD
 ## Sjekk bestillingsstatus for FNR og inntektsår
 
 ```mermaid
-flowchart TD
+flowchart LR
     Start(Start) --> FNR{Finnes \nperson?}
     FNR -->|Nei| IKKE_FORESPURT[UKJENT_FNR]
     FNR -->|Ja| SJEKK_SKATTEKORT{Har Skattekort}
@@ -130,7 +114,7 @@ flowchart TD
     SJEKK_ABONNEMENT -->|Ja| ABONNERER
     SJEKK_SKATTEKORT -->|Nei| SJEKK_BESTILLING{Finnes bestilling?}
     SJEKK_BESTILLING -->|Ja| SJEKK_BATCH{Finnes batch?}
-    SJEKK_BATCH -->|Ja| VENTER_SVAR[Status: Venter på svar fra Skatteetaten]
-    SJEKK_BATCH -->|Nei| VENTER_BATCH[Status: Venter på at Batchtoget skal gå]
-    SJEKK_BESTILLING -->|Nei| WAIT(Venter på skattekort utenom Skatteetaten)
+    SJEKK_BATCH -->|Ja| VENTER_SVAR[Venter på svar fra Skatteetaten]
+    SJEKK_BATCH -->|Nei| VENTER_BATCH[Venter på at Batchtoget skal gå]
+    SJEKK_BESTILLING -->|Nei| WAIT(Venter på manuelt skattekort)
 ```

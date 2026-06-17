@@ -132,7 +132,7 @@ class StatusServiceTest :
                 )
 
                 val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
-                status shouldBe Status.VENTER_PAA_UTSENDING
+                status shouldBe Status.VENTER_UTSENDING
             }
 
             test("Person og skattekort for året før finnes. Skal ha status IKKE_ABONNEMENT") {

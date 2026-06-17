@@ -20,6 +20,7 @@ import no.nav.sokos.skattekort.api.model.ForespoerselRequest
 import no.nav.sokos.skattekort.api.model.StatusResponse
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.ForespoerselService
+import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.AuthorizationGuard.getNavIdentOrNull
@@ -110,7 +111,7 @@ fun Route.skattekortApi(
             }
 
             call.respond(
-                StatusResponse(statusService.statusForespoeresel(request.personIdent, request.aar, request.forsystem, saksbehandler)),
+                StatusResponse(statusService.statusForespoeresel(Personidentifikator(request.personIdent), request.aar, Forsystem.fromValue(request.forsystem), saksbehandler)),
             )
         }
 

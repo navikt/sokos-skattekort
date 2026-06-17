@@ -60,20 +60,26 @@ flowchart TD
     B["Plukk ut n Bestillinger (unike på fnr/inntektsår)"] --> BB(Opprett Bestillingsbatch og få bestillingsreferanse fra SKD) --> OB(Oppdater Bestillinger med Bestillingsbatchid)
 ```
 
+## Prosess 2.5: Bestill oppdateringer
+
+```mermaid
+flowchart TD
+    A[Sjekk om det finnes en oppdateringsbatch som er NY, RERUN eller FEILET] -->|Hvis nei| B[Bestill oppdateringer]
+```
+
 ## Prosess 3: Hent skattekort fra skatteetaten
 
 ```mermaid
 flowchart LR
     BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten) -->
-    SVAR{Responskode} -->|200 OK|OK -->|For hvert mottatte skattekort| L(Lagre Skattekort i skattekortdata) 
-
-SVAR -->|Andre|FEIL(Feil som må undersøkes)
+    SVAR{Responskode} -->|200 OK| OK -->|For hvert mottatte skattekort| L(Lagre Skattekort i skattekortdata)
+    SVAR -->|Andre| FEIL(Feil som må undersøkes)
 ```
 
 ## Prosess 3.5: Ta Skattekortdata og lag skattekort
 ```mermaid
 flowchart TD
-    B["For hver skattekortdata"] --> BB(Opprett skattekort) --> OB(Opprett utsending)
+    B["For hver skattekortdata"] --> BB(Opprett skattekort) --> OB(Opprett utsendinger til alle abonnenter)
 ```
 
 ## Prosess 4: Send skattekort til Forsystem
@@ -81,16 +87,14 @@ flowchart TD
 ```mermaid
 flowchart TD
     U(Hent utsendinger) --> S(Hent skattekortene som vi vet vi har)
-    S -->|For hvert unike fnr| SO(Send skattekort til alle Forsystem som abonnerer) --> SLETT(Slett Utsendinger som vi har sendt Skattekort for)
+    S --> SO(Send skattekort forsystemet) --> SLETT(Slett Utsendinger som vi har sendt Skattekort for)
 ```
 
 ## Prosess 5: Motta oppdaterte skattekort
 
 ```mermaid
 flowchart TD
-    SKD(Sjekk om Skatteetaten har oppdatert noen skattekort) --> L(Lagre Skattekort i databasen)
-    L --> A(Sjekk hvilke Abonnementer som finnes for Fnr)
-    A --> U(Opprett Utsending til alle forsystemer som abonnerer på fnr)
+    SKD(Sjekk om Skatteetaten har oppdatert noen skattekort) --> L(Lagre Skattekortdata)
 ```
 
 ## Prosess 7: Slette gamle data(Ikke laget ennå!)
@@ -105,7 +109,7 @@ flowchart TD
 ```mermaid
 flowchart LR
     Start(Start) --> FNR{Finnes \nperson?}
-    FNR -->|Nei| IKKE_FORESPURT[UKJENT_FNR]
+    FNR -->|Nei| IKKE_FORESPURT[IKKE_FORESPURT]
     FNR -->|Ja| SJEKK_SKATTEKORT{Har Skattekort}
     SJEKK_SKATTEKORT -->|Ja| SJEKK_UTSENDING{Finnes Utsending?}
     SJEKK_UTSENDING -->|Nei| SJEKK_ABONNEMENT{Finnes Abonnement?}
@@ -116,5 +120,5 @@ flowchart LR
     SJEKK_BESTILLING -->|Ja| SJEKK_BATCH{Finnes batch?}
     SJEKK_BATCH -->|Ja| VENTER_SVAR[Venter på svar fra Skatteetaten]
     SJEKK_BATCH -->|Nei| VENTER_BATCH[Venter på at Batchtoget skal gå]
-    SJEKK_BESTILLING -->|Nei| WAIT(Venter på manuelt skattekort)
+    SJEKK_BESTILLING -->|Nei| SJEKK_ABONNEMENT
 ```

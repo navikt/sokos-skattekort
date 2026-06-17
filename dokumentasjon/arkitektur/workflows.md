@@ -60,11 +60,13 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    A[Mottatt forespørsel på kø] --> F(Lagre Forespørsel)
-    A --> P(Hent eller opprett Person for hvert fnr)
-    A --> SF(Opprett Abonnement for hvert fnr)
-    SF -->|Mangler skattekort| B(Opprett Bestilling for fnr)
-    SF --> U(Opprett Utsending for Fnr til gitt forsystem)
+    Start(Start) --> FNR{Finnes \nperson?}
+    FNR -->|Nei| OPPRETT_PERSONID --> OPPRETT_ABONNEMENT
+    FNR -->|Ja| OPPRETT_ABONNEMENT --> SJEKK_SKATTEKORT{Har Skattekort?}
+    SJEKK_SKATTEKORT -->|Ja| OPPRETT_UTSENDING
+    SJEKK_SKATTEKORT -->|Nei| FNR_KAN_BESTILLE{FNR kan bestille \nfra Skatteetaten?}
+    FNR_KAN_BESTILLE --> |Nei| VENT_PAA_MANUELT_SKATTEKORT
+    FNR_KAN_BESTILLE --> |Ja| OPPRETT_BESTILLING
 ```
 
 ## Prosess 2: Bestille skattekort fra skatteetaten
@@ -78,55 +80,57 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten for aktuell bestillingsreferanse) -->
-    SVAR{Responskode} -->|200|OK -->|For hver Bestilling|SK{Har vi fått skattekort?} -->|Ja|L(Lagre Skattekort i databasen) -->
-SLETT(Slett bestilling som vi har fått skattekort for) -->
-OPPRETT(Opprett Utsending for hvert forsystem som abonnerer på fnr og inntektsår)
-SK -->|Nei|RESET(Slett bestillingsbatchid fra bestilling)
-
-SVAR -->|204|NoContent --> VENT(Ikke gjør noe og la
-neste kjøring
-plukke opp batchen)
-
-SVAR -->|503|503(Service Unavailable) --> VENT
+    BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten) -->
+    SVAR{Responskode} -->|200 OK|OK -->|For hvert mottatte skattekort| L(Lagre Skattekort i skattekortdata) 
 
 SVAR -->|Andre|FEIL(Feil som må undersøkes)
+```
+
+## Prosess 3.5: Ta Skattekortdata og lag skattekort
+```mermaid
+flowchart TD
+    B["For hver skattekortdata"] --> BB(Opprett skattekort) --> OB(Opprett utsending)
 ```
 
 ## Prosess 4: Send skattekort til Forsystem
 
 ```mermaid
 flowchart TD
-    U(Hent utsendinger som skal til Forsystem) -->|For hvert unike fnr| S(Hent de skattekortene vi har)
-    S --> SO(Send skattekort til Forsystem) --> SLETT(Slett Utsendinger som vi har sendt Skattekort for)
+    U(Hent utsendinger) --> S(Hent skattekortene som vi vet vi har)
+    S -->|For hvert unike fnr| SO(Send skattekort til alle Forsystem som abonnerer) --> SLETT(Slett Utsendinger som vi har sendt Skattekort for)
 ```
 
 ## Prosess 5: Motta oppdaterte skattekort
 
 ```mermaid
 flowchart TD
-    SKD(Sjekk om SKD har oppdatert noen skattekort) --> L(Lagre Skattekort i databasen)
+    SKD(Sjekk om Skatteetaten har oppdatert noen skattekort) --> L(Lagre Skattekort i databasen)
     L --> A(Sjekk hvilke Abonnementer som finnes for Fnr)
     A --> U(Opprett Utsending til alle forsystemer som abonnerer på fnr)
 ```
 
-## Prosess 7: Slette gamle data
+## Prosess 7: Slette gamle data(Ikke laget ennå!)
 
 1. Delete from skattekort where inntektsaar < currentYear - 1
 2. Delete from abonnementer where inntektsaar < currentYear - 1
 3. Delete from person where not exists (select 1 from abonnementer where abonnementer.fnr = person.fnr)
 4. etc
 
-## Prosess 8: Sjekk bestillingsstatus for FNR og inntektsår
+## Sjekk bestillingsstatus for FNR og inntektsår
 
 ```mermaid
 flowchart TD
-    S{Finnes Skattekort?} -->|Nei| A{Finnes Abonnement} -->|Ja| BB{Finnes bestillingsbatch} -->|Ja| S1[Status: Venter på svar fra Skatteetaten]
-    S -->|Ja| S2[Status: Har Skattekort]
-    A -->|Nei| S3[Status: Aldri forespurt]
-    BB -->|Nei| B{Finnes Bestilling?} -->|Ja| S5[Status: Venter på at Batchtoget skal gå]
-    B -->|Nei| S4["Feil som må håndteres:
-                    Vi har et abonnnement, men har ikke skattekort
-og heller ikke planlagt å bestille det"]
-
+    Start(Start) --> FNR{Finnes \nperson?}
+    FNR -->|Nei| IKKE_FORESPURT[UKJENT_FNR]
+    FNR -->|Ja| SJEKK_SKATTEKORT{Har Skattekort}
+    SJEKK_SKATTEKORT -->|Ja| SJEKK_UTSENDING{Finnes Utsending?}
+    SJEKK_UTSENDING -->|Nei| SJEKK_ABONNEMENT{Finnes Abonnement?}
+    SJEKK_UTSENDING -->|Ja| VENTER_UTSENDING
+    SJEKK_ABONNEMENT{Finnes Abonnement?} -->|Nei| IKKE_ABONNENT
+    SJEKK_ABONNEMENT -->|Ja| ABONNERER
+    SJEKK_SKATTEKORT -->|Nei| SJEKK_BESTILLING{Finnes bestilling?}
+    SJEKK_BESTILLING -->|Ja| SJEKK_BATCH{Finnes batch?}
+    SJEKK_BATCH -->|Ja| VENTER_SVAR[Status: Venter på svar fra Skatteetaten]
+    SJEKK_BATCH -->|Nei| VENTER_BATCH[Status: Venter på at Batchtoget skal gå]
+    SJEKK_BESTILLING -->|Nei| WAIT(Venter på skattekort utenom Skatteetaten)
 ```

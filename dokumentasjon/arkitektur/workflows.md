@@ -45,12 +45,12 @@ flowchart LR
 ```mermaid
 flowchart LR
     Start(Start) --> FNR{Finnes \nperson?}
-    FNR -->|Nei| OPPRETT_PERSONID --> OPPRETT_ABONNEMENT
-    FNR -->|Ja| OPPRETT_ABONNEMENT --> SJEKK_SKATTEKORT{Har Skattekort?}
-    SJEKK_SKATTEKORT -->|Ja| OPPRETT_UTSENDING
+    FNR -->|Nei| OPPRETT_PERSONID(Opprett person) --> OPPRETT_ABONNEMENT
+    FNR -->|Ja| OPPRETT_ABONNEMENT(Opprett abonnement) --> SJEKK_SKATTEKORT{Har Skattekort?}
+    SJEKK_SKATTEKORT -->|Ja| OPPRETT_UTSENDING(Opprett utsending)
     SJEKK_SKATTEKORT -->|Nei| FNR_KAN_BESTILLE{FNR kan bestille \nfra Skatteetaten?}
-    FNR_KAN_BESTILLE --> |Nei| VENT_PAA_MANUELT_SKATTEKORT
-    FNR_KAN_BESTILLE --> |Ja| OPPRETT_BESTILLING
+    FNR_KAN_BESTILLE --> |Nei| VENT_PAA_MANUELT_SKATTEKORT(Vent til noen legger \ninn skattekort manuelt)
+    FNR_KAN_BESTILLE --> |Ja| OPPRETT_BESTILLING(Opprett bestilling)
 ```
 
 ## Prosess 2: Bestille skattekort fra skatteetaten
@@ -71,9 +71,9 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    BB[Ta tak i en Bestillingsbatch med status NY] --> HS(Kall HentSkattekort hos Skatteetaten) -->
-    SVAR{Responskode} -->|200 OK| OK -->|For hvert mottatte skattekort| L(Lagre Skattekort i skattekortdata)
-    SVAR -->|Andre| FEIL(Feil som må undersøkes)
+    BB[Ta tak i en \nBestillingsbatch \nmed status NY] --> HS(Kall endepunktet \nskattekortTilArbeidsgiver/svar\nhos Skatteetaten) -->
+    SVAR{Responskode} -->|200 OK| OK -->|For hvert mottatte skattekort| L(Lagre Skattekort \ni skattekortdata)
+    SVAR -->|Andre| FEIL(Feil som må \nundersøkes)
 ```
 
 ## Prosess 3.5: Ta Skattekortdata og lag skattekort
@@ -94,7 +94,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    SKD(Sjekk om Skatteetaten har oppdatert noen skattekort) --> L(Lagre Skattekortdata)
+    SKD(For hvert skattekort vi får som svar på oppdateringsbatch) --> L(Lagre Skattekortdata)
 ```
 
 ## Prosess 7: Slette gamle data(Ikke laget ennå!)

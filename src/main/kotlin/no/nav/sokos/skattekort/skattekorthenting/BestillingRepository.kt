@@ -45,26 +45,26 @@ object BestillingRepository {
         )
     }
 
-    fun insert(
+    fun insertBatch(
         tx: TransactionalSession,
-        bestilling: Bestilling,
-    ): Long? {
+        bestillingList: List<Bestilling>,
+    ) = run {
         // language=SQL
         val sql =
             """
-                |INSERT INTO bestillinger (person_id, inntektsaar, fnr)
-                |VALUES (:personId, :inntektsaar, :fnr)
-                |ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
-            """.trimMargin()
-        return tx.updateAndReturnGeneratedKey(
-            queryOf(
-                sql,
+            INSERT INTO bestillinger (person_id, inntektsaar, fnr)
+            VALUES (:personId, :inntektsaar, :fnr)
+            ON CONFLICT (person_id, fnr, inntektsaar) DO NOTHING
+            """.trimIndent()
+        tx.batchPreparedNamedStatement(
+            sql,
+            bestillingList.map { bestilling ->
                 mapOf(
                     "personId" to bestilling.personId.value,
                     "inntektsaar" to bestilling.inntektsaar,
                     "fnr" to bestilling.fnr.value,
-                ),
-            ),
+                )
+            },
         )
     }
 
@@ -99,7 +99,7 @@ object BestillingRepository {
                 WHERE bestillingsbatch_id = :bestillingsbatchId
                 AND fnr = :fnr
             """.trimIndent()
-        tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+        tx.batchPreparedNamedStatement(
             sql,
             fnrList.map { fnr ->
                 mapOf(

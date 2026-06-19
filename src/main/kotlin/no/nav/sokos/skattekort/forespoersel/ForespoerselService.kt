@@ -148,47 +148,35 @@ class ForespoerselService(
 
         val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
-
-        val (kanBestilles, kanIkkeBestilles) =
-            personIdWithoutSkattekort.partition { (fnr, _) ->
-                foedselsnummerkategori.kanBestilleSkattekort(fnr)
-            }
-
-        if (kanIkkeBestilles.isNotEmpty()) {
-            logger.warn { "Fødselsnummer som ikke kan bestille skattekort funnet, sjekk TEAM LOGS" }
-            logger.warn(marker = TEAM_LOGS_MARKER) {
-                "Fødselsnummer som ikke kan bestille skattekort funnet: ${kanIkkeBestilles.joinToString { it.first }}"
-            }
-        }
+        val (kanBestilles) = personIdWithoutSkattekort.partition { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
 
         val bestillingCount =
             kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->
-                chunk
-                    .map { (fnr, personId) ->
-                        BestillingRepository.insert(
-                            tx = tx,
-                            bestilling =
+                BestillingRepository
+                    .insertBatch(
+                        tx = tx,
+                        bestillingList =
+                            chunk.map { (fnr, personId) ->
                                 Bestilling(
                                     personId = personId,
                                     fnr = Personidentifikator(fnr),
                                     inntektsaar = inntektsaar,
-                                ),
-                        )
-                    }.size
+                                )
+                            },
+                    ).sum()
             }
 
         val utsendingCount =
             personIdWithSkattekort.chunked(CHUNKED_SIZE).sumOf { chunk ->
-                chunk
-                    .map { (fnr, _) ->
-                        UtsendingRepository
-                            .insert(
-                                tx,
-                                utsending = Utsending(null, Personidentifikator(fnr), inntektsaar, forsystem),
-                            )
-                    }.size
+                UtsendingRepository
+                    .insertBatch(
+                        tx,
+                        utsendingList =
+                            chunk.map { (fnr, _) ->
+                                Utsending(null, Personidentifikator(fnr), inntektsaar, forsystem)
+                            },
+                    ).sum()
             }
-
         return Pair(bestillingCount, utsendingCount)
     }
 

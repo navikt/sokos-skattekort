@@ -84,13 +84,15 @@ class IdentifikatorEndringService(
                                 fnr = Personidentifikator(identifikasjonsnummer),
                             ),
                         )
-                        BestillingRepository.insert(
+                        BestillingRepository.insertBatch(
                             tx,
-                            bestilling =
-                                Bestilling(
-                                    personId = personId,
-                                    fnr = Personidentifikator(identifikasjonsnummer),
-                                    inntektsaar = LocalDate.now().year,
+                            bestillingList =
+                                listOf(
+                                    Bestilling(
+                                        personId = personId,
+                                        fnr = Personidentifikator(identifikasjonsnummer),
+                                        inntektsaar = LocalDate.now().year,
+                                    ),
                                 ),
                         )
                         AuditRepository.insert(tx, AuditTag.NYTT_FNR, personId, "Opprettet bestilling pga. melding fra PDL om ny Personidentifikator")

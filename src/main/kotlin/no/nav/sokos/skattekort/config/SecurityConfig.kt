@@ -19,13 +19,13 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.securityConfig(azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties()) {
+fun Application.securityConfig(azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.azureAdProperties) {
     val openIdMetadata: OpenIdMetadata = wellKnowConfig(azureAdProperties.wellKnownUrl)
     val jwkProvider = cachedJwkProvider(openIdMetadata.jwksUri)
 
     authentication {
         jwt(azureAdProperties.providerName) {
-            realm = PropertiesConfig.getApplicationProperties().naisAppName
+            realm = PropertiesConfig.applicationProperties.appName
             verifier(
                 jwkProvider = jwkProvider,
                 issuer = openIdMetadata.issuer,

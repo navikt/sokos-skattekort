@@ -128,7 +128,7 @@ fun setupClient(jsonFile: String): SkatteetatenClient {
     val skatteetatenClient =
         SkatteetatenClient(
             clientWithMockReply,
-            PropertiesConfig.getSkatteetatenProperties().skatteetatenUrl,
+            PropertiesConfig.skatteetatenProperties.skatteetatenUrl,
             mockTokenClient,
         )
     return skatteetatenClient

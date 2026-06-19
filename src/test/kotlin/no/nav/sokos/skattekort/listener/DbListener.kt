@@ -8,7 +8,6 @@ import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
 import io.kotest.extensions.testcontainers.toDataSource
 import kotliquery.queryOf
-import mu.KotlinLogging
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.ext.ScriptUtils
@@ -18,16 +17,14 @@ import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
-private val logger = KotlinLogging.logger {}
-
 object DbListener : BeforeSpecListener, AfterEachListener {
-    private val postgresProperties = PropertiesConfig.getPostgresProperties()
+    private val testConfig = PropertiesConfig.config
     val container: PostgreSQLContainer<Nothing> =
         PostgreSQLContainer<Nothing>("postgres:latest").apply {
             withReuse(false)
-            withUsername(postgresProperties.username)
-            withPassword(postgresProperties.password)
-            withDatabaseName(postgresProperties.name)
+            withUsername(testConfig.property("postgres.username").getString())
+            withPassword(testConfig.property("postgres.password").getString())
+            withDatabaseName(testConfig.property("postgres.name").getString())
             waitingFor(Wait.defaultWaitStrategy())
             start()
         }

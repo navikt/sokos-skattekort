@@ -70,11 +70,12 @@ class SkattekortDataService(
                 }
             UtsendingRepository.insert(
                 tx,
-                Utsending(
-                    inntektsaar = inntektsaar,
-                    fnr = fnr,
-                    forsystem = forsystem,
-                ),
+                utsending =
+                    Utsending(
+                        inntektsaar = inntektsaar,
+                        fnr = fnr,
+                        forsystem = forsystem,
+                    ),
             )
         }
     }

@@ -121,6 +121,10 @@ paths:
       responses:
         '200':
           description: Returnerer status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
         '400':
           description: Ugyldig request, oppfyller ikke swagger-kontrakt
           content:
@@ -129,6 +133,51 @@ paths:
                 $ref: '#/components/schemas/ApiError'
         '401':
           description: Ingen tilgang
+        '500':
+          description: Annen feil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - BearerAuth: [ ]
+
+  /statuser:
+    post:
+      tags:
+        - skattekort
+      summary: Hent detaljert status for flere personer
+      description: |
+        Returnerer detaljert status per personident.
+        Request body er text/plain med ett FNR per linje.
+      operationId: statusForespoersler
+      requestBody:
+        required: true
+        description: Liste med FNR, ett per linje
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: |
+                01010112345
+                02020212345
+      responses:
+        '200':
+          description: Returnerer detaljert status per FNR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailStatusResponse'
+        '400':
+          description: Ugyldig request, oppfyller ikke swagger-kontrakt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Ingen tilgang
+        '403':
+          description: Mangler nødvendig ident/rolle
         '500':
           description: Annen feil
           content:
@@ -155,11 +204,41 @@ components:
           example: "MANUELL"
     StatusResponse:
       type: object
+      required:
+        - status
       properties:
         status:
           type: string
           example: "VENTER_PAA_UTSENDING"
           description: Status for forespørselen
+    DetailStatusResponse:
+      type: object
+      required:
+        - statuses
+      properties:
+        statuses:
+          type: object
+          description: Detaljert status for en liste med fnr. Man kan sende inn alle slags fnr, men ugyldige fnr vil ikke gi noe svar.
+          additionalProperties:
+            $ref: '#/components/schemas/DetailStatus'
+    DetailStatus:
+      type: object
+      required:
+        - abonnements
+        - skattekortLastYear
+        - skattekortThisYear
+        - skattekortNextYear
+      properties:
+        abonnements:
+          type: array
+          items:
+            type: string
+        skattekortLastYear:
+          type: boolean
+        skattekortThisYear:
+          type: boolean
+        skattekortNextYear:
+          type: boolean
     ApiError:
       type: object
       required:

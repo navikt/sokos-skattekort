@@ -9,52 +9,63 @@ object ForespoerselRepository {
         tx: TransactionalSession,
         forsystem: Forsystem,
         dataMottatt: String,
-    ): Long =
-        tx.updateAndReturnGeneratedKey(
+    ): Long {
+        // language=SQL
+        val sql =
+            """
+            INSERT INTO forespoersler (forsystem, data_mottatt)
+            VALUES (:forsystem, :data_mottatt)
+            """.trimIndent()
+        return tx.updateAndReturnGeneratedKey(
             queryOf(
-                """
-                INSERT INTO forespoersler (forsystem, data_mottatt)
-                VALUES (:forsystem, :data_mottatt)
-                """.trimIndent(),
+                sql,
                 mapOf(
                     "forsystem" to forsystem.value,
                     "data_mottatt" to dataMottatt,
                 ),
             ),
         ) ?: throw IllegalStateException("Failed to insert forespoersel")
+    }
 
     fun getAllForespoersel(
         tx: TransactionalSession,
         count: Int = 1000,
         offset: Int = 0,
-    ): List<Forespoersel> =
-        tx.list(
+    ): List<Forespoersel> {
+        // language=SQL
+        val sql =
+            """
+            SELECT * FROM forespoersler
+            ORDER BY id ASC
+            LIMIT :count OFFSET :offset
+            """.trimIndent()
+        return tx.list(
             queryOf(
-                """
-                SELECT * FROM forespoersler
-                ORDER BY id ASC
-                LIMIT :count OFFSET :offset
-                """.trimIndent(),
+                sql,
                 mapOf("count" to count, "offset" to offset),
             ),
             mapToForespoersel,
         )
+    }
 
-    fun getAllForespoerselInput(tx: TransactionalSession): List<ForespoerselInput> =
-        tx.list(
-            queryOf(
-                """
-                SELECT * FROM forespoersel_input
-                """.trimIndent(),
-            ),
+    fun getAllForespoerselInput(tx: TransactionalSession): List<ForespoerselInput> {
+        // language=SQL
+        val sql =
+            """
+            SELECT * FROM forespoersel_input
+            """.trimIndent()
+        return tx.list(
+            queryOf(sql),
             mapToForespoerselInput,
         )
+    }
 
     fun deleteAllForespoerselInput(tx: TransactionalSession) {
+        // language=SQL
+        val sql =
+            "DELETE FROM forespoersel_input"
         tx.update(
-            queryOf(
-                """DELETE FROM forespoersel_input""",
-            ),
+            queryOf(sql),
         )
     }
 

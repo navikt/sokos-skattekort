@@ -12,7 +12,6 @@ import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
@@ -44,7 +43,6 @@ class ForespoerselListenerTest :
                     ForespoerselService(
                         dataSource = DbListener.dataSource,
                         personService = PersonService(DbListener.dataSource, pdlClientService, tilgangsmaskinClientService = mockk<TilgangsmaskinClientService>(relaxed = true)),
-                        featureToggles = UnleashIntegration(),
                     ),
                 forespoerselQueue = forSystemQueue,
                 forespoerselBoqQueue = forSystemBOQQueue,

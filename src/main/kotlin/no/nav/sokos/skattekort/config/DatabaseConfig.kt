@@ -31,7 +31,7 @@ object DatabaseConfig {
     }
 
     init {
-        if (!(PropertiesConfig.isLocal() || PropertiesConfig.isTest())) {
+        if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     (dataSource as HikariDataSource).close()
@@ -41,21 +41,28 @@ object DatabaseConfig {
     }
 
     fun migrate(dataSource: DataSource = this.dataSource) {
-        Flyway
-            .configure()
-            .dataSource(dataSource)
-            .lockRetryCount(-1)
-            .validateMigrationNaming(true)
-            .sqlMigrationSeparator("__")
-            .sqlMigrationPrefix("V")
-            .load()
-            .migrate()
-            .migrationsExecuted
-        logger.info { "Migration finished" }
+        val flyway =
+            Flyway
+                .configure()
+                .dataSource(dataSource)
+                .lockRetryCount(-1)
+                .validateMigrationNaming(true)
+                .sqlMigrationSeparator("__")
+                .sqlMigrationPrefix("V")
+                .load()
+
+        val pending = flyway.info().pending().isNotEmpty()
+        if (!pending) {
+            logger.info { "Flyway: no pending migrations, skipping migrate()" }
+            return
+        }
+
+        val result = flyway.migrate()
+        logger.info { "Flyway migrate finished. executed=${result.migrationsExecuted}" }
     }
 
     private fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
-        val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.getPostgresProperties()
+        val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.postgresProperties
         return HikariConfig().apply {
             poolName = poolname
             maximumPoolSize = 15
@@ -67,7 +74,7 @@ object DatabaseConfig {
             maxLifetime = Duration.ofMinutes(30).toMillis()
 
             when {
-                !(PropertiesConfig.isLocal() || PropertiesConfig.isTest()) -> {
+                !(PropertiesConfig.isLocal || PropertiesConfig.isTest) -> {
                     jdbcUrl = postgresProperties.jdbcUrl
                     logger.info { "Setting up PostgreSQL" }
                 }

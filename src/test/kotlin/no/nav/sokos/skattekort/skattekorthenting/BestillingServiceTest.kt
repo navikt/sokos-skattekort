@@ -119,7 +119,7 @@ class BestillingServiceTest :
         test("Logger som feil for ukjente personer fra henteBestillingsbatcher") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
                 coEvery { skatteetatenClient.hentSkattekort(any()) } returns
-                    aHentSkattekortResponse(aSkattekortFor("0101010000X", 10007))
+                    aHentSkattekortResponse(aSkattekortFor("01010100009", 10007))
 
                 databaseHas(
                     aPerson(1L),
@@ -133,7 +133,7 @@ class BestillingServiceTest :
 
                 bestillingService.hentBestillingsbatcher(OPPDATERING)
 
-                val person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("0101010000X")) }
+                val person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("01010100009")) }
                 val bestillingsbatchList = tx(DBTestUtils::getAllBestillingsbatch)
 
                 assertSoftly {

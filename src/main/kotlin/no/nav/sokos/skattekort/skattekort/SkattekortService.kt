@@ -9,6 +9,7 @@ import mu.KotlinLogging
 import no.nav.sokos.skattekort.api.model.v1.SkattekortDTO
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori.GYLDIGE
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
@@ -20,6 +21,8 @@ import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar.alleLovligeInntek
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.util.audit.AuditLogg
 import no.nav.sokos.skattekort.util.audit.AuditLogger
+import no.nav.sokos.skattekort.utsending.Utsending
+import no.nav.sokos.skattekort.utsending.UtsendingRepository
 import no.nav.tilgangsmaskinen.ProblemDetailResponse
 
 private val logger = KotlinLogging.logger {}
@@ -73,13 +76,13 @@ class SkattekortService(
         fnr: String,
         skattekortDTO: SkattekortDTO,
         saksbehandler: Saksbehandler?,
-    ): Long? {
+    ) {
         logger.info(marker = TEAM_LOGS_MARKER) { "Oppretter skattekort for person: $fnr, for år: ${skattekortDTO.inntektsaar}" }
 
-        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.getApplicationProperties().gyldigeFnr)
+        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         if (!foedselsnummerkategori.erGyldig(fnr)) {
-            logger.warn(marker = TEAM_LOGS_MARKER) { "Ugyldig fnr for miljø ${PropertiesConfig.getApplicationProperties().environment}($fnr)" }
-            return null
+            logger.warn(marker = TEAM_LOGS_MARKER) { "Ugyldig fnr for miljø ${PropertiesConfig.applicationProperties.profile}($fnr)" }
+            return
         }
 
         if (GYLDIGE.erGyldig(fnr)) {
@@ -113,6 +116,17 @@ class SkattekortService(
 
             Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, _) ->
                 SkattekortRepository.insert(tx, syntetisertSkattekort)
+            }
+            AbonnementRepository.findForsystemAndFnr(tx, personId, skattekortDTO.inntektsaar).forEach { (system, fnr) ->
+                UtsendingRepository.insert(
+                    tx,
+                    utsending =
+                        Utsending(
+                            inntektsaar = skattekortDTO.inntektsaar,
+                            fnr = fnr,
+                            forsystem = system,
+                        ),
+                )
             }
         }
     }

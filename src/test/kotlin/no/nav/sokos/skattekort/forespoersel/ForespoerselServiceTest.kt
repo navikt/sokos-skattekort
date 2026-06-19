@@ -5,6 +5,9 @@ import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
@@ -14,20 +17,20 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.mockk
+import org.slf4j.LoggerFactory
 
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.pdl.PdlClientService
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
-import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
+import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utils.DateUtils.toLocalDate
@@ -38,6 +41,22 @@ import no.nav.sokos.skattekort.utsending.UtsendingRepository
 class ForespoerselServiceTest :
     FunSpec({
         extensions(DbListener, WiremockListener)
+
+        val logger = LoggerFactory.getLogger(ForespoerselService::class.java) as Logger
+        val listAppender = ListAppender<ILoggingEvent>().apply { start() }
+
+        beforeSpec {
+            logger.addAppender(listAppender)
+        }
+
+        beforeEach {
+            listAppender.list.clear()
+        }
+
+        afterSpec {
+            logger.detachAppender(listAppender)
+            listAppender.stop()
+        }
 
         val pdlClientService: PdlClientService by lazy {
             PdlClientService(
@@ -52,7 +71,7 @@ class ForespoerselServiceTest :
         }
 
         val forespoerselService: ForespoerselService by lazy {
-            ForespoerselService(DbListener.dataSource, personService, UnleashIntegration())
+            ForespoerselService(DbListener.dataSource, personService)
         }
 
         test("taImotForespoersel skal parse message fra OS og oppretter forespoersel, abonnement, bestilling og utsending") {
@@ -289,34 +308,6 @@ class ForespoerselServiceTest :
             }
         }
 
-        test("Skal ta i mot forespørsler fra databasetabell") {
-            DbListener.loadDataSet("database/forespoersler/forespoersel_fra_tabell.sql")
-            WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("19876543210"))
-
-            forespoerselService.cronForespoerselInput()
-            DbListener.dataSource.transaction { tx ->
-                val bestillinger = DBTestUtils.getAllBestilling(tx)
-
-                assertSoftly {
-                    bestillinger shouldNotBeNull {
-                        size shouldBe 1
-                        shouldContainAllIgnoringFields(
-                            listOf(
-                                Bestilling(
-                                    personId = PersonId(1),
-                                    fnr = Personidentifikator("19876543210"),
-                                    inntektsaar = 2025,
-                                ),
-                            ),
-                            Bestilling::id,
-                            Bestilling::bestillingsbatchId,
-                            Bestilling::oppdatert,
-                        )
-                    }
-                }
-            }
-        }
-
         test("skal ikke kaste en PSQLException: ERROR: duplicate key value violates unique constraint") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
                 WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
@@ -366,6 +357,42 @@ class ForespoerselServiceTest :
                     forespoerselList.size shouldBe 4
                 }
             }
+        }
+
+        test("taImotForespoersel der bestilling allerede finnes i DB skal logge bestillingCount 0 pga ON CONFLICT DO NOTHING") {
+            DbListener.loadDataSet("database/forespoersler/forespoersel_med_bestilling.sql")
+            val fnr = "01010112345"
+
+            DbListener.dataSource.transaction { tx ->
+                BestillingRepository
+                    .getAllBestillingsForAdmin(tx)
+                    .first()
+                    .fnr.value shouldBe fnr
+            }
+            val osMessage = "OS;2025;$fnr"
+
+            forespoerselService.taImotForespoersel(osMessage)
+
+            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
+            logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
+        }
+
+        test("taImotForespoersel der utsending allerede finnes i DB skal legge utsendingCount 0 pga ON CONFLICT DO NOTHING") {
+            DbListener.loadDataSet("database/forespoersler/forespoersel_med_utsending.sql")
+
+            val fnr = "01010112345"
+
+            DbListener.dataSource.transaction { tx ->
+                UtsendingRepository
+                    .getAllUtsendinger(tx)
+                    .first()
+                    .fnr.value shouldBe fnr
+            }
+            val message = "OS;2025;$fnr"
+            forespoerselService.taImotForespoersel(message)
+
+            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
+            logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
         }
     })
 

@@ -19,6 +19,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 
+import no.nav.sokos.skattekort.api.model.DetailStatusResponse
 import no.nav.sokos.skattekort.api.model.ForespoerselRequest
 import no.nav.sokos.skattekort.config.ApiError
 import no.nav.sokos.skattekort.forespoersel.ForespoerselRepository
@@ -45,6 +46,7 @@ class SkattekortApiTest :
         val forsystem = Forsystem.OPPDRAGSSYSTEMET.value
         val validFnrs = "01010112345\n02020212345\n03030312345"
         val bulkPath = "$BASE_PATH_SKATTEKORT/bestillingbulk/$forsystem/$inntektsaar"
+        val statuserPath = "$BASE_PATH_SKATTEKORT/statuser"
 
         test("bestille skattekort skal returnere 201 Created") {
             // Må ha withConstantNow pga. hvis denne testen kjører fra 15.12 til 31.12, så vil det bli 2 bestillinger
@@ -160,8 +162,8 @@ class SkattekortApiTest :
         test("bestillingbulk skal returnere 200 OK for gyldig request") {
             WiremockListener.wiremockPDLStub(
                 WiremockListener.generateHentIdenterBolk(
-                    "16836895413",
-                    "24864999049",
+                    "01010112345",
+                    "02020212345",
                     "03030312345",
                 ),
             )
@@ -243,6 +245,70 @@ class SkattekortApiTest :
                 val apiError = response.body<ApiError>()
                 apiError.status shouldBe HttpStatusCode.BadRequest.value
                 apiError.message shouldBe "inntektsår er ugyldig. Gyldig årstall er mellom ${Year.now().value - 1} og ${Year.now().value}"
+            }
+        }
+
+        test("statuser skal returnere 200 OK for gyldig text/plain body") {
+            TestUtils.withFullTestApplication {
+                val contentType = ContentType.Text.Plain
+                val response =
+                    client.post(statuserPath) {
+                        header(HttpHeaders.ContentType, contentType)
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        setBody(validFnrs)
+                    }
+
+                val validationReport =
+                    response.validationReport(
+                        validator = validator,
+                        method = HttpMethod.Post,
+                        path = statuserPath,
+                        content = validFnrs,
+                        contentType = contentType,
+                    )
+
+                validationReport.hasErrors() shouldBe false
+                response.status shouldBe HttpStatusCode.OK
+
+                val detailStatusResponse = response.body<DetailStatusResponse>()
+                val expectedFnrs =
+                    validFnrs
+                        .lineSequence()
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() }
+                        .toSet()
+
+                detailStatusResponse.statuses.keys shouldBe expectedFnrs
+            }
+        }
+
+        test("statuser skal returnere 400 når body er tom") {
+            TestUtils.withFullTestApplication {
+                val contentType = ContentType.Text.Plain
+                val response =
+                    client.post(statuserPath) {
+                        header(HttpHeaders.ContentType, contentType)
+                        header(HttpHeaders.Authorization, "Bearer $oboTokenWithNavIdent")
+                        setBody("")
+                    }
+
+                val validationReport =
+                    response.validationReport(
+                        validator = validator,
+                        method = HttpMethod.Post,
+                        path = statuserPath,
+                        content = "",
+                        contentType = contentType,
+                    )
+
+                validationReport.hasErrors() shouldBe true
+                response.status shouldBe HttpStatusCode.BadRequest
+
+                val apiError = response.body<ApiError>()
+                apiError.status shouldBe HttpStatusCode.BadRequest.value
+                apiError.error shouldBe HttpStatusCode.BadRequest.description
+                apiError.message shouldBe "Mangler FNR"
+                apiError.path shouldBe statuserPath
             }
         }
     })

@@ -4,6 +4,11 @@ import java.time.LocalDateTime
 import java.time.Month
 
 object ReglerForInntektsaar {
+    fun skalBestilleForNesteAarOgsaa(year: Int): Boolean {
+        val now = LocalDateTime.now()
+        return now.year == year && lovligeInntektsAarAaBestilleFraSkatteetaten().contains(year + 1)
+    }
+
     fun lovligeInntektsAarAaBestilleFraSkatteetaten(): List<Int> {
         val now = LocalDateTime.now()
         val min = if (now.month <= Month.JUNE) now.year - 1 else now.year

@@ -3,24 +3,29 @@ package no.nav.sokos.skattekort.skattekort
 import kotlinx.serialization.json.Json
 
 import kotliquery.Query
+import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
+import no.nav.sokos.skattekort.api.model.DetailStatus
 import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.person.Personidentifikator
 
 object SkattekortRepository {
     fun insert(
         tx: TransactionalSession,
         skattekort: Skattekort,
     ): Long {
+        // language=SQL
+        val insertSkattekortSql =
+            """
+            INSERT INTO skattekort (generert_fra, person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
+            VALUES (:generertFra, :personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
+            """.trimIndent()
         val id =
             tx.updateAndReturnGeneratedKey(
                 Query(
-                    statement =
-                        """
-                        INSERT INTO skattekort (generert_fra, person_id, utstedt_dato, identifikator, inntektsaar, kilde, resultatForSkattekort) 
-                        VALUES (:generertFra, :personId, :utstedtDato, :identifikator, :inntektsaar, :kilde, :resultatForSkattekort)
-                        """.trimIndent(),
+                    statement = insertSkattekortSql,
                     paramMap =
                         mapOf(
                             "generertFra" to skattekort.generertFra?.value,
@@ -34,11 +39,14 @@ object SkattekortRepository {
                 ),
             )
         if (skattekort.forskuddstrekkList.isNotEmpty()) {
-            tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+            // language=SQL
+            val insertForskuddstrekkSql =
                 """
                 INSERT INTO forskuddstrekk (skattekort_id, trekk_kode, type, frikort_beloep, tabell_nummer, prosentsats, antall_mnd_for_trekk)
                 VALUES (:skattekortId, :trekk_kode, :type, :frikort_beloep, :tabell_nummer, :prosentsats, :antall_mnd_for_trekk)
-                """.trimIndent(),
+                """.trimIndent()
+            tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+                insertForskuddstrekkSql,
                 skattekort.forskuddstrekkList.map { forskuddstrekk ->
                     when (forskuddstrekk) {
                         is Frikort -> {
@@ -81,11 +89,14 @@ object SkattekortRepository {
             )
         }
         if (skattekort.tilleggsopplysningList.isNotEmpty()) {
-            tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+            // language=SQL
+            val insertTilleggsopplysningSql =
                 """
                 INSERT INTO skattekort_tilleggsopplysning (skattekort_id, opplysning)
                 VALUES (:skattekortId, :opplysning)
-                """.trimIndent(),
+                """.trimIndent()
+            tx.batchPreparedNamedStatementAndReturnGeneratedKeys(
+                insertTilleggsopplysningSql,
                 skattekort.tilleggsopplysningList.map { tilleggsopplysning ->
                     mapOf(
                         "skattekortId" to id,
@@ -168,84 +179,91 @@ object SkattekortRepository {
     fun getAllIdByInntektsaar(
         tx: TransactionalSession,
         inntektsaar: Int,
-    ): List<Long> =
-        tx.list(
-            queryOf(
-                """
-                SELECT id FROM skattekort WHERE inntektsaar = :inntektsaar ORDER BY id;
-                """.trimIndent(),
-                mapOf("inntektsaar" to inntektsaar),
-            ),
+    ): List<Long> {
+        // language=SQL
+        val sql =
+            """
+            SELECT id FROM skattekort WHERE inntektsaar = :inntektsaar ORDER BY id;
+            """.trimIndent()
+        return tx.list(
+            queryOf(sql, mapOf("inntektsaar" to inntektsaar)),
             extractor = { row -> row.long("id") },
         )
+    }
 
     fun deleteBatch(
         tx: TransactionalSession,
         skattekortIdList: List<Long>,
     ) {
+        // language=SQL
+        val sql = "DELETE FROM skattekort WHERE id = :skattekortId"
         tx.batchPreparedNamedStatement(
-            """
-            DELETE FROM skattekort WHERE id = :skattekortId
-            """.trimIndent(),
+            sql,
             skattekortIdList.map { id ->
                 mapOf("skattekortId" to id)
             },
         )
     }
 
-    fun getSecondsSinceLatestSkattekortOpprettet(tx: TransactionalSession): Double? =
-        tx.single(
-            queryOf(
-                """SELECT EXTRACT(EPOCH FROM NOW() - MAX(opprettet)) AS sekunder_siden_siste_skattekort FROM skattekort""",
-            ),
+    fun getSecondsSinceLatestSkattekortOpprettet(tx: TransactionalSession): Double? {
+        // language=SQL
+        val sql = "SELECT EXTRACT(EPOCH FROM NOW() - MAX(opprettet)) AS sekunder_siden_siste_skattekort FROM skattekort"
+        return tx.single(
+            queryOf(sql),
             extractor = { row -> row.doubleOrNull("sekunder_siden_siste_skattekort") },
         )
+    }
 
-    fun numberOfSkattekortByResultatForSkattekortMetrics(tx: TransactionalSession): Map<ResultatForSkattekort, Int> =
-        tx
+    fun numberOfSkattekortByResultatForSkattekortMetrics(tx: TransactionalSession): Map<ResultatForSkattekort, Int> {
+        // language=SQL
+        val sql =
+            """
+            SELECT resultatForSkattekort, COUNT(1) AS antall 
+            FROM skattekort
+            GROUP BY resultatForSkattekort
+            """.trimIndent()
+        return tx
             .list(
-                queryOf(
-                    """
-                    SELECT resultatForSkattekort, COUNT(1) AS antall 
-                    FROM skattekort
-                    GROUP BY resultatForSkattekort
-                    """.trimIndent(),
-                ),
+                queryOf(sql),
                 extractor = { row ->
                     val resultat = ResultatForSkattekort.fromValue(row.string("resultatForSkattekort"))
                     val count = row.int("antall")
                     resultat to count
                 },
             ).toMap()
+    }
 
-    fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<String, Int> =
-        tx
+    fun numberOfForskuddstrekkWithTabelltrekkByTrekkodeMetrics(tx: TransactionalSession): Map<String, Int> {
+        // language=SQL
+        val sql =
+            """
+            SELECT trekk_kode, COUNT(1) AS antall 
+            FROM forskuddstrekk
+            WHERE type = 'trekktabell'
+            GROUP BY trekk_kode
+            """.trimIndent()
+        return tx
             .list(
-                queryOf(
-                    """
-                    SELECT trekk_kode, COUNT(1) AS antall 
-                    FROM forskuddstrekk
-                    WHERE type = 'trekktabell'
-                    GROUP BY trekk_kode
-                    """.trimIndent(),
-                ),
+                queryOf(sql),
                 extractor = { row ->
                     val trekkode = row.string("trekk_kode")
                     val count = row.int("antall")
                     trekkode to count
                 },
             ).toMap()
+    }
 
-    fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<Tilleggsopplysning, Int> =
-        tx
+    fun numberOfSkattekortByTilleggsopplysningMetrics(tx: TransactionalSession): Map<Tilleggsopplysning, Int> {
+        // language=SQL
+        val sql =
+            """
+            SELECT opplysning, COUNT(skattekort_id) AS antall 
+            FROM skattekort_tilleggsopplysning
+            GROUP BY opplysning
+            """.trimIndent()
+        return tx
             .list(
-                queryOf(
-                    """
-                    SELECT opplysning, COUNT(skattekort_id) AS antall 
-                    FROM skattekort_tilleggsopplysning
-                    GROUP BY opplysning
-                    """.trimIndent(),
-                ),
+                queryOf(sql),
                 extractor = { row ->
                     val opplysning =
                         Tilleggsopplysning.fromValue(row.string("opplysning"))
@@ -253,44 +271,92 @@ object SkattekortRepository {
                     opplysning to count
                 },
             ).toMap()
+    }
 
-    fun numberOfFrikortMedUtenBeloepsgrense(tx: TransactionalSession): Map<String, Int> =
-        tx
+    fun numberOfFrikortMedUtenBeloepsgrense(tx: TransactionalSession): Map<String, Int> {
+        // language=SQL
+        val sql =
+            """
+            SELECT 
+               CASE WHEN
+                  frikort_beloep IS NULL OR frikort_beloep = 0 THEN 'Ubegrenset'
+                  ELSE 'Begrenset'
+               END AS begrensning,
+            COUNT(1) AS antall 
+            FROM forskuddstrekk
+            WHERE type = 'frikort'
+            GROUP BY
+              CASE WHEN
+                  frikort_beloep IS NULL OR frikort_beloep = 0 THEN 'Ubegrenset'
+                  ELSE 'Begrenset'
+              END 
+            """.trimIndent()
+        return tx
             .list(
-                queryOf(
-                    """
-                    SELECT 
-                       CASE WHEN
-                          frikort_beloep IS NULL OR frikort_beloep = 0 THEN 'Ubegrenset'
-                          ELSE 'Begrenset'
-                       END AS begrensning,
-                    COUNT(1) AS antall 
-                    FROM forskuddstrekk
-                    WHERE type = 'frikort'
-                    GROUP BY
-                      CASE WHEN
-                          frikort_beloep IS NULL OR frikort_beloep = 0 THEN 'Ubegrenset'
-                          ELSE 'Begrenset'
-                      END 
-                    """.trimIndent(),
-                ),
+                queryOf(sql),
                 extractor = { row ->
                     val type = row.string("begrensning")
                     val count = row.int("antall")
                     type to count
                 },
             ).toMap()
+    }
 
-    fun getNoekkelinformasjon(tx: TransactionalSession): Map<String, Int> =
-        tx
+    fun getNoekkelinformasjon(tx: TransactionalSession): Map<String, Int> {
+        // language=SQL
+        val sql =
+            """
+            SELECT inntektsaar::text AS key, COUNT(1) AS antall FROM skattekort GROUP BY inntektsaar
+            UNION ALL
+            SELECT 'personer' AS key, COUNT(1) AS antall FROM personer;
+            """.trimIndent()
+        return tx
+            .list(queryOf(sql)) { row -> row.string("key") to row.int("antall") }
+            .toMap()
+    }
+
+    fun getDetailStatus(
+        tx: TransactionalSession,
+        fnrs: Collection<Personidentifikator>,
+    ): Map<String, DetailStatus> {
+        if (fnrs.isEmpty()) {
+            return emptyMap()
+        }
+
+        val valuesClause = fnrs.indices.joinToString(", ") { idx -> "(:fnr$idx)" }
+        val paramMap = fnrs.mapIndexed { idx, personidentifikator -> "fnr$idx" to personidentifikator.value }.toMap()
+        return tx
             .list(
                 queryOf(
+                    // language=PostgreSQL
                     """
-            |SELECT inntektsaar::text AS key, COUNT(1) AS antall FROM skattekort GROUP BY inntektsaar
-            |UNION ALL
-            |SELECT 'personer' AS key, COUNT(1) AS antall FROM personer;
-                    """.trimMargin(),
+                    select sok.fnr /*                                                  */ as fnr,
+                     string_agg(distinct concat(f.forsystem, a.inntektsaar::text), ', ')  as abonnements,
+                     sum(case when sminus1.id is not null then 1 else 0 end) > 0 /*    */ as skattekort_last_year,
+                     sum(case when s.id is not null then 1 else 0 end) > 0 /*          */ as skattekort_this_year,
+                     sum(case when splus1.id is not null then 1 else 0 end) > 0 /*     */ as skattekort_next_year
+                         from (values  $valuesClause) as sok(fnr)
+                    left join foedselsnumre fnr on fnr.fnr = sok.fnr
+                    left join abonnementer a on a.person_id = fnr.person_id
+                    left join forespoersler f on f.id = a.forespoersel_id
+                    left join skattekort sminus1 on sminus1.person_id = fnr.person_id and sminus1.inntektsaar = extract(year from current_date)::int - 1
+                    left join skattekort s on s.person_id = fnr.person_id and s.inntektsaar = extract(year from current_date)::int
+                    left join skattekort splus1 on splus1.person_id = fnr.person_id and splus1.inntektsaar = extract(year from current_date)::int + 1
+
+                    group by SOK.fnr;
+                    """.trimIndent(),
+                    paramMap,
                 ),
-            ) { row -> row.string("key") to row.int("antall") }
+            ) { row -> row.string("fnr") to mapToDetailStatus(row) }
             .toMap()
+    }
+
+    private val mapToDetailStatus: (Row) -> DetailStatus = { row ->
+        DetailStatus(
+            abonnements = row.stringOrNull("abonnements")?.split(", ")?.toList() ?: emptyList(),
+            skattekortLastYear = row.boolean("skattekort_last_year"),
+            skattekortThisYear = row.boolean("skattekort_this_year"),
+            skattekortNextYear = row.boolean("skattekort_next_year"),
+        )
+    }
 }

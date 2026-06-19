@@ -38,7 +38,7 @@ class AzuredTokenClient(
     private val client: HttpClient,
     private val azureAdScope: String,
 ) {
-    private val azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.AzureAdProperties()
+    private val azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.azureAdProperties
     private val azureAdAccessTokenUrl: String = "https://login.microsoftonline.com/${azureAdProperties.tenantId}/oauth2/v2.0/token"
     private val mutex = Mutex()
 

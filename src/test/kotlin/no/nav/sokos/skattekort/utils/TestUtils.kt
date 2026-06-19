@@ -27,7 +27,6 @@ import jakarta.jms.ConnectionFactory
 import jakarta.jms.Queue
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
-import org.apache.activemq.artemis.jms.client.ActiveMQQueue
 
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
@@ -42,7 +41,6 @@ import no.nav.sokos.skattekort.PDL_URL
 import no.nav.sokos.skattekort.SKATTEETATEN_URL
 import no.nav.sokos.skattekort.TILGANGSMAKSIN_AZURED_TOKEN_CLIENT
 import no.nav.sokos.skattekort.TILGANGSMASKIN_URL
-import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
@@ -140,16 +138,16 @@ object TestUtils {
                 }
                 provide { MQListener.connectionFactory }
                 provide<Queue>(name = FORESPORSEL_QUEUE) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().fraForSystemQueue)
+                    MQListener.forespoerselQueue
                 }
                 provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
-                    ActiveMQQueue("${PropertiesConfig.getMQProperties().fraForSystemQueue}_BOQ")
+                    MQListener.forespoerselBoqQueue
                 }
                 provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekort)
+                    MQListener.utsendingsQueue
                 }
                 provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
-                    ActiveMQQueue(PropertiesConfig.getMQProperties().leveransekoeOppdragZSkattekortStor)
+                    MQListener.utsendingStorQueue
                 }
             }
         }
@@ -213,12 +211,8 @@ object TestUtils {
             put("APPLICATION_ENV", "TEST")
 
             // Database properties
-            put("DB_USERNAME", DbListener.container.username)
-            put("DB_PASSWORD", DbListener.container.password)
-            put("DB_DATABASE", DbListener.container.databaseName)
             put("DB_PORT", DbListener.container.firstMappedPort.toString())
             put("DB_HOST", DbListener.container.host)
-            put("AZURE_APP_CLIENT_ID", "default")
             put("AZURE_APP_WELL_KNOWN_URL", authServer.wellKnownUrl("default").toUrl().toString())
         }
 

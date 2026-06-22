@@ -93,7 +93,7 @@ object AbonnementRepository {
         )
     }
 
-    fun existsForFnrAndInntektsaar(
+    fun abonnementsForFnrAndInntektsaar(
         tx: TransactionalSession,
         fnr: Personidentifikator,
         forsystem: Forsystem,

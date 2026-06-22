@@ -156,7 +156,7 @@ class StatusContext(
 
     val abonnement: List<Abonnement> by lazy {
         dataSource.transaction { tx ->
-            AbonnementRepository.existsForFnrAndInntektsaar(tx, fnr, forsystem = Forsystem.fromValue(forsystem), inntektsaar = aar)
+            AbonnementRepository.abonnementsForFnrAndInntektsaar(tx, fnr, forsystem = Forsystem.fromValue(forsystem), inntektsaar = aar)
         }
     }
 }

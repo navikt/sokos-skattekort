@@ -166,10 +166,6 @@ configurations.all {
                 useVersion("4.2.15.Final")
                 because("Netty CVE remediation: CVE-2026-45536, CVE-2026-42577, CVE-2026-47244 and CVE-2026-48043")
             }
-            if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
-                useVersion("1.84")
-                because("Bouncy Castle Has Covert Timing Channel Vulnerability. Affected version >= 1.71, < 1.84")
-            }
         }
     }
 }

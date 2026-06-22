@@ -67,7 +67,7 @@ class StatusServiceTest :
                 status shouldBe Status.SKJERMET
             }
 
-            test("Gyldig fnr men kan ikke bestille") {
+            test("Nytt, gyldig og kunstig fnr som ikke kan bestille har også status IKKE_FORESPURT") {
                 mockkObject(PropertiesConfig)
                 every { PropertiesConfig.applicationProperties } returns mockk { every { gyldigeFnr } returns "KUNSTIGE_FNR" }
 
@@ -86,17 +86,17 @@ class StatusServiceTest :
             test("Gyldig fnr men person finnes ikke. Skal ha status IKKE_FORESPURT") {
                 databaseHas()
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.IKKE_FORESPURT
             }
 
-            test("Person finnes, men ikke noe annet. Skal ha status IKKE_ABONNEMENT") {
+            test("Person finnes, men ikke noe annet. Skal ha status ABONNERER_IKKE") {
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, anotherFnr.value),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.ABONNERER_IKKE
             }
 
@@ -107,7 +107,7 @@ class StatusServiceTest :
                     aBestilling(1L, anotherFnr.value, 2025, null),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.IKKE_BESTILT
             }
 
@@ -119,11 +119,11 @@ class StatusServiceTest :
                     aBestilling(1L, anotherFnr.value, 2025, 1L),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.BESTILT
             }
 
-            test("Person, skattekort og utsending finnes. Skal ha status VENTER_PAA_UTSENDING") {
+            test("Person, skattekort og utsending finnes. Skal ha status VENTER_UTSENDING") {
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, anotherFnr.value),
@@ -131,18 +131,18 @@ class StatusServiceTest :
                     anUtsending(anotherFnr.value, 2025, forsystem = "OS"),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.VENTER_UTSENDING
             }
 
-            test("Person og skattekort for året før finnes. Skal ha status IKKE_ABONNEMENT") {
+            test("Person og skattekort for året før finnes. Skal ha status ABONNERER_IKKE") {
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, anotherFnr.value),
                     aSkattekort(1L, 1L, 2025),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2026, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2026, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.ABONNERER_IKKE
             }
             test("Person, skattekort og abonnement for samme forsystem og år finnes. Skal ha status ABONNERER") {
@@ -153,7 +153,7 @@ class StatusServiceTest :
                     anAbonnement(123, 1L, 2025, Forsystem.OPPDRAGSSYSTEMET),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.ABONNERER
             }
             test("Person og abonnement for samme forsystem og år finnes. Skal ha status ABONNERER") {
@@ -163,10 +163,10 @@ class StatusServiceTest :
                     anAbonnement(123, 1L, 2025, Forsystem.OPPDRAGSSYSTEMET),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.ABONNERER
             }
-            test("Person, skattekort abonnement, og en utsending for et annet forsystem finnes. Skal ha status ABONNERER") {
+            test("Person, skattekort abonnement, og en utsending for et annet forsystem finnes. Skal ha status ABONNERER_IKKE") {
                 databaseHas(
                     aPerson(1L),
                     afoedselsnummer(1L, anotherFnr.value),
@@ -175,7 +175,7 @@ class StatusServiceTest :
                     anAbonnement(123, 1L, 2025, Forsystem.DARE_POC),
                 )
 
-                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler)
+                val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
                 status shouldBe Status.ABONNERER_IKKE
             }
         },

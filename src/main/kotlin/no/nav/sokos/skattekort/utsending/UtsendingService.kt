@@ -2,16 +2,10 @@ package no.nav.sokos.skattekort.utsending
 
 import javax.sql.DataSource
 
-import kotlinx.coroutines.runBlocking
-
 import io.ktor.server.plugins.di.annotations.Named
-import jakarta.jms.MessageProducer
 import jakarta.jms.Queue
-import jakarta.jms.Session
-import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
 import no.nav.sokos.skattekort.config.MQ_BATCH_SIZE
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
@@ -20,10 +14,7 @@ import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.dare.UtsendingDareClientService
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
-import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonRepository
-import no.nav.sokos.skattekort.person.Personidentifikator
-import no.nav.sokos.skattekort.skattekort.Skattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.mq.JmsProducerService
@@ -43,12 +34,32 @@ class UtsendingService(
         if (!featureToggles.isUtsendingEnabled()) return
         runCatching {
             while (true) {
-                val utsendingList = dataSource.transaction { UtsendingRepository.getAllUtsendinger(it, MQ_BATCH_SIZE) }
-                if (utsendingList.isEmpty()) break
+                val utsendingMap = dataSource.transaction { UtsendingRepository.getAllUtsendinger(it, MQ_BATCH_SIZE) }.groupBy { it.forsystem }
+                if (utsendingMap.isEmpty()) break
 
-                utsendingerIKoe.labelValues("uhaandtert").set(utsendingList.size.toDouble())
-                utsendingerIKoe.labelValues("feilet").set(utsendingList.filterNot { it.failCount == 0 }.size.toDouble())
+                utsendingerIKoe.labelValues("uhaandtert").set(utsendingMap.values.sumOf { it.size }.toDouble())
+                utsendingerIKoe.labelValues("feilet").set(
+                    utsendingMap.values
+                        .flatten()
+                        .count { it.failCount != 0 }
+                        .toDouble(),
+                )
+
+                utsendingMap.forEach { (forsystem, utsendingList) ->
+                    when (forsystem) {
+                        Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> utsendingTilOppdragZ(forsystem, utsendingList)
+                        Forsystem.MANUELL -> dataSource.transaction { tx -> UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! }) }
+                        Forsystem.DARE_POC -> {
+                            if (utsendingDareClientService == null) {
+                                logger.error { "UtsendingDareClientService ikke tilgjengelig i prod" }
+                                return@forEach
+                            }
+                        }
+                    }
+                }
             }
+        }.onFailure { exception ->
+            logger.error(exception) {}
         }
     }
 //        (jmsConnectionFactory.createConnection() ?: error("Kunne ikke koble til JMS")).use { jmsConnection ->
@@ -138,59 +149,55 @@ class UtsendingService(
 //        }
 //    }
 
-    private fun sendTilDarePoc(
-        tx: TransactionalSession,
-        fnr: Personidentifikator,
-        inntektsaar: Int,
+//    private fun sendTilDarePoc(inntektsaar: Int) {
+//        val person = PersonRepository.findPersonByFnr(tx, fnr)
+//        val skattekort: Skattekort = SkattekortRepository.findAllByPersonId(tx, listOf(person?.id!!), listOf(inntektsaar), showOnlyLatest = true, adminRole = false).first()
+//        runBlocking {
+//            utsendingDareClientService?.sendSkattekort(
+//                skattekortDTO =
+//                    SkattekortDTO(
+//                        skattekort,
+//                        fnr,
+//                    ),
+//            )
+//            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, person.id, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
+//        }
+//    }
+
+    private fun utsendingTilOppdragZ(
+        forsystem: Forsystem,
+        utsendingList: List<Utsending>,
     ) {
-        val person = PersonRepository.findPersonByFnr(tx, fnr)
-        val skattekort: Skattekort = SkattekortRepository.findAllByPersonId(tx, listOf(person?.id!!), listOf(inntektsaar), showOnlyLatest = true, adminRole = false).first()
-        runBlocking {
-            utsendingDareClientService?.sendSkattekort(
-                skattekortDTO =
-                    SkattekortDTO(
-                        skattekort,
-                        fnr,
-                    ),
-            )
-            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, person.id, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
-        }
-    }
+        runCatching {
+            dataSource.transaction { tx ->
+                val inntektsaar = utsendingList.first().inntektsaar
+                val personMap =
+                    PersonRepository
+                        .findAllByFnr(tx, fnr = utsendingList.map { it.fnr.value }.toTypedArray())
+                        .associate { person -> person.id!! to person.foedselsnummer }
+                val personIdList = personMap.keys.toList()
 
-    private fun sendTilOppdragz(
-        tx: TransactionalSession,
-        fnr: Personidentifikator,
-        inntektsaar: Int,
-        destination: String,
-        jmsSession: Session,
-        jmsProducer: MessageProducer,
-    ) {
-        var personId: PersonId? = null
-        try {
-            val person = PersonRepository.findPersonByFnr(tx, fnr)
-            personId = person?.id ?: throw IllegalStateException("Fant ikke personidentifikator")
-            val skattekort: Skattekort = SkattekortRepository.findAllByPersonId(tx, listOf(personId), listOf(inntektsaar), showOnlyLatest = true, adminRole = false).first()
-            val copybook = SkattekortFixedRecordFormatter(skattekort, fnr.value).format()
+                val skattekortList = SkattekortRepository.findAllByPersonId(tx, personIdList, listOf(inntektsaar), showOnlyLatest = true, adminRole = false)
+                val payloadList = skattekortList.map { skattekort -> SkattekortFixedRecordFormatter(skattekort, personMap[skattekort.personId]!!.fnr.value).format() }
+                val queue =
+                    when (forsystem) {
+                        Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
+                        else -> leveransekoeOppdragZSkattekortStor
+                    }
+                jmsProducerService.send(payloadList, queue, utsendingOppdragzCounter)
+                AuditRepository.insertBatch(tx, AuditTag.UTSENDING_OK, personIdList, "Oppdragz: Skattekort sendt til $queue")
+                UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! })
 
-            if (featureToggles.isBevisForSendingEnabled()) {
-                UtsendingRepository.lagreBevis(tx, skattekort.id!!, Forsystem.OPPDRAGSSYSTEMET, fnr, copybook)
-            }
-
-            if (!copybook.trim().isEmpty()) {
-                val message = jmsSession.createTextMessage(copybook)
-                jmsProducer.send(message)
-                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort sendt til $destination")
-            } else {
-                AuditRepository.insert(tx, AuditTag.UTSENDING_OK, personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
-            }
-        } catch (e: Exception) {
-            logger.error(e) { "Feil under sending til oppdragz, kø $destination" }
-            personId?.let { id ->
-                dataSource.transaction { errorsession ->
-                    AuditRepository.insert(errorsession, AuditTag.UTSENDING_FEILET, id, "Oppdragz: Utsending feilet: $e")
+                // TODO: Fjern denne featureToggles
+                if (featureToggles.isBevisForSendingEnabled()) {
                 }
             }
-            throw e
+        }.onFailure { exception ->
+            dataSource.transaction { tx ->
+                val failMessage = exception.message ?: "Ukjent feil"
+                UtsendingRepository.increaseFailCount(tx, failMessage, utsendingList.map { it.id!! })
+            }
+            logger.error(exception) { "Utsending av skattekort til oppdragZ: ${utsendingList.map { it.id }.joinToString()} feilet." }
         }
     }
 

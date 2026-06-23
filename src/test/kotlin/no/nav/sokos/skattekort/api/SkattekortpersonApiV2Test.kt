@@ -36,7 +36,6 @@ import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.listener.WiremockListener
 import no.nav.sokos.skattekort.listener.WiremockListener.generateHentPersonBolk
 import no.nav.sokos.skattekort.person.PersonRepository
-import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortKilde
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
@@ -368,7 +367,7 @@ class SkattekortpersonApiV2Test :
                         }
                     response.status shouldBe HttpStatusCode.Created
                     DbListener.dataSource.transaction { tx ->
-                        val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
+                        val opprettetPerson = PersonRepository.findAllByFnr(tx, "01010112345").firstOrNull()
                         opprettetPerson.shouldNotBeNull()
                         val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, listOf(opprettetPerson.id!!), listOf(2026), false)
                         nyeSkattekort.size shouldBe 2
@@ -405,7 +404,7 @@ class SkattekortpersonApiV2Test :
                         }
                     response.status shouldBe HttpStatusCode.Created
                     DbListener.dataSource.transaction { tx ->
-                        val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01010112345"))
+                        val opprettetPerson = PersonRepository.findAllByFnr(tx, "01010112345").firstOrNull()
                         opprettetPerson.shouldNotBeNull()
                         val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, listOf(opprettetPerson.id!!), listOf(2026), false)
                         nyeSkattekort shouldNotBeNull {
@@ -558,7 +557,7 @@ class SkattekortpersonApiV2Test :
 
                     response.status shouldBe HttpStatusCode.Created
                     DbListener.dataSource.transaction { tx ->
-                        val opprettetPerson = PersonRepository.findPersonByFnr(tx, Personidentifikator("01410112345"))
+                        val opprettetPerson = PersonRepository.findAllByFnr(tx, "01410112345").firstOrNull()
                         opprettetPerson.shouldNotBeNull()
                         val nyeSkattekort = SkattekortRepository.findAllByPersonId(tx, listOf(opprettetPerson.id!!), listOf(2026), false)
                         nyeSkattekort.size shouldBe 1

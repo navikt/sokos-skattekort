@@ -60,11 +60,14 @@ class SkattekortService(
 
         val skattekortList =
             dataSource.transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
+                val personList = PersonRepository.findAllByFnr(tx, fnr)
+                if (personList.isEmpty()) {
+                    return@transaction emptyList()
+                }
                 SkattekortRepository
                     .findAllByPersonId(
                         tx,
-                        personIdList = listOf(person.id!!),
+                        personIdList = personList.map { it.id!! },
                         inntektsaarList = inntektsaar?.let { listOf(it) } ?: alleLovligeInntektsaarAaHenteSkattekortFor(),
                     )
             }

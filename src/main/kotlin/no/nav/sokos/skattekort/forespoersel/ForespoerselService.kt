@@ -148,7 +148,7 @@ class ForespoerselService(
 
         val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
-        val (kanBestilles) = personIdWithoutSkattekort.partition { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
+        val kanBestilles = personIdWithoutSkattekort.filter { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
 
         val bestillingCount =
             kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->
@@ -163,7 +163,7 @@ class ForespoerselService(
                                     inntektsaar = inntektsaar,
                                 )
                             },
-                    ).sum()
+                    )
             }
 
         val utsendingCount =
@@ -175,7 +175,7 @@ class ForespoerselService(
                             chunk.map { (fnr, _) ->
                                 Utsending(null, Personidentifikator(fnr), inntektsaar, forsystem)
                             },
-                    ).sum()
+                    )
             }
         return Pair(bestillingCount, utsendingCount)
     }

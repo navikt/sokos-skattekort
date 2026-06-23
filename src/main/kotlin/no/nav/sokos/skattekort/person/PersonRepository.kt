@@ -28,24 +28,24 @@ object PersonRepository {
         ) { row -> PersonId(row.long("id")) }
     }
 
-    fun findPersonById(
+    fun findById(
         tx: TransactionalSession,
         personId: PersonId,
     ): Person {
         // language=SQL
         val sql =
             """
-                |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
-                |FROM personer p
-                |LEFT JOIN LATERAL (
-                |   SELECT id, gjelder_fom, fnr
-                |   FROM foedselsnumre
-                |   WHERE person_id = p.id
-                |   ORDER BY gjelder_fom DESC, id DESC
-                |   LIMIT 1
-                |) pf ON TRUE
-                |WHERE p.id = :personId
-            """.trimMargin()
+            SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
+            FROM personer p
+            LEFT JOIN LATERAL (
+               SELECT id, gjelder_fom, fnr
+               FROM foedselsnumre
+               WHERE person_id = p.id
+               ORDER BY gjelder_fom DESC, id DESC
+               LIMIT 1
+            ) pf ON TRUE
+            WHERE p.id = :personId
+            """.trimIndent()
         return tx.single(
             queryOf(
                 sql,
@@ -55,21 +55,23 @@ object PersonRepository {
         )!!
     }
 
-    fun findPersonByFnr(
+    fun findAllByFnr(
         tx: TransactionalSession,
-        fnr: Personidentifikator,
-    ): Person? {
+        vararg fnr: String,
+    ): List<Person> {
+        val fnrParamList = List(fnr.size) { index -> ":fnr$index" }.joinToString(", ")
+
         // language=SQL
         val sql =
             """
-                |SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
-                |FROM personer p JOIN foedselsnumre pf ON p.id = pf.person_id
-                |WHERE pf.fnr = :fnr
-            """.trimMargin()
-        return tx.single(
+            SELECT p.id as person_id, p.flagget, pf.id as foedselsnummer_id, pf.gjelder_fom, pf.fnr
+            FROM personer p JOIN foedselsnumre pf ON p.id = pf.person_id
+            WHERE pf.fnr IN ($fnrParamList)
+            """.trimIndent()
+        return tx.list(
             queryOf(
                 sql,
-                mapOf("fnr" to fnr.value),
+                fnr.mapIndexed { index, fnr -> "fnr$index" to fnr }.toMap(),
             ),
             extractor = mapToPerson,
         )

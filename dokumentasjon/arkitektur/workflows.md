@@ -97,7 +97,7 @@ flowchart TD
     SKD(For hvert skattekort vi får som svar på oppdateringsbatch) --> L(Lagre Skattekortdata)
 ```
 
-## Prosess 7: Slette gamle data(Ikke laget ennå!)
+## Prosess 7: Slette gamle data (Ikke laget ennå!)
 
 1. Delete from skattekort where inntektsaar < currentYear - 1
 2. Delete from abonnementer where inntektsaar < currentYear - 1

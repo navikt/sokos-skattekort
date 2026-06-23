@@ -113,7 +113,7 @@ object AbonnementRepository {
                ORDER BY gjelder_fom DESC, id DESC
                LIMIT 1
             ) pf ON TRUE
-            where pf.fnr=:fnr and fs.inntektsaar=:inntektsaar and forsystem=:forsystem
+            WHERE pf.fnr = :fnr AND fs.inntektsaar = :inntektsaar AND f.forsystem = :forsystem
             """.trimIndent()
         return tx.list(
             queryOf(

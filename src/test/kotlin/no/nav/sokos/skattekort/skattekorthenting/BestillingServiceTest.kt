@@ -36,7 +36,6 @@ import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.Person
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.PersonRepository
-import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeSkattekort
@@ -133,7 +132,7 @@ class BestillingServiceTest :
 
                 bestillingService.hentBestillingsbatcher(OPPDATERING)
 
-                val person = tx { PersonRepository.findPersonByFnr(it, Personidentifikator("01010100009")) }
+                val person = tx { PersonRepository.findAllByFnr(it, "01010100009").firstOrNull() }
                 val bestillingsbatchList = tx(DBTestUtils::getAllBestillingsbatch)
 
                 assertSoftly {
@@ -366,7 +365,7 @@ class BestillingServiceTest :
 
             val updatedBatches: List<Bestillingsbatch> = tx(DBTestUtils::getAllBestillingsbatch)
             val bestillingsAfter: List<Bestilling> = tx(DBTestUtils::getAllBestilling)
-            val person: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
+            val person: Person = tx { PersonRepository.findById(it, PersonId(1L)) }
 
             assertSoftly {
                 bestillingsAfter shouldNotBeNull {
@@ -460,7 +459,7 @@ class BestillingServiceTest :
             val bestillingsbatchList = tx(DBTestUtils::getAllBestillingsbatch)
             val audit: List<Audit> = tx { AuditRepository.getAuditByPersonId(it, PersonId(1L)) }
             val bestillingListAfter = tx(DBTestUtils::getAllBestilling)
-            val person: Person = tx { PersonRepository.findPersonById(it, PersonId(1L)) }
+            val person: Person = tx { PersonRepository.findById(it, PersonId(1L)) }
             val skattekortDataList = tx { SkattekortDataRepository.getUnprocessedSkattekortData(it) }
 
             assertSoftly {

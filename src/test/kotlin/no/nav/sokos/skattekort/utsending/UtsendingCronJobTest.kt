@@ -17,16 +17,20 @@ import no.nav.sokos.skattekort.person.Audit
 import no.nav.sokos.skattekort.person.AuditService
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
+import no.nav.sokos.skattekort.utsending.mq.JmsProducerService
 
 class UtsendingCronJobTest :
     FunSpec(
         {
             extensions(listOf(MQListener, DbListener))
             val utsendingDareClientService = mockk<UtsendingDareClientService>()
+            val jmsProducerService: JmsProducerService by lazy {
+                JmsProducerService(MQListener.connectionFactory)
+            }
             val uut =
                 UtsendingService(
                     DbListener.dataSource,
-                    MQListener.connectionFactory,
+                    jmsProducerService,
                     MQListener.utsendingsQueue,
                     MQListener.utsendingStorQueue,
                     UnleashIntegration(),

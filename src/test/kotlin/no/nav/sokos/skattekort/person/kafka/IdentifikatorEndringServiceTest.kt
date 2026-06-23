@@ -17,7 +17,6 @@ import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.Person
 import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.person.PersonService
-import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.DBTestUtils
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
@@ -49,12 +48,12 @@ class IdentifikatorEndringServiceTest :
             wiremockPDLStub(pdlResponse)
 
             val hendelse = getPersonHendelseMockData()
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
+            val fnr = hendelse.folkeregisteridentifikator!!.identifikasjonsnummer
 
             identifikatorEndringService.processIdentifikatorEndring(hendelse)
             DbListener.dataSource.transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, personidentifikator)!!
-                person.foedselsnummer.fnr shouldBe personidentifikator
+                val person = PersonRepository.findAllByFnr(tx, fnr).first()
+                person.foedselsnummer.fnr.value shouldBe fnr
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
                 withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
@@ -75,12 +74,12 @@ class IdentifikatorEndringServiceTest :
                 getPersonHendelseMockData().copy(
                     endringstype = EndringstypeDTO.KORRIGERT,
                 )
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
+            val fnr = hendelse.folkeregisteridentifikator!!.identifikasjonsnummer
 
             identifikatorEndringService.processIdentifikatorEndring(hendelse)
             DbListener.dataSource.transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, personidentifikator)!!
-                person.foedselsnummer.fnr shouldBe personidentifikator
+                val person = PersonRepository.findAllByFnr(tx, fnr).first()
+                person.foedselsnummer.fnr.value shouldBe fnr
 
                 val auditList = AuditRepository.getAuditByPersonId(tx, person.id!!)
                 withClue("Skal ha 3 audit meldinger") { auditList.size shouldBe 3 }
@@ -98,11 +97,10 @@ class IdentifikatorEndringServiceTest :
                 getPersonHendelseMockData().copy(
                     endringstype = EndringstypeDTO.OPPHOERT,
                 )
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
 
             identifikatorEndringService.processIdentifikatorEndring(hendelse)
             DbListener.dataSource.transaction { tx ->
-                PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                PersonRepository.findAllByFnr(tx, hendelse.folkeregisteridentifikator!!.identifikasjonsnummer) shouldBe emptyList()
             }
         }
 
@@ -113,11 +111,10 @@ class IdentifikatorEndringServiceTest :
             wiremockPDLStub(pdlResponse)
 
             val hendelse = getPersonHendelseMockData()
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
 
             identifikatorEndringService.processIdentifikatorEndring(hendelse)
             DbListener.dataSource.transaction { tx ->
-                PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                PersonRepository.findAllByFnr(tx, hendelse.folkeregisteridentifikator!!.identifikasjonsnummer) shouldBe emptyList()
             }
         }
 
@@ -128,11 +125,10 @@ class IdentifikatorEndringServiceTest :
                 getPersonHendelseMockData().copy(
                     opplysningstype = "ANNEN_IDENTIFIKATOR",
                 )
-            val personidentifikator = Personidentifikator(hendelse.folkeregisteridentifikator!!.identifikasjonsnummer)
 
             identifikatorEndringService.processIdentifikatorEndring(hendelse)
             DbListener.dataSource.transaction { tx ->
-                PersonRepository.findPersonByFnr(tx, personidentifikator) shouldBe null
+                PersonRepository.findAllByFnr(tx, hendelse.folkeregisteridentifikator!!.identifikasjonsnummer) shouldBe emptyList()
             }
         }
     })

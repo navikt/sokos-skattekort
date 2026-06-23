@@ -12,13 +12,15 @@ private val logger = KotlinLogging.logger {}
 
 open class JmsProducerService(
     connectionFactory: ConnectionFactory,
-    private val senderQueue: Queue,
-    private val metricCounter: Counter,
 ) {
     private val jmsContext: JMSContext = connectionFactory.createContext()
     private val producer: JMSProducer = jmsContext.createProducer()
 
-    open fun send(payload: List<String>) {
+    open fun send(
+        payload: List<String>,
+        senderQueue: Queue,
+        metricCounter: Counter,
+    ) {
         jmsContext.createContext(SESSION_TRANSACTED).use { context ->
             val messages =
                 payload.map {
@@ -37,6 +39,7 @@ open class JmsProducerService(
             }.onFailure { exception ->
                 context.rollback()
                 logger.error(exception) { "MQ-transaksjon rolled back" }
+                throw exception
             }
         }
     }

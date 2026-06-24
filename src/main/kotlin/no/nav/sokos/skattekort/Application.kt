@@ -49,6 +49,7 @@ import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.util.launchBackgroundTask
 import no.nav.sokos.skattekort.utsending.UtsendingService
+import no.nav.sokos.skattekort.utsending.mq.JmsProducerService
 
 const val FORESPORSEL_QUEUE = "forespoerselQueue"
 const val FORESPORSEL_BOQ_QUEUE = "forespoerselBoqQueue"
@@ -135,6 +136,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide(TilgangsmaskinClientService::class)
         provide(IdentifikatorEndringService::class)
         provide(MetricsService::class)
+        provide(JmsProducerService::class)
         // SOKOS-DARE-POC skal kun brukes i test.
         if (!PropertiesConfig.isProd) {
             provide(UtsendingDareClientService::class)

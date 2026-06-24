@@ -3,6 +3,8 @@ package no.nav.sokos.skattekort.skattekortbestilling.status
 import javax.sql.DataSource
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
+import no.nav.sokos.skattekort.forespoersel.Abonnement
+import no.nav.sokos.skattekort.forespoersel.AbonnementRepository
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.Person
@@ -30,20 +32,19 @@ class StatusRegelsett(
 ) {
     val regler =
         listOf(
-            UgyldigFnrForDetteMiljoeRegel(),
-            KanIkkeBestilleFraSkatteetatenForKunstigFnrRegel(),
-            IkkeForespurtRegel(),
-            IkkeBestiltRegel(),
-            BestiltRegel(),
-            BestillingFeiletRegel(),
-            SkattekortManglerRegel(),
-            UgyldigForsystemRegel(),
-            VenterPaaUtsendingRegel(),
-            SendtForsystemRegel(),
+            UgyldigFnrForDetteMiljoeRegel,
+            UgyldigForsystemRegel,
+            UkjentPersonRegel,
+            BestiltOgVenterPaaBatchRegel,
+            SendtBestillingRegel,
+            BestillingFeiletRegel,
+            VenterPaaUtsendingRegel,
+            AbonnererRegel,
+            AbonnererIkkeRegel,
         )
 
     fun evaluate(
-        fnr: String,
+        fnr: Personidentifikator,
         aar: Int,
         forsystem: String,
     ): Status {
@@ -53,49 +54,13 @@ class StatusRegelsett(
     }
 }
 
-class UgyldigFnrForDetteMiljoeRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr).erGyldig(ctx.fnr)
+private object UgyldigFnrForDetteMiljoeRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr).erGyldig(ctx.fnr.value)
 
     override fun status(): Status = Status.UGYLDIG_FNR
 }
 
-class KanIkkeBestilleFraSkatteetatenForKunstigFnrRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = !Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr).kanBestilleSkattekort(ctx.fnr)
-
-    override fun status(): Status = Status.KUNSTIG_FNR
-}
-
-class IkkeForespurtRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = (ctx.person == null)
-
-    override fun status(): Status = Status.IKKE_FORESPURT
-}
-
-class IkkeBestiltRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = ctx.bestilling != null && ctx.bestilling?.bestillingsbatchId == null
-
-    override fun status(): Status = Status.IKKE_BESTILT
-}
-
-class BestiltRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = ctx.bestillingsbatch?.status == BestillingsbatchStatus.NY
-
-    override fun status(): Status = Status.BESTILT
-}
-
-class BestillingFeiletRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = ctx.bestillingsbatch?.status == BestillingsbatchStatus.FEILET
-
-    override fun status(): Status = Status.FEILET_I_BESTILLING
-}
-
-class SkattekortManglerRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = ctx.skattekort.isEmpty()
-
-    override fun status(): Status = Status.IKKE_FORESPURT
-}
-
-class UgyldigForsystemRegel : Regel {
+private object UgyldigForsystemRegel : Regel {
     override fun applies(ctx: StatusContext): Boolean {
         try {
             Forsystem.fromValue(ctx.forsystem)
@@ -108,27 +73,57 @@ class UgyldigForsystemRegel : Regel {
     override fun status(): Status = Status.UGYLDIG_FORSYSTEM
 }
 
-class VenterPaaUtsendingRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = ctx.utsending != null
+private object UkjentPersonRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = (ctx.person == null)
 
-    override fun status(): Status = Status.VENTER_PAA_UTSENDING
+    override fun status(): Status = Status.IKKE_FORESPURT
 }
 
-class SendtForsystemRegel : Regel {
-    override fun applies(ctx: StatusContext): Boolean = ctx.utsending == null
+private object BestiltOgVenterPaaBatchRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = ctx.bestilling != null && ctx.bestilling?.bestillingsbatchId == null
 
-    override fun status(): Status = Status.SENDT_FORSYSTEM
+    override fun status(): Status = Status.IKKE_BESTILT
+}
+
+private object SendtBestillingRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = ctx.bestillingsbatch?.status == BestillingsbatchStatus.NY
+
+    override fun status(): Status = Status.BESTILT
+}
+
+private object BestillingFeiletRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = ctx.bestillingsbatch?.status == BestillingsbatchStatus.FEILET
+
+    override fun status(): Status = Status.FEILET_I_BESTILLING
+}
+
+private object VenterPaaUtsendingRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = ctx.utsending != null
+
+    override fun status(): Status = Status.VENTER_UTSENDING
+}
+
+private object AbonnererRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = ctx.abonnement.isNotEmpty()
+
+    override fun status(): Status = Status.ABONNERER
+}
+
+private object AbonnererIkkeRegel : Regel {
+    override fun applies(ctx: StatusContext): Boolean = ctx.abonnement.isEmpty()
+
+    override fun status(): Status = Status.ABONNERER_IKKE
 }
 
 class StatusContext(
-    val fnr: String,
+    val fnr: Personidentifikator,
     val aar: Int,
     val forsystem: String,
     private val dataSource: DataSource,
 ) {
     val person: Person? by lazy {
         dataSource.transaction { tx ->
-            PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr))
+            PersonRepository.findPersonByFnr(tx, fnr)
         }
     }
 
@@ -155,7 +150,13 @@ class StatusContext(
 
     val utsending: Utsending? by lazy {
         dataSource.transaction { tx ->
-            UtsendingRepository.findByPersonIdAndInntektsaar(tx, Personidentifikator(fnr), aar, Forsystem.fromValue(forsystem))
+            UtsendingRepository.findByPersonIdAndInntektsaar(tx, fnr, aar, Forsystem.fromValue(forsystem))
+        }
+    }
+
+    val abonnement: List<Abonnement> by lazy {
+        dataSource.transaction { tx ->
+            AbonnementRepository.abonnementsForFnrAndInntektsaar(tx, fnr, forsystem = Forsystem.fromValue(forsystem), inntektsaar = aar)
         }
     }
 }

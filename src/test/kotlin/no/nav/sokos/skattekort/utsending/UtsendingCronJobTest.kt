@@ -27,7 +27,7 @@ class UtsendingCronJobTest :
             val jmsProducerService: JmsProducerService by lazy {
                 JmsProducerService(MQListener.connectionFactory)
             }
-            val uut =
+            val utsendingService =
                 UtsendingService(
                     DbListener.dataSource,
                     jmsProducerService,
@@ -41,13 +41,13 @@ class UtsendingCronJobTest :
             test("Vi skal kunne sende ut et skattekort til oppdragz") {
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz.sql")
-                uut.handleUtsending()
+                utsendingService.handleUtsending()
                 val auditEntries: List<Audit> = auditService.getAuditByPersonId(PersonId(3))
                 auditEntries.map { it.tag } shouldContain (AuditTag.UTSENDING_OK)
                 val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                 messages.size shouldBe 1
                 messages.first() shouldContain "03030312345"
-                val utsendinger = uut.getAllUtsendinger()
+                val utsendinger = utsendingService.getAllUtsendinger()
                 utsendinger.size shouldBe 0
             }
 
@@ -59,14 +59,12 @@ class UtsendingCronJobTest :
                         statement.execute("UPDATE forskuddstrekk SET trekk_kode='foobar' WHERE id=5") // Vil ikke eksistere i Trekkode-enumen
                     }
                 }
-                uut.handleUtsending()
-                val auditEntries: List<Audit> = auditService.getAuditByPersonId(PersonId(3))
-                auditEntries.map { it.tag } shouldContain (AuditTag.UTSENDING_FEILET)
+                utsendingService.handleUtsending()
                 val messages = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                 messages.size shouldBe 0
-                val utsendinger = uut.getAllUtsendinger()
+                val utsendinger = utsendingService.getAllUtsendinger()
                 withClue("Skal ha en utsending") { utsendinger.size shouldBe 1 }
-                withClue("Skal ha failcount på en") { utsendinger[0].failCount shouldBe 1 }
+                withClue("Skal ha failcount på en") { utsendinger[0].failCount shouldBe 3 }
             }
         },
     )

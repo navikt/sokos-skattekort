@@ -57,16 +57,20 @@ object UtsendingRepository {
     fun getAllUtsendinger(
         tx: TransactionalSession,
         limit: Int? = null,
+        fail_count: Int = 3,
     ): List<Utsending> {
         // language=SQL
         val sql =
             """
-            SELECT * FROM utsendinger where fail_count <= 3 ORDER BY id, fail_count ${if (limit != null) "LIMIT :limit" else ""}  
+            SELECT * FROM utsendinger WHERE (:failCount = 0 OR fail_count < :failCount) ORDER BY id, fail_count LIMIT NULLIF(:limit, 0)  
             """.trimIndent()
         return tx.list(
             queryOf(
                 sql,
-                if (limit != null) mapOf("limit" to limit) else emptyMap(),
+                mapOf(
+                    "limit" to (limit ?: 0),
+                    "failCount" to fail_count,
+                ),
             ),
             extractor = { row -> Utsending(row) },
         )

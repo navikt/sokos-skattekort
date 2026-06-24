@@ -6,15 +6,15 @@
 block-beta
     columns 7
     space space hent("hent-skattekort") space space space space
-    space space bestilling space space space space
-    space space space space applikasjon space space
+    space space forespørsel space space space space
+    space space space space sokosskattekort("sokos-skattekort") space space
     space space space space space space OS("OppdragZ")
     space space space space db[("Database")] space space
-    OS_inn --> bestilling
-    space bestilling --> applikasjon
-    space applikasjon --> OS
-    space applikasjon --> db
-    hent --> applikasjon
+    OS_inn_JMS --> forespørsel
+    space forespørsel --> sokosskattekort
+    space sokosskattekort --> OS
+    space sokosskattekort --> db
+    hent --> sokosskattekort
 
 ```
 

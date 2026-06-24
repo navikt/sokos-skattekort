@@ -93,6 +93,41 @@ object AbonnementRepository {
         )
     }
 
+    fun abonnementsForFnrAndInntektsaar(
+        tx: TransactionalSession,
+        fnr: Personidentifikator,
+        forsystem: Forsystem,
+        inntektsaar: Int,
+    ): List<Abonnement> {
+        // language=SQL
+        val sql =
+            """
+            SELECT fs.id, fs.forespoersel_id, f.forsystem, f.opprettet, fs.inntektsaar, p.id AS person_id, p.flagget, pf.id AS person_fnr_id, pf.fnr, pf.gjelder_fom
+            FROM abonnementer fs
+            LEFT JOIN forespoersler f ON f.id = fs.forespoersel_id
+            LEFT JOIN personer p ON p.id = fs.person_id
+            LEFT JOIN LATERAL (
+               SELECT id, gjelder_fom, fnr
+               FROM foedselsnumre
+               WHERE person_id = p.id
+               ORDER BY gjelder_fom DESC, id DESC
+               LIMIT 1
+            ) pf ON TRUE
+            WHERE pf.fnr = :fnr AND fs.inntektsaar = :inntektsaar AND f.forsystem = :forsystem
+            """.trimIndent()
+        return tx.list(
+            queryOf(
+                sql,
+                mapOf(
+                    "fnr" to fnr.value,
+                    "forsystem" to forsystem.value,
+                    "inntektsaar" to inntektsaar,
+                ),
+            ),
+            mapToAbonnement,
+        )
+    }
+
     private val mapToAbonnement: (Row) -> Abonnement = { row ->
         Abonnement(
             id = AbonnementId(row.long("id")),

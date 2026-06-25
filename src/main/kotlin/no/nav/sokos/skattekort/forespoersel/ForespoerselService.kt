@@ -15,6 +15,7 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar
+import no.nav.sokos.skattekort.skattekort.Skattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
@@ -133,7 +134,7 @@ class ForespoerselService(
         forsystem: Forsystem,
         foedselsnumreWithPersonIdList: List<Pair<String, PersonId>>,
     ): Pair<BestillingCount, UtsendingCount> {
-        val skattekortPersonIds =
+        val skattekortByPersonId =
             foedselsnumreWithPersonIdList
                 .chunked(CHUNKED_SIZE)
                 .flatMap { chunk ->
@@ -143,10 +144,20 @@ class ForespoerselService(
                             personIdList = chunk.map { it.second },
                             inntektsaarList = listOf(inntektsaar),
                             showOnlyLatest = true,
-                        ).map { it.personId }
-                }.toSet()
+                        )
+                }.associateBy(Skattekort::personId)
 
-        val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
+        val (personIdWithSkattekort, personIdWithoutSkattekort) =
+            foedselsnumreWithPersonIdList.fold(
+                Pair(
+                    mutableListOf<Pair<String, Skattekort>>(),
+                    mutableListOf<Pair<String, PersonId>>(),
+                ),
+            ) { (found, missing), (key, personId) ->
+                skattekortByPersonId[personId]?.let { found += key to it } ?: run { missing += key to personId }
+                found to missing
+            }
+
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         val kanBestilles = personIdWithoutSkattekort.filter { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
 
@@ -172,8 +183,8 @@ class ForespoerselService(
                     .insertBatch(
                         tx,
                         utsendingList =
-                            chunk.map { (fnr, _) ->
-                                Utsending(null, Personidentifikator(fnr), inntektsaar, forsystem)
+                            chunk.map { (fnr, skattekort) ->
+                                Utsending(Personidentifikator(fnr), inntektsaar, forsystem, skattekort.id!!)
                             },
                     )
             }
@@ -203,4 +214,9 @@ class ForespoerselService(
             fnrList = parts.drop(2),
         )
     }
+
+    private data class Result(
+        val found: List<Pair<String, Skattekort>>,
+        val missing: List<Pair<String, PersonId>>,
+    )
 }

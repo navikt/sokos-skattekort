@@ -15,8 +15,8 @@ object UtsendingRepository {
         // language=SQL
         val sql =
             """
-            INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
-            VALUES (:fnr, :inntektsaar, :forsystem)
+            INSERT INTO utsendinger (fnr, inntektsaar, forsystem, skattekort_id)
+            VALUES (:fnr, :inntektsaar, :forsystem, :skattekortId)
             ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
             """.trimIndent()
         tx.batchPreparedNamedStatement(
@@ -26,6 +26,7 @@ object UtsendingRepository {
                     "fnr" to utsending.fnr.value,
                     "inntektsaar" to utsending.inntektsaar,
                     "forsystem" to utsending.forsystem.value,
+                    "skattekortId" to utsending.skattekortId.value,
                 )
             },
         )
@@ -109,7 +110,7 @@ object UtsendingRepository {
         // language=SQL
         val sql =
             """
-            SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger
+            SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message, skattekort_id FROM utsendinger
             WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
             """.trimIndent()
         return tx.single(

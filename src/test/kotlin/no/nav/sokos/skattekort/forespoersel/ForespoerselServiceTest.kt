@@ -29,6 +29,7 @@ import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
+import no.nav.sokos.skattekort.skattekort.SkattekortId
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
@@ -299,7 +300,13 @@ class ForespoerselServiceTest :
                         size shouldBe 1
                         shouldContainAllIgnoringFields(
                             listOf(
-                                Utsending(UtsendingId(1), Personidentifikator("01010112345"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                                Utsending(
+                                    id = UtsendingId(1),
+                                    fnr = Personidentifikator("01010112345"),
+                                    inntektsaar = 2025,
+                                    forsystem = Forsystem.OPPDRAGSSYSTEMET,
+                                    skattekortId = SkattekortId(1),
+                                ),
                             ),
                             Utsending::opprettet,
                         )

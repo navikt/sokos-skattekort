@@ -3,6 +3,7 @@ package no.nav.sokos.skattekort.skattekortbestilling.status
 import javax.sql.DataSource
 
 import no.nav.sokos.skattekort.api.model.DetailStatus
+import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
@@ -14,16 +15,16 @@ class StatusService(
     private val tilgangsmaskinClientService: TilgangsmaskinClientService,
 ) {
     suspend fun statusForespoeresel(
-        fnr: String,
+        fnr: Personidentifikator,
         aar: Int,
-        forsystem: String,
+        forsystem: Forsystem,
         saksbehandler: Saksbehandler,
     ): Status {
-        if (tilgangsmaskinClientService.checkSaksbehandlerAccess(saksbehandler.ident, fnr) != null) {
+        if (tilgangsmaskinClientService.checkSaksbehandlerAccess(saksbehandler.ident, fnr.value) != null) {
             return Status.SKJERMET
         }
 
-        return StatusRegelsett(dataSource).evaluate(fnr, aar, forsystem)
+        return StatusRegelsett(dataSource).evaluate(fnr, aar, forsystem.value)
     }
 
     fun statusForespoersler(fnr: Collection<Personidentifikator>): Map<String, DetailStatus> =

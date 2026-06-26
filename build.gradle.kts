@@ -49,10 +49,10 @@ val testcontainersVersion = "1.21.4"
 val flywayVersion = "12.5.0"
 val postgresVersion = "42.7.11"
 val activemqVersion = "2.53.0"
-val ibmmqVersion = "9.4.5.0"
-val opentelemetryVersion = "2.27.0-alpha"
-val swaggerRequestValidatorVersion = "2.46.1"
-val kafkaClientsVersion = "8.1.1-ce"
+val ibmmqVersion = "9.4.5.1"
+val opentelemetryVersion = "2.29.0-alpha"
+val swaggerRequestValidatorVersion = "3.0.0"
+val kafkaClientsVersion = "4.3.0"
 val avroVersion = "1.12.1"
 val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
@@ -165,10 +165,6 @@ configurations.all {
             if (requested.group == "io.netty") {
                 useVersion("4.2.15.Final")
                 because("Netty CVE remediation: CVE-2026-45536, CVE-2026-42577, CVE-2026-47244 and CVE-2026-48043")
-            }
-            if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
-                useVersion("1.84")
-                because("Bouncy Castle Has Covert Timing Channel Vulnerability. Affected version >= 1.71, < 1.84")
             }
         }
     }

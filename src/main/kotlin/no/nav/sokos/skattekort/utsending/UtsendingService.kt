@@ -54,7 +54,7 @@ class UtsendingService(
                     val personIdMap =
                         dataSource.transaction { tx ->
                             PersonRepository
-                                .findAllByFnr(tx, fnr = utsendingList.map { it.fnr.value }.toTypedArray())
+                                .findAllByFnr(tx, *utsendingList.map { it.fnr.value }.toTypedArray())
                                 .associate { person -> person.id!! to person.foedselsnummer }
                         }
 
@@ -84,7 +84,7 @@ class UtsendingService(
             runBlocking {
                 val skattekortList =
                     dataSource.transaction { tx ->
-                        SkattekortRepository.getAllById(tx, id = utsendingList.map { it.skattekortId.value }.toLongArray())
+                        SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray())
                     }
                 skattekortList.forEach { skattekort ->
                     val personidentifikator = personIdMap[skattekort.personId]!!.fnr
@@ -116,7 +116,7 @@ class UtsendingService(
         runCatching {
             dataSource.transaction { tx ->
                 val personIdList = personIdMap.keys.toList()
-                val skattekortList = SkattekortRepository.getAllById(tx, id = utsendingList.map { it.skattekortId.value }.toLongArray())
+                val skattekortList = SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray())
                 val payloadList = skattekortList.map { skattekort -> SkattekortFixedRecordFormatter(skattekort, personIdMap[skattekort.personId]!!.fnr.value).format() }
                 val queue =
                     when (forsystem) {

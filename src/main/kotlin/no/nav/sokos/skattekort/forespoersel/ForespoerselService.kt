@@ -214,9 +214,4 @@ class ForespoerselService(
             fnrList = parts.drop(2),
         )
     }
-
-    private data class Result(
-        val found: List<Pair<String, Skattekort>>,
-        val missing: List<Pair<String, PersonId>>,
-    )
 }

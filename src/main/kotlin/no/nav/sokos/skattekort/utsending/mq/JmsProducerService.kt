@@ -1,6 +1,5 @@
 package no.nav.sokos.skattekort.utsending.mq
 
-import com.ibm.msg.client.jakarta.jms.JmsConstants.SESSION_TRANSACTED
 import io.prometheus.metrics.core.metrics.Counter
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSContext

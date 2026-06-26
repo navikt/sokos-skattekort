@@ -50,7 +50,7 @@ object UtsendingRepository {
         return tx.update(
             queryOf(
                 sql,
-                idList.mapIndexed { index, id -> "id$index" to id }.toMap(),
+                idList.mapIndexed { index, id -> "id$index" to id.value }.toMap(),
             ),
         )
     }

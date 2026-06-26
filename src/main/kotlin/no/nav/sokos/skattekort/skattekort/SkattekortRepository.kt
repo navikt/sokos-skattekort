@@ -108,6 +108,53 @@ object SkattekortRepository {
         return id ?: error("Failed to insert skattekort record")
     }
 
+    fun getAllById(
+        tx: TransactionalSession,
+        vararg id: Long,
+        adminRole: Boolean = false,
+    ): List<Skattekort> {
+        val idParamList = List(id.size) { idx -> ":id$idx" }.joinToString(", ")
+        val paramMap = id.mapIndexed { idx, i -> "id$idx" to i }.toMap()
+        // language=SQL
+        val sql =
+            """
+            SELECT jsonb_build_object(
+                           'id', s.id,
+                           'generertFra', s.generert_fra,
+                           'personId', s.person_id,
+                           'utstedtDato', s.utstedt_dato,
+                           'identifikator', s.identifikator,
+                           'inntektsaar', s.inntektsaar,
+                           'kilde', s.kilde,
+                           'resultatForSkattekort', s.resultatForSkattekort,
+                           'opprettet', s.opprettet,
+                           'forskuddstrekkList',
+                           COALESCE(
+                                   (SELECT jsonb_agg(jsonb_build_object(
+                                           'type', f.type,
+                                           'trekkode', f.trekk_kode,
+                                           'frikortBeloep', f.frikort_beloep,
+                                           'tabellNummer', f.tabell_nummer,
+                                           'prosentSats', f.prosentsats,
+                                           'antallMndForTrekk', f.antall_mnd_for_trekk))
+                                    FROM forskuddstrekk f
+                                    WHERE f.skattekort_id = s.id),
+                                   '[]'::jsonb
+                           ),
+                           'tilleggsopplysningList',
+                           COALESCE(
+                                   (SELECT jsonb_agg(t.opplysning)
+                                    FROM skattekort_tilleggsopplysning t
+                                    WHERE t.skattekort_id = s.id),
+                                   '[]'::jsonb
+                           )
+                   ) AS skattekort_json
+            FROM skattekort s
+            WHERE s.id IN ($idParamList);
+            """.trimIndent()
+        return tx.list(queryOf(sql, paramMap)) { row -> mapToSkattekort(row, adminRole) }
+    }
+
     fun findAllByPersonId(
         tx: TransactionalSession,
         personIdList: List<PersonId>,
@@ -119,61 +166,47 @@ object SkattekortRepository {
         val inntektsaarParamList = List(inntektsaarList.size) { idx -> ":inntektsaar$idx" }.joinToString(", ")
         val paramMap = personIdList.mapIndexed { idx, pid -> "personId$idx" to pid.value }.toMap() + inntektsaarList.mapIndexed { idx, i -> "inntektsaar$idx" to i }.toMap()
         val distinctQuery = if (showOnlyLatest) "DISTINCT ON (s.person_id)" else ""
-        return tx
-            .list(
-                queryOf(
-                    """            
-                    SELECT $distinctQuery jsonb_build_object(
-                                   'id', s.id,
-                                   'generertFra', s.generert_fra,
-                                   'personId', s.person_id,
-                                   'utstedtDato', s.utstedt_dato,
-                                   'identifikator', s.identifikator,
-                                   'inntektsaar', s.inntektsaar,
-                                   'kilde', s.kilde,
-                                   'resultatForSkattekort', s.resultatForSkattekort,
-                                   'opprettet', s.opprettet,
-                                   'forskuddstrekkList',
-                                   COALESCE(
-                                           (SELECT jsonb_agg(jsonb_build_object(
-                                                   'type', f.type,
-                                                   'trekkode', f.trekk_kode,
-                                                   'frikortBeloep', f.frikort_beloep,
-                                                   'tabellNummer', f.tabell_nummer,
-                                                   'prosentSats', f.prosentsats,
-                                                   'antallMndForTrekk', f.antall_mnd_for_trekk))
-                                            FROM forskuddstrekk f
-                                            WHERE f.skattekort_id = s.id),
-                                           '[]'::jsonb
-                                   ),
-                                   'tilleggsopplysningList',
-                                   COALESCE(
-                                           (SELECT jsonb_agg(t.opplysning)
-                                            FROM skattekort_tilleggsopplysning t
-                                            WHERE t.skattekort_id = s.id),
-                                           '[]'::jsonb
-                                   )
-                           ) AS skattekort_json
-                    FROM skattekort s
-                    WHERE s.person_id IN ($personIdParamList)
-                      AND s.inntektsaar IN ($inntektsaarParamList)
-                    ORDER BY s.person_id, s.opprettet DESC, s.id DESC;            
-                    """.trimIndent(),
-                    paramMap,
-                ),
-            ) { row -> Json.decodeFromString<SkattekortJson>(row.string("skattekort_json")).toDomain() }
-            .let { skattekortList ->
-                if (adminRole) {
-                    skattekortList
-                } else {
-                    skattekortList.map { skattekort ->
-                        skattekort.copy(
-                            forskuddstrekkList = skattekort.forskuddstrekkList.filter { !it.requiresAdminRole() },
-                            tilleggsopplysningList = skattekort.tilleggsopplysningList.filter { !it.requiresAdminRole },
-                        )
-                    }
-                }
-            }
+
+        // language=SQL
+        val sql =
+            """            
+            SELECT $distinctQuery jsonb_build_object(
+                           'id', s.id,
+                           'generertFra', s.generert_fra,
+                           'personId', s.person_id,
+                           'utstedtDato', s.utstedt_dato,
+                           'identifikator', s.identifikator,
+                           'inntektsaar', s.inntektsaar,
+                           'kilde', s.kilde,
+                           'resultatForSkattekort', s.resultatForSkattekort,
+                           'opprettet', s.opprettet,
+                           'forskuddstrekkList',
+                           COALESCE(
+                                   (SELECT jsonb_agg(jsonb_build_object(
+                                           'type', f.type,
+                                           'trekkode', f.trekk_kode,
+                                           'frikortBeloep', f.frikort_beloep,
+                                           'tabellNummer', f.tabell_nummer,
+                                           'prosentSats', f.prosentsats,
+                                           'antallMndForTrekk', f.antall_mnd_for_trekk))
+                                    FROM forskuddstrekk f
+                                    WHERE f.skattekort_id = s.id),
+                                   '[]'::jsonb
+                           ),
+                           'tilleggsopplysningList',
+                           COALESCE(
+                                   (SELECT jsonb_agg(t.opplysning)
+                                    FROM skattekort_tilleggsopplysning t
+                                    WHERE t.skattekort_id = s.id),
+                                   '[]'::jsonb
+                           )
+                   ) AS skattekort_json
+            FROM skattekort s
+            WHERE s.person_id IN ($personIdParamList)
+              AND s.inntektsaar IN ($inntektsaarParamList)
+            ORDER BY s.person_id, s.opprettet DESC, s.id DESC;            
+            """.trimIndent()
+        return tx.list(queryOf(sql, paramMap)) { row -> mapToSkattekort(row, adminRole) }
     }
 
     fun getAllIdByInntektsaar(
@@ -358,5 +391,17 @@ object SkattekortRepository {
             skattekortThisYear = row.boolean("skattekort_this_year"),
             skattekortNextYear = row.boolean("skattekort_next_year"),
         )
+    }
+
+    private val mapToSkattekort: (Row, Boolean) -> Skattekort = { row, adminRole ->
+        val skattekort = Json.decodeFromString<SkattekortJson>(row.string("skattekort_json")).toDomain()
+        if (adminRole) {
+            skattekort
+        } else {
+            skattekort.copy(
+                forskuddstrekkList = skattekort.forskuddstrekkList.filter { !it.requiresAdminRole() },
+                tilleggsopplysningList = skattekort.tilleggsopplysningList.filter { !it.requiresAdminRole },
+            )
+        }
     }
 }

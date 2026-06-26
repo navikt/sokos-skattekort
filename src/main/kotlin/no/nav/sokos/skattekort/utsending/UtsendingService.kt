@@ -51,7 +51,6 @@ class UtsendingService(
                 )
 
                 utsendingMap.forEach { (forsystem, utsendingList) ->
-                    val inntektsaar = utsendingList.first().inntektsaar
                     val personIdMap =
                         dataSource.transaction { tx ->
                             PersonRepository
@@ -60,32 +59,33 @@ class UtsendingService(
                         }
 
                     when (forsystem) {
-                        Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> utsendingTilOppdragZ(forsystem, inntektsaar, personIdMap, utsendingList)
+                        Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> utsendingTilOppdragZ(forsystem, personIdMap, utsendingList)
                         Forsystem.MANUELL -> dataSource.transaction { tx -> UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! }) }
                         Forsystem.DARE_POC -> {
                             if (utsendingDareClientService == null) {
                                 logger.error { "UtsendingDareClientService ikke tilgjengelig i prod" }
                                 return@forEach
                             }
-                            utsendingTilDarePoc(inntektsaar, personIdMap, utsendingList)
+                            utsendingTilDarePoc(personIdMap, utsendingList)
                         }
                     }
                 }
             }
         }.onFailure { exception ->
-            logger.error(exception) { "Feil under utSending til " }
+            logger.error(exception) { "Feil av henting data under utSending" }
         }
     }
 
     private fun utsendingTilDarePoc(
-        inntektsaar: Int,
         personIdMap: Map<PersonId, Foedselsnummer>,
         utsendingList: List<Utsending>,
     ) {
         runCatching {
-            val personIdList = personIdMap.keys.toList()
-            val skattekortList = dataSource.transaction { tx -> SkattekortRepository.findAllByPersonId(tx, personIdList, listOf(inntektsaar), showOnlyLatest = true, adminRole = false) }
             runBlocking {
+                val skattekortList =
+                    dataSource.transaction { tx ->
+                        SkattekortRepository.getAllById(tx, id = utsendingList.map { it.skattekortId.value }.toLongArray())
+                    }
                 skattekortList.forEach { skattekort ->
                     val personidentifikator = personIdMap[skattekort.personId]!!.fnr
 
@@ -110,14 +110,13 @@ class UtsendingService(
 
     private fun utsendingTilOppdragZ(
         forsystem: Forsystem,
-        inntektsaar: Int,
         personIdMap: Map<PersonId, Foedselsnummer>,
         utsendingList: List<Utsending>,
     ) {
         runCatching {
             dataSource.transaction { tx ->
                 val personIdList = personIdMap.keys.toList()
-                val skattekortList = SkattekortRepository.findAllByPersonId(tx, personIdList, listOf(inntektsaar), showOnlyLatest = true, adminRole = false)
+                val skattekortList = SkattekortRepository.getAllById(tx, id = utsendingList.map { it.skattekortId.value }.toLongArray())
                 val payloadList = skattekortList.map { skattekort -> SkattekortFixedRecordFormatter(skattekort, personIdMap[skattekort.personId]!!.fnr.value).format() }
                 val queue =
                     when (forsystem) {

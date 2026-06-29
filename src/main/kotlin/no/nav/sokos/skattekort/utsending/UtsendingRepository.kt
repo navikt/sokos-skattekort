@@ -41,6 +41,7 @@ object UtsendingRepository {
         tx: TransactionalSession,
         idList: List<UtsendingId>,
     ): Int {
+        if (idList.isEmpty()) return 0
         val idParamList = List(idList.size) { index -> ":id$index" }.joinToString(", ")
         // language=SQL
         val sql =

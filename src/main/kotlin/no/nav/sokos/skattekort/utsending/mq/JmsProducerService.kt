@@ -18,7 +18,7 @@ open class JmsProducerService(
     ) {
         connectionFactory.createContext(JMSContext.SESSION_TRANSACTED).use { context ->
             val producer = context.createProducer()
-            val messages = payload.map { context.createTextMessage(truncate(it)) }
+            val messages = payload.map { context.createTextMessage(it) }
             runCatching {
                 messages.forEach { message ->
                     producer.send(senderQueue, message)
@@ -34,6 +34,4 @@ open class JmsProducerService(
             }
         }
     }
-
-    private fun truncate(msg: String): String = msg.replace(Regex(">\\s+<"), "><")
 }

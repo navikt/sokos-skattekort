@@ -58,7 +58,7 @@ object UtsendingRepository {
     fun getAllUtsendinger(
         tx: TransactionalSession,
         limit: Int? = null,
-        fail_count: Int = 3,
+        failCount: Int = 3,
     ): List<Utsending> {
         // language=SQL
         val sql =
@@ -70,7 +70,7 @@ object UtsendingRepository {
                 sql,
                 mapOf(
                     "limit" to (limit ?: 0),
-                    "failCount" to fail_count,
+                    "failCount" to failCount,
                 ),
             ),
             extractor = { row -> Utsending(row) },

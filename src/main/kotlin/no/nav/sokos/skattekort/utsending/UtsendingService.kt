@@ -72,7 +72,7 @@ class UtsendingService(
                 }
             }
         }.onFailure { exception ->
-            logger.error(exception) { "Feil av henting data under utSending" }
+            logger.error(exception) { "Feil av henting data under utsending" }
         }
     }
 
@@ -124,7 +124,7 @@ class UtsendingService(
                         else -> leveransekoeOppdragZSkattekortStor
                     }
                 jmsProducerService.send(payloadList, queue, utsendingOppdragzCounter)
-                AuditRepository.insertBatch(tx, AuditTag.UTSENDING_OK, personIdList, "Oppdragz: Skattekort sendt til $queue")
+                AuditRepository.insertBatch(tx, AuditTag.UTSENDING_OK, personIdList, "Oppdragz: Skattekort sendt til ${queue.queueName}")
                 UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! })
 
                 // TODO: Fjern denne featureToggles
@@ -136,7 +136,7 @@ class UtsendingService(
         }
     }
 
-    fun getAllUtsendinger(): List<Utsending> = dataSource.transaction { tx -> UtsendingRepository.getAllUtsendinger(tx, fail_count = 0) }
+    fun getAllUtsendinger(): List<Utsending> = dataSource.transaction { tx -> UtsendingRepository.getAllUtsendinger(tx, failCount = 0) }
 
     private fun handleException(
         exception: Throwable,

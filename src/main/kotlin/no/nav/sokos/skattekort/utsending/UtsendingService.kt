@@ -39,7 +39,11 @@ class UtsendingService(
         if (!featureToggles.isUtsendingEnabled()) return
         runCatching {
             while (true) {
-                val utsendingMap = dataSource.transaction { UtsendingRepository.getAllUtsendinger(it, MQ_BATCH_SIZE) }.groupBy { it.forsystem }
+                val utsendingMap =
+                    dataSource
+                        .transaction { UtsendingRepository.getAllUtsendinger(it, MQ_BATCH_SIZE) }
+                        .groupBy { it.forsystem }
+                        .filterValues { it.isNotEmpty() }
                 if (utsendingMap.isEmpty()) break
 
                 utsendingerIKoe.labelValues("uhaandtert").set(utsendingMap.values.sumOf { it.size }.toDouble())

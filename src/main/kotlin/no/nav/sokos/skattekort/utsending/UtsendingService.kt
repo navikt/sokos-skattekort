@@ -2,6 +2,8 @@ package no.nav.sokos.skattekort.utsending
 
 import javax.sql.DataSource
 
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlinx.coroutines.runBlocking
 
 import io.ktor.server.plugins.di.annotations.Named
@@ -25,6 +27,9 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.mq.JmsProducerService
 import no.nav.sokos.skattekort.utsending.oppdragz.SkattekortFixedRecordFormatter
 
+private val logger = KotlinLogging.logger {}
+
+@OptIn(ExperimentalAtomicApi::class)
 class UtsendingService(
     private val dataSource: DataSource,
     private val jmsProducerService: JmsProducerService,
@@ -33,10 +38,11 @@ class UtsendingService(
     private val featureToggles: UnleashIntegration,
     private val utsendingDareClientService: UtsendingDareClientService? = null,
 ) {
-    private val logger = KotlinLogging.logger {}
+    private val totalIUtsending = AtomicInt(0)
 
     fun handleUtsending() {
         if (!featureToggles.isUtsendingEnabled()) return
+
         runCatching {
             while (true) {
                 val utsendingMap =
@@ -45,6 +51,11 @@ class UtsendingService(
                         .groupBy { it.forsystem }
                         .filterValues { it.isNotEmpty() }
                 if (utsendingMap.isEmpty()) break
+
+                if (totalIUtsending.load() == 0) {
+                    logger.info { "Starter utsending-batch" }
+                    totalIUtsending.store(0)
+                }
 
                 utsendingerIKoe.labelValues("uhaandtert").set(utsendingMap.values.sumOf { it.size }.toDouble())
                 utsendingerIKoe.labelValues("feilet").set(
@@ -73,8 +84,10 @@ class UtsendingService(
                             utsendingTilDarePoc(personIdMap, utsendingList)
                         }
                     }
+                    logger.info { "Ferdig med utsending til ${forsystem.value}. Antall behandlet: ${utsendingList.size}" }
                 }
             }
+            logger.info { "Ferdig utsending-batch. Antall behandlet i batch: ${totalIUtsending.load()}" }
         }.onFailure { exception ->
             logger.error(exception) { "Feil av henting data under utsending" }
         }

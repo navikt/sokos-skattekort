@@ -285,24 +285,26 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
-            DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+            withConstantNow(LocalDateTime.parse("2025-06-20T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-            val message = "OS;2025;01010112345"
+                val message = "OS;2025;01010112345"
 
-            forespoerselService.taImotForespoersel(message)
+                forespoerselService.taImotForespoersel(message)
 
-            DbListener.dataSource.transaction { tx ->
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                DbListener.dataSource.transaction { tx ->
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
 
-                assertSoftly {
-                    utsendingList shouldNotBeNull {
-                        size shouldBe 1
-                        shouldContainAllIgnoringFields(
-                            listOf(
-                                Utsending(UtsendingId(1), Personidentifikator("01010112345"), 2025, Forsystem.OPPDRAGSSYSTEMET),
-                            ),
-                            Utsending::opprettet,
-                        )
+                    assertSoftly {
+                        utsendingList shouldNotBeNull {
+                            size shouldBe 1
+                            shouldContainAllIgnoringFields(
+                                listOf(
+                                    Utsending(UtsendingId(1), Personidentifikator("01010112345"), 2025, Forsystem.OPPDRAGSSYSTEMET),
+                                ),
+                                Utsending::opprettet,
+                            )
+                        }
                     }
                 }
             }
@@ -360,39 +362,43 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel der bestilling allerede finnes i DB skal logge bestillingCount 0 pga ON CONFLICT DO NOTHING") {
-            DbListener.loadDataSet("database/forespoersler/forespoersel_med_bestilling.sql")
-            val fnr = "01010112345"
+            withConstantNow(LocalDateTime.parse("2025-06-20T00:00:00")) {
+                DbListener.loadDataSet("database/forespoersler/forespoersel_med_bestilling.sql")
+                val fnr = "01010112345"
 
-            DbListener.dataSource.transaction { tx ->
-                BestillingRepository
-                    .getAllBestillingsForAdmin(tx)
-                    .first()
-                    .fnr.value shouldBe fnr
+                DbListener.dataSource.transaction { tx ->
+                    BestillingRepository
+                        .getAllBestillingsForAdmin(tx)
+                        .first()
+                        .fnr.value shouldBe fnr
+                }
+                val osMessage = "OS;2025;$fnr"
+
+                forespoerselService.taImotForespoersel(osMessage)
+
+                val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
+                logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
             }
-            val osMessage = "OS;2025;$fnr"
-
-            forespoerselService.taImotForespoersel(osMessage)
-
-            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
-            logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
         }
 
         test("taImotForespoersel der utsending allerede finnes i DB skal legge utsendingCount 0 pga ON CONFLICT DO NOTHING") {
-            DbListener.loadDataSet("database/forespoersler/forespoersel_med_utsending.sql")
+            withConstantNow(LocalDateTime.parse("2025-06-20T00:00:00")) {
+                DbListener.loadDataSet("database/forespoersler/forespoersel_med_utsending.sql")
 
-            val fnr = "01010112345"
+                val fnr = "01010112345"
 
-            DbListener.dataSource.transaction { tx ->
-                UtsendingRepository
-                    .getAllUtsendinger(tx)
-                    .first()
-                    .fnr.value shouldBe fnr
+                DbListener.dataSource.transaction { tx ->
+                    UtsendingRepository
+                        .getAllUtsendinger(tx)
+                        .first()
+                        .fnr.value shouldBe fnr
+                }
+                val message = "OS;2025;$fnr"
+                forespoerselService.taImotForespoersel(message)
+
+                val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
+                logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
             }
-            val message = "OS;2025;$fnr"
-            forespoerselService.taImotForespoersel(message)
-
-            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
-            logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
         }
     })
 

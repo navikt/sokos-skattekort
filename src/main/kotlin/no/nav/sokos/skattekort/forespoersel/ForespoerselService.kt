@@ -1,6 +1,7 @@
 package no.nav.sokos.skattekort.forespoersel
 
 import java.time.LocalDate
+import java.time.LocalDateTime
 import javax.sql.DataSource
 
 import kotliquery.TransactionalSession
@@ -182,7 +183,7 @@ class ForespoerselService(
 
     private fun forSentAaBestille(inntektsaar: Int): Boolean {
         // Skatteetatens regel er at man kan bestille skattekort for året før frem til 01.07.
-        val currentDate = LocalDate.now()
+        val currentDate = LocalDateTime.now().toLocalDate()
         val currentYear = currentDate.year
         val cutoffDate = LocalDate.of(currentYear, 7, 1)
         return currentDate.isAfter(cutoffDate) && inntektsaar == currentYear - 1

@@ -9,6 +9,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
+import no.nav.sokos.skattekort.person.AUDIT_SYSTEM
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
 import no.nav.sokos.skattekort.person.PersonId
@@ -54,11 +55,6 @@ class ForespoerselService(
                     input.copy(fnrList = personService.validateFoedselsnummer(input.fnrList))
                 }
 
-            if (forSentAaBestille(forespoerselInput.inntektsaar)) {
-                logger.warn { "Vi kan ikke lenger bestille skattekort for ${forespoerselInput.inntektsaar}" }
-                return
-            }
-
             if (forespoerselInput.fnrList.isEmpty()) {
                 logger.error { "Ingen data blir lagret i forespørseler pga. ugyldig fnr" }
                 return
@@ -68,7 +64,6 @@ class ForespoerselService(
             dataSource.transaction { tx ->
                 handleForespoersel(tx, message, forespoerselInput, foedselsnumreWithPersonIdMap, saksbehandler?.ident)
                 if (forespoerselInput.forsystem == Forsystem.OPPDRAGSSYSTEMET_STOR) return@transaction
-
                 if (ReglerForInntektsaar.skalBestilleForNesteAarOgsaa(forespoerselInput.inntektsaar)) {
                     val forespoerselForNesteAar = forespoerselInput.copy(inntektsaar = forespoerselInput.inntektsaar + 1)
                     handleForespoersel(
@@ -154,7 +149,21 @@ class ForespoerselService(
 
         val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
-        val (kanBestilles) = personIdWithoutSkattekort.partition { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
+        val (kanBestilles) =
+            personIdWithoutSkattekort.partition { (fnr, _) ->
+                !forSentAaBestille(inntektsaar) && foedselsnummerkategori.kanBestilleSkattekort(fnr)
+            }
+
+        if (forSentAaBestille(inntektsaar)) {
+            logger.warn { "Vi kan ikke lenger bestille skattekort for $inntektsaar fra Skatteetaten" }
+            AuditRepository.insertBatch(
+                tx,
+                tag = AuditTag.MOTTATT_FORESPOERSEL,
+                personIdList = personIdWithoutSkattekort.map { it.second },
+                informasjon = "Vi kan ikke lenger bestille skattekort for $inntektsaar fra Skatteetaten",
+                brukerId = AUDIT_SYSTEM,
+            )
+        }
 
         val bestillingCount =
             kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->
@@ -190,7 +199,7 @@ class ForespoerselService(
         // Skatteetatens regel er at man kan bestille skattekort for året før frem til 01.07.
         val currentDate = LocalDateTime.now().toLocalDate()
         val currentYear = currentDate.year
-        val cutoffDate = LocalDate.of(currentYear, 7, 1)
+        val cutoffDate = LocalDate.of(currentYear, 6, 30)
         return currentDate.isAfter(cutoffDate) && inntektsaar == currentYear - 1
     }
 

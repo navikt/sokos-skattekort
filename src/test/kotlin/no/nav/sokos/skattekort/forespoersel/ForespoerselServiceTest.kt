@@ -9,6 +9,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
@@ -164,6 +165,49 @@ class ForespoerselServiceTest :
                         utsendingList shouldNotBeNull {
                             size shouldBe 0
                         }
+                    }
+                }
+            }
+        }
+
+        test("Forespørres fjoråret med et fnr som vi har skattekort for, skal vi opprette utsending") {
+            withConstantNow(LocalDateTime.parse("2026-07-01T00:00:01")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val osMessage = "OS;2025;01010112345"
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    abonnementList.size shouldBe 1
+                    abonnementList.first().inntektsaar shouldBe 2025
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
+                    bestillingList.size shouldBe 0
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendingList.size shouldBe 1
+                }
+            }
+        }
+        test("Forespørres fjoråret med et fnr som vi ikke har skattekort for, skal vi opprette abonnement") {
+            withConstantNow(LocalDateTime.parse("2026-07-01T00:00:01")) {
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val osMessage = "OS;2025;01010112345"
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    withClue("Vi skal opprette abonnement for 2025 selv om vi ikke kan bestille") {
+                        abonnementList.size shouldBe 1
+                        abonnementList.first().inntektsaar shouldBe 2025
+                    }
+                    withClue("Vi skal ikke opprette bestilling når vi ikke kan bestille fra Skatteetaten") {
+                        val bestillingList = DBTestUtils.getAllBestilling(tx)
+                        bestillingList.size shouldBe 0
+                    }
+                    withClue("Vi skal ikke opprette utsending når vi ikke har noe skattekort å sende ut") {
+                        val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                        utsendingList.size shouldBe 0
                     }
                 }
             }

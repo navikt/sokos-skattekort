@@ -400,6 +400,13 @@ class ForespoerselServiceTest :
                 logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
             }
         }
+
+        test("en forespørsel i ikke-støttet XML-format") {
+            val message = "<xml>ikke-stottet</xml>"
+            forespoerselService.taImotForespoersel(message)
+            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("Ikke støttet innlesningsformat") }
+            logMessage shouldBe "Ikke støttet innlesningsformat til skattekort"
+        }
     })
 
 private fun verifyData(

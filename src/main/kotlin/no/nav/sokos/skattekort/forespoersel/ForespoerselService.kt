@@ -43,7 +43,12 @@ class ForespoerselService(
 
             val forespoerselInput =
                 when {
-                    message.startsWith("<") -> return
+                    message.startsWith("<") -> {
+                        logger.error { "Ikke støttet innlesningsformat til skattekort" }
+                        logger.error(marker = TEAM_LOGS_MARKER) { "Ikke støttet innlesningsformat til skattekort: $message" }
+                        return
+                    }
+
                     else -> parseCopybookMessage(message)
                 }.let { input ->
                     input.copy(fnrList = personService.validateFoedselsnummer(input.fnrList))

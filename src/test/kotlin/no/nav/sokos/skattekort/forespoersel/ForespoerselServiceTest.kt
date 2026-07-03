@@ -205,6 +205,10 @@ class ForespoerselServiceTest :
                         val bestillingList = DBTestUtils.getAllBestilling(tx)
                         bestillingList.size shouldBe 0
                     }
+                    withClue("Vi skal ikke opprette utsending når vi ikke har noe skattekort å sende ut") {
+                        val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                        utsendingList.size shouldBe 0
+                    }
                 }
             }
         }

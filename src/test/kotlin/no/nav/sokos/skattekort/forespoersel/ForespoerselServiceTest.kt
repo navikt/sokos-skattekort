@@ -401,7 +401,7 @@ class ForespoerselServiceTest :
             }
         }
 
-        test("en foresporsel i ikke-stottet XML-format") {
+        test("en forespørsel i ikke-støttet XML-format") {
             val message = "<xml>ikke-stottet</xml>"
             forespoerselService.taImotForespoersel(message)
             val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("Ikke støttet innlesningsformat") }

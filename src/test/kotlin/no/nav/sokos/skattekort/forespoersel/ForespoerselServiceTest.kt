@@ -9,6 +9,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.time.withConstantNow
 import io.kotest.matchers.collections.shouldContainAllIgnoringFields
@@ -170,6 +171,49 @@ class ForespoerselServiceTest :
             }
         }
 
+        test("Forespørres fjoråret med et fnr som vi har skattekort for, skal vi opprette utsending") {
+            withConstantNow(LocalDateTime.parse("2026-07-01T00:00:01")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val osMessage = "OS;2025;01010112345"
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    abonnementList.size shouldBe 1
+                    abonnementList.first().inntektsaar shouldBe 2025
+                    val bestillingList = DBTestUtils.getAllBestilling(tx)
+                    bestillingList.size shouldBe 0
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                    utsendingList.size shouldBe 1
+                }
+            }
+        }
+        test("Forespørres fjoråret med et fnr som vi ikke har skattekort for, skal vi opprette abonnement") {
+            withConstantNow(LocalDateTime.parse("2026-07-01T00:00:01")) {
+                WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
+                val osMessage = "OS;2025;01010112345"
+                forespoerselService.taImotForespoersel(osMessage)
+
+                DbListener.dataSource.transaction { tx ->
+                    val abonnementList = AbonnementRepository.getAllAbonnementer(tx)
+                    withClue("Vi skal opprette abonnement for 2025 selv om vi ikke kan bestille") {
+                        abonnementList.size shouldBe 1
+                        abonnementList.first().inntektsaar shouldBe 2025
+                    }
+                    withClue("Vi skal ikke opprette bestilling når vi ikke kan bestille fra Skatteetaten") {
+                        val bestillingList = DBTestUtils.getAllBestilling(tx)
+                        bestillingList.size shouldBe 0
+                    }
+                    withClue("Vi skal ikke opprette utsending når vi ikke har noe skattekort å sende ut") {
+                        val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                        utsendingList.size shouldBe 0
+                    }
+                }
+            }
+        }
+
         test("mot slutten av året skal vi også bestille for neste år") {
             withConstantNow(LocalDateTime.parse("2025-12-20T00:00:00")) {
                 WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
@@ -286,30 +330,32 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel der vi allerede har skattekort skal lage en utsending direkte") {
-            DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
+            withConstantNow(LocalDateTime.parse("2025-06-20T00:00:00")) {
+                DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
 
-            val message = "OS;2025;01010112345"
+                val message = "OS;2025;01010112345"
 
-            forespoerselService.taImotForespoersel(message)
+                forespoerselService.taImotForespoersel(message)
 
-            DbListener.dataSource.transaction { tx ->
-                val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
+                DbListener.dataSource.transaction { tx ->
+                    val utsendingList = UtsendingRepository.getAllUtsendinger(tx)
 
-                assertSoftly {
-                    utsendingList shouldNotBeNull {
-                        size shouldBe 1
-                        shouldContainAllIgnoringFields(
-                            listOf(
-                                Utsending(
-                                    id = UtsendingId(1),
-                                    fnr = Personidentifikator("01010112345"),
-                                    inntektsaar = 2025,
-                                    forsystem = Forsystem.OPPDRAGSSYSTEMET,
-                                    skattekortId = SkattekortId(1),
+                    assertSoftly {
+                        utsendingList shouldNotBeNull {
+                            size shouldBe 1
+                            shouldContainAllIgnoringFields(
+                                listOf(
+                                    Utsending(
+                                        id = UtsendingId(1),
+                                        fnr = Personidentifikator("01010112345"),
+                                        inntektsaar = 2025,
+                                        forsystem = Forsystem.OPPDRAGSSYSTEMET,
+                                        skattekortId = SkattekortId(1),
+                                    ),
                                 ),
-                            ),
-                            Utsending::opprettet,
-                        )
+                                Utsending::opprettet,
+                            )
+                        }
                     }
                 }
             }
@@ -367,39 +413,50 @@ class ForespoerselServiceTest :
         }
 
         test("taImotForespoersel der bestilling allerede finnes i DB skal logge bestillingCount 0 pga ON CONFLICT DO NOTHING") {
-            DbListener.loadDataSet("database/forespoersler/forespoersel_med_bestilling.sql")
-            val fnr = "01010112345"
+            withConstantNow(LocalDateTime.parse("2025-06-20T00:00:00")) {
+                DbListener.loadDataSet("database/forespoersler/forespoersel_med_bestilling.sql")
+                val fnr = "01010112345"
 
-            DbListener.dataSource.transaction { tx ->
-                BestillingRepository
-                    .getAllBestillingsForAdmin(tx)
-                    .first()
-                    .fnr.value shouldBe fnr
+                DbListener.dataSource.transaction { tx ->
+                    BestillingRepository
+                        .getAllBestillingsForAdmin(tx)
+                        .first()
+                        .fnr.value shouldBe fnr
+                }
+                val osMessage = "OS;2025;$fnr"
+
+                forespoerselService.taImotForespoersel(osMessage)
+
+                val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
+                logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
             }
-            val osMessage = "OS;2025;$fnr"
-
-            forespoerselService.taImotForespoersel(osMessage)
-
-            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
-            logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
         }
 
         test("taImotForespoersel der utsending allerede finnes i DB skal legge utsendingCount 0 pga ON CONFLICT DO NOTHING") {
-            DbListener.loadDataSet("database/forespoersler/forespoersel_med_utsending.sql")
+            withConstantNow(LocalDateTime.parse("2025-06-20T00:00:00")) {
+                DbListener.loadDataSet("database/forespoersler/forespoersel_med_utsending.sql")
 
-            val fnr = "01010112345"
+                val fnr = "01010112345"
 
-            DbListener.dataSource.transaction { tx ->
-                UtsendingRepository
-                    .getAllUtsendinger(tx)
-                    .first()
-                    .fnr.value shouldBe fnr
+                DbListener.dataSource.transaction { tx ->
+                    UtsendingRepository
+                        .getAllUtsendinger(tx)
+                        .first()
+                        .fnr.value shouldBe fnr
+                }
+                val message = "OS;2025;$fnr"
+                forespoerselService.taImotForespoersel(message)
+
+                val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
+                logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
             }
-            val message = "OS;2025;$fnr"
-            forespoerselService.taImotForespoersel(message)
+        }
 
-            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("ForespoerselId:") }
-            logMessage shouldBe "ForespoerselId: 1 med total: 1 abonnement(er), 0 bestilling(er), 0 utsending(er) for inntektsår: 2025"
+        test("en forespørsel i ikke-støttet XML-format") {
+            val message = "<xml>ikke-stottet</xml>"
+            forespoerselService.taImotForespoersel(message)
+            val logMessage = listAppender.list.map { it.formattedMessage }.first { it.startsWith("Ikke støttet innlesningsformat") }
+            logMessage shouldBe "Ikke støttet innlesningsformat til skattekort"
         }
     })
 

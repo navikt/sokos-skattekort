@@ -90,11 +90,17 @@ fun Route.skattekortAdminApi(
                 is Either.Right -> call.respond(WrappedWithErrorResponse(data = AuditResponse(result.get().map(::AuditDTO))))
             }
         }
+
         patch("bestillingsbatcher/{id}") {
             call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
             val id = call.parameters["id"]?.toLongOrNull() ?: throw IllegalArgumentException("Ugyldig id, må være et tall")
             val updatedRows = bestillingsbatchService.rerun(id)
             return@patch call.respond(HttpStatusCode.Accepted, "Oppdaterte $updatedRows batcher")
+        }
+
+        patch("utsendinger/{id}") {
+            call.requireScope(requiredScope = Scope.ADMIN_SCOPE)
+            val id = call.parameters["id"]?.toLongOrNull() ?: throw IllegalArgumentException("Ugyldig id, må være et tall")
         }
     }
 }

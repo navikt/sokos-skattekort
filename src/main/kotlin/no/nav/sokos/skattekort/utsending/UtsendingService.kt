@@ -41,6 +41,7 @@ class UtsendingService(
     private val totalIUtsending = AtomicInt(0)
 
     fun handleUtsending() {
+        totalIUtsending.store(0)
         if (!featureToggles.isUtsendingEnabled()) return
 
         runCatching {
@@ -85,6 +86,7 @@ class UtsendingService(
                         }
                     }
                     logger.info { "Ferdig med utsending til ${forsystem.value}. Antall behandlet: ${utsendingList.size}" }
+                    totalIUtsending.addAndFetch(utsendingList.size)
                 }
             }
             logger.info { "Ferdig utsending-batch. Antall behandlet i batch: ${totalIUtsending.load()}" }
@@ -99,11 +101,14 @@ class UtsendingService(
     ) {
         runCatching {
             runBlocking {
-                val skattekortList =
+                val skattekortMap =
                     dataSource.transaction { tx ->
-                        SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray())
+                        SkattekortRepository
+                            .getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray())
+                            .associateBy { it.id!!.value }
                     }
-                skattekortList.forEach { skattekort ->
+                utsendingList.forEach { utsending ->
+                    val skattekort = skattekortMap[utsending.skattekortId.value]!!
                     val personidentifikator = personIdMap[skattekort.personId]!!.fnr
 
                     utsendingDareClientService?.sendSkattekort(
@@ -115,8 +120,7 @@ class UtsendingService(
                     )
                     dataSource.transaction { tx ->
                         AuditRepository.insert(tx, AuditTag.UTSENDING_OK, skattekort.personId, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
-                        val utsendingId = utsendingList.find { it.fnr == personidentifikator && it.forsystem == Forsystem.DARE_POC }!!.id!!
-                        UtsendingRepository.deleteBatch(tx, listOf(utsendingId))
+                        UtsendingRepository.deleteBatch(tx, listOf(utsending.id!!))
                     }
                 }
             }

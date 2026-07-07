@@ -80,7 +80,7 @@ class SkattekortService(
         skattekortDTO: SkattekortDTO,
         saksbehandler: Saksbehandler?,
     ) {
-        logger.info(marker = TEAM_LOGS_MARKER) { "Oppretter skattekort for person: $fnr, for år: ${skattekortDTO.inntektsaar}" }
+        logger.info(TEAM_LOGS_MARKER) { "Oppretter skattekort for person: $fnr, for år: ${skattekortDTO.inntektsaar}" }
 
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         if (!foedselsnummerkategori.erGyldig(fnr)) {

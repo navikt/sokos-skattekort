@@ -37,7 +37,6 @@ val logstashVersion = "9.0"
 val micrometerVersion = "1.16.5"
 val dbSchedulerVersion = "16.7.1"
 val kotlinLoggingVersion = "3.0.5"
-val janionVersion = "3.1.12"
 val kotestVersion = "6.1.11"
 val kotlinxSerializationVersion = "1.11.0"
 val kotlinxDatetimeVersion = "0.7.1-0.6.x-compat"
@@ -103,7 +102,6 @@ dependencies {
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    runtimeOnly("org.codehaus.janino:janino:$janionVersion")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")

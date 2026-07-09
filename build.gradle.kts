@@ -13,7 +13,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
-    id("com.expediagroup.graphql") version "9.2.0"
+    id("com.expediagroup.graphql") version "10.1.1"
     id("org.openapi.generator") version "7.23.0"
 
     application
@@ -37,7 +37,6 @@ val logstashVersion = "9.0"
 val micrometerVersion = "1.17.0"
 val dbSchedulerVersion = "16.12.0"
 val kotlinLoggingVersion = "3.0.5"
-val janionVersion = "3.1.12"
 val kotestVersion = "6.2.1"
 val kotlinxSerializationVersion = "1.11.0"
 val kotlinxDatetimeVersion = "0.8.0-0.6.x-compat"
@@ -103,7 +102,6 @@ dependencies {
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    runtimeOnly("org.codehaus.janino:janino:$janionVersion")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
 
     implementation("jakarta.jms:jakarta.jms-api:3.1.0")

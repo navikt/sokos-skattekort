@@ -13,7 +13,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
-    id("com.expediagroup.graphql") version "9.2.0"
+    id("com.expediagroup.graphql") version "10.1.1"
     id("org.openapi.generator") version "7.23.0"
 
     application

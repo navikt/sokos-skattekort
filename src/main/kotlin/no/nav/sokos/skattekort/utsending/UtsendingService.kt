@@ -91,7 +91,7 @@ class UtsendingService(
             }
             logger.info { "Ferdig utsending-batch. Antall behandlet i batch: ${totalIUtsending.load()}" }
         }.onFailure { exception ->
-            logger.error(exception) { "Feil av henting data under utsending" }
+            logger.error(exception) { "Feil ved henting data under utsending" }
         }
     }
 
@@ -101,26 +101,19 @@ class UtsendingService(
     ) {
         runCatching {
             runBlocking {
-                val skattekortMap =
-                    dataSource.transaction { tx ->
-                        SkattekortRepository
-                            .getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray())
-                            .associateBy { it.id!!.value }
-                    }
-                utsendingList.forEach { utsending ->
-                    val skattekort = skattekortMap[utsending.skattekortId.value]!!
-                    val personidentifikator = personIdMap[skattekort.personId]!!.fnr
-
-                    utsendingDareClientService?.sendSkattekort(
-                        skattekortDTO =
-                            SkattekortDTO(
-                                skattekort,
-                                personidentifikator,
-                            ),
-                    )
-                    dataSource.transaction { tx ->
-                        AuditRepository.insert(tx, AuditTag.UTSENDING_OK, skattekort.personId, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
-                        UtsendingRepository.deleteBatch(tx, listOf(utsending.id!!))
+                val skattekortList = dataSource.transaction { tx -> SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray()) }
+                skattekortList.forEach { skattekort ->
+                    val utsending = utsendingList.find { it.skattekortId == skattekort.id }
+                    if (utsending != null) {
+                        utsendingDareClientService?.sendSkattekort(
+                            skattekortDTO = SkattekortDTO(skattekort, utsending.fnr),
+                        )
+                        dataSource.transaction { tx ->
+                            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, skattekort.personId, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
+                            UtsendingRepository.deleteBatch(tx, listOf(utsending.id!!))
+                        }
+                    } else {
+                        logger.error { "Skattekort er sendt til ${Forsystem.DARE_POC}, men fant ingen utsending" }
                     }
                 }
             }
@@ -136,16 +129,52 @@ class UtsendingService(
     ) {
         runCatching {
             dataSource.transaction { tx ->
-                val personIdList = personIdMap.keys.toList()
+                // Build a deterministic skattekortId→fnr mapping directly from the utsendingList.
+                // Each Utsending already carries the exact FNR that was stored when the request was
+                // created, so we never need to re-resolve via PersonRepository (which can return
+                // multiple rows when a person has more than one identifier).
+                val skattekortIdToFnrMap = utsendingList.associate { it.skattekortId to it.fnr }
                 val skattekortList = SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray())
-                val payloadList = skattekortList.map { skattekort -> SkattekortFixedRecordFormatter(skattekort, personIdMap[skattekort.personId]!!.fnr.value).format() }
+
+                // Pair each skattekort with its payload, skipping those that produce an empty
+                // string (no valid forskuddstrekk for NAV). Empty payloads must never be sent to MQ
+                // and must not be audited as successful sendings.
+                val skattekortOgPayload =
+                    skattekortList.mapNotNull { skattekort ->
+                        val fnr =
+                            skattekortIdToFnrMap[skattekort.id]
+                                ?: run {
+                                    logger.warn { "Ingen utsending funnet for skattekortId=${skattekort.id} – hoppes over" }
+                                    return@mapNotNull null
+                                }
+                        val payload = SkattekortFixedRecordFormatter(skattekort, fnr.value).format()
+                        if (payload.isEmpty()) {
+                            logger.warn { "Skattekort ${skattekort.id} for personId=${skattekort.personId} produserte tom payload (ingen gyldige forskuddstrekk) – hoppes over" }
+                            null
+                        } else {
+                            skattekort to payload
+                        }
+                    }
+
                 val queue =
                     when (forsystem) {
                         Forsystem.OPPDRAGSSYSTEMET -> leveransekoeOppdragZSkattekort
                         else -> leveransekoeOppdragZSkattekortStor
                     }
-                jmsProducerService.send(payloadList, queue, utsendingOppdragzCounter)
-                AuditRepository.insertBatch(tx, AuditTag.UTSENDING_OK, personIdList, "Oppdragz: Skattekort sendt til ${queue.queueName}")
+
+                if (skattekortOgPayload.isNotEmpty()) {
+                    jmsProducerService.send(skattekortOgPayload.map { it.second }, queue, utsendingOppdragzCounter)
+                    // Audit only the persons whose skattekort were actually sent to MQ.
+                    AuditRepository.insertBatch(
+                        tx,
+                        AuditTag.UTSENDING_OK,
+                        skattekortOgPayload.map { it.first.personId },
+                        "Oppdragz: Skattekort sendt til ${queue.queueName}",
+                    )
+                }
+
+                // Delete all utsendinger in this batch, including those that produced an empty
+                // payload – they will never produce content and must not be retried endlessly.
                 UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! })
 
                 // TODO: Fjern denne featureToggles

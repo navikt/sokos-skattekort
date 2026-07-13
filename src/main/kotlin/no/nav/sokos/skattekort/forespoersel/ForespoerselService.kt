@@ -162,7 +162,7 @@ class ForespoerselService(
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         val kanBestilles = personIdWithoutSkattekort.filter { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
         val bestillingCount =
-            if (kanBestilles.isNotEmpty() && forSentAaBestille(inntektsaar)) {
+            if (forSentAaBestille(inntektsaar)) {
                 logger.warn { "Vi kan ikke lenger bestille skattekort for $inntektsaar fra Skatteetaten" }
                 AuditRepository.insertBatch(
                     tx,

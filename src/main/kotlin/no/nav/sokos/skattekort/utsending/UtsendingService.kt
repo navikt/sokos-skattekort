@@ -19,9 +19,6 @@ import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.dare.UtsendingDareClientService
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
-import no.nav.sokos.skattekort.person.Foedselsnummer
-import no.nav.sokos.skattekort.person.PersonId
-import no.nav.sokos.skattekort.person.PersonRepository
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.mq.JmsProducerService
@@ -67,22 +64,15 @@ class UtsendingService(
                 )
 
                 utsendingMap.forEach { (forsystem, utsendingList) ->
-                    val personIdMap =
-                        dataSource.transaction { tx ->
-                            PersonRepository
-                                .findAllByFnr(tx, *utsendingList.map { it.fnr.value }.toTypedArray())
-                                .associate { person -> person.id!! to person.foedselsnummer }
-                        }
-
                     when (forsystem) {
-                        Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> utsendingTilOppdragZ(forsystem, personIdMap, utsendingList)
+                        Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> utsendingTilOppdragZ(forsystem, utsendingList)
                         Forsystem.MANUELL -> dataSource.transaction { tx -> UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! }) }
                         Forsystem.DARE_POC -> {
                             if (utsendingDareClientService == null) {
                                 logger.error { "UtsendingDareClientService ikke tilgjengelig i prod" }
                                 return@forEach
                             }
-                            utsendingTilDarePoc(personIdMap, utsendingList)
+                            utsendingTilDarePoc(utsendingList)
                         }
                     }
                     logger.info { "Ferdig med utsending til ${forsystem.value}. Antall behandlet: ${utsendingList.size}" }
@@ -95,10 +85,7 @@ class UtsendingService(
         }
     }
 
-    private fun utsendingTilDarePoc(
-        personIdMap: Map<PersonId, Foedselsnummer>,
-        utsendingList: List<Utsending>,
-    ) {
+    private fun utsendingTilDarePoc(utsendingList: List<Utsending>) {
         runCatching {
             runBlocking {
                 val skattekortList = dataSource.transaction { tx -> SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray()) }
@@ -124,7 +111,6 @@ class UtsendingService(
 
     private fun utsendingTilOppdragZ(
         forsystem: Forsystem,
-        personIdMap: Map<PersonId, Foedselsnummer>,
         utsendingList: List<Utsending>,
     ) {
         runCatching {
@@ -197,8 +183,11 @@ class UtsendingService(
             val failMessage = exception.message ?: "Ukjent feil"
             UtsendingRepository.increaseFailCount(tx, failMessage, utsendingList.map { it.id!! })
         }
-        if (utsendingList.first().failCount >= 2) {
-            feiledeUtsendingerOppdragzCounter.inc(utsendingList.size.toLong())
+        val failCountEtterInkrement = utsendingList.maxOf { it.failCount + 1 }
+        if (failCountEtterInkrement >= 2) {
+            if (forsystem == Forsystem.OPPDRAGSSYSTEMET || forsystem == Forsystem.OPPDRAGSSYSTEMET_STOR) {
+                feiledeUtsendingerOppdragzCounter.inc(utsendingList.size.toLong())
+            }
             logger.error(exception) { "Utsending av skattekort til ${forsystem.value}: ${utsendingList.map { it.id }.joinToString()} feilet." }
         }
     }

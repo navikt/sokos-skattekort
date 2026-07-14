@@ -13,7 +13,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
-    id("com.expediagroup.graphql") version "10.1.1"
+    id("com.expediagroup.graphql") version "10.1.2"
     id("org.openapi.generator") version "7.23.0"
 
     application
@@ -45,8 +45,8 @@ val mockkVersion = "1.14.11"
 val hikariVersion = "7.1.0"
 val kotliqueryVersion = "2.0.9"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "12.9.0"
-val postgresVersion = "42.7.12"
+val flywayVersion = "12.10.0"
+val postgresVersion = "42.7.13"
 val activemqVersion = "2.55.0"
 val ibmmqVersion = "10.0.0.0"
 val opentelemetryVersion = "2.29.0-alpha"
@@ -149,7 +149,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.11.0")
+                useTarget("at.yawk.lz4:lz4-java:1.11.1")
                 because("Prefer the patched fork for vulnerability fix")
             }
             if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {

@@ -66,7 +66,7 @@ object BestillingRepository {
                 )
             },
         )
-    }
+    }.sum()
 
     fun updateBestillingsWithBatchId(
         tx: TransactionalSession,

@@ -10,5 +10,5 @@ VALUES (1, 'TEST_USER', 'OPPRETTET_PERSON', 'Person 1 opprettet');
 INSERT INTO skattekort (id, person_id, utstedt_dato, identifikator, inntektsaar, kilde, opprettet)
 VALUES (1, 1, '2025-11-11'::date, '17', 2025, 'skatteetaten', now() - interval '2 days');
 
-INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
-VALUES ('01010112345', 2025, 'OS');
+INSERT INTO utsendinger (fnr, inntektsaar, forsystem, skattekort_id)
+VALUES ('01010112345', 2025, 'OS', 1);

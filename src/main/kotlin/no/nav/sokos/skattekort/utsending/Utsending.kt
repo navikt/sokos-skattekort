@@ -8,6 +8,7 @@ import kotliquery.Row
 
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.Personidentifikator
+import no.nav.sokos.skattekort.skattekort.SkattekortId
 
 data class Utsending(
     val id: UtsendingId? = null,
@@ -17,6 +18,7 @@ data class Utsending(
     val failCount: Int = 0,
     val failMessage: String? = null,
     val opprettet: Instant = Clock.System.now(),
+    val skattekortId: SkattekortId,
 ) {
     constructor(row: Row) : this(
         id = row.longOrNull("id")?.let { UtsendingId(it) },
@@ -26,17 +28,20 @@ data class Utsending(
         failCount = row.int("fail_count"),
         failMessage = row.stringOrNull("fail_message"),
         opprettet = row.instant("opprettet").toKotlinInstant(),
+        skattekortId = SkattekortId(row.long("skattekort_id")),
     )
 
     constructor(
         fnr: Personidentifikator,
         inntektsaar: Int,
         forsystem: Forsystem,
+        skattekortId: SkattekortId,
     ) : this(
         id = null,
         fnr = fnr,
         inntektsaar = inntektsaar,
         forsystem = forsystem,
+        skattekortId = skattekortId,
     )
 }
 

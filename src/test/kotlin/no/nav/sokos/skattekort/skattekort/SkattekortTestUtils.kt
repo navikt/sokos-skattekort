@@ -214,9 +214,10 @@ fun anUtsending(
     fnr: String,
     inntektsaar: Int,
     forsystem: String,
+    skattekortId: Long,
 ) = """
-    INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
-    VALUES ('$fnr', $inntektsaar, '$forsystem');
+    INSERT INTO utsendinger (fnr, inntektsaar, forsystem, skattekort_id)
+    VALUES ('$fnr', $inntektsaar, '$forsystem', $skattekortId);
     """.trimIndent()
 
 fun aBatch(

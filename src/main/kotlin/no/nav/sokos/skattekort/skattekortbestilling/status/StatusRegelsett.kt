@@ -123,7 +123,7 @@ class StatusContext(
 ) {
     val person: Person? by lazy {
         dataSource.transaction { tx ->
-            PersonRepository.findPersonByFnr(tx, fnr)
+            PersonRepository.findAllByFnr(tx, fnr.value).firstOrNull()
         }
     }
 

@@ -48,7 +48,7 @@ class SkattekortDataService(
                         AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, personId, aarsak)
                     }
                     SkattekortDataRepository.updateSkattekortId(tx, id.value, skattekortId.value)
-                    opprettUtsendingerForAbonnementer(tx, personId, inntektsaar, type)
+                    opprettUtsendingerForAbonnementer(tx, personId, inntektsaar, type, skattekortId)
                 }
             }
         }.onFailure { exception ->
@@ -61,6 +61,7 @@ class SkattekortDataService(
         personId: PersonId,
         inntektsaar: Int,
         type: BestillingsbatchType?,
+        skattekortId: SkattekortId,
     ) {
         AbonnementRepository.findForsystemAndFnr(tx, personId, inntektsaar).forEach { (system, fnr) ->
             val forsystem =
@@ -75,6 +76,7 @@ class SkattekortDataService(
                         inntektsaar = inntektsaar,
                         fnr = fnr,
                         forsystem = forsystem,
+                        skattekortId = skattekortId,
                     ),
             )
         }

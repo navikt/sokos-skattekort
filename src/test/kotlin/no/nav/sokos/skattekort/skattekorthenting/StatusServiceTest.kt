@@ -128,7 +128,7 @@ class StatusServiceTest :
                     aPerson(1L),
                     afoedselsnummer(1L, anotherFnr.value),
                     aSkattekort(1L, 1L, 2025),
-                    anUtsending(anotherFnr.value, 2025, forsystem = "OS"),
+                    anUtsending(anotherFnr.value, 2025, forsystem = "OS", 1L),
                 )
 
                 val status = statusService.statusForespoeresel(fnr = anotherFnr, aar = 2025, forsystem = Forsystem.OPPDRAGSSYSTEMET, saksbehandler = saksbehandler)
@@ -171,7 +171,7 @@ class StatusServiceTest :
                     aPerson(1L),
                     afoedselsnummer(1L, anotherFnr.value),
                     aSkattekort(1L, 1L, 2025),
-                    anUtsending(anotherFnr.value, 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR"),
+                    anUtsending(anotherFnr.value, 2025, forsystem = "THIS_IS_NOT_THE_FORSYSTEM_YOU_ARE_LOOKING_FOR", 1L),
                     anAbonnement(123, 1L, 2025, Forsystem.DARE_POC),
                 )
 

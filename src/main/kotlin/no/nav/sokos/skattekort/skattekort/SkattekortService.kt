@@ -60,11 +60,14 @@ class SkattekortService(
 
         val skattekortList =
             dataSource.transaction { tx ->
-                val person = PersonRepository.findPersonByFnr(tx, Personidentifikator(fnr)) ?: return@transaction emptyList()
+                val personList = PersonRepository.findAllByFnr(tx, fnr)
+                if (personList.isEmpty()) {
+                    return@transaction emptyList()
+                }
                 SkattekortRepository
                     .findAllByPersonId(
                         tx,
-                        personIdList = listOf(person.id!!),
+                        personIdList = personList.map { it.id!! },
                         inntektsaarList = inntektsaar?.let { listOf(it) } ?: alleLovligeInntektsaarAaHenteSkattekortFor(),
                     )
             }
@@ -77,7 +80,7 @@ class SkattekortService(
         skattekortDTO: SkattekortDTO,
         saksbehandler: Saksbehandler?,
     ) {
-        logger.info(marker = TEAM_LOGS_MARKER) { "Oppretter skattekort for person: $fnr, for år: ${skattekortDTO.inntektsaar}" }
+        logger.info(TEAM_LOGS_MARKER) { "Oppretter skattekort for person: $fnr, for år: ${skattekortDTO.inntektsaar}" }
 
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         if (!foedselsnummerkategori.erGyldig(fnr)) {
@@ -112,11 +115,12 @@ class SkattekortService(
                     identifikator = null,
                     kilde = SkattekortKilde.MANUELL,
                 )
-            val id = SkattekortId(SkattekortRepository.insert(tx, skattekort))
-
-            Syntetisering.evtSyntetiserSkattekort(skattekort, id)?.let { (syntetisertSkattekort, _) ->
-                SkattekortRepository.insert(tx, syntetisertSkattekort)
-            }
+            val originalSkattekortId = SkattekortId(SkattekortRepository.insert(tx, skattekort))
+            val skattekortId =
+                Syntetisering
+                    .evtSyntetiserSkattekort(skattekort, originalSkattekortId)
+                    ?.let { (syntetisertSkattekort, _) -> SkattekortId(SkattekortRepository.insert(tx, syntetisertSkattekort)) }
+                    ?: originalSkattekortId
             AbonnementRepository.findForsystemAndFnr(tx, personId, skattekortDTO.inntektsaar).forEach { (system, fnr) ->
                 UtsendingRepository.insert(
                     tx,
@@ -125,6 +129,7 @@ class SkattekortService(
                             inntektsaar = skattekortDTO.inntektsaar,
                             fnr = fnr,
                             forsystem = system,
+                            skattekortId = skattekortId,
                         ),
                 )
             }

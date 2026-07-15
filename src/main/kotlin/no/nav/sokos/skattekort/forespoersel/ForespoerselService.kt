@@ -17,6 +17,7 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar
+import no.nav.sokos.skattekort.skattekort.Skattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
@@ -134,7 +135,7 @@ class ForespoerselService(
         forsystem: Forsystem,
         foedselsnumreWithPersonIdList: List<Pair<String, PersonId>>,
     ): Pair<BestillingCount, UtsendingCount> {
-        val skattekortPersonIds =
+        val skattekortByPersonId =
             foedselsnumreWithPersonIdList
                 .chunked(CHUNKED_SIZE)
                 .flatMap { chunk ->
@@ -144,41 +145,48 @@ class ForespoerselService(
                             personIdList = chunk.map { it.second },
                             inntektsaarList = listOf(inntektsaar),
                             showOnlyLatest = true,
-                        ).map { it.personId }
-                }.toSet()
+                        )
+                }.associateBy(Skattekort::personId)
 
-        val (personIdWithSkattekort, personIdWithoutSkattekort) = foedselsnumreWithPersonIdList.partition { it.second in skattekortPersonIds }
-        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
-        val (kanBestilles) =
-            personIdWithoutSkattekort.partition { (fnr, _) ->
-                !forSentAaBestille(inntektsaar) && foedselsnummerkategori.kanBestilleSkattekort(fnr)
+        val (personIdWithSkattekort, personIdWithoutSkattekort) =
+            foedselsnumreWithPersonIdList.fold(
+                Pair(
+                    mutableListOf<Pair<String, Skattekort>>(),
+                    mutableListOf<Pair<String, PersonId>>(),
+                ),
+            ) { (found, missing), (key, personId) ->
+                skattekortByPersonId[personId]?.let { found += key to it } ?: run { missing += key to personId }
+                found to missing
             }
 
-        if (forSentAaBestille(inntektsaar)) {
-            logger.warn { "Vi kan ikke lenger bestille skattekort for $inntektsaar fra Skatteetaten" }
-            AuditRepository.insertBatch(
-                tx,
-                tag = AuditTag.MOTTATT_FORESPOERSEL,
-                personIdList = personIdWithoutSkattekort.map { it.second },
-                informasjon = "Vi kan ikke lenger bestille skattekort for $inntektsaar fra Skatteetaten",
-                brukerId = AUDIT_SYSTEM,
-            )
-        }
-
+        val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
+        val kanBestilles = personIdWithoutSkattekort.filter { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }
         val bestillingCount =
-            kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->
-                BestillingRepository
-                    .insertBatch(
-                        tx = tx,
-                        bestillingList =
-                            chunk.map { (fnr, personId) ->
-                                Bestilling(
-                                    personId = personId,
-                                    fnr = Personidentifikator(fnr),
-                                    inntektsaar = inntektsaar,
-                                )
-                            },
-                    ).sum()
+            if (forSentAaBestille(inntektsaar)) {
+                logger.warn { "Vi kan ikke lenger bestille skattekort for $inntektsaar fra Skatteetaten" }
+                AuditRepository.insertBatch(
+                    tx,
+                    tag = AuditTag.MOTTATT_FORESPOERSEL,
+                    personIdList = personIdWithoutSkattekort.map { it.second },
+                    informasjon = "Vi kan ikke lenger bestille skattekort for $inntektsaar fra Skatteetaten",
+                    brukerId = AUDIT_SYSTEM,
+                )
+                0
+            } else {
+                kanBestilles.chunked(CHUNKED_SIZE).sumOf { chunk ->
+                    BestillingRepository
+                        .insertBatch(
+                            tx = tx,
+                            bestillingList =
+                                chunk.map { (fnr, personId) ->
+                                    Bestilling(
+                                        personId = personId,
+                                        fnr = Personidentifikator(fnr),
+                                        inntektsaar = inntektsaar,
+                                    )
+                                },
+                        )
+                }
             }
 
         val utsendingCount =
@@ -187,10 +195,10 @@ class ForespoerselService(
                     .insertBatch(
                         tx,
                         utsendingList =
-                            chunk.map { (fnr, _) ->
-                                Utsending(null, Personidentifikator(fnr), inntektsaar, forsystem)
+                            chunk.map { (fnr, skattekort) ->
+                                Utsending(Personidentifikator(fnr), inntektsaar, forsystem, skattekort.id!!)
                             },
-                    ).sum()
+                    )
             }
         return Pair(bestillingCount, utsendingCount)
     }

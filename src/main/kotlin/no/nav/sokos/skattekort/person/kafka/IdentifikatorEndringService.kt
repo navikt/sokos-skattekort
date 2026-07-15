@@ -62,7 +62,7 @@ class IdentifikatorEndringService(
         val identifikasjonsnummer = folkeregisteridentifikator.identifikasjonsnummer
 
         dataSource.transaction { tx ->
-            if (PersonRepository.findPersonByFnr(tx, Personidentifikator(identifikasjonsnummer)) == null) {
+            if (PersonRepository.findAllByFnr(tx, identifikasjonsnummer).isEmpty()) {
                 val pdlResponse = runBlocking { pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer)) }
                 val identList = pdlResponse[identifikasjonsnummer]!!.filter { it.historisk }.map { it.ident }
 

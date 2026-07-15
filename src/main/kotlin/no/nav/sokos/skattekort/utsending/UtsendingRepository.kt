@@ -15,8 +15,8 @@ object UtsendingRepository {
         // language=SQL
         val sql =
             """
-            INSERT INTO utsendinger (fnr, inntektsaar, forsystem)
-            VALUES (:fnr, :inntektsaar, :forsystem)
+            INSERT INTO utsendinger (fnr, inntektsaar, forsystem, skattekort_id)
+            VALUES (:fnr, :inntektsaar, :forsystem, :skattekortId)
             ON CONFLICT (fnr, inntektsaar, forsystem) DO NOTHING
             """.trimIndent()
         tx.batchPreparedNamedStatement(
@@ -26,66 +26,81 @@ object UtsendingRepository {
                     "fnr" to utsending.fnr.value,
                     "inntektsaar" to utsending.inntektsaar,
                     "forsystem" to utsending.forsystem.value,
+                    "skattekortId" to utsending.skattekortId.value,
                 )
             },
         )
-    }
+    }.sum()
 
     fun insert(
         tx: TransactionalSession,
         utsending: Utsending,
-    ) = insertBatch(tx, listOf(utsending)).first()
+    ): Int = insertBatch(tx, listOf(utsending))
 
-    fun delete(
+    fun deleteBatch(
         tx: TransactionalSession,
-        id: UtsendingId,
-    ) {
+        idList: List<UtsendingId>,
+    ): Int {
+        if (idList.isEmpty()) return 0
+        val idParamList = List(idList.size) { index -> ":id$index" }.joinToString(", ")
         // language=SQL
         val sql =
-            "DELETE FROM utsendinger WHERE id = :id".trimIndent()
-        tx.update(
+            """
+            DELETE FROM utsendinger WHERE id IN ($idParamList)
+            """.trimIndent()
+        return tx.update(
             queryOf(
                 sql,
-                mapOf("id" to id.value),
+                idList.mapIndexed { index, id -> "id$index" to id.value }.toMap(),
             ),
         )
     }
 
-    fun getAllUtsendinger(tx: TransactionalSession): List<Utsending> {
+    fun getAllUtsendinger(
+        tx: TransactionalSession,
+        limit: Int? = null,
+        failCount: Int = 3,
+    ): List<Utsending> {
         // language=SQL
         val sql =
-            "SELECT * FROM utsendinger ORDER BY ID".trimIndent()
+            """
+            SELECT * FROM utsendinger WHERE (:failCount = 0 OR fail_count < :failCount) ORDER BY id, fail_count LIMIT NULLIF(:limit, 0)  
+            """.trimIndent()
         return tx.list(
-            queryOf(sql),
+            queryOf(
+                sql,
+                mapOf(
+                    "limit" to (limit ?: 0),
+                    "failCount" to failCount,
+                ),
+            ),
             extractor = { row -> Utsending(row) },
         )
     }
 
     fun increaseFailCount(
         tx: TransactionalSession,
-        maybeId: UtsendingId?,
         failMessage: String,
-    ) {
-        maybeId?.let { id ->
-            // language=SQL
-            val sql =
-                """
-                UPDATE utsendinger SET
-                fail_count = fail_count + 1,
-                fail_message = :fail_message
-                WHERE id = :id
-                """.trimIndent()
-            tx.update(
-                queryOf(
-                    sql,
-                    mapOf(
-                        "id" to id.value,
-                        "fail_message" to failMessage,
-                    ),
-                ),
-            )
-        }
-    }
+        idList: List<UtsendingId>,
+    ) = run {
+        // language=SQL
+        val sql =
+            """
+            UPDATE utsendinger SET
+            fail_count = fail_count + 1,
+            fail_message = :fail_message
+            WHERE id = :id
+            """.trimIndent()
+        tx.batchPreparedNamedStatement(
+            sql,
+            idList.map { id ->
+                mapOf(
+                    "id" to id.value,
+                    "fail_message" to failMessage,
+                )
+            },
+        )
+    }.sum()
 
     fun findByPersonIdAndInntektsaar(
         tx: TransactionalSession,
@@ -96,7 +111,7 @@ object UtsendingRepository {
         // language=SQL
         val sql =
             """
-            SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message FROM utsendinger
+            SELECT id, fnr, forsystem, inntektsaar, opprettet, fail_count, fail_message, skattekort_id FROM utsendinger
             WHERE fnr = :fnr AND inntektsaar = :inntektsaar AND forsystem = :forsystem
             """.trimIndent()
         return tx.single(
@@ -146,15 +161,6 @@ object UtsendingRepository {
                     "sending" to copybook,
                 ),
             ),
-        )
-    }
-
-    fun slettGamleBevis(tx: TransactionalSession) {
-        // language=SQL
-        val sql =
-            "DELETE FROM bevis_sending WHERE opprettet < now() - interval '7 days'"
-        tx.update(
-            queryOf(sql),
         )
     }
 }

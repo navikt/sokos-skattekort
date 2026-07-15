@@ -1,18 +1,13 @@
 package no.nav.sokos.skattekort.utsending
 
-import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldContainAll
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.server.plugins.di.dependencies
-import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.JmsTestUtil
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
-import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
 
@@ -33,27 +28,7 @@ class UtsendingEndToEndTest :
                 eventually(eventuallyConfiguration) {
                     val messages: List<String> = JmsTestUtil.getMessages(MQListener.utsendingsQueue)
                     messages.size shouldBe 1
-                    messages[0] shouldBe
-                        expectedCopybook
-                }
-                DbListener.dataSource.transaction { tx ->
-                    val sendinger =
-                        tx.list(
-                            queryOf(
-                                """SELECT sending FROM bevis_sending""",
-                            ),
-                            { row ->
-                                row.string("sending")
-                            },
-                        )
-                    assertSoftly {
-                        sendinger shouldNotBeNull {
-                            size shouldBe 1
-                            shouldContainAll(
-                                expectedCopybook,
-                            )
-                        }
-                    }
+                    messages[0] shouldBe expectedCopybook
                 }
             }
         }

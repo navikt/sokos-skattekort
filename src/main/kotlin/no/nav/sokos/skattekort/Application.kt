@@ -1,5 +1,6 @@
 package no.nav.sokos.skattekort
 
+import kotlin.onFailure
 import kotlinx.coroutines.runBlocking
 
 import com.ibm.mq.jakarta.jms.MQQueue
@@ -161,15 +162,15 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val forespoerselListener: ForespoerselListener by dependencies
     forespoerselListener.onOppdateringChanged(unleashIntegration.isForespoerselListenerEnabled())
 
-    if (PropertiesConfig.schedulerProperties.enabled) {
-        val bestillingService: BestillingService by dependencies
-        val bestillingsbatchService: BestillingsbatchService by dependencies
-        val utsendingService: UtsendingService by dependencies
-        val skattekortdataService: SkattekortDataService by dependencies
-        val metricsService: MetricsService by dependencies
-        val skattekortService: SkattekortService by dependencies
+    val scheduler =
+        PropertiesConfig.schedulerProperties.takeIf { it.enabled }?.let {
+            val bestillingService: BestillingService by dependencies
+            val bestillingsbatchService: BestillingsbatchService by dependencies
+            val utsendingService: UtsendingService by dependencies
+            val skattekortdataService: SkattekortDataService by dependencies
+            val metricsService: MetricsService by dependencies
+            val skattekortService: SkattekortService by dependencies
 
-        val scheduler =
             JobTaskConfig
                 .scheduler(
                     bestillingService = bestillingService,
@@ -180,31 +181,55 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                     skattekortService = skattekortService,
                     dataSource = DatabaseConfig.dataSourceScheduler,
                 ).also { it.start() }
+        }
 
-        monitor.subscribe(ApplicationStopPreparing) {
-            if (!scheduler.schedulerState.isShuttingDown) {
+    val kafkaConsumerService =
+        PropertiesConfig.kafkaProperties.takeIf { it.enabled }?.let {
+            val kafkaConsumerService: KafkaConsumerService by dependencies
+            applicationState.onReady = {
+                launchBackgroundTask(applicationState) {
+                    kafkaConsumerService.start(applicationState)
+                }
+            }
+            kafkaConsumerService
+        }
+
+    monitor.subscribe(ApplicationStopPreparing) {
+        logger.info { "Application stopping - shutting down background services" }
+
+        // Step 1: Stop Kafka consumer first
+        kafkaConsumerService?.let { service ->
+            logger.info { "Stopping Kafka consumer..." }
+            service.close()
+        }
+
+        // Step 2: Stop db-scheduler
+        scheduler?.let { service ->
+            if (!service.schedulerState.isShuttingDown) {
                 logger.info { "Stopping scheduler..." }
                 scheduler.stop()
             }
         }
 
+        // Step 3: Stop ForespoerselListener (which uses MQ/JMS)
+        logger.info { "Stopping ForespoerselListener..." }
+        forespoerselListener.onOppdateringChanged(false)
+    }
+
+    monitor.subscribe(ApplicationStopped) {
+        logger.info { "Application stopped - closing database pools" }
+
+        // Only close datasources after all services have stopped
         if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
-            monitor.subscribe(ApplicationStopped) {
-                logger.info { "Closing database scheduler pools..." }
-                (DatabaseConfig.dataSourceScheduler as? HikariDataSource)?.close()
-            }
+            logger.info { "Closing database scheduler pools..." }
+            runCatching { (DatabaseConfig.dataSourceScheduler as? HikariDataSource)?.close() }
+                .onFailure { logger.warn(it) { "Error closing scheduler datasource" } }
+
+            logger.info { "Closing main database pools..." }
+            runCatching { (DatabaseConfig.dataSource as? HikariDataSource)?.close() }
+                .onFailure { logger.warn(it) { "Error closing main datasource" } }
         }
     }
 
-    val kafkaProperties = PropertiesConfig.kafkaProperties
-    if (kafkaProperties.enabled) {
-        applicationState.onReady = {
-            val kafkaConsumerService: KafkaConsumerService by dependencies
-            launchBackgroundTask(applicationState) {
-                kafkaConsumerService.start(applicationState)
-            }
-        }
-    }
-
-    logger.info { "Kafka consumer is enabled: ${kafkaProperties.enabled}" }
+    logger.info { "Kafka consumer is enabled: ${PropertiesConfig.kafkaProperties.enabled}" }
 }

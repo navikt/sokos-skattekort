@@ -135,7 +135,8 @@ class UtsendingService(
                                 }
                         val payload = SkattekortFixedRecordFormatter(skattekort, fnr.value).format()
                         if (payload.isEmpty()) {
-                            logger.warn { "Skattekort ${skattekort.id} for personId=${skattekort.personId} produserte tom payload (ingen gyldige forskuddstrekk) – hoppes over" }
+                            logger.info { "Skattekort ${skattekort.id} for personId=${skattekort.personId} produserte tom payload (ingen gyldige forskuddstrekk) – hoppes over" }
+                            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, skattekort.personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
                             null
                         } else {
                             skattekort to payload

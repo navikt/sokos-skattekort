@@ -79,7 +79,9 @@ class UtsendingService(
                     totalIUtsending.addAndFetch(utsendingList.size)
                 }
             }
-            logger.info { "Ferdig utsending-batch. Antall behandlet i batch: ${totalIUtsending.load()}" }
+            if (totalIUtsending.load() > 0) {
+                logger.info { "Ferdig utsending-batch. Antall behandlet i batch: ${totalIUtsending.load()}" }
+            }
         }.onFailure { exception ->
             logger.error(exception) { "Feil ved henting data under utsending" }
         }

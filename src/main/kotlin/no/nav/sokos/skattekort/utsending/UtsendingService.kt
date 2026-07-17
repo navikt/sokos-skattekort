@@ -12,6 +12,7 @@ import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
 import no.nav.sokos.skattekort.config.MQ_BATCH_SIZE
+import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
@@ -141,6 +142,7 @@ class UtsendingService(
                             AuditRepository.insert(tx, AuditTag.UTSENDING_OK, skattekort.personId, "Oppdragz: Skattekort ikke sendt fordi skattekort-formatet ikke kan uttrykke innholdet")
                             null
                         } else {
+                            logger.info(marker = TEAM_LOGS_MARKER) { "Skattekort ${skattekort.id} for personId=${skattekort.personId} payload: $payload" }
                             skattekort to payload
                         }
                     }
@@ -154,21 +156,12 @@ class UtsendingService(
                 if (skattekortOgPayload.isNotEmpty()) {
                     jmsProducerService.send(skattekortOgPayload.map { it.second }, queue, utsendingOppdragzCounter)
                     // Audit only the persons whose skattekort were actually sent to MQ.
-                    AuditRepository.insertBatch(
-                        tx,
-                        AuditTag.UTSENDING_OK,
-                        skattekortOgPayload.map { it.first.personId },
-                        "Oppdragz: Skattekort sendt til ${queue.queueName}",
-                    )
+                    AuditRepository.insertBatch(tx, AuditTag.UTSENDING_OK, skattekortOgPayload.map { it.first.personId }, "Oppdragz: Skattekort sendt til ${queue.queueName}")
                 }
 
                 // Delete all utsendinger in this batch, including those that produced an empty
                 // payload – they will never produce content and must not be retried endlessly.
                 UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! })
-
-                // TODO: Fjern denne featureToggles
-                if (featureToggles.isBevisForSendingEnabled()) {
-                }
             }
         }.onFailure { exception ->
             handleException(exception, forsystem, utsendingList)

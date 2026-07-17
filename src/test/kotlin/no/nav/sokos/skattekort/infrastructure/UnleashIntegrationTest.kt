@@ -19,10 +19,6 @@ class UnleashIntegrationTest :
             unleash.isOppdateringEnabled() shouldBe true
         }
 
-        test("isBevisForSendingEnabled skal returnere true når BEVIS_FOR_SENDING flagget er på") {
-            unleash.isBevisForSendingEnabled() shouldBe true
-        }
-
         test("isLagreMottatteBestillingerEnabled skal returnere false som default") {
             unleash.isLagreMottatteBestillingerEnabled() shouldBe false
         }

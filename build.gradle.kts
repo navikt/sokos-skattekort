@@ -11,10 +11,10 @@ plugins {
     kotlin("jvm") version "2.4.0"
     kotlin("plugin.serialization") version "2.4.0"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
-    id("org.jetbrains.kotlinx.kover") version "0.9.8"
+    id("org.jetbrains.kotlinx.kover") version "0.9.9"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "10.1.2"
-    id("org.openapi.generator") version "7.23.0"
+    id("org.openapi.generator") version "7.24.0"
 
     application
 }
@@ -57,7 +57,7 @@ val kafkaAvroSerializerVersion = "8.1.1"
 val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "10.1.2"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "12.2.2"
+val unleashedVersion = "12.2.3"
 
 dependencies {
 

@@ -152,6 +152,10 @@ configurations.all {
                 useTarget("at.yawk.lz4:lz4-java:1.11.1")
                 because("Prefer the patched fork for vulnerability fix")
             }
+            if (requested.group == "io.netty") {
+                useVersion("4.2.16.Final")
+                because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.15.Final")
+            }
             if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
                 useVersion("2.22.1")
                 because("jackson-core: Number Length Constraint Bypass in Async Parser Leads to Potential DoS Condition. Affected version >= 2.19.0, < 2.21.1")
@@ -159,10 +163,6 @@ configurations.all {
             if (requested.group == "tools.jackson.core" && requested.name == "jackson-core") {
                 useVersion("3.2.1")
                 because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
-            }
-            if (requested.group == "io.netty") {
-                useVersion("4.2.15.Final")
-                because("Netty CVE remediation: CVE-2026-45536, CVE-2026-42577, CVE-2026-47244 and CVE-2026-48043")
             }
         }
     }

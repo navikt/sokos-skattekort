@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-    kotlin("jvm") version "2.4.0"
-    kotlin("plugin.serialization") version "2.4.0"
+    kotlin("jvm") version "2.4.10"
+    kotlin("plugin.serialization") version "2.4.10"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"

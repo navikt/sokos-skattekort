@@ -14,7 +14,9 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.pluginOrNull
+import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.config.withFallback
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.DependencyConflictPolicy
 import io.ktor.server.plugins.di.DependencyConflictResult
@@ -206,15 +208,15 @@ object TestUtils {
 
     fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
 
-    private fun testEnvironmentConfig(authServer: MockOAuth2Server): MapApplicationConfig =
-        MapApplicationConfig().apply {
-            put("APPLICATION_ENV", "TEST")
-
-            // Database properties
-            put("DB_PORT", DbListener.container.firstMappedPort.toString())
-            put("DB_HOST", DbListener.container.host)
-            put("AZURE_APP_WELL_KNOWN_URL", authServer.wellKnownUrl("default").toUrl().toString())
-        }
+    private fun testEnvironmentConfig(authServer: MockOAuth2Server): ApplicationConfig {
+        val dynamicOverrides =
+            MapApplicationConfig().apply {
+                put("postgres.port", DbListener.container.firstMappedPort.toString())
+                put("postgres.host", DbListener.container.host)
+                put("azureAd.wellKnownUrl", authServer.wellKnownUrl("default").toUrl().toString())
+            }
+        return dynamicOverrides.withFallback(ApplicationConfig("application-test.conf"))
+    }
 
     private fun DependencyInjectionConfig.configureShutdownBehavior() {
         conflictPolicy =

@@ -25,7 +25,6 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.applicationLifecycleConfig
 import no.nav.sokos.skattekort.config.commonConfig
 import no.nav.sokos.skattekort.config.createHttpClient
-import no.nav.sokos.skattekort.config.loadEnvironmentConfig
 import no.nav.sokos.skattekort.config.routingConfig
 import no.nav.sokos.skattekort.config.securityConfig
 import no.nav.sokos.skattekort.forespoersel.ForespoerselListener
@@ -70,12 +69,12 @@ fun main() {
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
+fun Application.module(applicationConfig: ApplicationConfig = loadConfig()) {
     val applicationState = ApplicationState()
     applicationLifecycleConfig(applicationState)
     commonConfig()
 
-    PropertiesConfig.load(applicationConfig.loadEnvironmentConfig())
+    PropertiesConfig.load(applicationConfig)
     val applicationProperties = PropertiesConfig.applicationProperties
     logger.info { "Application started with environment: ${applicationProperties.profile}" }
     DatabaseConfig.migrate()

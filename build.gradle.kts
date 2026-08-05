@@ -172,6 +172,19 @@ application {
     mainClass.set("no.nav.sokos.skattekort.ApplicationKt")
 }
 
+// Local development: add test resources to classpath so src/test/resources/application.conf is picked up
+tasks.named<JavaExec>("run") {
+    mainClass.set("no.nav.sokos.skattekort.ApplicationKt")
+    classpath =
+        sourceSets.main.get().runtimeClasspath +
+        files(
+            sourceSets.test
+                .get()
+                .output.resourcesDir,
+        )
+    dependsOn(tasks.named("processTestResources"))
+}
+
 sourceSets {
     main {
         java {

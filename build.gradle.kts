@@ -191,6 +191,17 @@ kotlin {
 }
 
 tasks {
+    named<JavaExec>("run") {
+        mainClass.set("no.nav.sokos.skattekort.ApplicationKt")
+        classpath = sourceSets.main.get().runtimeClasspath +
+            files(
+                sourceSets.test
+                    .get()
+                    .output.resourcesDir,
+            )
+        dependsOn(named("processTestResources"))
+    }
+
     named("runKtlintCheckOverMainSourceSet").configure {
         dependsOn("graphqlGenerateClient")
         dependsOn("openApiGenerate")

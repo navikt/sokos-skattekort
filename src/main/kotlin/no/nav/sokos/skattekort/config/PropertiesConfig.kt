@@ -4,12 +4,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 import com.nimbusds.jose.jwk.RSAKey
-import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.ApplicationConfig
-import io.ktor.server.config.HoconApplicationConfig
 import io.ktor.server.config.getAs
-import io.ktor.server.config.tryGetString
-import io.ktor.server.config.withFallback
 
 object PropertiesConfig {
     lateinit var config: ApplicationConfig
@@ -192,21 +188,7 @@ object PropertiesConfig {
     )
 }
 
-fun ApplicationConfig.loadEnvironmentConfig(): ApplicationConfig {
-    val environmentName =
-        System.getenv("APPLICATION_ENV")
-            ?: System.getProperty("APPLICATION_ENV")
-            ?: System.getenv("NAIS_CLUSTER_NAME")
-            ?: System.getProperty("NAIS_CLUSTER_NAME")
-            ?: this.tryGetString("APPLICATION_ENV")
-
-    val environment = environmentName?.lowercase()?.substringBefore("-") ?: "local"
-    val environmentConfig = ConfigFactory.parseResources("application-$environment.conf")
-    val systemConfig = ConfigFactory.systemEnvironment().withFallback(ConfigFactory.systemProperties()).withFallback(environmentConfig)
-    val applicationConfig = ConfigFactory.parseMap(this.toMap())
-
-    return HoconApplicationConfig(systemConfig.withFallback(applicationConfig).resolve())
-}
+fun loadEnvironmentConfig(): ApplicationConfig = ApplicationConfig("application.conf")
 
 enum class Profile {
     LOCAL,

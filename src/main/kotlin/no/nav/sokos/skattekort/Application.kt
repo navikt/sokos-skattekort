@@ -75,7 +75,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     applicationLifecycleConfig(applicationState)
     commonConfig()
 
-    PropertiesConfig.load(loadEnvironmentConfig())
+    PropertiesConfig.load(applicationConfig.loadEnvironmentConfig())
     val applicationProperties = PropertiesConfig.applicationProperties
     logger.info { "Application started with environment: ${applicationProperties.profile}" }
     DatabaseConfig.migrate()

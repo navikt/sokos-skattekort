@@ -5,7 +5,6 @@ import kotliquery.queryOf
 
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.person.Personidentifikator
-import no.nav.sokos.skattekort.skattekort.SkattekortId
 
 object UtsendingRepository {
     fun insertBatch(
@@ -137,30 +136,5 @@ object UtsendingRepository {
             queryOf(sql),
             extractor = { row -> row.double("earliest_opprettet") },
         ) ?: error("Should always return a number")
-    }
-
-    fun lagreBevis(
-        tx: TransactionalSession,
-        id: SkattekortId,
-        forsystem: Forsystem,
-        fnr: Personidentifikator,
-        copybook: String,
-    ) {
-        // language=SQL
-        val sql =
-            """INSERT INTO bevis_sending
-                |(skattekort_id, forsystem, fnr, sending) VALUES (:id, :forsystem, :fnr, :sending)
-            """.trimMargin()
-        tx.update(
-            queryOf(
-                sql,
-                mapOf(
-                    "id" to id.value,
-                    "forsystem" to forsystem.value,
-                    "fnr" to fnr.value,
-                    "sending" to copybook,
-                ),
-            ),
-        )
     }
 }

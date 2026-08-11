@@ -165,10 +165,6 @@ class UtsendingService(
                 // Delete all utsendinger in this batch, including those that produced an empty
                 // payload – they will never produce content and must not be retried endlessly.
                 UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! })
-
-                // TODO: Fjern denne featureToggles
-                if (featureToggles.isBevisForSendingEnabled()) {
-                }
             }
         }.onFailure { exception ->
             handleException(exception, forsystem, utsendingList)

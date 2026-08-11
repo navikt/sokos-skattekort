@@ -12,7 +12,6 @@ import no.nav.sokos.skattekort.config.PropertiesConfig
 private const val TOGGLE_BESTILLINGER_SUFFIX = "bestillinger.enabled"
 private const val TOGGLE_UTSENDINGER_SUFFIX = "utsendinger.enabled"
 private const val TOGGLE_OPPDATERINGER_SUFFIX = "oppdateringer.enabled"
-private const val TOGGLE_BEVISFORSENDING_SUFFIX = "bevisforsending.enabled"
 private const val TOGGLE_LAGRE_MOTTATTE_BESTILLINGER_SUFFIX = "lagre-mottatte-bestillinger.enabled"
 private const val TOGGLE_FORESPOERSEL_LISTENER_SUFFIX = "forespoersel-listener.enabled"
 
@@ -32,8 +31,6 @@ class UnleashIntegration(
 
     fun isOppdateringEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_OPPDATERINGER_SUFFIX))
 
-    fun isBevisForSendingEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_BEVISFORSENDING_SUFFIX))
-
     fun isLagreMottatteBestillingerEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_LAGRE_MOTTATTE_BESTILLINGER_SUFFIX))
 
     fun isForespoerselListenerEnabled(): Boolean = unleashClient.isEnabled(toggleName(TOGGLE_FORESPOERSEL_LISTENER_SUFFIX))
@@ -46,7 +43,6 @@ class UnleashIntegration(
                     fakeUnleash.enable(toggleName(TOGGLE_UTSENDINGER_SUFFIX))
                     fakeUnleash.enable(toggleName(TOGGLE_BESTILLINGER_SUFFIX))
                     fakeUnleash.enable(toggleName(TOGGLE_OPPDATERINGER_SUFFIX))
-                    fakeUnleash.enable(toggleName(TOGGLE_BEVISFORSENDING_SUFFIX))
                     fakeUnleash.disable(toggleName(TOGGLE_LAGRE_MOTTATTE_BESTILLINGER_SUFFIX))
                 }
         } else {

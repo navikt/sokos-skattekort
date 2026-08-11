@@ -24,7 +24,6 @@ NB! Gå gjennom AuditTag for å se om flere tags bør fjernes.
 ```sql
 begin transaction read write;
 truncate table forespoersler cascade;
-truncate table bevis_sending;
 truncate table bestillingsbatcher cascade;
 truncate table skattekort cascade;
 truncate table skattekort_data;

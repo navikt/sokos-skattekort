@@ -82,16 +82,16 @@ class BestillingsbatchService(
     suspend fun bestillOppdaterteSkattekort() {
         if (!featureToggles.isOppdateringEnabled()) return
         runCatching {
-            dataSource.transactionSuspending { tx ->
-                if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transactionSuspending
-
-                // Vi henter skattekort for neste år 15. desember for å ha de klar til første utbetaling i januar, og for å kunne ta juleferie uten trøbbel
-                ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->
-                    val response = skatteetatenClient.bestillSkattekort(oppdateringsrequest)
-                    logger.info("Bestillingsbatch for henting av oppdaterte skattekort ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                    val bestillingsbatchId = BestillingsbatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(oppdateringsrequest), BestillingsbatchType.OPPDATERING)
-                    logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
-                }
+            dataSource.transactionSuspending { tx -> if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transactionSuspending }
+            // Vi henter skattekort for neste år 15. desember for å ha de klar til første utbetaling i januar, og for å kunne ta juleferie uten trøbbel
+            ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->
+                val response = skatteetatenClient.bestillSkattekort(oppdateringsrequest)
+                logger.info("Bestillingsbatch for henting av oppdaterte skattekort ${response.bestillingsreferanse} mottatt av Skatteetaten")
+                val bestillingsbatchId =
+                    dataSource.transactionSuspending { tx ->
+                        BestillingsbatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(oppdateringsrequest), BestillingsbatchType.OPPDATERING)
+                    }
+                logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
             }
         }.onFailure { exception ->
             when (exception) {

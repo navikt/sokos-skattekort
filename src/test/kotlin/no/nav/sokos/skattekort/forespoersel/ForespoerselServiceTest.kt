@@ -3,9 +3,10 @@ package no.nav.sokos.skattekort.forespoersel
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
@@ -368,42 +369,24 @@ class ForespoerselServiceTest :
                 WiremockListener.wiremockPDLStub(WiremockListener.generateHentIdenterBolk("01010112345"))
 
                 val message = "OS;2025;01010112345"
-                val startLatch = CountDownLatch(1)
-                val completeLatch = CountDownLatch(2)
                 val exceptions = ConcurrentHashMap<String, Exception>()
 
-                val thread1 =
-                    Thread {
+                coroutineScope {
+                    launch(Dispatchers.Default) {
                         try {
-                            startLatch.await()
-                            runBlocking { forespoerselService.taImotForespoersel(message) }
+                            forespoerselService.taImotForespoersel(message)
                         } catch (e: Exception) {
-                            exceptions["thread1"] = e
-                        } finally {
-                            completeLatch.countDown()
+                            exceptions["job1"] = e
                         }
                     }
-
-                val thread2 =
-                    Thread {
+                    launch(Dispatchers.Default) {
                         try {
-                            startLatch.await()
-                            runBlocking { forespoerselService.taImotForespoersel(message) }
+                            forespoerselService.taImotForespoersel(message)
                         } catch (e: Exception) {
-                            exceptions["thread2"] = e
-                        } finally {
-                            completeLatch.countDown()
+                            exceptions["job2"] = e
                         }
                     }
-
-                thread1.start()
-                thread2.start()
-
-                // Signal both threads to start simultaneously
-                startLatch.countDown()
-
-                // Wait for completion
-                completeLatch.await()
+                }
 
                 DbListener.dataSource.transaction { tx ->
                     val forespoerselList = ForespoerselRepository.getAllForespoersel(tx)

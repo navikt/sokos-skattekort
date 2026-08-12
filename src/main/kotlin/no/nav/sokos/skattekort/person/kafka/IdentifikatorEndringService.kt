@@ -59,44 +59,47 @@ class IdentifikatorEndringService(
     private suspend fun behandleIdentifikator(folkeregisteridentifikator: FolkeregisteridentifikatorDTO) {
         val identifikasjonsnummer = folkeregisteridentifikator.identifikasjonsnummer
 
+        // 1. Rask DB-sjekk først (egen kort transaksjon)
+        val finnesAllerede = dataSource.transactionSuspending { tx -> PersonRepository.findAllByFnr(tx, identifikasjonsnummer).isNotEmpty() }
+        if (finnesAllerede) return
+
+        // 2. PDL-kall UTENFOR transaksjonen — ingen DB-tilkobling holdes
+        val pdlResponse = pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer))
+        val identList = pdlResponse[identifikasjonsnummer].orEmpty().filter { it.historisk }.map { it.ident }
+        if (identList.isEmpty()) return
+
+        // 3. Kort transaksjon for selve skrivingen
         dataSource.transactionSuspending { tx ->
-            if (PersonRepository.findAllByFnr(tx, identifikasjonsnummer).isEmpty()) {
-                val pdlResponse = pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer))
-                val identList = pdlResponse[identifikasjonsnummer].orEmpty().filter { it.historisk }.map { it.ident }
+            val personId =
+                FoedselsnummerRepository
+                    .findPersonIdByFnrList(tx, identList)
+                    .filterValues { it != null }
+                    .values
+                    .firstOrNull()
 
-                if (identList.isNotEmpty()) {
-                    val personId =
-                        FoedselsnummerRepository
-                            .findPersonIdByFnrList(tx, identList)
-                            .filterValues { it != null }
-                            .values
-                            .firstOrNull()
-
-                    personId?.let { id ->
-                        logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
-                        personService.updateFoedselsnummer(
-                            tx,
-                            Foedselsnummer(
-                                personId = id,
-                                gjelderFom = LocalDate.now(),
+            personId?.let { id ->
+                logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
+                personService.updateFoedselsnummer(
+                    tx,
+                    Foedselsnummer(
+                        personId = id,
+                        gjelderFom = LocalDate.now(),
+                        fnr = Personidentifikator(identifikasjonsnummer),
+                    ),
+                )
+                BestillingRepository.insertBatch(
+                    tx,
+                    bestillingList =
+                        listOf(
+                            Bestilling(
+                                personId = personId,
                                 fnr = Personidentifikator(identifikasjonsnummer),
+                                inntektsaar = LocalDate.now().year,
                             ),
-                        )
-                        BestillingRepository.insertBatch(
-                            tx,
-                            bestillingList =
-                                listOf(
-                                    Bestilling(
-                                        personId = personId,
-                                        fnr = Personidentifikator(identifikasjonsnummer),
-                                        inntektsaar = LocalDate.now().year,
-                                    ),
-                                ),
-                        )
-                        AuditRepository.insert(tx, AuditTag.NYTT_FNR, personId, "Opprettet bestilling pga. melding fra PDL om ny Personidentifikator")
-                    } ?: logger.info(marker = TEAM_LOGS_MARKER) { "Ingen ident endringer med folkeregisteridentifikator=$identifikasjonsnummer" }
-                }
-            }
+                        ),
+                )
+                AuditRepository.insert(tx, AuditTag.NYTT_FNR, personId, "Opprettet bestilling pga. melding fra PDL om ny Personidentifikator")
+            } ?: logger.info(marker = TEAM_LOGS_MARKER) { "Ingen ident endringer med folkeregisteridentifikator=$identifikasjonsnummer" }
         }
     }
 }

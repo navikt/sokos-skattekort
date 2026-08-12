@@ -93,8 +93,14 @@ fun Route.skattekortApi(
 
             backgroundTaskRunner.launch {
                 fnrSet.forEach { fnr ->
-                    val message = "$forsystem;$inntektsaar;$fnr"
-                    forespoerselService.taImotForespoersel(message, saksbehandler = null)
+                    try {
+                        val message = "$forsystem;$inntektsaar;$fnr"
+                        forespoerselService.taImotForespoersel(message, saksbehandler = null)
+                    } catch (ex: Exception) {
+                        logger.error(marker = TEAM_LOGS_MARKER, ex) {
+                            "Bulk-bestilling feilet for fnr=$fnr forsystem=$forsystem inntektsaar=$inntektsaar"
+                        }
+                    }
                 }
             }
         }

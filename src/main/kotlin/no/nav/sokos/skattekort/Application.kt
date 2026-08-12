@@ -47,8 +47,8 @@ import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
 import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
+import no.nav.sokos.skattekort.util.BackgroundTaskRunner
 import no.nav.sokos.skattekort.util.audit.AuditLogger
-import no.nav.sokos.skattekort.util.launchBackgroundTask
 import no.nav.sokos.skattekort.utsending.UtsendingService
 import no.nav.sokos.skattekort.utsending.mq.JmsProducerService
 
@@ -90,6 +90,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         provide { PropertiesConfig.applicationProperties }
         provide(MaskinportenTokenClient::class)
         provide(AuditLogger::class)
+        provide { BackgroundTaskRunner(applicationState) }
 
         provide { MQConfig.connectionFactory }
         provide<Queue>(name = FORESPORSEL_QUEUE) {
@@ -186,8 +187,9 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
     val kafkaConsumerService =
         PropertiesConfig.kafkaProperties.takeIf { it.enabled }?.let {
             val kafkaConsumerService: KafkaConsumerService by dependencies
+            val backgroundTaskRunner: BackgroundTaskRunner by dependencies
             applicationState.onReady = {
-                launchBackgroundTask(applicationState) {
+                backgroundTaskRunner.launch {
                     kafkaConsumerService.start(applicationState)
                 }
             }
@@ -214,6 +216,10 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
         // Step 3: Stop ForespoerselListener (which uses MQ/JMS)
         logger.info { "Stopping ForespoerselListener..." }
         forespoerselListener.onOppdateringChanged(false)
+
+        logger.info { "Stopping background tasks..." }
+        val backgroundTaskRunner: BackgroundTaskRunner by dependencies
+        backgroundTaskRunner.close()
     }
 
     monitor.subscribe(ApplicationStopped) {

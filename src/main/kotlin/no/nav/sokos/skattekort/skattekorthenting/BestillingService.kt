@@ -4,7 +4,6 @@ import java.time.Duration
 import java.time.Instant
 import javax.sql.DataSource
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
@@ -46,7 +45,7 @@ class BestillingService(
 ) {
     private val errorLoggedBatchIds = mutableSetOf<Long>()
 
-    fun hentBestillingsbatcher(type: BestillingsbatchType) {
+    suspend fun hentBestillingsbatcher(type: BestillingsbatchType) {
         val bestillingsbatchList =
             try {
                 dataSource.transaction { tx -> BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, type) }
@@ -56,10 +55,10 @@ class BestillingService(
             }
 
         for (batch in bestillingsbatchList) {
-            val batchId = batch.id!!.id
+            val batchId = requireNotNull(batch.id) { "Bestillingsbatch mangler id" }.id
             runCatching {
                 logger.info("Henter skattekort for ${batch.bestillingsreferanse}")
-                val response = runBlocking { skatteetatenClient.hentSkattekort(batch.bestillingsreferanse) }
+                val response = skatteetatenClient.hentSkattekort(batch.bestillingsreferanse)
                 if (response == null) {
                     logger.info("Svaret er ikke klart ennå for bestillingsbatch $batchId, forsøker igjen senere")
                     if (batch.opprettet.plus(Duration.ofHours(RECENT_BATCH_GRACE_PERIOD)) < Instant.now() && errorLoggedBatchIds.add(batchId)) {

@@ -4,7 +4,6 @@ import javax.sql.DataSource
 
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlinx.coroutines.runBlocking
 
 import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.Queue
@@ -37,7 +36,7 @@ class UtsendingService(
 ) {
     private val totalIUtsending = AtomicInt(0)
 
-    fun handleUtsending() {
+    suspend fun handleUtsending() {
         totalIUtsending.store(0)
         if (!featureToggles.isUtsendingEnabled()) return
 
@@ -66,7 +65,7 @@ class UtsendingService(
                 utsendingMap.forEach { (forsystem, utsendingList) ->
                     when (forsystem) {
                         Forsystem.OPPDRAGSSYSTEMET, Forsystem.OPPDRAGSSYSTEMET_STOR -> utsendingTilOppdragZ(forsystem, utsendingList)
-                        Forsystem.MANUELL -> dataSource.transaction { tx -> UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! }) }
+                        Forsystem.MANUELL -> dataSource.transaction { tx -> UtsendingRepository.deleteBatch(tx, utsendingList.map { requireNotNull(it.id) { "Utsending mangler id" } }) }
                         Forsystem.DARE_POC -> {
                             if (utsendingDareClientService == null) {
                                 logger.error { "UtsendingDareClientService ikke tilgjengelig i prod" }
@@ -87,23 +86,21 @@ class UtsendingService(
         }
     }
 
-    private fun utsendingTilDarePoc(utsendingList: List<Utsending>) {
+    private suspend fun utsendingTilDarePoc(utsendingList: List<Utsending>) {
         runCatching {
-            runBlocking {
-                val skattekortList = dataSource.transaction { tx -> SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray()) }
-                skattekortList.forEach { skattekort ->
-                    val utsending = utsendingList.find { it.skattekortId == skattekort.id }
-                    if (utsending != null) {
-                        utsendingDareClientService?.sendSkattekort(
-                            skattekortDTO = SkattekortDTO(skattekort, utsending.fnr),
-                        )
-                        dataSource.transaction { tx ->
-                            AuditRepository.insert(tx, AuditTag.UTSENDING_OK, skattekort.personId, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
-                            UtsendingRepository.deleteBatch(tx, listOf(utsending.id!!))
-                        }
-                    } else {
-                        logger.error { "Skattekort er sendt til ${Forsystem.DARE_POC}, men fant ingen utsending" }
+            val skattekortList = dataSource.transaction { tx -> SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray()) }
+            skattekortList.forEach { skattekort ->
+                val utsending = utsendingList.find { it.skattekortId == skattekort.id }
+                if (utsending != null) {
+                    utsendingDareClientService?.sendSkattekort(
+                        skattekortDTO = SkattekortDTO(skattekort, utsending.fnr),
+                    )
+                    dataSource.transaction { tx ->
+                        AuditRepository.insert(tx, AuditTag.UTSENDING_OK, skattekort.personId, "${Forsystem.DARE_POC.value}: Skattekort sendt til ${Forsystem.DARE_POC.value} OK")
+                        UtsendingRepository.deleteBatch(tx, listOf(requireNotNull(utsending.id) { "Utsending mangler id" }))
                     }
+                } else {
+                    logger.error { "Skattekort er sendt til ${Forsystem.DARE_POC}, men fant ingen utsending" }
                 }
             }
         }.onFailure { exception ->
@@ -164,7 +161,7 @@ class UtsendingService(
 
                 // Delete all utsendinger in this batch, including those that produced an empty
                 // payload – they will never produce content and must not be retried endlessly.
-                UtsendingRepository.deleteBatch(tx, utsendingList.map { it.id!! })
+                UtsendingRepository.deleteBatch(tx, utsendingList.map { requireNotNull(it.id) { "Utsending mangler id" } })
             }
         }.onFailure { exception ->
             handleException(exception, forsystem, utsendingList)
@@ -180,7 +177,7 @@ class UtsendingService(
     ) {
         dataSource.transaction { tx ->
             val failMessage = exception.message ?: "Ukjent feil"
-            UtsendingRepository.increaseFailCount(tx, failMessage, utsendingList.map { it.id!! })
+            UtsendingRepository.increaseFailCount(tx, failMessage, utsendingList.map { requireNotNull(it.id) { "Utsending mangler id" } })
         }
         val failCountEtterInkrement = utsendingList.maxOf { it.failCount + 1 }
         if (failCountEtterInkrement >= 2) {

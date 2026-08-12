@@ -91,8 +91,8 @@ class PdlClientService(
                 }
                 result.data
                     ?.hentPersonBolk
-                    ?.filter { item -> item.person != null }
-                    ?.associate { item -> item.ident to item.person!! } ?: emptyMap()
+                    ?.mapNotNull { item -> item.person?.let { item.ident to it } }
+                    ?.toMap() ?: emptyMap()
             }
 
             else -> {

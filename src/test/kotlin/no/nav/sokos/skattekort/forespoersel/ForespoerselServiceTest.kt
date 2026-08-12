@@ -5,6 +5,8 @@ import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 
+import kotlinx.coroutines.runBlocking
+
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
@@ -374,7 +376,7 @@ class ForespoerselServiceTest :
                     Thread {
                         try {
                             startLatch.await()
-                            forespoerselService.taImotForespoersel(message)
+                            runBlocking { forespoerselService.taImotForespoersel(message) }
                         } catch (e: Exception) {
                             exceptions["thread1"] = e
                         } finally {
@@ -386,7 +388,7 @@ class ForespoerselServiceTest :
                     Thread {
                         try {
                             startLatch.await()
-                            forespoerselService.taImotForespoersel(message)
+                            runBlocking { forespoerselService.taImotForespoersel(message) }
                         } catch (e: Exception) {
                             exceptions["thread2"] = e
                         } finally {

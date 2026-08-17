@@ -4,6 +4,8 @@ import java.time.Duration
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
+import kotlinx.coroutines.runBlocking
+
 import com.github.kagkarlsson.scheduler.Scheduler
 import com.github.kagkarlsson.scheduler.task.ExecutionContext
 import com.github.kagkarlsson.scheduler.task.TaskInstance
@@ -68,9 +70,11 @@ object JobTaskConfig {
                 if (handleJobs) {
                     withTracerId {
                         showLog(showLogLocalTime, instance, context)
-                        bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
-                        skattekortdataService.processSkattekortData()
-                        bestillingsbatchService.bestillSkattekort()
+                        runBlocking {
+                            bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
+                            skattekortdataService.processSkattekortData()
+                            bestillingsbatchService.bestillSkattekort()
+                        }
                     }
                 }
             }
@@ -89,11 +93,13 @@ object JobTaskConfig {
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
                     withTracerId {
-                        try {
-                            showLog(startTime, instance, context)
-                            utsendingService.handleUtsending()
-                        } catch (_: Exception) {
-                            // Spis exception for å ta kontroll over logging
+                        runBlocking {
+                            try {
+                                showLog(startTime, instance, context)
+                                utsendingService.handleUtsending()
+                            } catch (e: Exception) {
+                                logger.error(e) { "Utsending feilet" }
+                            }
                         }
                     }
                 }
@@ -115,8 +121,10 @@ object JobTaskConfig {
                 if (handleJobs) {
                     withTracerId {
                         showLog(showLogLocalTime, instance, context)
-                        bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
-                        bestillingsbatchService.bestillOppdaterteSkattekort()
+                        runBlocking {
+                            bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
+                            bestillingsbatchService.bestillOppdaterteSkattekort()
+                        }
                     }
                 }
             }

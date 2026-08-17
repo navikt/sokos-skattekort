@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort.forespoersel
 
+import kotlinx.coroutines.runBlocking
+
 import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSConsumer
@@ -26,25 +28,28 @@ class ForespoerselListener(
 
     @Synchronized
     private fun start() {
-        jmsContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
-        jmsConsumer = jmsContext!!.createConsumer(forespoerselQueue)
+        val context = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)
+        val consumer = context.createConsumer(forespoerselQueue)
+        jmsContext = context
+        jmsConsumer = consumer
 
-        jmsConsumer!!.setMessageListener { message: Message ->
+        consumer.setMessageListener { message: Message ->
             TraceUtils.withTracerId {
-                runCatching {
-                    val jmsMessage = message.getBody(String::class.java)
-                    forespoerselService.taImotForespoersel(jmsMessage)
-                    message.acknowledge()
-                }.onFailure {
-                    logger.error { "Send to BOQ with messageId: ${message.jmsMessageID}" }
-                    val boqProducer = jmsContext!!.createProducer()
-                    boqProducer.send(forespoerselBoqQueue, message)
-                    message.acknowledge()
+                runBlocking {
+                    runCatching {
+                        val jmsMessage = message.getBody(String::class.java)
+                        forespoerselService.taImotForespoersel(jmsMessage)
+                        message.acknowledge()
+                    }.onFailure { exception ->
+                        logger.error(exception) { "Send to BOQ with messageId: ${message.jmsMessageID}" }
+                        context.createProducer().send(forespoerselBoqQueue, message)
+                        message.acknowledge()
+                    }
                 }
             }
         }
 
-        jmsContext!!.start()
+        context.start()
         isRunning = true
         logger.info { "Forespoersel started, listening on queue: ${forespoerselQueue.queueName}" }
     }

@@ -67,7 +67,7 @@ class SkattekortService(
                 SkattekortRepository
                     .findAllByPersonId(
                         tx,
-                        personIdList = personList.map { it.id!! },
+                        personIdList = personList.map { requireNotNull(it.id) { "Person mangler id" } },
                         inntektsaarList = inntektsaar?.let { listOf(it) } ?: alleLovligeInntektsaarAaHenteSkattekortFor(),
                     )
             }

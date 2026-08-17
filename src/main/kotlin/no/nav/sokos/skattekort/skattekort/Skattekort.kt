@@ -87,23 +87,24 @@ sealed interface Forskuddstrekk {
                 ForskuddstrekkType.FRIKORT -> {
                     Frikort(
                         trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
-                        frikortBeloep = forskuddstrekk.frikort!!.frikortbeloep?.toInt(),
+                        frikortBeloep = requireNotNull(forskuddstrekk.frikort) { "Forskuddstrekk klassifisert som FRIKORT uten frikort-data" }.frikortbeloep?.toInt(),
                     )
                 }
 
                 ForskuddstrekkType.PROSENTKORT -> {
                     Prosentkort(
                         trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
-                        prosentSats = forskuddstrekk.trekkprosent!!.prosentsats,
+                        prosentSats = requireNotNull(forskuddstrekk.trekkprosent) { "Forskuddstrekk klassifisert som PROSENTKORT uten trekkprosent-data" }.prosentsats,
                     )
                 }
 
                 ForskuddstrekkType.TABELLKORT -> {
+                    val trekktabell = requireNotNull(forskuddstrekk.trekktabell) { "Forskuddstrekk klassifisert som TABELLKORT uten trekktabell-data" }
                     Tabellkort(
                         trekkode = Trekkode.fromValue(forskuddstrekk.trekkode),
-                        tabellNummer = forskuddstrekk.trekktabell!!.tabellnummer,
-                        prosentSats = forskuddstrekk.trekktabell.prosentsats,
-                        antallMndForTrekk = forskuddstrekk.trekktabell.antallMaanederForTrekk,
+                        tabellNummer = trekktabell.tabellnummer,
+                        prosentSats = trekktabell.prosentsats,
+                        antallMndForTrekk = trekktabell.antallMaanederForTrekk,
                     )
                 }
             }
@@ -266,16 +267,16 @@ fun ForskuddstrekkJson.toDomain(): Forskuddstrekk {
         Forskuddstrekk.Companion.ForskuddstrekkType.PROSENTKORT ->
             Prosentkort(
                 trekkode = Trekkode.fromValue(trekkode),
-                prosentSats = prosentSats!!.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
+                prosentSats = requireNotNull(prosentSats) { "Prosentkort mangler prosentSats" }.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
                 antallMndForTrekk = antallMndForTrekk?.toBigDecimal()?.setScale(1, RoundingMode.HALF_UP),
             )
 
         Forskuddstrekk.Companion.ForskuddstrekkType.TABELLKORT ->
             Tabellkort(
                 trekkode = Trekkode.fromValue(trekkode),
-                tabellNummer = tabellNummer!!,
-                prosentSats = prosentSats!!.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
-                antallMndForTrekk = antallMndForTrekk!!.toBigDecimal().setScale(1, RoundingMode.HALF_UP),
+                tabellNummer = requireNotNull(tabellNummer) { "Tabellkort mangler tabellNummer" },
+                prosentSats = requireNotNull(prosentSats) { "Tabellkort mangler prosentSats" }.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
+                antallMndForTrekk = requireNotNull(antallMndForTrekk) { "Tabellkort mangler antallMndForTrekk" }.toBigDecimal().setScale(1, RoundingMode.HALF_UP),
             )
     }
 }

@@ -15,6 +15,7 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.SkattekortService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
+import no.nav.sokos.skattekort.util.BackgroundTaskRunner
 import no.nav.sokos.skattekort.utsending.UtsendingService
 
 fun Application.routingConfig(
@@ -32,9 +33,10 @@ fun Application.routingConfig(
             val skattekortService: SkattekortService by dependencies
             val statusService: StatusService by dependencies
             val utsendingService: UtsendingService by dependencies
+            val backgroundTaskRunner: BackgroundTaskRunner by dependencies
 
             skattekortAdminApi(bestillingsbatchService, personService, utsendingService, skattekortService)
-            skattekortApi(forespoerselService, personService, statusService)
+            skattekortApi(forespoerselService, personService, statusService, backgroundTaskRunner)
             skattekortPersonApi(skattekortService, pdlService)
         }
     }

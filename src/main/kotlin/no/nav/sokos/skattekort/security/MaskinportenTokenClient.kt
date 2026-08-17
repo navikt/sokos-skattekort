@@ -44,10 +44,12 @@ class MaskinportenTokenClient(
             val cachedToken = tokenCache.get()
 
             if (cachedToken == null || cachedToken.expiresAt < nowPlusLimit) {
-                tokenCache.set(getMaskinportenToken())
+                val freshToken = getMaskinportenToken()
+                tokenCache.set(freshToken)
+                return@withLock freshToken.token
             }
 
-            tokenCache.get()!!.token
+            cachedToken.token
         }
 
     private suspend fun getMaskinportenToken(): AccessToken {

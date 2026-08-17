@@ -5,7 +5,6 @@ import java.time.Duration
 import java.time.Instant
 import javax.sql.DataSource
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
@@ -26,6 +25,7 @@ import no.nav.sokos.skattekort.skattekort.ReglerForInntektsaar.maxInntektsaar
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.util.SQLUtils.transactionSuspending
 
 private val logger = KotlinLogging.logger {}
 
@@ -34,7 +34,7 @@ class BestillingsbatchService(
     private val skatteetatenClient: SkatteetatenClient,
     private val featureToggles: UnleashIntegration,
 ) {
-    fun bestillSkattekort() {
+    suspend fun bestillSkattekort() {
         if (!featureToggles.isBestillingerEnabled()) return
         val bestillingList: MutableList<Bestilling> = mutableListOf()
 
@@ -48,7 +48,7 @@ class BestillingsbatchService(
                     fnr = bestillingList.map { it.fnr }.distinct(),
                     bestillingOrgnr = PropertiesConfig.applicationProperties.bestillingOrgnr,
                 )
-            val response = runBlocking { skatteetatenClient.bestillSkattekort(request) }
+            val response = skatteetatenClient.bestillSkattekort(request)
 
             dataSource.transaction { tx ->
                 logger.info { "Bestillingsbatch ${response.bestillingsreferanse} mottatt av Skatteetaten" }
@@ -56,7 +56,7 @@ class BestillingsbatchService(
 
                 logger.info { "Bestillingsbatch $bestillingsbatchId opprettet" }
                 AuditRepository.insertBatch(tx, AuditTag.BESTILLING_SENDT, bestillingList.map { it.personId }, "Bestilling sendt")
-                BestillingRepository.updateBestillingsWithBatchId(tx, bestillingList.map { it.id!!.id }, bestillingsbatchId)
+                BestillingRepository.updateBestillingsWithBatchId(tx, bestillingList.map { requireNotNull(it.id) { "Bestilling mangler id" }.id }, bestillingsbatchId)
             }
         }.onFailure { exception ->
             when (exception) {
@@ -79,22 +79,19 @@ class BestillingsbatchService(
         }
     }
 
-    fun bestillOppdaterteSkattekort() {
+    suspend fun bestillOppdaterteSkattekort() {
         if (!featureToggles.isOppdateringEnabled()) return
         runCatching {
-            dataSource.transaction { tx ->
-                if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transaction
-
-                // Vi henter skattekort for neste år 15. desember for å ha de klar til første utbetaling i januar, og for å kunne ta juleferie uten trøbbel
-                ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->
-                    val response =
-                        runBlocking {
-                            skatteetatenClient.bestillSkattekort(oppdateringsrequest)
-                        }
-                    logger.info("Bestillingsbatch for henting av oppdaterte skattekort ${response.bestillingsreferanse} mottatt av Skatteetaten")
-                    val bestillingsbatchId = BestillingsbatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(oppdateringsrequest), BestillingsbatchType.OPPDATERING)
-                    logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
-                }
+            dataSource.transactionSuspending { tx -> if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transactionSuspending }
+            // Vi henter skattekort for neste år 15. desember for å ha de klar til første utbetaling i januar, og for å kunne ta juleferie uten trøbbel
+            ReglerForInntektsaar.inntektsaarAaBestille().map(::bestillOppdateringRequest).forEach { oppdateringsrequest ->
+                val response = skatteetatenClient.bestillSkattekort(oppdateringsrequest)
+                logger.info("Bestillingsbatch for henting av oppdaterte skattekort ${response.bestillingsreferanse} mottatt av Skatteetaten")
+                val bestillingsbatchId =
+                    dataSource.transactionSuspending { tx ->
+                        BestillingsbatchRepository.insert(tx, response.bestillingsreferanse, Json.encodeToString(oppdateringsrequest), BestillingsbatchType.OPPDATERING)
+                    }
+                logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
             }
         }.onFailure { exception ->
             when (exception) {

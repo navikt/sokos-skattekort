@@ -3,8 +3,6 @@ package no.nav.sokos.skattekort.person.kafka
 import java.time.LocalDate
 import javax.sql.DataSource
 
-import kotlinx.coroutines.runBlocking
-
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -18,7 +16,7 @@ import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.person.Personidentifikator
 import no.nav.sokos.skattekort.skattekorthenting.Bestilling
 import no.nav.sokos.skattekort.skattekorthenting.BestillingRepository
-import no.nav.sokos.skattekort.util.SQLUtils.transaction
+import no.nav.sokos.skattekort.util.SQLUtils.transactionSuspending
 
 private val logger = KotlinLogging.logger {}
 const val FOLKEREGISTERIDENTIFIKATOR = "FOLKEREGISTERIDENTIFIKATOR_V1"
@@ -28,7 +26,7 @@ class IdentifikatorEndringService(
     private val pdlClientService: PdlClientService,
     private val personService: PersonService,
 ) {
-    fun processIdentifikatorEndring(personHendelse: PersonHendelseDTO) {
+    suspend fun processIdentifikatorEndring(personHendelse: PersonHendelseDTO) {
         if (personHendelse.opplysningstype == FOLKEREGISTERIDENTIFIKATOR) {
             logger.info(marker = TEAM_LOGS_MARKER) { "Processing personHendelse: $personHendelse" }
             logger.info { "Behandle hendelse med hendelseId=${personHendelse.hendelseId}, opplysningstype=${personHendelse.opplysningstype} og endringstype=${personHendelse.endringstype.name}" }
@@ -58,47 +56,50 @@ class IdentifikatorEndringService(
         }
     }
 
-    private fun behandleIdentifikator(folkeregisteridentifikator: FolkeregisteridentifikatorDTO) {
+    private suspend fun behandleIdentifikator(folkeregisteridentifikator: FolkeregisteridentifikatorDTO) {
         val identifikasjonsnummer = folkeregisteridentifikator.identifikasjonsnummer
 
-        dataSource.transaction { tx ->
-            if (PersonRepository.findAllByFnr(tx, identifikasjonsnummer).isEmpty()) {
-                val pdlResponse = runBlocking { pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer)) }
-                val identList = pdlResponse[identifikasjonsnummer]!!.filter { it.historisk }.map { it.ident }
+        // 1. Rask DB-sjekk først (egen kort transaksjon)
+        val finnesAllerede = dataSource.transactionSuspending { tx -> PersonRepository.findAllByFnr(tx, identifikasjonsnummer).isNotEmpty() }
+        if (finnesAllerede) return
 
-                if (identList.isNotEmpty()) {
-                    val personId =
-                        FoedselsnummerRepository
-                            .findPersonIdByFnrList(tx, identList)
-                            .filterValues { it != null }
-                            .values
-                            .firstOrNull()
+        // 2. PDL-kall UTENFOR transaksjonen — ingen DB-tilkobling holdes
+        val pdlResponse = pdlClientService.getIdenterBolk(listOf(identifikasjonsnummer))
+        val identList = pdlResponse[identifikasjonsnummer].orEmpty().filter { it.historisk }.map { it.ident }
+        if (identList.isEmpty()) return
 
-                    personId?.let { id ->
-                        logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
-                        personService.updateFoedselsnummer(
-                            tx,
-                            Foedselsnummer(
-                                personId = id,
-                                gjelderFom = LocalDate.now(),
+        // 3. Kort transaksjon for selve skrivingen
+        dataSource.transactionSuspending { tx ->
+            val personId =
+                FoedselsnummerRepository
+                    .findPersonIdByFnrList(tx, identList)
+                    .filterValues { it != null }
+                    .values
+                    .firstOrNull()
+
+            personId?.let { id ->
+                logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$id med folkeregisteridentifikator=$identifikasjonsnummer" }
+                personService.updateFoedselsnummer(
+                    tx,
+                    Foedselsnummer(
+                        personId = id,
+                        gjelderFom = LocalDate.now(),
+                        fnr = Personidentifikator(identifikasjonsnummer),
+                    ),
+                )
+                BestillingRepository.insertBatch(
+                    tx,
+                    bestillingList =
+                        listOf(
+                            Bestilling(
+                                personId = personId,
                                 fnr = Personidentifikator(identifikasjonsnummer),
+                                inntektsaar = LocalDate.now().year,
                             ),
-                        )
-                        BestillingRepository.insertBatch(
-                            tx,
-                            bestillingList =
-                                listOf(
-                                    Bestilling(
-                                        personId = personId,
-                                        fnr = Personidentifikator(identifikasjonsnummer),
-                                        inntektsaar = LocalDate.now().year,
-                                    ),
-                                ),
-                        )
-                        AuditRepository.insert(tx, AuditTag.NYTT_FNR, personId, "Opprettet bestilling pga. melding fra PDL om ny Personidentifikator")
-                    } ?: logger.info(marker = TEAM_LOGS_MARKER) { "Ingen ident endringer med folkeregisteridentifikator=$identifikasjonsnummer" }
-                }
-            }
+                        ),
+                )
+                AuditRepository.insert(tx, AuditTag.NYTT_FNR, personId, "Opprettet bestilling pga. melding fra PDL om ny Personidentifikator")
+            } ?: logger.info(marker = TEAM_LOGS_MARKER) { "Ingen ident endringer med folkeregisteridentifikator=$identifikasjonsnummer" }
         }
     }
 }

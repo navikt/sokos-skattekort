@@ -46,13 +46,15 @@ object PersonRepository {
             ) pf ON TRUE
             WHERE p.id = :personId
             """.trimIndent()
-        return tx.single(
-            queryOf(
-                sql,
-                mapOf("personId" to personId.value),
+        return requireNotNull(
+            tx.single(
+                queryOf(
+                    sql,
+                    mapOf("personId" to personId.value),
+                ),
+                extractor = mapToPerson,
             ),
-            extractor = mapToPerson,
-        )!!
+        ) { "Fant ikke person med id=${personId.value}" }
     }
 
     fun findAllByFnr(

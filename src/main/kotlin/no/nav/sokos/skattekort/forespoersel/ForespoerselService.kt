@@ -36,7 +36,7 @@ class ForespoerselService(
     private typealias BestillingCount = Int
     private typealias UtsendingCount = Int
 
-    fun taImotForespoersel(
+    suspend fun taImotForespoersel(
         message: String,
         saksbehandler: Saksbehandler? = null,
     ) {
@@ -196,7 +196,7 @@ class ForespoerselService(
                         tx,
                         utsendingList =
                             chunk.map { (fnr, skattekort) ->
-                                Utsending(Personidentifikator(fnr), inntektsaar, forsystem, skattekort.id!!)
+                                Utsending(Personidentifikator(fnr), inntektsaar, forsystem, requireNotNull(skattekort.id) { "Skattekort mangler id" })
                             },
                     )
             }

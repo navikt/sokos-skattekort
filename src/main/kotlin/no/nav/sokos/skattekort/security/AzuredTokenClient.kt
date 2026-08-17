@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.security
 
 import java.time.Instant
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
@@ -43,19 +42,21 @@ class AzuredTokenClient(
     private val mutex = Mutex()
 
     @Volatile
-    private var token: AccessToken = runBlocking { AccessToken(getAccessToken()) }
+    private var token: AccessToken? = null
 
     suspend fun getSystemToken(): String {
         val expiresInToMinutes = Instant.now().plusSeconds(120L)
         return mutex.withLock {
+            val cached = token
             when {
-                token.expiresAt.isBefore(expiresInToMinutes) -> {
+                cached == null || cached.expiresAt.isBefore(expiresInToMinutes) -> {
                     logger.debug { "Henter ny accesstoken" }
-                    token = AccessToken(getAccessToken())
-                    token.accessToken
+                    val newToken = AccessToken(getAccessToken())
+                    token = newToken
+                    newToken.accessToken
                 }
 
-                else -> token.accessToken.also { logger.debug { "Henter accesstoken fra cache" } }
+                else -> cached.accessToken.also { logger.debug { "Henter accesstoken fra cache" } }
             }
         }
     }

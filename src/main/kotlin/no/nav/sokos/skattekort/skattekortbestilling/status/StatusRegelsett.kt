@@ -129,8 +129,9 @@ class StatusContext(
 
     val bestilling: Bestilling? by lazy {
         val p = person ?: return@lazy null
+        val personId = p.id ?: return@lazy null
         dataSource.transaction { tx ->
-            BestillingRepository.findByPersonIdAndInntektsaar(tx, p.id!!, aar)
+            BestillingRepository.findByPersonIdAndInntektsaar(tx, personId, aar)
         }
     }
 
@@ -143,8 +144,9 @@ class StatusContext(
 
     val skattekort: List<Skattekort> by lazy {
         val p = person ?: return@lazy emptyList()
+        val personId = p.id ?: return@lazy emptyList()
         dataSource.transaction { tx ->
-            SkattekortRepository.findAllByPersonId(tx, listOf(p.id!!), listOf(aar), adminRole = false)
+            SkattekortRepository.findAllByPersonId(tx, listOf(personId), listOf(aar), adminRole = false)
         }
     }
 

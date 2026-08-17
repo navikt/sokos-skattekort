@@ -1,9 +1,5 @@
 package no.nav.sokos.skattekort.api
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.request.httpMethod
@@ -31,6 +27,7 @@ import no.nav.sokos.skattekort.security.Saksbehandler
 import no.nav.sokos.skattekort.security.Scope
 import no.nav.sokos.skattekort.skattekort.SkattekortValidator
 import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
+import no.nav.sokos.skattekort.util.BackgroundTaskRunner
 
 private val logger = KotlinLogging.logger { }
 
@@ -40,6 +37,7 @@ fun Route.skattekortApi(
     forespoerselService: ForespoerselService,
     personService: PersonService,
     statusService: StatusService,
+    backgroundTaskRunner: BackgroundTaskRunner,
 ) {
     route(BASE_PATH_SKATTEKORT) {
         post("bestille") {
@@ -93,10 +91,16 @@ fun Route.skattekortApi(
 
             call.respond(HttpStatusCode.Accepted)
 
-            CoroutineScope(Dispatchers.IO).launch {
+            backgroundTaskRunner.launch {
                 fnrSet.forEach { fnr ->
-                    val message = "$forsystem;$inntektsaar;$fnr"
-                    forespoerselService.taImotForespoersel(message, saksbehandler = null)
+                    try {
+                        val message = "$forsystem;$inntektsaar;$fnr"
+                        forespoerselService.taImotForespoersel(message, saksbehandler = null)
+                    } catch (ex: Exception) {
+                        logger.error(marker = TEAM_LOGS_MARKER, ex) {
+                            "Bulk-bestilling feilet for fnr=$fnr forsystem=$forsystem inntektsaar=$inntektsaar"
+                        }
+                    }
                 }
             }
         }

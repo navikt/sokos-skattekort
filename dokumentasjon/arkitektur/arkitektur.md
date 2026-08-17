@@ -42,3 +42,8 @@ Swagger
 
 Systembrukere er objekter som eies på NAV-nivå, og føringer/ideer fra NAV sentralt har fått oss til å håndtere systembrukere
 som [delt konfigurasjon](https://confluence.adeo.no/x/Av8ML) i seksjon utbetaling.
+
+### Konfigurasjon
+
+Se [Konfigurasjon](konfigurasjon.md) for en forklaring av hvordan applikasjonens konfigurasjon lastes,
+og hvordan/hvorfor dette oppfører seg forskjellig i IntelliJ/Gradle sammenlignet med Docker/Nais.

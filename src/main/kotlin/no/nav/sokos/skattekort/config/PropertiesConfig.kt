@@ -7,6 +7,20 @@ import com.nimbusds.jose.jwk.RSAKey
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.getAs
 
+/**
+ * Sentralt sted for all applikasjonskonfigurasjon. Resten av koden skal alltid lese konfigurasjon
+ * via `PropertiesConfig.xxxProperties` her, aldri direkte fra `environment.config` eller
+ * `System.getenv()`.
+ *
+ * `config` settes via [load], som kalles fra to forskjellige steder avhengig av kontekst:
+ * - I produksjon/dev/q1: fra `Application.module()`, med `application.conf` funnet på classpath
+ *   (se [loadEnvironmentConfig]).
+ * - I tester: fra Kotest sin `ProjectConfig`, som laster `application-test.conf` eksplisitt.
+ *
+ * Se `dokumentasjon/arkitektur/konfigurasjon.md` for en fullstendig forklaring av hvorfor
+ * IntelliJ/Gradle-kjøring og Docker/Nais-kjøring ender opp med å bruke forskjellige filer, selv om
+ * begge kaller `ApplicationConfig("application.conf")`.
+ */
 object PropertiesConfig {
     lateinit var config: ApplicationConfig
         private set
@@ -188,6 +202,17 @@ object PropertiesConfig {
     )
 }
 
+/**
+ * Laster `application.conf` fra classpath. Hvilken fysiske fil dette faktisk blir avhenger av
+ * hvordan applikasjonen kjøres:
+ * - I Docker (dev/q1/prod) er dette `.nais/<miljø>/application.conf`, kopiert inn som
+ *   `/app/application.conf` og lagt først på classpath av `Dockerfile` (se ENTRYPOINT sin `-cp`-flagg).
+ * - I IntelliJ/`./gradlew run` kjører applikasjonen på test-modulens classpath, og dette blir derfor
+ *   `src/test/resources/application.conf`.
+ *
+ * Se `dokumentasjon/arkitektur/konfigurasjon.md` for detaljer, inkludert en kjent feil i sistnevnte
+ * fil (manglende `profile`-nøkkel).
+ */
 fun loadEnvironmentConfig(): ApplicationConfig = ApplicationConfig("application.conf")
 
 enum class Profile {

@@ -1,15 +1,21 @@
 # Konfigurasjonssettinger
 
-Denne seksjonen dokumenterer konfigurasjonssettinger fra application*.conf-filene til applikasjonen
+Denne seksjonen dokumenterer konfigurasjonssettinger fra application*.conf-filene til applikasjonen.
+For en forklaring av *hvordan* disse filene faktisk lastes (og hvorfor det er forskjell på lokal
+kjøring i IntelliJ/Gradle og kjøring i Docker/Nais), se
+[arkitekturdokumentasjonen for konfigurasjon](../arkitektur/konfigurasjon.md).
+
+> ⚠️ Bryterne under (`mqListenerEnabled`, `scheduler.enabled`, `kafka.enabled`, `azureAd.providerName`)
+> er **hardkodet direkte i hver miljøs `.conf`-fil** i dag, og styres ikke av egne miljøvariabler slik
+> tabellen tidligere ga inntrykk av. `ENVIRONMENT`, `MQ_LISTENER_ENABLED`, `SCHEDULER_ENABLED`,
+> `KAFKA_CONSUMER_ENABLED`, `AZURE_APP_PROVIDER_NAME` og `AZURE_APP_AUTH_PROVIDER_NAME` finnes ikke i
+> kildekoden og er fjernet fra tabellen under. Se arkitekturdokumentasjonen for detaljer og forslag til
+> videre opprydning.
 
 | Generell konfigurasjon | Beskrivelse                                                                                                                            |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 | NAIS_APP_NAME          | Applikasjonens navn, levert fra NAIS                                                                                                   |
 | NAIS_POD_NAME          | Applikasjonens pod-navn, levert fra NAIS                                                                                               |
-| ENVIRONMENT            | En setting som styrer hvordan applikasjonen laster konfigurasjon. Styrer hvilken fil som lastes "først", f.eks. application-local.conf |
-| MQ_LISTENER_ENABLED    | Konfigurasjonssetting som styrer hvorvidt applikasjonen skal forsøke å koble seg til JMS.                                              |
-| SCHEDULER_ENABLED      | Styrer hvorvidt applikasjonen starter cron-jobber                                                                                      |
-| KAFKA_CONSUMER_ENABLED | Styrer hvorvidt applikasjonen forsøker å koble seg til Kafka, som brukes til å interagere med PDL                                      |
 
 | Konfigurasjon av funksjonalitet | Beskrivelse                                                                                                                                                                          |
 |---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -18,11 +24,10 @@ Denne seksjonen dokumenterer konfigurasjonssettinger fra application*.conf-filen
 
 | Konfigurasjon av infrastruktur                   | Beskrivelse                                                                                                                                                                         |
 |--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AZURE_APP_PROVIDER_NAME                          | Navnet på OAuth-provider. Siden vi bruker azure entra er denne "azureAD" i produksjon. I test-modus bruker vi "default", som er default i MockOAuth2Server                          |
 | AZURE_APP_WELL_KNOWN_URL                         | Well known url til Azure entra. Settes av Nais, overrides til å peke på MockOAuth2Server i test.                                                                                    |
+| AZURE_APP_CLIENT_ID                              | Azure entra client ID. Settes av Nais                                                                                                                                               |
 | AZURE_APP_TENANT_ID                              | Azure entra tenant ID. Settes av Nais                                                                                                                                               |
 | AZURE_APP_CLIENT_SECRET                          | Azure application client secret. Settes av Nais                                                                                                                                     |
-| AZURE_APP_AUTH_PROVIDER_NAME                     | Azure application authentication provider name. Settes av Nais                                                                                                                      |
 | MASKINPORTEN_SYSTEM_BRUKER_CLAIM                 | Organisasjonsnummer i claim for å skape token knyttet til systembrukeren vår, brukes under bestilling av skattekort fra Skatteetaten. Må settes til samme verdi som BESTILLING_ORGNR |
 | MASKINPORTEN_CLIENT_ID                           | Maskinporten client id, UUID. Settes av Nais                                                                                                                                        |
 | MASKINPORTEN_WELL_KNOWN_URL                      | Maskinporten oidc endpoint. Settes av Nais                                                                                                                                          |

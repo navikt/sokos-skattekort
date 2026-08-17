@@ -14,7 +14,9 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.pluginOrNull
+import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.config.mergeWith
 import io.ktor.server.plugins.di.DI
 import io.ktor.server.plugins.di.DependencyConflictPolicy
 import io.ktor.server.plugins.di.DependencyConflictResult
@@ -41,6 +43,7 @@ import no.nav.sokos.skattekort.PDL_URL
 import no.nav.sokos.skattekort.SKATTEETATEN_URL
 import no.nav.sokos.skattekort.TILGANGSMAKSIN_AZURED_TOKEN_CLIENT
 import no.nav.sokos.skattekort.TILGANGSMASKIN_URL
+import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
@@ -140,6 +143,7 @@ object TestUtils {
                 provide<Queue>(name = FORESPORSEL_QUEUE) {
                     MQListener.forespoerselQueue
                 }
+                provide<DataSource> { DbListener.dataSource }
                 provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
                     MQListener.forespoerselBoqQueue
                 }
@@ -206,15 +210,18 @@ object TestUtils {
 
     fun <T> tx(block: (TransactionalSession) -> T): T = DbListener.dataSource.transaction { tx -> block(tx) }
 
-    private fun testEnvironmentConfig(authServer: MockOAuth2Server): MapApplicationConfig =
-        MapApplicationConfig().apply {
-            put("APPLICATION_ENV", "TEST")
-
-            // Database properties
-            put("DB_PORT", DbListener.container.firstMappedPort.toString())
-            put("DB_HOST", DbListener.container.host)
-            put("AZURE_APP_WELL_KNOWN_URL", authServer.wellKnownUrl("default").toUrl().toString())
-        }
+    // Tar utgangspunkt i den allerede lastede testkonfigurasjonen (se ProjectConfig, som laster
+    // application-test.conf) og overstyrer kun well-known-URL-en med den faktiske URL-en til
+    // mock-OAuth2-serveren, slik at `Application.module()` får en komplett, gyldig konfigurasjon.
+    // NB: `mergeWith` er ikke intuitiv - ARGUMENTET har prioritet, ikke mottakeren. Derfor må
+    // basiskonfigurasjonen (PropertiesConfig.config) stå som mottaker, og overstyringen som
+    // argument, ellers vinner ikke overstyringen. Se dokumentasjon/arkitektur/konfigurasjon.md.
+    private fun testEnvironmentConfig(authServer: MockOAuth2Server): ApplicationConfig =
+        PropertiesConfig.config.mergeWith(
+            MapApplicationConfig(
+                "azureAd.wellKnownUrl" to authServer.wellKnownUrl("default").toUrl().toString(),
+            ),
+        )
 
     private fun DependencyInjectionConfig.configureShutdownBehavior() {
         conflictPolicy =

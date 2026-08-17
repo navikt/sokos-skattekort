@@ -1,5 +1,7 @@
 package no.nav.sokos.skattekort
 
+import javax.sql.DataSource
+
 import kotlin.onFailure
 import kotlinx.coroutines.runBlocking
 
@@ -70,21 +72,34 @@ fun main() {
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.module(applicationConfig: ApplicationConfig = environment.config) {
+/**
+ * `applicationConfig` er eneste kilde til konfigurasjon for hele applikasjonen (se
+ * [PropertiesConfig]). Default-verdien [loadEnvironmentConfig] brukes i produksjon/dev/q1, hvor
+ * `embeddedServer(...)` (i motsetning til `EngineMain`) ikke selv laster noe HOCON-oppsett inn i
+ * `environment.config` – konfigurasjonen må derfor lastes manuelt her.
+ *
+ * Tester sender inn en egen `applicationConfig` (se `TestUtils.withFullTestApplication`) for å
+ * overstyre enkeltverdier, f.eks. URL-en til en `MockOAuth2Server`. Se
+ * `dokumentasjon/arkitektur/konfigurasjon.md` for en fullstendig gjennomgang av hvordan
+ * konfigurasjonslasting skiller seg mellom IntelliJ/Gradle, Docker/Nais og testsuiten.
+ */
+fun Application.module(applicationConfig: ApplicationConfig = loadEnvironmentConfig()) {
     val applicationState = ApplicationState()
     applicationLifecycleConfig(applicationState)
     commonConfig()
 
-    PropertiesConfig.load(applicationConfig.loadEnvironmentConfig())
+    PropertiesConfig.load(applicationConfig)
     val applicationProperties = PropertiesConfig.applicationProperties
     logger.info { "Application started with environment: ${applicationProperties.profile}" }
-    DatabaseConfig.migrate()
 
     dependencies {
         provide { createHttpClient() } cleanup { client ->
             client.close()
         }
-        provide { DatabaseConfig.dataSource }
+        provide(DatabaseConfig::class)
+        val databaseConfig: DatabaseConfig by this@module.dependencies
+        provide { HikariDataSource(databaseConfig.initHikariConfig()) }
+        databaseConfig.migrate()
         provide { KafkaConfig() }
         provide { PropertiesConfig.unleashProperties }
         provide { PropertiesConfig.applicationProperties }
@@ -170,6 +185,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
             val skattekortdataService: SkattekortDataService by dependencies
             val metricsService: MetricsService by dependencies
             val skattekortService: SkattekortService by dependencies
+            val databaseConfig: DatabaseConfig by dependencies
 
             JobTaskConfig
                 .scheduler(
@@ -179,7 +195,7 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
                     skattekortdataService = skattekortdataService,
                     metricsService = metricsService,
                     skattekortService = skattekortService,
-                    dataSource = DatabaseConfig.dataSourceScheduler,
+                    dataSource = databaseConfig.dataSourceScheduler,
                 ).also { it.start() }
         }
 
@@ -218,15 +234,17 @@ fun Application.module(applicationConfig: ApplicationConfig = environment.config
 
     monitor.subscribe(ApplicationStopped) {
         logger.info { "Application stopped - closing database pools" }
+        val databaseConfig: DatabaseConfig by dependencies
+        val dataSource: DataSource by dependencies
 
         // Only close datasources after all services have stopped
         if (!(PropertiesConfig.isLocal || PropertiesConfig.isTest)) {
             logger.info { "Closing database scheduler pools..." }
-            runCatching { (DatabaseConfig.dataSourceScheduler as? HikariDataSource)?.close() }
+            runCatching { (databaseConfig.dataSourceScheduler as? HikariDataSource)?.close() }
                 .onFailure { logger.warn(it) { "Error closing scheduler datasource" } }
 
             logger.info { "Closing main database pools..." }
-            runCatching { (DatabaseConfig.dataSource as? HikariDataSource)?.close() }
+            runCatching { (dataSource as? HikariDataSource)?.close() }
                 .onFailure { logger.warn(it) { "Error closing main datasource" } }
         }
     }

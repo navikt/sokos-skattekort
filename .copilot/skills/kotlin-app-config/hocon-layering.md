@@ -50,7 +50,7 @@ postgres {
 }
 ```
 
-**`application-local.conf`** (local overrides):
+**`application.conf`** (local overrides):
 ```hocon
 include file("application.conf")
 

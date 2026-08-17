@@ -13,7 +13,6 @@ import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.ext.ScriptUtils
 import org.testcontainers.jdbc.JdbcDatabaseDelegate
 
-import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
@@ -31,8 +30,6 @@ object DbListener : BeforeSpecListener, AfterEachListener {
 
     val dataSource: DataSource by lazy {
         container.toDataSource()
-    }.apply {
-        DatabaseConfig.migrate(container.toDataSource())
     }
 
     fun loadDataSet(script: String) {

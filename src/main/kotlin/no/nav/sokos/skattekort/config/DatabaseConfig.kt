@@ -14,11 +14,11 @@ import no.nav.sokos.skattekort.infrastructure.Metrics.prometheusMeterRegistry
 
 private val logger = KotlinLogging.logger {}
 
-object DatabaseConfig {
-    val dataSource: DataSource by lazy {
-        HikariDataSource(initHikariConfig())
-    }
-
+// TODO: Bør kanskje renames til noe slikt som databaseadmin eller noe? Det er i
+// kke konfigurasjonen som tilbys, først og fremst, det er vedlikehold av skjemaet?
+class DatabaseConfig(
+    private val dataSource: DataSource,
+) {
     val dataSourceScheduler: DataSource by lazy {
         HikariDataSource(
             initHikariConfig(
@@ -61,7 +61,7 @@ object DatabaseConfig {
         logger.info { "Flyway migrate finished. executed=${result.migrationsExecuted}" }
     }
 
-    private fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
+    fun initHikariConfig(poolname: String = "postgres-pool"): HikariConfig {
         val postgresProperties: PropertiesConfig.PostgresProperties = PropertiesConfig.postgresProperties
         return HikariConfig().apply {
             poolName = poolname

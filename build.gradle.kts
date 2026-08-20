@@ -30,7 +30,7 @@ repositories {
 }
 
 val resilience4jVersion = "2.4.0"
-val ktorVersion = "3.5.1"
+val ktorVersion = "3.5.2"
 val nimbusVersion = "10.9.1"
 val logbackVersion = "1.6.0"
 val logstashVersion = "9.0"

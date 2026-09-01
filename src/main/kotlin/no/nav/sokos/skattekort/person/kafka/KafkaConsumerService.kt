@@ -9,7 +9,6 @@ import kotlinx.coroutines.delay
 
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import mu.KotlinLogging
-import org.apache.avro.util.ClassSecurityValidator
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -40,7 +39,6 @@ class KafkaConsumerService(
 
     suspend fun start(applicationState: ApplicationState) {
         try {
-            configureAvroSecurity()
             kafkaConsumer.subscribe(listOf(kafkaConfig.topic))
 
             logger.info { "Starter kafka consumer for topic=${kafkaConfig.topic}" }
@@ -95,16 +93,6 @@ class KafkaConsumerService(
     override fun close() {
         if (stopping.compareAndSet(false, true)) {
             runCatching { kafkaConsumer.wakeup() }
-        }
-    }
-
-    private fun configureAvroSecurity() {
-        ClassSecurityValidator.setGlobal { clazz ->
-            clazz.simpleName in
-                listOf(
-                    "no.nav.person.pdl.leesah.Personhendelse",
-                    "no.nav.person.pdl.leesah.folkeregisteridentifikator.Folkeregisteridentifikator",
-                )
         }
     }
 }

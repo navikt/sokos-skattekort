@@ -62,18 +62,6 @@ spec:
               - "bestille-role"
               - "hent-skattekort-role"
               - "hent-navn-role"
-        - application: sokos-up-skattekort-ssr
-          permissions:
-            scopes:
-              - "hent-skattekort-scope"
-        - application: sokos-utbetalingsportalen
-          permissions:
-            scopes:
-              - "bestille-scope"
-              - "status-scope"
-              - "hent-skattekort-scope"
-              - "hent-navn-scope"
-              - "admin-scope"
         - application: sokos-dare-poc
           permissions:
             roles:

@@ -122,6 +122,7 @@ dependencies {
 
     // Opentelemetry
     implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api-incubator:$opentelemetryVersion")
 
     // Feature switches
     implementation("io.getunleash:unleash-client-java:$unleashedVersion")

@@ -52,9 +52,8 @@ val ibmmqVersion = "10.0.0.0"
 val opentelemetryVersion = "2.31.1-alpha"
 val swaggerRequestValidatorVersion = "3.0.0"
 val kafkaClientsVersion = "4.3.1"
-val avroVersion = "1.12.1"
-val kafkaAvroSerializerVersion = "8.1.1"
-val avro4kVersion = "2.6.0"
+val avroVersion = "1.12.2"
+val kafkaAvroSerializerVersion = "8.3.1"
 val graphqlClientVersion = "10.2.2"
 val wiremockVersion = "3.13.2"
 val unleashedVersion = "12.3.0"
@@ -97,7 +96,6 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-circuitbreaker:$resilience4jVersion")
     implementation("io.github.resilience4j:resilience4j-kotlin:$resilience4jVersion")
     implementation("io.github.resilience4j:resilience4j-micrometer:$resilience4jVersion")
-    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")

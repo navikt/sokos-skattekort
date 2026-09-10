@@ -6,6 +6,8 @@ import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
+import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
+import io.confluent.kafka.serializers.subject.TopicNameStrategy
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.config.SslConfigs
@@ -33,6 +35,7 @@ class KafkaConfig(
             put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaProperties.offsetReset)
             put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed")
             put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true)
+            put(KafkaAvroSerializerConfig.VALUE_SUBJECT_NAME_STRATEGY, TopicNameStrategy::class.java.name)
             put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.brokers)
 
             // Schema Registry

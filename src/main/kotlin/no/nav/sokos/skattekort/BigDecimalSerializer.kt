@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort
 
 import java.math.BigDecimal
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.IntArraySerializer
@@ -15,7 +14,6 @@ import kotlinx.serialization.json.JsonUnquotedLiteral
 import kotlinx.serialization.json.jsonPrimitive
 
 object BigDecimalSerializer : KSerializer<BigDecimal> {
-    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(
         encoder: Encoder,
         value: BigDecimal,
@@ -35,6 +33,7 @@ object BigDecimalSerializer : KSerializer<BigDecimal> {
                     .decodeJsonElement()
                     .jsonPrimitive.content
                     .toBigDecimal()
+
             else -> decoder.decodeString().toBigDecimal()
         }
 }

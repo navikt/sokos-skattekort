@@ -49,7 +49,7 @@ val flywayVersion = "13.4.0"
 val postgresVersion = "42.7.13"
 val activemqVersion = "2.56.0"
 val ibmmqVersion = "10.0.0.0"
-val opentelemetryVersion = "2.31.1-alpha"
+val opentelemetryVersion = "2.31.1"
 val swaggerRequestValidatorVersion = "3.0.0"
 val kafkaClientsVersion = "4.3.1"
 val avroVersion = "1.12.2"
@@ -119,8 +119,7 @@ dependencies {
     }
 
     // Opentelemetry
-    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
-    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api-incubator:$opentelemetryVersion")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$opentelemetryVersion")
 
     // Feature switches
     implementation("io.getunleash:unleash-client-java:$unleashedVersion")
@@ -254,6 +253,10 @@ tasks {
 
     withType<Test>().configureEach {
         useJUnitPlatform()
+        systemProperty(
+            "org.apache.avro.SERIALIZABLE_PACKAGES",
+            "no.nav.person.pdl.leesah",
+        )
 
         testLogging {
             showExceptions = true

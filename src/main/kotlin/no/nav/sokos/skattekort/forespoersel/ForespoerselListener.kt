@@ -3,14 +3,13 @@ package no.nav.sokos.skattekort.forespoersel
 import kotlinx.coroutines.runBlocking
 
 import io.ktor.server.plugins.di.annotations.Named
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSConsumer
 import jakarta.jms.JMSContext
 import jakarta.jms.Message
 import jakarta.jms.Queue
 import mu.KotlinLogging
-
-import no.nav.sokos.skattekort.util.TraceUtils
 
 private val logger = KotlinLogging.logger { }
 
@@ -34,19 +33,19 @@ class ForespoerselListener(
         jmsConsumer = consumer
 
         consumer.setMessageListener { message: Message ->
-            TraceUtils.withTracerId {
-                runBlocking {
-                    runCatching {
-                        val jmsMessage = message.getBody(String::class.java)
-                        forespoerselService.taImotForespoersel(jmsMessage)
-                        message.acknowledge()
-                    }.onFailure { exception ->
-                        logger.error(exception) { "Send to BOQ with messageId: ${message.jmsMessageID}" }
-                        context.createProducer().send(forespoerselBoqQueue, message)
-                        message.acknowledge()
-                    }
+            @WithSpan
+            suspend fun processMessage() {
+                runCatching {
+                    val jmsMessage = message.getBody(String::class.java)
+                    forespoerselService.taImotForespoersel(jmsMessage)
+                    message.acknowledge()
+                }.onFailure { exception ->
+                    logger.error(exception) { "Send to BOQ with messageId: ${message.jmsMessageID}" }
+                    context.createProducer().send(forespoerselBoqQueue, message)
+                    message.acknowledge()
                 }
             }
+            runBlocking { processMessage() }
         }
 
         context.start()

@@ -12,6 +12,7 @@ import com.github.kagkarlsson.scheduler.task.TaskInstance
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask
 import com.github.kagkarlsson.scheduler.task.helper.Tasks
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules.cron
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.infrastructure.MetricsService
@@ -20,7 +21,6 @@ import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchService
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
 import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
-import no.nav.sokos.skattekort.util.TraceUtils.withTracerId
 import no.nav.sokos.skattekort.utsending.UtsendingService
 
 private val logger = KotlinLogging.logger { }
@@ -68,7 +68,7 @@ object JobTaskConfig {
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
-                    withTracerId {
+                    executeSpan {
                         showLog(showLogLocalTime, instance, context)
                         runBlocking {
                             bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
@@ -92,14 +92,10 @@ object JobTaskConfig {
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
-                    withTracerId {
+                    executeSpan {
                         runBlocking {
-                            try {
-                                showLog(startTime, instance, context)
-                                utsendingService.handleUtsending()
-                            } catch (e: Exception) {
-                                logger.error(e) { "Utsending feilet" }
-                            }
+                            showLog(startTime, instance, context)
+                            utsendingService.handleUtsending()
                         }
                     }
                 }
@@ -119,7 +115,7 @@ object JobTaskConfig {
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
-                    withTracerId {
+                    executeSpan {
                         showLog(showLogLocalTime, instance, context)
                         runBlocking {
                             bestillingService.hentBestillingsbatcher(BestillingsbatchType.OPPDATERING)
@@ -142,7 +138,7 @@ object JobTaskConfig {
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
-                    withTracerId {
+                    executeSpan {
                         showLog(showLogLocalTime, instance, context)
                         metricsService.fetchMetrics()
                     }
@@ -162,7 +158,7 @@ object JobTaskConfig {
                 String::class.java,
             ).execute { instance: TaskInstance<String>, context: ExecutionContext ->
                 if (handleJobs) {
-                    withTracerId {
+                    executeSpan {
                         showLog(showLogLocalTime, instance, context)
                         skattekortService.deleteSkattekortForYear()
                     }
@@ -180,6 +176,11 @@ object JobTaskConfig {
             return LocalDateTime.now()
         }
         return localtime
+    }
+
+    @WithSpan
+    private fun executeSpan(block: () -> Unit) {
+        block()
     }
 
     init {

@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-    kotlin("jvm") version "2.4.10"
-    kotlin("plugin.serialization") version "2.4.10"
+    kotlin("jvm") version "2.4.20"
+    kotlin("plugin.serialization") version "2.4.20"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
@@ -49,12 +49,11 @@ val flywayVersion = "13.4.0"
 val postgresVersion = "42.7.13"
 val activemqVersion = "2.56.0"
 val ibmmqVersion = "10.0.0.0"
-val opentelemetryVersion = "2.31.1-alpha"
+val opentelemetryVersion = "2.31.1"
 val swaggerRequestValidatorVersion = "3.0.0"
 val kafkaClientsVersion = "4.3.1"
-val avroVersion = "1.12.1"
+val avroVersion = "1.12.2"
 val kafkaAvroSerializerVersion = "8.1.1"
-val avro4kVersion = "2.6.0"
 val graphqlClientVersion = "10.2.2"
 val wiremockVersion = "3.13.2"
 val unleashedVersion = "12.3.0"
@@ -97,7 +96,6 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-circuitbreaker:$resilience4jVersion")
     implementation("io.github.resilience4j:resilience4j-kotlin:$resilience4jVersion")
     implementation("io.github.resilience4j:resilience4j-micrometer:$resilience4jVersion")
-    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
@@ -121,8 +119,7 @@ dependencies {
     }
 
     // Opentelemetry
-    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:$opentelemetryVersion")
-    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api-incubator:$opentelemetryVersion")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$opentelemetryVersion")
 
     // Feature switches
     implementation("io.getunleash:unleash-client-java:$unleashedVersion")
@@ -256,6 +253,10 @@ tasks {
 
     withType<Test>().configureEach {
         useJUnitPlatform()
+        systemProperty(
+            "org.apache.avro.SERIALIZABLE_PACKAGES",
+            "no.nav.person.pdl.leesah",
+        )
 
         testLogging {
             showExceptions = true

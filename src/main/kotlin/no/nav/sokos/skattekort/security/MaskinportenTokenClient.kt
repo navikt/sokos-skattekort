@@ -21,6 +21,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Parameters
 import io.ktor.http.isSuccess
 import mu.KotlinLogging
@@ -70,7 +71,7 @@ class MaskinportenTokenClient(
             AccessToken(response.body<TokenResponse>())
         } else {
             logger.error("Kunne ikke hente accessToken, se security log for meldingen som string")
-            val feilmelding = "Feil fra tokenprovider, Feilmelding: ${response.body<TokenError>()}"
+            val feilmelding = "Feil fra tokenprovider, Feilmelding: ${response.bodyAsText()}"
             logger.error(TEAM_LOGS_MARKER) { feilmelding }
             throw AuthenticationException(feilmelding)
         }

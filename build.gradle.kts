@@ -151,8 +151,8 @@ configurations.all {
                 because("Prefer the patched fork for vulnerability fix")
             }
             if (requested.group == "io.netty") {
-                useVersion("4.2.16.Final")
-                because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.15.Final")
+                useVersion("4.2.18.Final")
+                because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.17.Final")
             }
             if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
                 useVersion("2.22.1")
@@ -161,6 +161,18 @@ configurations.all {
             if (requested.group == "tools.jackson.core" && requested.name == "jackson-core") {
                 useVersion("3.2.1")
                 because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
+            }
+            if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
+                useVersion("1.85")
+                because("Fix CVE-2026-8763")
+            }
+            if (requested.group == "org.apache.httpcomponents.core5" && requested.name in setOf("httpcore5", "httpcore5-h2")) {
+                useVersion("5.4.3")
+                because("Fix CVE-2026-54399")
+            }
+            if (requested.group == "org.apache.httpcomponents.client5" && requested.name == "httpclient5") {
+                useVersion("5.6.4")
+                because("Fix CVE-2026-64607")
             }
         }
     }

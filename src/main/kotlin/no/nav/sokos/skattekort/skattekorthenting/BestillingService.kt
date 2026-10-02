@@ -124,13 +124,13 @@ class BestillingService(
         type: BestillingsbatchType,
     ) {
         dataSource.transaction { tx ->
+            val filteredResponse = filterNonNavDataFromResponse(response)
             if (featureToggles.isLagreMottatteBestillingerEnabled()) {
-                BestillingsbatchRepository.updateBestillingsbatchWithMottatteData(tx, batchId, Json.encodeToString(response))
+                BestillingsbatchRepository.updateBestillingsbatchWithMottatteData(tx, batchId, Json.encodeToString(filteredResponse))
             }
-            when (response.status) {
+            when (filteredResponse.status) {
                 ResponseStatus.FORESPOERSEL_OK.name -> {
-                    val receivedArbeidstakerList = response.arbeidsgiver?.first()?.arbeidstaker ?: emptyList()
-                    val arbeidstakerList = receivedArbeidstakerList.stream().map { filterNonNavData(it) }.toList()
+                    val arbeidstakerList = filteredResponse.arbeidsgiver?.first()?.arbeidstaker ?: emptyList()
                     arbeidstakerList.forEach { arbeidstaker ->
                         val personId =
                             PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {
@@ -166,14 +166,14 @@ class BestillingService(
                 }
 
                 else -> {
-                    logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
-                    logger.error(TEAM_LOGS_MARKER) { "Batchhenting av skattekort avvist av Skatteetaten: $response" }
+                    logger.error { "Bestillingsbatch $batchId feilet: ${filteredResponse.status}" }
+                    logger.error(TEAM_LOGS_MARKER) { "Batchhenting av skattekort avvist av Skatteetaten: $filteredResponse" }
                     BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.FEILET)
                     AuditRepository.insertBatch(
                         tx,
                         AuditTag.HENTING_AV_SKATTEKORT_FEILET,
                         BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                        "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
+                        "Batchhenting av skattekort avvist av Skatteetaten med status: ${filteredResponse.status}",
                     )
                     return@transaction
                 }
@@ -181,7 +181,17 @@ class BestillingService(
         }
     }
 
-    private fun filterNonNavData(receivedArbeidstaker: Arbeidstaker): Arbeidstaker {
+    private fun filterNonNavDataFromResponse(response: HentSkattekortResponse): HentSkattekortResponse {
+        if (response.arbeidsgiver != null) {
+            val arbeidstakerList = response.arbeidsgiver.first().arbeidstaker ?: emptyList()
+            val filteredList = arbeidstakerList.stream().map { arbeidstaker -> filterNonNavDataFromArbeidstaker(arbeidstaker) }.toList()
+            val filteredArbeidsgiver = response.arbeidsgiver.first().copy(arbeidstaker = filteredList)
+            return response.copy(arbeidsgiver = listOf(filteredArbeidsgiver))
+        }
+        return response
+    }
+
+    private fun filterNonNavDataFromArbeidstaker(receivedArbeidstaker: Arbeidstaker): Arbeidstaker {
         if (receivedArbeidstaker.skattekort != null) {
             val filteredForskuddstrekkList =
                 receivedArbeidstaker.skattekort.forskuddstrekk

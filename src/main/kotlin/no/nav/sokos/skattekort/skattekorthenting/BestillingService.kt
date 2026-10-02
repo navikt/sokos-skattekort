@@ -181,15 +181,15 @@ class BestillingService(
         }
     }
 
-    private fun filterNonNavDataFromResponse(response: HentSkattekortResponse): HentSkattekortResponse {
-        if (response.arbeidsgiver != null) {
-            val arbeidstakerList = response.arbeidsgiver.first().arbeidstaker ?: emptyList()
-            val filteredList = arbeidstakerList.stream().map { arbeidstaker -> filterNonNavDataFromArbeidstaker(arbeidstaker) }.toList()
-            val filteredArbeidsgiver = response.arbeidsgiver.first().copy(arbeidstaker = filteredList)
-            return response.copy(arbeidsgiver = listOf(filteredArbeidsgiver))
-        }
-        return response
-    }
+    private fun filterNonNavDataFromResponse(response: HentSkattekortResponse): HentSkattekortResponse =
+        response.copy(
+            arbeidsgiver =
+                response.arbeidsgiver?.map { arbeidsgiver ->
+                    arbeidsgiver.copy(
+                        arbeidstaker = arbeidsgiver.arbeidstaker.map(::filterNonNavDataFromArbeidstaker),
+                    )
+                },
+        )
 
     private fun filterNonNavDataFromArbeidstaker(receivedArbeidstaker: Arbeidstaker): Arbeidstaker {
         if (receivedArbeidstaker.skattekort != null) {

@@ -21,6 +21,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.slf4j.LoggerFactory
@@ -260,6 +261,26 @@ class BestillingServiceTest :
                     }
                 }
                 skattekortDataList.size shouldBe 3
+            }
+            assertSoftly("Skattekortdata inneholder kun NAV-relaterte elementer") {
+                skattekortDataList[0].dataMottatt shouldContain "loennFraNAV"
+                skattekortDataList[0].dataMottatt shouldContain "pensjonFraNAV"
+                skattekortDataList[0].dataMottatt shouldContain "ufoeretrygdFraNAV"
+                skattekortDataList[0].dataMottatt shouldNotContain "loennFraHovedarbeidsgiver"
+                skattekortDataList[0].dataMottatt shouldNotContain "loennFraBiarbeidsgiver"
+                skattekortDataList[0].dataMottatt shouldNotContain "ufoereytelserFraAndre"
+                skattekortDataList[1].dataMottatt shouldContain "loennFraNAV"
+                skattekortDataList[1].dataMottatt shouldContain "pensjonFraNAV"
+                skattekortDataList[1].dataMottatt shouldContain "ufoeretrygdFraNAV"
+                skattekortDataList[1].dataMottatt shouldNotContain "loennFraHovedarbeidsgiver"
+                skattekortDataList[1].dataMottatt shouldNotContain "loennFraBiarbeidsgiver"
+                skattekortDataList[1].dataMottatt shouldNotContain "ufoereytelserFraAndre"
+                skattekortDataList[2].dataMottatt shouldContain "loennFraNAV"
+                skattekortDataList[2].dataMottatt shouldContain "pensjonFraNAV"
+                skattekortDataList[2].dataMottatt shouldContain "ufoeretrygdFraNAV"
+                skattekortDataList[2].dataMottatt shouldNotContain "loennFraHovedarbeidsgiver"
+                skattekortDataList[2].dataMottatt shouldNotContain "loennFraBiarbeidsgiver"
+                skattekortDataList[2].dataMottatt shouldNotContain "ufoereytelserFraAndre"
             }
         }
 

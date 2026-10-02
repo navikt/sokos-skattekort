@@ -16,6 +16,7 @@ import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
@@ -29,6 +30,7 @@ import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
+import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
@@ -127,7 +129,8 @@ class BestillingService(
             }
             when (response.status) {
                 ResponseStatus.FORESPOERSEL_OK.name -> {
-                    val arbeidstakerList = response.arbeidsgiver?.first()?.arbeidstaker ?: emptyList()
+                    val receivedArbeidstakerList = response.arbeidsgiver?.first()?.arbeidstaker ?: emptyList()
+                    val arbeidstakerList = receivedArbeidstakerList.stream().map { filterNonNavData(it) }.toList()
                     arbeidstakerList.forEach { arbeidstaker ->
                         val personId =
                             PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {
@@ -177,6 +180,21 @@ class BestillingService(
             }
         }
     }
+
+    private fun filterNonNavData(receivedArbeidstaker: Arbeidstaker): Arbeidstaker {
+        if (receivedArbeidstaker.skattekort != null) {
+            val filteredForskuddstrekkList =
+                receivedArbeidstaker.skattekort.forskuddstrekk
+                    .stream()
+                    .filter { forskuddstrekk -> forskuddstrekk.isNavData() }
+                    .toList()
+            val filteredSkattekort = receivedArbeidstaker.skattekort.copy(forskuddstrekk = filteredForskuddstrekkList)
+            return receivedArbeidstaker.copy(skattekort = filteredSkattekort)
+        }
+        return receivedArbeidstaker
+    }
+
+    private fun Forskuddstrekk.isNavData(): Boolean = trekkode in listOf(Trekkode.LOENN_FRA_NAV.value, Trekkode.PENSJON_FRA_NAV.value, Trekkode.UFOERETRYGD_FRA_NAV.value)
 
     private fun handleResultatForSkattekort(
         tx: TransactionalSession,

@@ -13,34 +13,16 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
-import io.ktor.server.application.pluginOrNull
 import io.ktor.server.config.MapApplicationConfig
-import io.ktor.server.plugins.di.DI
-import io.ktor.server.plugins.di.DependencyConflictPolicy
-import io.ktor.server.plugins.di.DependencyConflictResult
-import io.ktor.server.plugins.di.DependencyInjectionConfig
-import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
-import jakarta.jms.ConnectionFactory
-import jakarta.jms.Queue
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.withMockOAuth2Server
-import no.nav.sokos.skattekort.DAREPOC_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.DAREPOC_URL
-import no.nav.sokos.skattekort.FORESPORSEL_BOQ_QUEUE
-import no.nav.sokos.skattekort.FORESPORSEL_QUEUE
-import no.nav.sokos.skattekort.LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT
-import no.nav.sokos.skattekort.LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR
-import no.nav.sokos.skattekort.PDL_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.PDL_URL
-import no.nav.sokos.skattekort.SKATTEETATEN_URL
-import no.nav.sokos.skattekort.TILGANGSMAKSIN_AZURED_TOKEN_CLIENT
-import no.nav.sokos.skattekort.TILGANGSMASKIN_URL
+import no.nav.sokos.skattekort.config.ApplicationServiceOverrides
 import no.nav.sokos.skattekort.config.jsonConfig
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
@@ -116,42 +98,24 @@ object TestUtils {
         }
 
     fun Application.configureTestModule(authServer: MockOAuth2Server) {
-        if (pluginOrNull(DI) == null) {
-            install(DI) {
-                configureShutdownBehavior()
-            }
-
-            dependencies {
-                provide<String>(name = PDL_URL) { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = DAREPOC_URL) { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = SKATTEETATEN_URL) { WiremockListener.wiremock.baseUrl() }
-                provide<String>(name = TILGANGSMASKIN_URL) { WiremockListener.wiremock.baseUrl() }
-                provide { mockk<MaskinportenTokenClient>(relaxed = true) }
-                provide<AzuredTokenClient>(name = PDL_AZURED_TOKEN_CLIENT) {
-                    mockk<AzuredTokenClient>(relaxed = true)
-                }
-                provide<AzuredTokenClient>(name = TILGANGSMAKSIN_AZURED_TOKEN_CLIENT) {
-                    mockk<AzuredTokenClient>(relaxed = true)
-                }
-                provide<AzuredTokenClient>(name = DAREPOC_AZURED_TOKEN_CLIENT) {
-                    mockk<AzuredTokenClient>(relaxed = true)
-                }
-                provide { MQListener.connectionFactory }
-                provide<Queue>(name = FORESPORSEL_QUEUE) {
-                    MQListener.forespoerselQueue
-                }
-                provide<Queue>(name = FORESPORSEL_BOQ_QUEUE) {
-                    MQListener.forespoerselBoqQueue
-                }
-                provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT) {
-                    MQListener.utsendingsQueue
-                }
-                provide<Queue>(name = LEVERANSEKOE_OPPDRAG_Z_SKATTEKORT_STOR) {
-                    MQListener.utsendingStorQueue
-                }
-            }
-        }
-        module(testEnvironmentConfig(authServer))
+        module(
+            testEnvironmentConfig(authServer),
+            ApplicationServiceOverrides(
+                pdlUrl = WiremockListener.wiremock.baseUrl(),
+                tilgangsmaskinUrl = WiremockListener.wiremock.baseUrl(),
+                skatteetatenUrl = WiremockListener.wiremock.baseUrl(),
+                darePocUrl = WiremockListener.wiremock.baseUrl(),
+                pdlTokenClient = mockk<AzuredTokenClient>(relaxed = true),
+                tilgangsmaskinTokenClient = mockk<AzuredTokenClient>(relaxed = true),
+                darePocTokenClient = mockk<AzuredTokenClient>(relaxed = true),
+                maskinportenTokenClient = mockk<MaskinportenTokenClient>(relaxed = true),
+                connectionFactory = MQListener.connectionFactory,
+                forespoerselQueue = MQListener.forespoerselQueue,
+                forespoerselBoqQueue = MQListener.forespoerselBoqQueue,
+                utsendingQueue = MQListener.utsendingsQueue,
+                utsendingStorQueue = MQListener.utsendingStorQueue,
+            ),
+        )
     }
 
     fun runThisSql(query: String) {
@@ -215,25 +179,4 @@ object TestUtils {
             put("DB_HOST", DbListener.container.host)
             put("AZURE_APP_WELL_KNOWN_URL", authServer.wellKnownUrl("default").toUrl().toString())
         }
-
-    private fun DependencyInjectionConfig.configureShutdownBehavior() {
-        conflictPolicy =
-            DependencyConflictPolicy { _, _ ->
-                DependencyConflictResult.KeepPrevious
-            }
-
-        onShutdown = { dependencyKey, instance ->
-            when (instance) {
-                // Vi ønsker bare en DataSource i bruk for en hel test-kjøring, selv om flere tester start/stopper applikasjonen
-                // dette er en opt-out av auto-close-greiene til Kotlins DI-extension:
-                is DataSource -> {}
-
-                is ConnectionFactory -> {}
-
-                is AutoCloseable -> {
-                    instance.close()
-                }
-            }
-        }
-    }
 }

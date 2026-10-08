@@ -2,7 +2,6 @@ package no.nav.sokos.skattekort.forespoersel
 
 import kotlinx.coroutines.runBlocking
 
-import io.ktor.server.plugins.di.annotations.Named
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import jakarta.jms.ConnectionFactory
 import jakarta.jms.JMSConsumer
@@ -16,8 +15,8 @@ private val logger = KotlinLogging.logger { }
 class ForespoerselListener(
     private val connectionFactory: ConnectionFactory,
     private val forespoerselService: ForespoerselService,
-    @Named("forespoerselQueue") private val forespoerselQueue: Queue,
-    @Named("forespoerselBoqQueue") private val forespoerselBoqQueue: Queue,
+    private val forespoerselQueue: Queue,
+    private val forespoerselBoqQueue: Queue,
 ) {
     private var jmsContext: JMSContext? = null
     private var jmsConsumer: JMSConsumer? = null

@@ -32,7 +32,7 @@ REST patterns for this codebase — both the Ktor server routes and outgoing HTT
 | Retry | Ktor `HttpRequestRetry` plugin with exponential backoff |
 | Auth | `bearerAuth()` with Azure AD or Maskinporten tokens |
 | Content negotiation | `ContentNegotiation` with `kotlinx.serialization` JSON |
-| Named dependencies | `@Named("clientName")` for URL and token client injection |
+| Dependency wiring | Explicit constructor injection from the `ApplicationServices` composition root; routes receive only `ApiServices` |
 
 ## Sub-files
 
@@ -56,5 +56,5 @@ REST patterns for this codebase — both the Ktor server routes and outgoing HTT
 - Return raw exceptions to the client — always go through `StatusPages`
 - Build HTTP clients without retry and circuit breaker
 - Use `expectSuccess = true` on clients where non-2xx is a valid business response
-- Hardcode URLs — always inject via `@Named` string constants from `PropertiesConfig`
+- Hardcode URLs in client services — read them from `PropertiesConfig` in the composition root and pass them through constructors
 - Skip access control on authenticated routes

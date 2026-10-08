@@ -16,6 +16,7 @@ import no.nav.sokos.skattekort.infrastructure.Metrics.counter
 import no.nav.sokos.skattekort.infrastructure.UnleashIntegration
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.SkatteetatenClient
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
+import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
 import no.nav.sokos.skattekort.person.AuditRepository
 import no.nav.sokos.skattekort.person.AuditTag
@@ -29,6 +30,7 @@ import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeTrekkplikt
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
+import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchRepository
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchStatus
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchType
@@ -122,12 +124,13 @@ class BestillingService(
         type: BestillingsbatchType,
     ) {
         dataSource.transaction { tx ->
+            val filteredResponse = filterNonNavDataFromResponse(response)
             if (featureToggles.isLagreMottatteBestillingerEnabled()) {
-                BestillingsbatchRepository.updateBestillingsbatchWithMottatteData(tx, batchId, Json.encodeToString(response))
+                BestillingsbatchRepository.updateBestillingsbatchWithMottatteData(tx, batchId, Json.encodeToString(filteredResponse))
             }
-            when (response.status) {
+            when (filteredResponse.status) {
                 ResponseStatus.FORESPOERSEL_OK.name -> {
-                    val arbeidstakerList = response.arbeidsgiver?.first()?.arbeidstaker ?: emptyList()
+                    val arbeidstakerList = filteredResponse.arbeidsgiver?.first()?.arbeidstaker ?: emptyList()
                     arbeidstakerList.forEach { arbeidstaker ->
                         val personId =
                             PersonRepository.findPersonIdByFnr(tx, Personidentifikator(arbeidstaker.arbeidstakeridentifikator)) ?: run {
@@ -163,20 +166,45 @@ class BestillingService(
                 }
 
                 else -> {
-                    logger.error { "Bestillingsbatch $batchId feilet: ${response.status}" }
-                    logger.error(TEAM_LOGS_MARKER) { "Batchhenting av skattekort avvist av Skatteetaten: $response" }
+                    logger.error { "Bestillingsbatch $batchId feilet: ${filteredResponse.status}" }
+                    logger.error(TEAM_LOGS_MARKER) { "Batchhenting av skattekort avvist av Skatteetaten: $filteredResponse" }
                     BestillingsbatchRepository.markAs(tx, batchId, BestillingsbatchStatus.FEILET)
                     AuditRepository.insertBatch(
                         tx,
                         AuditTag.HENTING_AV_SKATTEKORT_FEILET,
                         BestillingRepository.getAllBestillingsInBatch(tx, batchId).map { bestilling -> bestilling.personId },
-                        "Batchhenting av skattekort avvist av Skatteetaten med status: ${response.status}",
+                        "Batchhenting av skattekort avvist av Skatteetaten med status: ${filteredResponse.status}",
                     )
                     return@transaction
                 }
             }
         }
     }
+
+    private fun filterNonNavDataFromResponse(response: HentSkattekortResponse): HentSkattekortResponse =
+        response.copy(
+            arbeidsgiver =
+                response.arbeidsgiver?.map { arbeidsgiver ->
+                    arbeidsgiver.copy(
+                        arbeidstaker = arbeidsgiver.arbeidstaker.map(::filterNonNavDataFromArbeidstaker),
+                    )
+                },
+        )
+
+    private fun filterNonNavDataFromArbeidstaker(receivedArbeidstaker: Arbeidstaker): Arbeidstaker {
+        if (receivedArbeidstaker.skattekort != null) {
+            val filteredForskuddstrekkList =
+                receivedArbeidstaker.skattekort.forskuddstrekk
+                    .stream()
+                    .filter { forskuddstrekk -> forskuddstrekk.isNavData() }
+                    .toList()
+            val filteredSkattekort = receivedArbeidstaker.skattekort.copy(forskuddstrekk = filteredForskuddstrekkList)
+            return receivedArbeidstaker.copy(skattekort = filteredSkattekort)
+        }
+        return receivedArbeidstaker
+    }
+
+    private fun Forskuddstrekk.isNavData(): Boolean = trekkode in listOf(Trekkode.LOENN_FRA_NAV.value, Trekkode.PENSJON_FRA_NAV.value, Trekkode.UFOERETRYGD_FRA_NAV.value)
 
     private fun handleResultatForSkattekort(
         tx: TransactionalSession,

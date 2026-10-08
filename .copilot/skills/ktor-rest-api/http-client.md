@@ -58,22 +58,18 @@ infrastructure/
 
 ### Constructor injection
 
-Client services receive the shared `HttpClient`, a named URL string, and a named token client:
+Client services receive the shared `HttpClient`, a URL string, and a token client:
 
 ```kotlin
 class SkatteetatenClient(
     private val httpClient: HttpClient,
-    @Named(SKATTEETATEN_URL) private val skatteetatenUrl: String,
+    private val skatteetatenUrl: String,
     private val maskinportenTokenClient: MaskinportenTokenClient,
 )
 ```
 
-Named constants for URLs and token clients are defined in `Application.kt`:
-
-```kotlin
-const val PDL_URL = "pdlUrl"
-const val PDL_AZURED_TOKEN_CLIENT = "pdlAzuredTokenClient"
-```
+`ApplicationServices` reads endpoint URLs and token scopes from `PropertiesConfig` and passes them
+to client constructors. Client services remain independently constructible and testable.
 
 ## Circuit breaker
 

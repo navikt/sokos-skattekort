@@ -5,7 +5,6 @@ import javax.sql.DataSource
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-import io.ktor.server.plugins.di.annotations.Named
 import jakarta.jms.Queue
 import mu.KotlinLogging
 
@@ -29,8 +28,8 @@ private val logger = KotlinLogging.logger {}
 class UtsendingService(
     private val dataSource: DataSource,
     private val jmsProducerService: JmsProducerService,
-    @Named(value = "leveransekoeOppdragZSkattekort") private val leveransekoeOppdragZSkattekort: Queue,
-    @Named(value = "leveransekoeOppdragZSkattekortStor") private val leveransekoeOppdragZSkattekortStor: Queue,
+    private val leveransekoeOppdragZSkattekort: Queue,
+    private val leveransekoeOppdragZSkattekortStor: Queue,
     private val featureToggles: UnleashIntegration,
     private val utsendingDareClientService: UtsendingDareClientService? = null,
 ) {

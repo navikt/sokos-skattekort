@@ -55,6 +55,13 @@ spec:
               - "status-scope"
               - "hent-skattekort-scope"
               - "admin-scope"
+        - application: sokos-utbetalingsportalen
+          permissions:
+            scopes:
+              - "bestille-scope"
+              - "status-scope"
+              - "hent-skattekort-scope"
+              - "hent-navn-scope"
         - application: saas-proxy
           namespace: platforce
           permissions:

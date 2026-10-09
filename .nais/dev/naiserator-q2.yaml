@@ -62,16 +62,23 @@ spec:
               - "bestille-role"
               - "hent-skattekort-role"
               - "hent-navn-role"
+        - application: sokos-skattekort-admin
+          permissions:
+            scopes:
+              - "bestille-scope"
+              - "status-scope"
+              - "hent-skattekort-scope"
+              - "admin-scope"
         - application: sokos-dare-poc
           permissions:
-            roles:
+            roles: # beregning trenger å bruke m2m-token
               - "bestille-role"
-        - application: saas-proxy
+        - application: saas-proxy # Nav kontaktsenter
           namespace: platforce
           permissions:
             scopes:
               - "hent-skattekort-scope"
-        - application: saas-proxy
+        - application: saas-proxy # Nav kontaktsenter
           namespace: teamcrm
           permissions:
             scopes:
@@ -79,8 +86,8 @@ spec:
         - application: testnav-dolly-proxy-trygdeetaten
           cluster: dev-fss
           namespace: dolly
-          permissions:
-            roles:
+          permissions: 
+            roles: # dolly trenger å bruke m2m-token
               - "opprett-role"
               - "hent-skattekort-role"
         # Det MÅ gis tilgang til testnav-dolly-proxy for at testnav-dolly-proxy-trygdeetaten kan hente data fra sokos-skattekort.

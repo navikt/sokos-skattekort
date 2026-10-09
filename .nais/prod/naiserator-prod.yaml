@@ -48,6 +48,13 @@ spec:
   accessPolicy:
     inbound:
       rules:
+        - application: sokos-skattekort-admin
+          permissions:
+            scopes:
+              - "bestille-scope"
+              - "status-scope"
+              - "hent-skattekort-scope"
+              - "admin-scope"
         - application: sokos-utbetalingsportalen
           permissions:
             scopes:
@@ -55,13 +62,12 @@ spec:
               - "status-scope"
               - "hent-skattekort-scope"
               - "hent-navn-scope"
-              - "admin-scope"
         - application: saas-proxy
           namespace: platforce
           permissions:
             scopes:
               - "hent-skattekort-scope"
-        - application: saas-proxy
+        - application: saas-proxy # Nav kontaktsenter
           namespace: teamcrm
           permissions:
             scopes:

@@ -53,17 +53,20 @@ fun Route.skattekortApi(
 All authenticated routes are mounted in `RoutingConfig.kt` inside `authenticate(...)`:
 
 ```kotlin
-fun Application.routingConfig(applicationState: ApplicationState) {
+fun Application.routingConfig(applicationState: ApplicationState, services: ApiServices) {
     routing {
         internalNaisRoutes(applicationState)
         swaggerApi()
         authenticate(azureAdProperties.providerName) {
-            val someService: SomeService by dependencies
-            skattekortApi(someService)
+            skattekortApi(services.someService)
         }
     }
 }
 ```
+
+`ApplicationServices` is the manual composition root. It creates the full application graph and
+exposes the smaller `ApiServices` bundle used by routing. Routes receive that bundle as a normal
+function parameter; they do not resolve services from application attributes.
 
 Health/metrics routes (`internalNaisRoutes`) and Swagger are **outside** the `authenticate` block.
 

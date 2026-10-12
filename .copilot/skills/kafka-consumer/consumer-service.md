@@ -123,9 +123,8 @@ The consumer starts as a background coroutine task, gated on `ApplicationState.r
 val kafkaProperties = PropertiesConfig.getKafkaProperties()
 if (kafkaProperties.enabled) {
     applicationState.onReady = {
-        val kafkaConsumerService: KafkaConsumerService by dependencies
-        launchBackgroundTask(applicationState) {
-            kafkaConsumerService.start(applicationState)
+        services.backgroundTaskRunner.launch {
+            services.kafkaConsumerService.start(applicationState)
         }
     }
 }

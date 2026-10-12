@@ -3,9 +3,9 @@ package no.nav.sokos.skattekort.utsending
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.plugins.di.dependencies
 
 import no.nav.sokos.skattekort.JmsTestUtil
+import no.nav.sokos.skattekort.config.ApiServices
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
@@ -20,7 +20,7 @@ class UtsendingEndToEndTest :
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz.sql")
 
-                val uut: UtsendingService by application.dependencies
+                val uut: UtsendingService = application.attributes[ApiServices.key].utsendingService
 
                 uut.handleUtsending()
                 val expectedCopybook =
@@ -38,7 +38,8 @@ class UtsendingEndToEndTest :
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz_stor.sql")
 
-                val utsendingService: UtsendingService by application.dependencies
+                val utsendingService: UtsendingService =
+                    application.attributes[ApiServices.key].utsendingService
 
                 utsendingService.handleUtsending()
                 val expectedCopybook =

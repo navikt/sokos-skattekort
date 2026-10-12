@@ -13,8 +13,12 @@ import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forsku
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Skattekort
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Trekkprosent
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.skattekort.Trekkode.LOENN_FRA_BIARBEIDSGIVER
+import no.nav.sokos.skattekort.skattekort.Trekkode.LOENN_FRA_HOVEDARBEIDSGIVER
 import no.nav.sokos.skattekort.skattekort.Trekkode.LOENN_FRA_NAV
+import no.nav.sokos.skattekort.skattekort.Trekkode.PENSJON_FRA_NAV
 import no.nav.sokos.skattekort.skattekort.Trekkode.UFOERETRYGD_FRA_NAV
+import no.nav.sokos.skattekort.skattekort.Trekkode.UFOEREYTELSER_FRA_ANDRE
 import no.nav.sokos.skattekort.skattekort.anArbeidstaker
 
 object SkatteetatenClientTestUtils {
@@ -56,6 +60,22 @@ object SkatteetatenClientTestUtils {
                         Forskuddstrekk(
                             trekkode = UFOERETRYGD_FRA_NAV.value,
                             trekkprosent = Trekkprosent(BigDecimal("28.00")),
+                        ),
+                        Forskuddstrekk(
+                            trekkode = PENSJON_FRA_NAV.value,
+                            trekkprosent = Trekkprosent(BigDecimal("31.00")),
+                        ),
+                        Forskuddstrekk(
+                            trekkode = LOENN_FRA_HOVEDARBEIDSGIVER.value,
+                            trekkprosent = Trekkprosent(BigDecimal("32.00")),
+                        ),
+                        Forskuddstrekk(
+                            trekkode = LOENN_FRA_BIARBEIDSGIVER.value,
+                            trekkprosent = Trekkprosent(BigDecimal("33.00")),
+                        ),
+                        Forskuddstrekk(
+                            trekkode = UFOEREYTELSER_FRA_ANDRE.value,
+                            trekkprosent = Trekkprosent(BigDecimal("34.00")),
                         ),
                     ),
             ),

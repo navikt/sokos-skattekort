@@ -53,7 +53,7 @@ fun Route.skattekortApi(
 All authenticated routes are mounted in `RoutingConfig.kt` inside `authenticate(...)`:
 
 ```kotlin
-fun Application.routingConfig(applicationState: ApplicationState, services: ApiServices) {
+fun Application.routingConfig(applicationState: ApplicationState, services: ApplicationServices) {
     routing {
         internalNaisRoutes(applicationState)
         swaggerApi()
@@ -64,9 +64,10 @@ fun Application.routingConfig(applicationState: ApplicationState, services: ApiS
 }
 ```
 
-`ApplicationServices` is the manual composition root. It creates the full application graph and
-exposes the smaller `ApiServices` bundle used by routing. Routes receive that bundle as a normal
-function parameter; they do not resolve services from application attributes.
+`ApplicationServices` is the manual composition root and is passed to `RoutingConfig`, which wires
+the application-level services into the appropriate routes. Each API route function receives only
+the individual services it uses as normal parameters; route functions do not resolve services from
+application attributes.
 
 Health/metrics routes (`internalNaisRoutes`) and Swagger are **outside** the `authenticate` block.
 

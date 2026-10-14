@@ -53,7 +53,7 @@ class BestillingsbatchServiceTest :
             BestillingsbatchService(
                 dataSource = DbListener.dataSource,
                 skatteetatenClient = skatteetatenClient,
-                featureToggles = UnleashIntegration(),
+                unleashIntegration = UnleashIntegration(),
             )
         }
 

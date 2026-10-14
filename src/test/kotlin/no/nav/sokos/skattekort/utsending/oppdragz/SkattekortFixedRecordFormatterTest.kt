@@ -1,4 +1,4 @@
-package no.nav.sokos.skattekort.utsending
+package no.nav.sokos.skattekort.utsending.oppdragz
 
 import java.time.Instant
 import java.time.LocalDate
@@ -7,7 +7,6 @@ import kotlinx.serialization.json.Json
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.serialization.kotlinx.json.DefaultJson
 
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Arbeidstaker
 import no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.HentSkattekortResponse
@@ -17,29 +16,22 @@ import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.Skattekort
 import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
-import no.nav.sokos.skattekort.utsending.oppdragz.SkattekortFixedRecordFormatter
 
-private val json =
-    Json(DefaultJson) {
-        isLenient = true
-        prettyPrint = true
-    }
+/**
+ Denne testen er drevet av to sett data:
+ - et sett med skattekort som skatt sier inneholder et bredt utvalg av data
+ - et sett med referansedata som er laget ved å kjøre settet med skattekort gjennom serialiseringen til gamel os-eskatt
 
-/*
-Denne testen er drevet av to sett data:
-- et sett med skattekort som skatt sier inneholder et bredt utvalg av data
-- et sett med referansedata som er laget ved å kjøre settet med skattekort gjennom serialiseringen til gamel os-eskatt
+ Forhåpentligvis vil dette gjenskape den gamle oppførselen bra.
 
-Forhåpentligvis vil dette gjenskape den gamle oppførselen bra.
-
-Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringen, gjør endringen, lager et nytt testdatasett,
-og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
+ Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringen, gjør endringen, lager et nytt testdatasett,
+ og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
  */
 class SkattekortFixedRecordFormatterTest :
     FunSpec({
         test("gå gjennom alle skattekort og sjekk at vi får et stabilt svar") {
             val arbeidstakere: List<Arbeidstaker> =
-                json
+                Json
                     .decodeFromString<HentSkattekortResponse>(readFile("/oppdragz/skattekortsvar.json"))
                     .arbeidsgiver!!
                     .flatMap { it.arbeidstaker }
@@ -51,10 +43,6 @@ class SkattekortFixedRecordFormatterTest :
                 nyFormatering shouldBe gammelFormatering
                 Pair(arbeidstaker.arbeidstakeridentifikator, nyFormatering)
             }
-            // Kommentert ut for enkel oppdatering av referansedataene når vi eventuelt endrer serialiseringen
-            //    .let { nyeReferanseVerdier ->
-            //        File("src/test/resources/oppdragz/skattekortreferanser.json").writeText(json.encodeToString(nyeReferanseVerdier))
-            //    }
         }
 
         test("vi kan serialisere et frikort med beløpsgrense") {

@@ -10,6 +10,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.RECENT_BATCH_GRACE_PERIOD
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
@@ -39,9 +40,9 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 private val logger = KotlinLogging.logger {}
 
 class BestillingService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
     private val skatteetatenClient: SkatteetatenClient,
-    private val featureToggles: UnleashIntegration,
+    private val unleashIntegration: UnleashIntegration,
 ) {
     private val errorLoggedBatchIds = mutableSetOf<Long>()
 
@@ -122,7 +123,7 @@ class BestillingService(
         type: BestillingsbatchType,
     ) {
         dataSource.transaction { tx ->
-            if (featureToggles.isLagreMottatteBestillingerEnabled()) {
+            if (unleashIntegration.isLagreMottatteBestillingerEnabled()) {
                 BestillingsbatchRepository.updateBestillingsbatchWithMottatteData(tx, batchId, Json.encodeToString(response))
             }
             when (response.status) {

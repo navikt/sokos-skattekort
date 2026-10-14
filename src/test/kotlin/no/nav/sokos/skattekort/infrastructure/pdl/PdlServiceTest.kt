@@ -9,10 +9,13 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
-import io.mockk.clearMocks
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.runs
 import io.mockk.slot
+import io.mockk.unmockkObject
 import io.mockk.verify
 
 import no.nav.pdl.hentpersonbolk.Navn
@@ -31,10 +34,6 @@ class PdlServiceTest :
         extensions(listOf(WiremockListener))
 
         val messageSlot = slot<AuditLogg>()
-        val auditLogger =
-            mockk<AuditLogger>(relaxed = true) {
-                every { auditLog(capture(messageSlot)) } returns Unit
-            }
 
         val pdlService: PdlService by lazy {
             PdlService(
@@ -50,7 +49,6 @@ class PdlServiceTest :
                         tilgangsmaskinUrl = WiremockListener.wiremock.baseUrl(),
                         azuredTokenClient = WiremockListener.azuredTokenClient,
                     ),
-                auditLogger = auditLogger,
             )
         }
 
@@ -58,8 +56,13 @@ class PdlServiceTest :
         val saksbehandler = mockk<Saksbehandler> { every { this@mockk.ident } returns "Z123456" }
 
         beforeTest {
-            clearMocks(auditLogger, answers = false, recordedCalls = true, childMocks = false)
+            mockkObject(AuditLogger)
+            every { AuditLogger.auditLog(capture(messageSlot)) } just runs
             messageSlot.clear()
+        }
+
+        afterTest {
+            unmockkObject(AuditLogger)
         }
 
         test("returns left when access is denied and does not call PDL") {
@@ -130,7 +133,7 @@ class PdlServiceTest :
             WiremockListener.wiremock.verify(1, postRequestedFor(urlPathMatching("/api/v1/ccf/kjerne/.*")))
             WiremockListener.wiremock.verify(1, postRequestedFor(urlEqualTo("/graphql")))
 
-            verify(exactly = 1) { auditLogger.auditLog(any()) }
+            verify(exactly = 1) { AuditLogger.auditLog(any()) }
 
             result.get() shouldBe "Ola Nordmann"
             messageSlot.captured shouldNotBeNull {

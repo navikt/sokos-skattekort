@@ -27,24 +27,8 @@ import no.nav.sokos.skattekort.skattekortbestilling.status.StatusService
 import no.nav.sokos.skattekort.skattekortdata.SkattekortDataService
 import no.nav.sokos.skattekort.skattekorthenting.BestillingService
 import no.nav.sokos.skattekort.util.BackgroundTaskRunner
-import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.utsending.UtsendingService
 import no.nav.sokos.skattekort.utsending.mq.JmsProducerService
-
-class ApiServices(
-    val bestillingsbatchService: BestillingsbatchService,
-    val personService: PersonService,
-    val utsendingService: UtsendingService,
-    val skattekortService: SkattekortService,
-    val forespoerselService: ForespoerselService,
-    val statusService: StatusService,
-    val backgroundTaskRunner: BackgroundTaskRunner,
-    val pdlService: PdlService,
-) {
-    companion object {
-        val key = AttributeKey<ApiServices>("apiServices")
-    }
-}
 
 data class ApplicationServiceOverrides(
     val pdlUrl: String? = null,
@@ -67,24 +51,17 @@ class ApplicationServices(
     overrides: ApplicationServiceOverrides = ApplicationServiceOverrides(),
 ) {
     val httpClient: HttpClient = createHttpClient()
-    val dataSource = DatabaseConfig.dataSource
-    val kafkaConfig = KafkaConfig()
     val backgroundTaskRunner = BackgroundTaskRunner(applicationState)
-    private val auditLogger = AuditLogger()
 
     private val mqProperties = PropertiesConfig.mqProperties
     private val connectionFactory = overrides.connectionFactory ?: MQConfig.connectionFactory
     private val pdlUrl = overrides.pdlUrl ?: PropertiesConfig.pdlProperties.pdlUrl
-    private val tilgangsmaskinUrl =
-        overrides.tilgangsmaskinUrl ?: PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinUrl
-    private val skatteetatenUrl =
-        overrides.skatteetatenUrl ?: PropertiesConfig.skatteetatenProperties.skatteetatenUrl
+    private val tilgangsmaskinUrl = overrides.tilgangsmaskinUrl ?: PropertiesConfig.tilgangsmaskinProperties.tilgangsmaskinUrl
+    private val skatteetatenUrl = overrides.skatteetatenUrl ?: PropertiesConfig.skatteetatenProperties.skatteetatenUrl
     private val darePocUrl by lazy {
         overrides.darePocUrl ?: PropertiesConfig.darePocProperties.darePocUrl
     }
-    private val pdlTokenClient =
-        overrides.pdlTokenClient
-            ?: AzuredTokenClient(httpClient, PropertiesConfig.pdlProperties.pdlScope)
+    private val pdlTokenClient = overrides.pdlTokenClient ?: AzuredTokenClient(httpClient, PropertiesConfig.pdlProperties.pdlScope)
     private val tilgangsmaskinTokenClient =
         overrides.tilgangsmaskinTokenClient
             ?: AzuredTokenClient(
@@ -109,80 +86,50 @@ class ApplicationServices(
 
     private val forespoerselQueue = overrides.forespoerselQueue ?: queue(mqProperties.fraForSystemQueue)
     private val forespoerselBoqQueue = overrides.forespoerselBoqQueue ?: queue("${mqProperties.fraForSystemQueue}_BOQ")
-    private val utsendingQueue =
-        overrides.utsendingQueue
-            ?: queue(mqProperties.leveransekoeOppdragZSkattekort, WMQConstants.WMQ_MESSAGE_BODY_MQ)
-    private val utsendingStorQueue =
-        overrides.utsendingStorQueue
-            ?: queue(mqProperties.leveransekoeOppdragZSkattekortStor, WMQConstants.WMQ_MESSAGE_BODY_MQ)
+    private val utsendingQueue = overrides.utsendingQueue ?: queue(mqProperties.leveransekoeOppdragZSkattekort, WMQConstants.WMQ_MESSAGE_BODY_MQ)
+    private val utsendingStorQueue = overrides.utsendingStorQueue ?: queue(mqProperties.leveransekoeOppdragZSkattekortStor, WMQConstants.WMQ_MESSAGE_BODY_MQ)
 
     val pdlClientService = PdlClientService(httpClient, pdlUrl, pdlTokenClient)
-    val tilgangsmaskinClientService =
-        TilgangsmaskinClientService(httpClient, tilgangsmaskinUrl, tilgangsmaskinTokenClient)
+    val tilgangsmaskinClientService = TilgangsmaskinClientService(httpClient, tilgangsmaskinUrl, tilgangsmaskinTokenClient)
     val dareClientService =
-        if (PropertiesConfig.isProd) {
-            null
-        } else {
-            UtsendingDareClientService(httpClient, darePocUrl, darePocTokenClient)
+        when (PropertiesConfig.isProd) {
+            true -> null
+            else -> UtsendingDareClientService(httpClient, darePocUrl, darePocTokenClient)
         }
-    val skatteetatenClient =
-        SkatteetatenClient(
-            httpClient,
-            skatteetatenUrl,
-            overrides.maskinportenTokenClient ?: MaskinportenTokenClient(httpClient),
-        )
+    val skatteetatenClient = SkatteetatenClient(httpClient, skatteetatenUrl, overrides.maskinportenTokenClient ?: MaskinportenTokenClient(httpClient))
     val personService =
-        PersonService(dataSource, pdlClientService, tilgangsmaskinClientService)
-    val forespoerselService = ForespoerselService(dataSource, personService)
-    val forespoerselListener =
-        ForespoerselListener(
-            connectionFactory,
-            forespoerselService,
-            forespoerselQueue,
-            forespoerselBoqQueue,
+        PersonService(
+            pdlClientService = pdlClientService,
+            tilgangsmaskinClientService = tilgangsmaskinClientService,
         )
-    val unleashIntegration =
-        UnleashIntegration(forespoerselListener::onOppdateringChanged)
-    val bestillingsbatchService =
-        BestillingsbatchService(dataSource, skatteetatenClient, unleashIntegration)
-    val bestillingService =
-        BestillingService(dataSource, skatteetatenClient, unleashIntegration)
-    val jmsProducerService = JmsProducerService(connectionFactory)
+    val forespoerselService = ForespoerselService(personService = personService)
+    val forespoerselListener = ForespoerselListener(connectionFactory, forespoerselService, forespoerselQueue, forespoerselBoqQueue)
+    val unleashIntegration = UnleashIntegration(forespoerselListener::onOppdateringChanged)
+    val bestillingsbatchService = BestillingsbatchService(skatteetatenClient = skatteetatenClient, unleashIntegration = unleashIntegration)
+    val bestillingService = BestillingService(skatteetatenClient = skatteetatenClient, unleashIntegration = unleashIntegration)
     val utsendingService =
         UtsendingService(
-            dataSource,
-            jmsProducerService,
-            utsendingQueue,
-            utsendingStorQueue,
-            unleashIntegration,
-            dareClientService,
+            jmsProducerService = JmsProducerService(connectionFactory),
+            leveransekoeOppdragZSkattekort = utsendingQueue,
+            leveransekoeOppdragZSkattekortStor = utsendingStorQueue,
+            unleashIntegration = unleashIntegration,
+            utsendingDareClientService = dareClientService,
         )
-    val skattekortDataService = SkattekortDataService(dataSource)
+    val skattekortDataService = SkattekortDataService()
     val skattekortService =
         SkattekortService(
-            dataSource,
-            personService,
-            tilgangsmaskinClientService,
-            auditLogger,
-        )
-    val pdlService =
-        PdlService(pdlClientService, tilgangsmaskinClientService, auditLogger)
-    val statusService = StatusService(dataSource, tilgangsmaskinClientService)
-    val apiServices =
-        ApiServices(
-            bestillingsbatchService = bestillingsbatchService,
             personService = personService,
-            utsendingService = utsendingService,
-            skattekortService = skattekortService,
-            forespoerselService = forespoerselService,
-            statusService = statusService,
-            backgroundTaskRunner = backgroundTaskRunner,
-            pdlService = pdlService,
+            tilgangsmaskinClientService = tilgangsmaskinClientService,
         )
-    val metricsService = MetricsService(dataSource)
-    val identifikatorEndringService =
-        IdentifikatorEndringService(dataSource, pdlClientService, personService)
+    val pdlService = PdlService(pdlClientService, tilgangsmaskinClientService)
+    val statusService = StatusService(tilgangsmaskinClientService = tilgangsmaskinClientService)
+    val metricsService = MetricsService()
+    val identifikatorEndringService = IdentifikatorEndringService(pdlClientService = pdlClientService, personService = personService)
     val kafkaConsumerService by lazy {
-        KafkaConsumerService(kafkaConfig, identifikatorEndringService)
+        KafkaConsumerService(KafkaConfig(), identifikatorEndringService)
+    }
+
+    companion object {
+        val key = AttributeKey<ApplicationServices>("applicationServices")
     }
 }

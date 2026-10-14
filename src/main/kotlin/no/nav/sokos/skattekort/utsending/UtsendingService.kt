@@ -9,6 +9,7 @@ import jakarta.jms.Queue
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.v2.SkattekortDTO
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.MQ_BATCH_SIZE
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.Metrics.counter
@@ -26,18 +27,18 @@ private val logger = KotlinLogging.logger {}
 
 @OptIn(ExperimentalAtomicApi::class)
 class UtsendingService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
     private val jmsProducerService: JmsProducerService,
     private val leveransekoeOppdragZSkattekort: Queue,
     private val leveransekoeOppdragZSkattekortStor: Queue,
-    private val featureToggles: UnleashIntegration,
+    private val unleashIntegration: UnleashIntegration,
     private val utsendingDareClientService: UtsendingDareClientService? = null,
 ) {
     private val totalIUtsending = AtomicInt(0)
 
     suspend fun handleUtsending() {
         totalIUtsending.store(0)
-        if (!featureToggles.isUtsendingEnabled()) return
+        if (!unleashIntegration.isUtsendingEnabled()) return
 
         runCatching {
             while (true) {

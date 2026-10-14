@@ -2,6 +2,7 @@ package no.nav.sokos.skattekort.infrastructure
 
 import javax.sql.DataSource
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.infrastructure.Metrics.gauge
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.SkattekortRepository
@@ -11,7 +12,7 @@ import no.nav.sokos.skattekort.util.SQLUtils.transaction
 import no.nav.sokos.skattekort.utsending.UtsendingRepository
 
 class MetricsService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
 ) {
     fun fetchMetrics() {
         dataSource.transaction { tx ->

@@ -15,14 +15,13 @@ private val logger = KotlinLogging.logger {}
 class PdlService(
     private val pdlClientService: PdlClientService,
     private val tilgangsmaskinClientService: TilgangsmaskinClientService,
-    private val auditLogger: AuditLogger,
 ) {
     suspend fun getPersonNavn(
         ident: String,
         saksbehandler: Saksbehandler,
     ): Either<ProblemDetailResponse, String> {
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter navn for ident: $ident" }
-        auditLogger.auditLog(
+        AuditLogger.auditLog(
             AuditLogg(
                 saksbehandler = saksbehandler.ident,
                 fnr = ident,

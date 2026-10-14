@@ -7,6 +7,7 @@ import io.github.resilience4j.core.functions.Either
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.v1.SkattekortDTO
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.AbonnementRepository
@@ -28,10 +29,9 @@ import no.nav.tilgangsmaskinen.ProblemDetailResponse
 private val logger = KotlinLogging.logger {}
 
 class SkattekortService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
     private val personService: PersonService,
     private val tilgangsmaskinClientService: TilgangsmaskinClientService,
-    private val auditLogger: AuditLogger,
 ) {
     suspend fun getSingleSkattekortForEachYear(
         fnr: String,
@@ -55,7 +55,7 @@ class SkattekortService(
         // Sjekker om fnr er reelt og krever i så fall det er kallt med obo-token
         if (GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Oppslag på reelle skattekort må gjøres på vegne av en saksbehandler" }
-            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har søkt etter skattekort for bruker"))
+            AuditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har søkt etter skattekort for bruker"))
         }
 
         val skattekortList =
@@ -90,9 +90,9 @@ class SkattekortService(
 
         if (GYLDIGE.erGyldig(fnr)) {
             requireNotNull(saksbehandler) { "Manuell opprettelse av reelle skattekort må gjøres på vegne av en saksbehandler" }
-            auditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har opprettet skattekort for bruker"))
+            AuditLogger.auditLog(AuditLogg(saksbehandler = saksbehandler.ident, fnr = fnr, brukerhandling = "NAV-ansatt har opprettet skattekort for bruker"))
         } else {
-            auditLogger.auditLog(AuditLogg(saksbehandler = "DOLLY", fnr = fnr, brukerhandling = "Dolly har opprettet skattekort for bruker"))
+            AuditLogger.auditLog(AuditLogg(saksbehandler = "DOLLY", fnr = fnr, brukerhandling = "Dolly har opprettet skattekort for bruker"))
         }
 
         return dataSource.transaction { tx ->

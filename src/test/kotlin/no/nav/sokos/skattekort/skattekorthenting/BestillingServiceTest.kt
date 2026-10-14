@@ -76,7 +76,7 @@ class BestillingServiceTest :
             BestillingService(
                 dataSource = DbListener.dataSource,
                 skatteetatenClient = skatteetatenClient,
-                featureToggles = UnleashIntegration(),
+                unleashIntegration = UnleashIntegration(),
             )
         }
 

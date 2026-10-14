@@ -11,10 +11,10 @@ plugins {
     kotlin("jvm") version "2.4.20"
     kotlin("plugin.serialization") version "2.4.20"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
-    id("org.jetbrains.kotlinx.kover") version "0.9.9"
+    id("org.jetbrains.kotlinx.kover") version "0.9.11"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
     id("com.expediagroup.graphql") version "10.2.2"
-    id("org.openapi.generator") version "7.25.0"
+    id("org.openapi.generator") version "7.26.0"
 
     application
 }
@@ -31,25 +31,25 @@ repositories {
 
 val resilience4jVersion = "2.4.0"
 val ktorVersion = "3.5.2"
-val nimbusVersion = "10.9.1"
-val logbackVersion = "1.6.3"
+val nimbusVersion = "10.10"
+val logbackVersion = "1.6.5"
 val logstashVersion = "9.0"
 val micrometerVersion = "1.17.1"
 val dbSchedulerVersion = "16.12.0"
 val kotlinLoggingVersion = "3.0.5"
-val kotestVersion = "6.2.4"
+val kotestVersion = "6.2.5"
 val kotlinxSerializationVersion = "1.11.0"
 val kotlinxDatetimeVersion = "0.8.0-0.6.x-compat"
-val mockOAuth2ServerVersion = "6.0.2"
+val mockOAuth2ServerVersion = "6.0.4"
 val mockkVersion = "1.14.11"
 val hikariVersion = "7.1.0"
 val kotliqueryVersion = "2.1.1"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "13.5.0"
+val flywayVersion = "13.9.0"
 val postgresVersion = "42.7.13"
-val activemqVersion = "2.56.0"
+val activemqVersion = "2.57.0"
 val ibmmqVersion = "10.0.0.0"
-val opentelemetryVersion = "2.31.1"
+val opentelemetryVersion = "2.32.0"
 val swaggerRequestValidatorVersion = "3.0.0"
 val kafkaClientsVersion = "4.3.1"
 val avroVersion = "1.12.2"
@@ -146,7 +146,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.11.4")
+                useTarget("at.yawk.lz4:lz4-java:1.12.0")
                 because("Prefer the patched fork for vulnerability fix")
             }
             if (requested.group == "io.netty") {

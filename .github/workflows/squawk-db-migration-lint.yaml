@@ -12,4 +12,4 @@ jobs:
       contents: read
       pull-requests: write
     name: Run DB migration lint
-    uses: navikt/mob-gha-workflows/.github/workflows/squawk-migration-lint.yaml@9f663f4e1ff4f85a52efa067fbf53c5a6bbaede9 # ratchet:navikt/mob-gha-workflows/.github/workflows/squawk-migration-lint.yaml@v1.1.2
+    uses: navikt/mob-gha-workflows/.github/workflows/squawk-migration-lint.yaml@eeb9163c47db1ceaadebd3130fa5f03c0fbf0b45 # ratchet:navikt/mob-gha-workflows/.github/workflows/squawk-migration-lint.yaml@v1.2.1

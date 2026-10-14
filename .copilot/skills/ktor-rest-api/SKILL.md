@@ -32,7 +32,7 @@ REST patterns for this codebase — both the Ktor server routes and outgoing HTT
 | Retry | Ktor `HttpRequestRetry` plugin with exponential backoff |
 | Auth | `bearerAuth()` with Azure AD or Maskinporten tokens |
 | Content negotiation | `ContentNegotiation` with `kotlinx.serialization` JSON |
-| Dependency wiring | Explicit constructor injection from the `ApplicationServices` composition root; routes receive only `ApiServices` |
+| Dependency wiring | `ApplicationServices` is the composition root and is passed to `RoutingConfig`; individual route functions receive only the services they use |
 
 ## Sub-files
 

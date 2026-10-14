@@ -5,13 +5,13 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 import no.nav.sokos.skattekort.JmsTestUtil
-import no.nav.sokos.skattekort.config.ApiServices
+import no.nav.sokos.skattekort.config.ApplicationServices
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.listener.MQListener
 import no.nav.sokos.skattekort.utils.TestUtils.eventuallyConfiguration
 import no.nav.sokos.skattekort.utils.TestUtils.withFullTestApplication
 
-class UtsendingEndToEndTest :
+class UtsendingServiceTest :
     FunSpec({
         extensions(DbListener, MQListener)
 
@@ -20,7 +20,7 @@ class UtsendingEndToEndTest :
                 DbListener.loadDataSet("database/skattekort/person_med_skattekort.sql")
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz.sql")
 
-                val uut: UtsendingService = application.attributes[ApiServices.key].utsendingService
+                val uut: UtsendingService = application.attributes[ApplicationServices.key].utsendingService
 
                 uut.handleUtsending()
                 val expectedCopybook =
@@ -39,7 +39,7 @@ class UtsendingEndToEndTest :
                 DbListener.loadDataSet("database/utsending/skattekort_oppdragz_stor.sql")
 
                 val utsendingService: UtsendingService =
-                    application.attributes[ApiServices.key].utsendingService
+                    application.attributes[ApplicationServices.key].utsendingService
 
                 utsendingService.handleUtsending()
                 val expectedCopybook =

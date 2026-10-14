@@ -7,6 +7,7 @@ import javax.sql.DataSource
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.person.AUDIT_SYSTEM
@@ -30,7 +31,7 @@ private const val CHUNKED_SIZE = 1000
 private val logger = KotlinLogging.logger { }
 
 class ForespoerselService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
     private val personService: PersonService,
 ) {
     private typealias BestillingCount = Int

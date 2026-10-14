@@ -11,6 +11,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import mu.KotlinLogging
 
 import no.nav.sokos.skattekort.api.model.BestillingsbatchDTO
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.RECENT_BATCH_GRACE_PERIOD
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -30,12 +31,12 @@ import no.nav.sokos.skattekort.util.SQLUtils.transactionSuspending
 private val logger = KotlinLogging.logger {}
 
 class BestillingsbatchService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
     private val skatteetatenClient: SkatteetatenClient,
-    private val featureToggles: UnleashIntegration,
+    private val unleashIntegration: UnleashIntegration,
 ) {
     suspend fun bestillSkattekort() {
-        if (!featureToggles.isBestillingerEnabled()) return
+        if (!unleashIntegration.isBestillingerEnabled()) return
         val bestillingList: MutableList<Bestilling> = mutableListOf()
 
         runCatching {
@@ -80,7 +81,7 @@ class BestillingsbatchService(
     }
 
     suspend fun bestillOppdaterteSkattekort() {
-        if (!featureToggles.isOppdateringEnabled()) return
+        if (!unleashIntegration.isOppdateringEnabled()) return
         runCatching {
             dataSource.transactionSuspending { tx -> if (BestillingsbatchRepository.getAllUnprocessedBestillingsbatch(tx, BestillingsbatchType.OPPDATERING).isNotEmpty()) return@transactionSuspending }
             // Vi henter skattekort for neste år 15. desember for å ha de klar til første utbetaling i januar, og for å kunne ta juleferie uten trøbbel

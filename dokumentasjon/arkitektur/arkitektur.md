@@ -20,6 +20,13 @@ block-beta
 
 Applikasjonen integrerer også med drifts- og observabilitetsverktøy.
 
+### Avhengighetskobling
+
+`ApplicationServices` er applikasjonens manuelle composition root og inneholder tjenestene og
+infrastrukturavhengighetene som opprettes ved oppstart. `RoutingConfig` mottar denne samlingen og
+kobler aktuelle tjenester til rutene. Hver API-rutefunksjon mottar bare tjenestene den selv bruker,
+som eksplisitte parametere.
+
 ### Interne grensesnitt
 
 Ingen

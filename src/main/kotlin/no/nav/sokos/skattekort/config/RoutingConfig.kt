@@ -11,7 +11,7 @@ import no.nav.sokos.skattekort.api.swaggerApi
 
 fun Application.routingConfig(
     applicationState: ApplicationState,
-    services: ApiServices,
+    services: ApplicationServices,
     azureAdProperties: PropertiesConfig.AzureAdProperties = PropertiesConfig.azureAdProperties,
 ) {
     routing {

@@ -9,7 +9,6 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import mu.KotlinLogging
 
-import no.nav.sokos.skattekort.config.ApiServices
 import no.nav.sokos.skattekort.config.ApplicationServiceOverrides
 import no.nav.sokos.skattekort.config.ApplicationServices
 import no.nav.sokos.skattekort.config.ApplicationState
@@ -44,10 +43,10 @@ fun Application.module(
     DatabaseConfig.migrate()
 
     val services = ApplicationServices(applicationState, serviceOverrides)
-    attributes.put(ApiServices.key, services.apiServices)
+    attributes.put(ApplicationServices.key, services)
 
     securityConfig()
-    routingConfig(applicationState, services.apiServices)
+    routingConfig(applicationState, services)
 
     services.forespoerselListener.onOppdateringChanged(services.unleashIntegration.isForespoerselListenerEnabled())
 

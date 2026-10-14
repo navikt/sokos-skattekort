@@ -18,6 +18,10 @@ val appName = PropertiesConfig.getApplicationProperties().naisAppName
 
 Health/metrics endpoints are unauthenticated; domain routes sit behind `authenticate(AUTHENTICATION_NAME)`. Expose: `/internal/isAlive`, `/internal/isReady`, `/internal/metrics`.
 
+`ApplicationServices` is the composition root passed to `RoutingConfig`. Keep route extension
+functions focused by passing them only the individual services they use; do not resolve dependencies
+from application attributes inside route handlers.
+
 ## Logging
 
 - Regular messages → Logback → Grafana Loki.

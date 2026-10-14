@@ -7,6 +7,7 @@ import io.github.resilience4j.core.functions.Either
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
 import no.nav.sokos.skattekort.forespoersel.Foedselsnummerkategori
@@ -21,7 +22,7 @@ private const val CHUNKED_SIZE = 1000
 private val logger = KotlinLogging.logger { }
 
 class PersonService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
     private val pdlClientService: PdlClientService,
     private val tilgangsmaskinClientService: TilgangsmaskinClientService,
 ) {

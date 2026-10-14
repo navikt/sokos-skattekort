@@ -3,6 +3,7 @@ package no.nav.sokos.skattekort.skattekortbestilling.status
 import javax.sql.DataSource
 
 import no.nav.sokos.skattekort.api.model.DetailStatus
+import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.forespoersel.Forsystem
 import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClientService
 import no.nav.sokos.skattekort.person.Personidentifikator
@@ -11,7 +12,7 @@ import no.nav.sokos.skattekort.skattekort.SkattekortRepository
 import no.nav.sokos.skattekort.util.SQLUtils.transaction
 
 class StatusService(
-    private val dataSource: DataSource,
+    private val dataSource: DataSource = DatabaseConfig.dataSource,
     private val tilgangsmaskinClientService: TilgangsmaskinClientService,
 ) {
     suspend fun statusForespoeresel(

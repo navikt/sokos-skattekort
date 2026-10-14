@@ -37,7 +37,6 @@ class SkattekortServiceTest :
                         pdlClientService = mockk(),
                         tilgangsmaskinClientService = tilgangsmaskinClientService,
                     ),
-                auditLogger = mockAuditLogger,
                 tilgangsmaskinClientService = tilgangsmaskinClientService,
             )
         }

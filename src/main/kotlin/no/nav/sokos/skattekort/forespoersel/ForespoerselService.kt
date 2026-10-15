@@ -150,15 +150,11 @@ class ForespoerselService(
                 }.associateBy(Skattekort::personId)
 
         val (personIdWithSkattekort, personIdWithoutSkattekort) =
-            foedselsnumreWithPersonIdList.fold(
-                Pair(
-                    mutableListOf<Pair<String, Skattekort>>(),
-                    mutableListOf<Pair<String, PersonId>>(),
-                ),
-            ) { (found, missing), (key, personId) ->
-                skattekortByPersonId[personId]?.let { found += key to it } ?: run { missing += key to personId }
-                found to missing
-            }
+            foedselsnumreWithPersonIdList
+                .partition { (_, personId) -> personId in skattekortByPersonId }
+                .let { (withSkattekort, withoutSkattekort) ->
+                    withSkattekort.map { (fnr, personId) -> fnr to skattekortByPersonId.getValue(personId) } to withoutSkattekort
+                }
 
         val foedselsnummerkategori = Foedselsnummerkategori.valueOf(PropertiesConfig.applicationProperties.gyldigeFnr)
         val kanBestilles = personIdWithoutSkattekort.filter { (fnr, _) -> foedselsnummerkategori.kanBestilleSkattekort(fnr) }

@@ -11,6 +11,46 @@ import no.nav.sokos.skattekort.api.model.DetailStatus
 import no.nav.sokos.skattekort.person.PersonId
 import no.nav.sokos.skattekort.person.Personidentifikator
 
+private val SKATTEKORT_JSON_PROJECTION =
+    """
+    jsonb_build_object(
+        'id', s.id,
+        'generertFra', s.generert_fra,
+        'personId', s.person_id,
+        'utstedtDato', s.utstedt_dato,
+        'identifikator', s.identifikator,
+        'inntektsaar', s.inntektsaar,
+        'kilde', s.kilde,
+        'resultatForSkattekort', s.resultatForSkattekort,
+        'opprettet', s.opprettet,
+        'forskuddstrekkList',
+        COALESCE(
+            (
+                SELECT jsonb_agg(jsonb_build_object(
+                    'type', f.type,
+                    'trekkode', f.trekk_kode,
+                    'frikortBeloep', f.frikort_beloep,
+                    'tabellNummer', f.tabell_nummer,
+                    'prosentSats', f.prosentsats,
+                    'antallMndForTrekk', f.antall_mnd_for_trekk
+                ))
+                FROM forskuddstrekk f
+                WHERE f.skattekort_id = s.id
+            ),
+            '[]'::jsonb
+        ),
+        'tilleggsopplysningList',
+        COALESCE(
+            (
+                SELECT jsonb_agg(t.opplysning)
+                FROM skattekort_tilleggsopplysning t
+                WHERE t.skattekort_id = s.id
+            ),
+            '[]'::jsonb
+        )
+    )
+    """.trimIndent()
+
 object SkattekortRepository {
     fun insert(
         tx: TransactionalSession,
@@ -118,37 +158,7 @@ object SkattekortRepository {
         // language=SQL
         val sql =
             """
-            SELECT jsonb_build_object(
-                           'id', s.id,
-                           'generertFra', s.generert_fra,
-                           'personId', s.person_id,
-                           'utstedtDato', s.utstedt_dato,
-                           'identifikator', s.identifikator,
-                           'inntektsaar', s.inntektsaar,
-                           'kilde', s.kilde,
-                           'resultatForSkattekort', s.resultatForSkattekort,
-                           'opprettet', s.opprettet,
-                           'forskuddstrekkList',
-                           COALESCE(
-                                   (SELECT jsonb_agg(jsonb_build_object(
-                                           'type', f.type,
-                                           'trekkode', f.trekk_kode,
-                                           'frikortBeloep', f.frikort_beloep,
-                                           'tabellNummer', f.tabell_nummer,
-                                           'prosentSats', f.prosentsats,
-                                           'antallMndForTrekk', f.antall_mnd_for_trekk))
-                                    FROM forskuddstrekk f
-                                    WHERE f.skattekort_id = s.id),
-                                   '[]'::jsonb
-                           ),
-                           'tilleggsopplysningList',
-                           COALESCE(
-                                   (SELECT jsonb_agg(t.opplysning)
-                                    FROM skattekort_tilleggsopplysning t
-                                    WHERE t.skattekort_id = s.id),
-                                   '[]'::jsonb
-                           )
-                   ) AS skattekort_json
+            SELECT $SKATTEKORT_JSON_PROJECTION AS skattekort_json
             FROM skattekort s
             WHERE s.id IN ($idParamList);
             """.trimIndent()
@@ -170,37 +180,7 @@ object SkattekortRepository {
         // language=SQL
         val sql =
             """            
-            SELECT $distinctQuery jsonb_build_object(
-                           'id', s.id,
-                           'generertFra', s.generert_fra,
-                           'personId', s.person_id,
-                           'utstedtDato', s.utstedt_dato,
-                           'identifikator', s.identifikator,
-                           'inntektsaar', s.inntektsaar,
-                           'kilde', s.kilde,
-                           'resultatForSkattekort', s.resultatForSkattekort,
-                           'opprettet', s.opprettet,
-                           'forskuddstrekkList',
-                           COALESCE(
-                                   (SELECT jsonb_agg(jsonb_build_object(
-                                           'type', f.type,
-                                           'trekkode', f.trekk_kode,
-                                           'frikortBeloep', f.frikort_beloep,
-                                           'tabellNummer', f.tabell_nummer,
-                                           'prosentSats', f.prosentsats,
-                                           'antallMndForTrekk', f.antall_mnd_for_trekk))
-                                    FROM forskuddstrekk f
-                                    WHERE f.skattekort_id = s.id),
-                                   '[]'::jsonb
-                           ),
-                           'tilleggsopplysningList',
-                           COALESCE(
-                                   (SELECT jsonb_agg(t.opplysning)
-                                    FROM skattekort_tilleggsopplysning t
-                                    WHERE t.skattekort_id = s.id),
-                                   '[]'::jsonb
-                           )
-                   ) AS skattekort_json
+            SELECT $distinctQuery $SKATTEKORT_JSON_PROJECTION AS skattekort_json
             FROM skattekort s
             WHERE s.person_id IN ($personIdParamList)
               AND s.inntektsaar IN ($inntektsaarParamList)

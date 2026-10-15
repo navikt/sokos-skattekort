@@ -7,6 +7,7 @@ import io.github.resilience4j.core.functions.Either
 import kotliquery.TransactionalSession
 import mu.KotlinLogging
 
+import no.nav.pdl.hentidenterbolk.IdentInformasjon
 import no.nav.sokos.skattekort.config.DatabaseConfig
 import no.nav.sokos.skattekort.config.PropertiesConfig
 import no.nav.sokos.skattekort.config.TEAM_LOGS_MARKER
@@ -72,51 +73,65 @@ class PersonService(
 
         dataSource.transaction { tx ->
             foedselsnummerList.forEach { fnr ->
-                val identInformasjon = identInformasjonMap[fnr]
-                if (!identInformasjon.isNullOrEmpty()) {
-                    // Hent ut ikke historisk ident
-                    val ident = identInformasjon.first { !it.historisk }.ident
-
-                    // hvis fnr er historisk og ident er allerede registrert i DB, da registrert vi kun gamle FNR med riktig personId
-                    if (identInformasjon.find { it.historisk && it.ident == fnr } != null) {
-                        PersonRepository.findPersonIdByFnr(tx, Personidentifikator(ident))?.let { personId ->
-                            logger.info(marker = TEAM_LOGS_MARKER) { "Folkeregisteridentifikator=$ident allerede registrert, registrerer gamle FNR: $fnr i DB" }
-                            FoedselsnummerRepository.insertByExistingFnr(tx, fnr, ident)
-                            AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, personId, "Oppdatert gamle foedselsnummer: $fnr")
-                            foedselsnumreWithPersonIdMap[fnr] = personId
-                            return@forEach
-                        }
-                    }
-
-                    val personId =
-                        findPersonIdOrCreatePersonByFnr(
-                            tx = tx,
-                            fnr = Personidentifikator(fnr),
-                            informasjon = "Opprett person",
-                            brukerId = brukerId,
-                        ).first
-                    // oppdatert foedselsnumreWithPersonIdMap med mangler personId
-                    foedselsnumreWithPersonIdMap[fnr] = personId
-
-                    if (ident != fnr) {
-                        logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$personId med folkeregisteridentifikator=$ident" }
-                        updateFoedselsnummer(
-                            tx,
-                            Foedselsnummer(
-                                personId = personId,
-                                gjelderFom = LocalDate.now(),
-                                fnr = Personidentifikator(ident),
-                            ),
-                        )
-                    }
-                } else {
-                    logger.error(marker = TEAM_LOGS_MARKER) { "Ingen person funnet i PDL for fnr: $fnr" }
-                    logger.error { "Ingen person funnet i PDL, sjekk TEAM LOGS" }
-                    foedselsnumreWithPersonIdMap.remove(fnr)
-                }
+                handleIdentifier(
+                    tx = tx,
+                    fnr = fnr,
+                    identInformasjon = identInformasjonMap[fnr],
+                    brukerId = brukerId,
+                    personIdByFnr = foedselsnumreWithPersonIdMap,
+                )
             }
         }
         return foedselsnumreWithPersonIdMap
+    }
+
+    private fun handleIdentifier(
+        tx: TransactionalSession,
+        fnr: String,
+        identInformasjon: List<IdentInformasjon>?,
+        brukerId: String?,
+        personIdByFnr: MutableMap<String, PersonId?>,
+    ) {
+        if (identInformasjon.isNullOrEmpty()) {
+            logger.error(marker = TEAM_LOGS_MARKER) { "Ingen person funnet i PDL for fnr: $fnr" }
+            logger.error { "Ingen person funnet i PDL, sjekk TEAM LOGS" }
+            personIdByFnr.remove(fnr)
+            return
+        }
+
+        val ident = identInformasjon.first { !it.historisk }.ident
+        val isHistoricalFnr = identInformasjon.any { it.historisk && it.ident == fnr }
+
+        if (isHistoricalFnr) {
+            PersonRepository.findPersonIdByFnr(tx, Personidentifikator(ident))?.let { personId ->
+                logger.info(marker = TEAM_LOGS_MARKER) { "Folkeregisteridentifikator=$ident allerede registrert, registrerer gamle FNR: $fnr i DB" }
+                FoedselsnummerRepository.insertByExistingFnr(tx, fnr, ident)
+                AuditRepository.insert(tx, AuditTag.OPPDATERT_PERSONIDENTIFIKATOR, personId, "Oppdatert gamle foedselsnummer: $fnr")
+                personIdByFnr[fnr] = personId
+                return
+            }
+        }
+
+        val personId =
+            findPersonIdOrCreatePersonByFnr(
+                tx = tx,
+                fnr = Personidentifikator(fnr),
+                informasjon = "Opprett person",
+                brukerId = brukerId,
+            ).first
+        personIdByFnr[fnr] = personId
+
+        if (ident != fnr) {
+            logger.info(marker = TEAM_LOGS_MARKER) { "Oppdater personId=$personId med folkeregisteridentifikator=$ident" }
+            updateFoedselsnummer(
+                tx,
+                Foedselsnummer(
+                    personId = personId,
+                    gjelderFom = LocalDate.now(),
+                    fnr = Personidentifikator(ident),
+                ),
+            )
+        }
     }
 
     fun updateFoedselsnummer(

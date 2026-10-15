@@ -41,7 +41,7 @@ fun OpprettSkattekortRequest.hasInvalidTrekkode(): Boolean =
         this.skattekort.forskuddstrekkList
             .asSequence()
             .map { it.toDomainForskuddstrekk() }
-            .map { it.trekkode() }
+            .map { it.trekkode }
             .any { it !in validTrekkodeList }
     }.getOrDefault(true)
 

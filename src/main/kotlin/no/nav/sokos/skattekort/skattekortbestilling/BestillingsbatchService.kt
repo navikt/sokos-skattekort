@@ -60,21 +60,11 @@ class BestillingsbatchService(
                 BestillingRepository.updateBestillingsWithBatchId(tx, bestillingList.map { requireNotNull(it.id) { "Bestilling mangler id" }.id }, bestillingsbatchId)
             }
         }.onFailure { exception ->
-            when (exception) {
-                is CallNotPermittedException -> {
-                    return
-                }
-
-                is BatchUpdateException -> {
-                    logger.error(marker = TEAM_LOGS_MARKER, exception) { "Oppretting av bestillingsbatch feilet: ${exception.message}" }
-                    logger.error("Oppretting av bestillingsbatch feilet, detaljer er logget til TEAM LOGS")
-                    dataSource.transaction { errorTx ->
-                        AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillingList.map { it.personId }, "Oppretting av bestilling feilet")
-                    }
-                }
-
-                else -> {
-                    logErrorAsInfoIfRecentBatch("Oppretting av bestillingsbatch feilet", exception)
+            handleBatchFailure("Oppretting av bestillingsbatch feilet", exception) { batchException ->
+                logger.error(marker = TEAM_LOGS_MARKER, batchException) { "Oppretting av bestillingsbatch feilet: ${batchException.message}" }
+                logger.error("Oppretting av bestillingsbatch feilet, detaljer er logget til TEAM LOGS")
+                dataSource.transaction { errorTx ->
+                    AuditRepository.insertBatch(errorTx, AuditTag.BESTILLING_FEILET, bestillingList.map { it.personId }, "Oppretting av bestilling feilet")
                 }
             }
         }
@@ -95,15 +85,7 @@ class BestillingsbatchService(
                 logger.info("Bestillingsbatch for henting av oppdaterte skattekort $bestillingsbatchId opprettet")
             }
         }.onFailure { exception ->
-            when (exception) {
-                is CallNotPermittedException -> {
-                    return
-                }
-
-                else -> {
-                    logErrorAsInfoIfRecentBatch("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet", exception)
-                }
-            }
+            handleBatchFailure("Oppretting av bestillingsbatch for henting av oppdaterte skattekort feilet", exception)
         }
     }
 
@@ -153,4 +135,16 @@ class BestillingsbatchService(
     }
 
     fun getAllBestillings(): List<Bestilling> = dataSource.transaction(BestillingRepository::getAllBestillingsForAdmin)
+
+    private fun handleBatchFailure(
+        errorMessage: String,
+        exception: Throwable,
+        onBatchUpdateException: (BatchUpdateException) -> Unit = { logErrorAsInfoIfRecentBatch(errorMessage, it) },
+    ) {
+        when (exception) {
+            is CallNotPermittedException -> Unit
+            is BatchUpdateException -> onBatchUpdateException(exception)
+            else -> logErrorAsInfoIfRecentBatch(errorMessage, exception)
+        }
+    }
 }

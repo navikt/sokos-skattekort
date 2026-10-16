@@ -33,7 +33,7 @@ class SkattekortFixedRecordFormatter internal constructor(
             skattekort
                 .forskuddstrekkList
                 .mapNotNull { t ->
-                    when (t.trekkode()) {
+                    when (t.trekkode) {
                         Trekkode.LOENN_FRA_NAV -> t
                         Trekkode.PENSJON_FRA_NAV -> t
                         Trekkode.UFOERETRYGD_FRA_NAV -> t

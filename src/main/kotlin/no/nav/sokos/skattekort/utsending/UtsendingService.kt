@@ -89,8 +89,9 @@ class UtsendingService(
     private suspend fun utsendingTilDarePoc(utsendingList: List<Utsending>) {
         runCatching {
             val skattekortList = dataSource.transaction { tx -> SkattekortRepository.getAllById(tx, *utsendingList.map { it.skattekortId.value }.toLongArray()) }
+            val utsendingBySkattekortId = utsendingList.associateBy { it.skattekortId }
             skattekortList.forEach { skattekort ->
-                val utsending = utsendingList.find { it.skattekortId == skattekort.id }
+                val utsending = utsendingBySkattekortId[skattekort.id]
                 if (utsending != null) {
                     utsendingDareClientService?.sendSkattekort(
                         skattekortDTO = SkattekortDTO(skattekort, utsending.fnr),

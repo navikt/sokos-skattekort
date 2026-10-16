@@ -47,7 +47,7 @@ object Syntetisering {
             skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.KILDESKATT_PAA_PENSJON) &&
                 manglendeKildeskattPaaPensjonSatser.isNotEmpty() -> {
                 Pair(
-                    (manglendeKildeskattPaaPensjonSatser + skattekort.forskuddstrekkList).sortedBy { it.trekkode() },
+                    (manglendeKildeskattPaaPensjonSatser + skattekort.forskuddstrekkList).sortedBy { it.trekkode },
                     """Skattekort syntetisert med manglende trekkoder ${
                         manglendeKildeskattPaaPensjonSatser.joinToString(
                             ",",
@@ -75,7 +75,7 @@ fun svalbardsatser(inntektsaar: Int): List<Forskuddstrekk> =
 
 fun manglendeKildeskattPaaPensjonSatser(fraSkd: List<Forskuddstrekk>): List<Forskuddstrekk> =
     listOf(Trekkode.PENSJON_FRA_NAV, Trekkode.UFOERETRYGD_FRA_NAV)
-        .subtract(fraSkd.map { it.trekkode() })
+        .subtract(fraSkd.map { it.trekkode })
         .map {
             Prosentkort(
                 trekkode = it,

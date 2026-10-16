@@ -71,14 +71,9 @@ value class SkattekortId(
 )
 
 sealed interface Forskuddstrekk {
-    fun trekkode(): Trekkode =
-        when (this) {
-            is Frikort -> this.trekkode
-            is Prosentkort -> this.trekkode
-            is Tabellkort -> this.trekkode
-        }
+    val trekkode: Trekkode
 
-    fun requiresAdminRole(): Boolean = trekkode().requiresAdminRole
+    fun requiresAdminRole(): Boolean = trekkode.requiresAdminRole
 
     companion object {
         fun create(forskuddstrekk: no.nav.sokos.skattekort.infrastructure.skatteetaten.hentskattekort.Forskuddstrekk): Forskuddstrekk {
@@ -136,19 +131,19 @@ sealed interface Forskuddstrekk {
 }
 
 data class Frikort(
-    val trekkode: Trekkode,
+    override val trekkode: Trekkode,
     val frikortBeloep: Int?,
 ) : Forskuddstrekk
 
 data class Tabellkort(
-    val trekkode: Trekkode,
+    override val trekkode: Trekkode,
     val tabellNummer: String,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal,
 ) : Forskuddstrekk
 
 data class Prosentkort(
-    val trekkode: Trekkode,
+    override val trekkode: Trekkode,
     val prosentSats: BigDecimal,
     val antallMndForTrekk: BigDecimal? = null,
 ) : Forskuddstrekk

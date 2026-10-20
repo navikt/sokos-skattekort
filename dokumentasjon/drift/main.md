@@ -63,7 +63,7 @@ Applikasjonen eksponerer `/internal/metrics`. Fagmetrikker har prefikset `sokos_
 | `oldest_bestilling_seconds` med `type=eldste_usendt` / `eldste_sendt` | Oppdage bestillinger som blir liggende før eller etter ekstern bestilling |
 | `oldest_usendt_utsending_seconds` | Oppdage leveranser som blir liggende |
 | `timer_siden_skattekort` | Tid siden siste lagrede skattekort; koden leverer sekunder til tross for navnet, så kontroller dashboardets omregning og alarmterskler |
-| `bestilte_skattekort` / `oppdaterte_skattekort` | Følge mottatte bestillinger og endringer |
+| `bestilte_skattekort_total` / `oppdaterte_skattekort_total` | Følge mottatte bestillinger og endringer |
 | `utsendinger_oppdragz_total` / `utsendinger_oppdragz_feil_total` | Følge MQ-leveranser og feil |
 | `utsendinger_i_koe` | Tilstand registrert under utsending; ikke en fullstendig opptelling av alle blokkerte utsendinger |
 

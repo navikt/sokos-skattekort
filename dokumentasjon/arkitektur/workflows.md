@@ -48,8 +48,9 @@ Se [feilsituasjoner](../drift/feil.md).
 
 ## 3. Bestille og hente oppdateringer
 
-Jobben `hentOppdaterteSkattekort` henter først svar på batcher av type `OPPDATERING`, deretter bestiller den nye
-oppdateringer hvis ingen slike batcher har status `NY` eller `RETRY`.
+Jobben `hentOppdaterteSkattekort` henter først svar på batcher av type `OPPDATERING`, deretter forsøker den å bestille nye
+oppdateringer når funksjonsbryteren tillater det. Eksisterende batcher med status `NY` eller `RETRY` hindrer ikke
+nye oppdateringsbestillinger i dagens implementasjon.
 Oppdateringene gjelder inneværende og eventuelt neste år etter årsreglene.
 
 Mottatte oppdateringsdata behandles av `SkattekortDataService` i `sendBestilling`.

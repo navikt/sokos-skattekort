@@ -1,115 +1,94 @@
-### Databaseskjema
+# Datamodell
 
-#### Person og bestilling
+Applikasjonen bruker PostgreSQL i Cloud SQL med Flyway-migreringer i
+[src/main/resources/db/migration](../../src/main/resources/db/migration).
+Migreringene samlet, ikke bare opprettelsesskriptene, definerer skjemaet.
+Flyway kjøres ved applikasjonsoppstart.
 
-```mermaid
-erDiagram
-    person ||--o{ person_fnr: har
-    person ||--o{ person_audit: har
-    person ||--o{ bestillinger: har
-    bestillinger_batch |o--o{ bestillinger: inneholder
-    person {
-    }
-    person_fnr {
-        text fnr "fnr/pid/dnr etc"
-        date gjelder_fom "Når byttet aktøren fra det andre til dette(?)"
-    }
-    person_audit {
-        text tag "Maskinlesbar kategorisering av auditlinjer, for f.eks. å kunne finne alle bestillinger"
-        text informasjon "Menneskelesbar tekst som beskriver endringen"
-        text bruker "Bruker eller system som forårsaket endringen"
-    }
-    bestillinger {
-        smallint aar
-        text fnr "Fødselsnummer brukt i bestilling."
-    }
-    bestillinger_batch {
-        text status "Tracker status på bestilling mot skatteetaten"
-        text bestillingreferanse "Referanse mottatt fra skatteetaten ved registrert bestilling"
-        text dialogreferanse "Referanse mottatt fra skatteetaten, til dialogporten"
-    }
-```
+## Tabeller og ansvar
 
-Designnotater:
+| Tabell | Ansvar |
+|--------|--------|
+| `personer` | Intern personidentitet og flagg for oppfølging |
+| `foedselsnumre` | Identifikatorer koblet til person, med `gjelder_fom` |
+| `forespoersler` | Mottatt grunnlag, forsystem og tidspunkt |
+| `abonnementer` | Personens interesse for et inntektsår, knyttet til en forespørsel |
+| `bestillinger` | Bestillinger per person, identifikator og år; batchreferanse settes etter ekstern bestilling |
+| `bestillingsbatcher` | Ekstern bestillingsreferanse, type, status, tidspunkt og sendt innhold; mottatt innhold kan lagres i tillegg |
+| `skattekort_data` | Mottatt JSON, identifikator, år og type; `skattekort_id` viser at dataene er behandlet |
+| `skattekort` | Versjoner av skattekort, resultat, kilde og eventuell kobling til originalkort |
+| `forskuddstrekk` | Trekkode og tabell-, prosent- eller frikortopplysninger |
+| `skattekort_tilleggsopplysning` | Tilleggsopplysninger på et skattekort |
+| `utsendinger` | Ventende levering med identifikator, forsystem, år, konkret skattekort-ID og feilteller |
+| `person_audit` | Personrelatert hendelseshistorikk med tag, informasjon, bruker/system og tidspunkt |
+| `scheduled_tasks` | db-scheduler sin kjøretilstand |
+| `forespoersel_input` | Historisk importtabell; ingen registrert leser i dagens scheduler |
 
-- vi kan få skattekort uten skattekort-deler. Det gjelder typisk personer som har tilleggsopplysninger.
-- tanken bak skattekort-tabellen er at den er immuterbar. Vi endrer ikke eksisterende innslag, vi lager nye.
+`bevis_sending` og `scheduled_tasks_history` er fjernet i migreringene.
+`skattekort_del` er omdøpt til `forskuddstrekk`.
 
-## Relasjonsmodell
+## Relasjoner
+
+Diagrammet viser sentrale fremmednøkler. Det er en oversikt, ikke en full DDL-definisjon.
 
 ```mermaid
 erDiagram
-    Forespoersler ||--|{ Abonnementer: ""
-    Personer ||--|{ Skattekort: ""
-    Foedselsnummer }|--|| Personer: ""
-    Bestillinger |{--o| Bestillingsbatcher: ""
-    Abonnementer ||--o| Utsendinger: ""
-    Personer ||--|{ Abonnementer: ""
-    Forespoersler {
-        string request
-        string forsystem
-    }
-
-    Foedselsnummer {
-        string fnr UK
-        date gjelder_fom
-    }
-
-    Abonnementer {
-        string fnr
-    }
-
-    Skattekort {
-    }
-
-    Bestillinger {
-        string fnr UK
-        int inntektsaar
-    }
-
-    Bestillingsbatcher {
-        string bestillingsreferanse UK
-        int inntektsaar
-    }
-
-    Utsendinger {
-        string fnr
-        string forsystem
-        int inntektsaar
-    }
+    personer ||--o{ foedselsnumre : har
+    personer ||--o{ person_audit : har
+    personer ||--o{ abonnementer : har
+    forespoersler ||--o{ abonnementer : oppretter
+    personer ||--o{ bestillinger : har
+    bestillingsbatcher |o--o{ bestillinger : samler
+    personer ||--o{ skattekort : har
+    skattekort ||--o{ forskuddstrekk : inneholder
+    skattekort ||--o{ skattekort_tilleggsopplysning : har
+    skattekort |o--o{ skattekort_data : behandlet_til
+    skattekort |o--o{ skattekort : generert_fra
 ```
 
-#### Skattekort (skisse)
+`utsendinger.skattekort_id` peker logisk på kortet som skal leveres. Migreringen innfører en sjekk for ikke-null,
+men ikke en fremmednøkkel til `skattekort`. `utsendinger` har ikke lenger `abonnement_id`.
+Forsystemet for abonnementer finnes via den tilknyttede forespørselen.
 
-```mermaid
-erDiagram
-    person ||--o{ skattekort: har
-    person ||--o{ skattekort_data: har
-    skattekort ||--o{ forskuddstrekk: har
-    skattekort ||--o{ skattekort_tilleggsopplysninger: har
-    skattekort {
-        smallint inntektsaar
-        date utstedt_dato "Felt satt av skatteetaten"
-        text identifikator "Skatteetatens id for skattekortet"
-        text kilde "Angir kilde for skattekortet: skatt, syntetisert, manuelt"
-        timestamptz opprettet "Vår egen dato for oppretting av skattekortet"
-    }
-    forskuddstrekk {
-        text trekk_kode "PENSJON, PENSJON_FRA_NAV, etc. Satt av skatteetaten, angir bruksområde for forskuddstrekken"
-        text type "frikort, tabell, prosent"
-        int frikort_beloep "Beløpsgrense for frikort, eller null dersom ikke frikort eller ingen grense"
-        text tabell_nummer "Tabellangivelse. Tabeller oppdateres en gang pr år"
-        decimal prosentsats "Prosentsats, kan være en fraksjonell prosent for kildeskatt"
-        decimal antall_mnd_for_trekk "Antall måneder trekk skal utføres for, typisk 12, 10.5"
-    }
-    skattekort_tilleggsopplysninger {
-        text opplysning "kildeskattPaaPensjon, kildeskattPaaLoenn etc"
-    }
-    skattekort_data {
-        timestamptz created
-        text data_mottatt "Payload mottatt, uten behandling. For debuggingsformål"
-        smallint aar
-        timestamptz opprettet
-    }
+## Historikk og behandlingsstatus
 
-```
+Skattekort behandles som versjoner: endringer lagres som nye kort i stedet for å overskrive eksisterende kort.
+Kilden skiller mellom mottatte, syntetiserte og manuelle kort.
+`generert_fra` kobler et syntetisert kort til originalen.
+Et skattekort kan ha resultat og tilleggsopplysninger uten trekkopplysninger.
+
+`skattekort_data` skiller mottak fra konvertering. `bestillingsbatcher` har typene `BESTILLING` og `OPPDATERING`
+og statusene `NY`, `RETRY`, `FEILET` og `FERDIG`.
+Se [prosesser](../arkitektur/workflows.md) og [resultater](../arkitektur/returer.md) for tolkning.
+
+Bestillinger har unik indeks på person, identifikator og inntektsår.
+Utsendinger har unik indeks på identifikator, inntektsår og forsystem; innsetting ved konflikt gjør ingenting.
+Dette er lokale duplikatsperrer, ikke en garanti for nøyaktig én ekstern levering.
+
+## Personopplysninger og tilgang
+
+Databasen inneholder identifikatorer, skattekortopplysninger og mottatte og sendte grunnlagsdata.
+Begrens oppslag til nødvendig formål og bruk godkjent tilgang.
+Ikke kopier rådata til dokumentasjon, ordinære logger, Slack eller åpne saker.
+Applikasjonens personhistorikk er ikke det samme som ekstern auditlogging av saksbehandleroppslag.
+
+## Sletting og datalivsløp
+
+Jobben `deleteSkattekort` kaller `SkattekortService.deleteSkattekortForYear()` og sletter som standard skattekort
+for inneværende år minus to. Standard kjøreplan er 15. januar. Den tar ikke automatisk alle tidligere år.
+
+Fremmednøkler med `ON DELETE CASCADE` sletter tilhørende forskuddstrekk, tilleggsopplysninger, mottatte data
+og avledede kort. Utsendinger har ingen tilsvarende kaskade og må vurderes særskilt ved datarydding.
+Jobben er ikke en generell sletterutine for personer, identifikatorer, forespørsler, abonnementer, batcher eller audit.
+Oppbevaringskrav og eventuell videre sletting må avklares med fag- og personvernansvarlige.
+
+Ikke bruk `TRUNCATE ... CASCADE` som vanlig feilretting.
+Se [historisk nullstilling](../drift/bestillingsfiler.md#historisk-nullstilling-av-database) og
+[databasegjenoppretting](../drift/redeploy.md#databasegjenoppretting).
+
+## Endre skjema
+
+Opprett en ny migrering etter [navnekonvensjonen](../../src/main/resources/db/migration/README.md).
+Ikke rediger allerede kjørte versjonerte migreringer.
+Vurder låser, datamengde, kompatibilitet med gammel og ny kode og påvirkning på produksjonssetting.
+Tilbakeføring av et containerimage ruller ikke automatisk tilbake databasen.

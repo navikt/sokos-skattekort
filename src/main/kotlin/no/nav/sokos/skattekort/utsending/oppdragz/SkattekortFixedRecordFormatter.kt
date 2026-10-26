@@ -9,7 +9,9 @@ import no.nav.sokos.skattekort.skattekort.Frikort
 import no.nav.sokos.skattekort.skattekort.Prosentkort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeTrekkplikt
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.RegistrertSomDoed
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.TrekkEtterReglerOmKildeskattPaaPensjon15Prosent
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigOrganisasjonsnummer
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
@@ -23,23 +25,25 @@ class SkattekortFixedRecordFormatter internal constructor(
     private val fnr: String,
 ) {
     private fun gyldigeForskuddstrekk(): List<Forskuddstrekk> =
-        if (skattekort.resultatForSkattekort == IkkeTrekkplikt) {
-            listOf(
-                Frikort(Trekkode.LOENN_FRA_NAV, null),
-                Frikort(Trekkode.PENSJON_FRA_NAV, null),
-                Frikort(Trekkode.UFOERETRYGD_FRA_NAV, null),
-            )
-        } else {
-            skattekort
-                .forskuddstrekkList
-                .mapNotNull { t ->
-                    when (t.trekkode) {
-                        Trekkode.LOENN_FRA_NAV -> t
-                        Trekkode.PENSJON_FRA_NAV -> t
-                        Trekkode.UFOERETRYGD_FRA_NAV -> t
-                        else -> null
+        when (skattekort.resultatForSkattekort) {
+            IkkeTrekkplikt ->
+                listOf(
+                    Frikort(Trekkode.LOENN_FRA_NAV, null),
+                    Frikort(Trekkode.PENSJON_FRA_NAV, null),
+                    Frikort(Trekkode.UFOERETRYGD_FRA_NAV, null),
+                )
+
+            else ->
+                skattekort
+                    .forskuddstrekkList
+                    .mapNotNull { t ->
+                        when (t.trekkode) {
+                            Trekkode.LOENN_FRA_NAV -> t
+                            Trekkode.PENSJON_FRA_NAV -> t
+                            Trekkode.UFOERETRYGD_FRA_NAV -> t
+                            else -> null
+                        }
                     }
-                }
         }
 
     fun format(): String {
@@ -58,27 +62,34 @@ class SkattekortFixedRecordFormatter internal constructor(
         return frSkattekort.toString()
     }
 
-    private fun formaterResultatPaaForesporsel(): String =
+    private fun formaterResultatPaaForesporsel(): String {
+        val resultatForSkattekort =
+            when (skattekort.resultatForSkattekort) {
+                RegistrertSomDoed -> IkkeSkattekort.value
+                else -> skattekort.resultatForSkattekort.value
+            }
+
         // Maks 40 posisjoner i fixedfield format til OS
-        if (skattekort.resultatForSkattekort.value.length > 40) {
-            skattekort.resultatForSkattekort.value.substring(0, 40)
+        return if (resultatForSkattekort.length > 40) {
+            resultatForSkattekort.substring(0, 40)
         } else {
-            skattekort.resultatForSkattekort.value.padEnd(40)
+            resultatForSkattekort.padEnd(40)
         }
+    }
 
     private fun formaterUtstedtDato(): String =
-        if (skattekort.resultatForSkattekort == IkkeTrekkplikt) {
-            (skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX).padEnd(10)
-        } else if (IkkeSkattekort.equals(skattekort.resultatForSkattekort)) {
-            "".padEnd(10, ' ')
-        } else {
-            (skattekort.utstedtDato?.toString() ?: "").padEnd(10)
+        when (skattekort.resultatForSkattekort) {
+            IkkeTrekkplikt -> (skattekort.inntektsaar.toString() + UTSTEDT_DATO_IKKE_SKATTEPLIKT_POSTFIX).padEnd(10)
+            RegistrertSomDoed, IkkeSkattekort -> "".padEnd(10, ' ')
+            else -> (skattekort.utstedtDato?.toString() ?: "").padEnd(10)
         }
 
     private fun formaterSkattekortidentifikator(): String =
         when (skattekort.resultatForSkattekort) {
-            IkkeTrekkplikt, IkkeSkattekort -> ""
-            SkattekortopplysningerOK, UgyldigOrganisasjonsnummer, UgyldigFoedselsEllerDnummer, UtgaattDnummerSkattekortForFoedselsnummerErLevert -> skattekort.identifikator ?: ""
+            IkkeTrekkplikt, IkkeSkattekort, RegistrertSomDoed -> ""
+            SkattekortopplysningerOK, UgyldigOrganisasjonsnummer, UgyldigFoedselsEllerDnummer, UtgaattDnummerSkattekortForFoedselsnummerErLevert,
+            TrekkEtterReglerOmKildeskattPaaPensjon15Prosent,
+            -> skattekort.identifikator ?: ""
         }.padEnd(10)
 
     private fun formaterTilleggsopplysning(): String = filterTilleggsopplysning(skattekort.tilleggsopplysningList).padEnd(50)

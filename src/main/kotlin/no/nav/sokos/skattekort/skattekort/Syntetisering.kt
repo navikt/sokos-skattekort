@@ -44,8 +44,8 @@ object Syntetisering {
                 )
             }
 
-            skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.KILDESKATT_PAA_PENSJON) &&
-                manglendeKildeskattPaaPensjonSatser.isNotEmpty() -> {
+            skattekort.resultatForSkattekort == ResultatForSkattekort.TrekkEtterReglerOmKildeskattPaaPensjon15Prosent ||
+                (skattekort.tilleggsopplysningList.contains(Tilleggsopplysning.KILDESKATT_PAA_PENSJON) && manglendeKildeskattPaaPensjonSatser.isNotEmpty()) -> {
                 Pair(
                     (manglendeKildeskattPaaPensjonSatser + skattekort.forskuddstrekkList).sortedBy { it.trekkode },
                     """Skattekort syntetisert med manglende trekkoder ${

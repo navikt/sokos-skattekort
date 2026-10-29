@@ -51,9 +51,9 @@ val activemqVersion = "2.57.0"
 val ibmmqVersion = "10.0.0.5"
 val opentelemetryVersion = "2.32.0"
 val swaggerRequestValidatorVersion = "3.0.0"
-val kafkaClientsVersion = "4.3.2"
+val kafkaClientsVersion = "4.4.0"
 val avroVersion = "1.12.2"
-val kafkaAvroSerializerVersion = "8.1.1"
+val kafkaAvroSerializerVersion = "8.4.0"
 val graphqlClientVersion = "11.0.0"
 val wiremockVersion = "3.13.2"
 val unleashedVersion = "12.3.0"
@@ -145,21 +145,25 @@ dependencies {
 configurations.all {
     resolutionStrategy {
         eachDependency {
-            if (requested.group == "org.lz4" && requested.name == "lz4-java") {
+            if (requested.group in setOf("org.lz4", "at.yawk.lz4") && requested.name == "lz4-java") {
                 useTarget("at.yawk.lz4:lz4-java:1.12.0")
-                because("Prefer the patched fork for vulnerability fix")
+                because("Fix CVE-2026-106451 using the patched fork")
             }
             if (requested.group == "io.netty") {
                 useVersion("4.2.18.Final")
                 because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.17.Final")
             }
-            if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
-                useVersion("2.22.1")
-                because("jackson-core: Number Length Constraint Bypass in Async Parser Leads to Potential DoS Condition. Affected version >= 2.19.0, < 2.21.1")
+            if (requested.group == "com.google.guava" && requested.name == "guava") {
+                useVersion("33.7.2-jre")
+                because("Fix CVE-2026-102554: uncontrolled memory allocation during collection deserialization")
             }
-            if (requested.group == "tools.jackson.core" && requested.name == "jackson-core") {
-                useVersion("3.2.1")
-                because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
+            if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
+                useVersion("2.22.4")
+                because("Fix CVE-2026-89407: quadratic backtracking in NumberInput.looksLikeValidNumber()")
+            }
+            if (requested.group == "tools.jackson.core" && requested.name in setOf("jackson-core", "jackson-databind")) {
+                useVersion("3.2.3")
+                because("Fix CVE-2026-89407 and CVE-2026-91777")
             }
             if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
                 useVersion("1.85")

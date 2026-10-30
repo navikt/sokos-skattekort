@@ -18,14 +18,14 @@ import no.nav.sokos.skattekort.skattekort.Trekkode
 import no.nav.sokos.skattekort.utils.TestUtils.readFile
 
 /**
- Denne testen er drevet av to sett data:
- - et sett med skattekort som skatt sier inneholder et bredt utvalg av data
- - et sett med referansedata som er laget ved å kjøre settet med skattekort gjennom serialiseringen til gamel os-eskatt
+Denne testen er drevet av to sett data:
+- et sett med skattekort som skatt sier inneholder et bredt utvalg av data
+- et sett med referansedata som er laget ved å kjøre settet med skattekort gjennom serialiseringen til gamel os-eskatt
 
- Forhåpentligvis vil dette gjenskape den gamle oppførselen bra.
+Forhåpentligvis vil dette gjenskape den gamle oppførselen bra.
 
- Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringen, gjør endringen, lager et nytt testdatasett,
- og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
+Tanken er at vi, dersom vi ender med å bestemme oss for å endre serialiseringen, gjør endringen, lager et nytt testdatasett,
+og så setter oss sammen med oppdrag z-gjengen for å validere at endringen ble bra.
  */
 class SkattekortFixedRecordFormatterTest :
     FunSpec({
@@ -65,5 +65,25 @@ class SkattekortFixedRecordFormatterTest :
             val copybook = SkattekortFixedRecordFormatter(skattekort, "01010112345").format()
             copybook shouldBe
                 "01010112345skattekortopplysningerOK                20252020-09-09123                                                         1Frikort     loennFraNAV                                                      0007890    "
+        }
+
+        test("registrert som død uten forskuddstrekk og tilleggsopplysninger blir serialisert som samme som uten skattekort") {
+            val skattekort =
+                Skattekort(
+                    id = null,
+                    personId = PersonId(value = 1),
+                    utstedtDato = LocalDate.parse("2020-09-09"),
+                    identifikator = "123",
+                    inntektsaar = 2025,
+                    kilde = "TJAFS",
+                    resultatForSkattekort = ResultatForSkattekort.RegistrertSomDoed,
+                    opprettet = Instant.parse("2020-08-30T18:43:00.50Z"),
+                    forskuddstrekkList = emptyList(),
+                    tilleggsopplysningList = emptyList(),
+                )
+
+            val copybook = SkattekortFixedRecordFormatter(skattekort, "01010112345").format()
+
+            copybook shouldBe ""
         }
     })

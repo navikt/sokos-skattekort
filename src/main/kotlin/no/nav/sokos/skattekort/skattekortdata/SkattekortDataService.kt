@@ -43,13 +43,15 @@ class SkattekortDataService(
                         }
                     val inntektsaar = arbeidstaker.inntektsaar
                     val skattekort = Skattekort(personId, arbeidstaker)
-                    val skattekortId = SkattekortId(SkattekortRepository.insert(tx, skattekort))
-                    Syntetisering.evtSyntetiserSkattekort(skattekort, skattekortId)?.let { (syntetisertSkattekort, aarsak) ->
-                        SkattekortRepository.insert(tx, syntetisertSkattekort)
+                    val originalSkattekortId = SkattekortId(SkattekortRepository.insert(tx, skattekort))
+                    var utsendingSkattekortId = originalSkattekortId
+                    Syntetisering.evtSyntetiserSkattekort(skattekort, originalSkattekortId)?.let { (syntetisertSkattekort, aarsak) ->
+                        val syntetisertSkattekortId = SkattekortId(SkattekortRepository.insert(tx, syntetisertSkattekort))
+                        utsendingSkattekortId = syntetisertSkattekortId
                         AuditRepository.insert(tx, AuditTag.SYNTETISERT_SKATTEKORT, personId, aarsak)
                     }
-                    SkattekortDataRepository.updateSkattekortId(tx, id.value, skattekortId.value)
-                    opprettUtsendingerForAbonnementer(tx, personId, inntektsaar, type, skattekortId)
+                    SkattekortDataRepository.updateSkattekortId(tx, id.value, originalSkattekortId.value)
+                    opprettUtsendingerForAbonnementer(tx, personId, inntektsaar, type, utsendingSkattekortId)
                 }
             }
         }.onFailure { exception ->

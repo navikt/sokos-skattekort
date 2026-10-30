@@ -692,4 +692,59 @@ class SkattekortDataServiceTest :
                 }
             }
         }
+
+        test("processSkattekortData should queue synthetic pension 15% card for utsending when original has no forskuddstrekk") {
+            databaseHas(
+                aPerson(1L),
+                afoedselsnummer(personId = 1L, fnr = fnr),
+                anAbonnement(1L, personId = 1L, inntektsaar = 2025),
+            )
+
+            val skattekortJson =
+                """
+                {
+                  "arbeidstakeridentifikator": "$fnr",
+                  "resultatForSkattekort": "trekkEtterReglerOmKildeskattPaaPensjon15Prosent",
+                  "inntektsaar": 2025,
+                  "skattekort": {
+                    "utstedtDato": "2025-11-01",
+                    "skattekortidentifikator": 10001,
+                    "forskuddstrekk": []
+                  }
+                }
+                """.trimIndent()
+
+            tx { SkattekortDataRepository.insert(it, skattekortJson, 2025, fnr, BestillingsbatchType.BESTILLING) }
+
+            skattekortDataService.processSkattekortData()
+
+            val skattekortList = tx { SkattekortRepository.findAllByPersonId(it, listOf(PersonId(1)), listOf(2025), adminRole = true) }
+            val utsendingList = tx(UtsendingRepository::getAllUtsendinger)
+
+            assertSoftly {
+                skattekortList shouldNotBeNull {
+                    size shouldBe 2
+                    val original = first { it.kilde == SkattekortKilde.SKATTEETATEN.value }
+                    val syntetisert = first { it.kilde == SkattekortKilde.SYNTETISERT.value }
+
+                    original.resultatForSkattekort shouldBe ResultatForSkattekort.TrekkEtterReglerOmKildeskattPaaPensjon15Prosent
+                    original.forskuddstrekkList shouldBe emptyList()
+                    syntetisert.resultatForSkattekort shouldBe ResultatForSkattekort.TrekkEtterReglerOmKildeskattPaaPensjon15Prosent
+                    syntetisert.forskuddstrekkList.shouldContainExactly(
+                        Prosentkort(Trekkode.PENSJON_FRA_NAV, BigDecimal("15.00"), null),
+                        Prosentkort(Trekkode.UFOERETRYGD_FRA_NAV, BigDecimal("15.00"), null),
+                    )
+                }
+
+                utsendingList shouldNotBeNull {
+                    size shouldBe 1
+                    first() shouldNotBeNull {
+                        this.skattekortId shouldBe skattekortList.first { it.kilde == SkattekortKilde.SYNTETISERT.value }.id
+                        this.fnr.value shouldBe fnr
+                        inntektsaar shouldBe 2025
+                        forsystem shouldBe Forsystem.OPPDRAGSSYSTEMET
+                    }
+                }
+            }
+        }
     })

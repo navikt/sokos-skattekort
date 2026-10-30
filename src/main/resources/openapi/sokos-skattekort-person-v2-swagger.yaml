@@ -218,6 +218,8 @@ components:
             - skattekortopplysningerOK
             - ikkeSkattekort
             - ikkeTrekkplikt
+            - registrertSomDoed
+            - trekkEtterReglerOmKildeskattPaaPensjon15Prosent
         forskuddstrekkList:
           type: array
           items:
@@ -262,6 +264,8 @@ components:
             - skattekortopplysningerOK
             - ikkeSkattekort
             - ikkeTrekkplikt
+            - registrertSomDoed
+            - trekkEtterReglerOmKildeskattPaaPensjon15Prosent
             - utgaattDnummerSkattekortForFoedselsnummerErLevert
         forskuddstrekkList:
           type: array

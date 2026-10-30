@@ -548,4 +548,76 @@ class BestillingServiceTest :
                 auditAfter shouldBe emptyList()
             }
         }
+
+        test("registrert som død skal lagres som skattekortinformasjon") {
+            val personId = 1L
+            val fnr = "01010100001"
+            val batchId = 1L
+
+            databaseHas(
+                aPerson(personId),
+                afoedselsnummer(personId = personId, fnr = fnr),
+                anAbonnement(personId, personId = personId, inntektsaar = 2025),
+                aBestillingsbatch(batchId, "ref$batchId", NY),
+                aBestilling(personId = personId, fnr = fnr, inntektsaar = 2025, batchId = batchId),
+            )
+
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    anArbeidstaker(
+                        resultat = ResultatForSkattekort.RegistrertSomDoed,
+                        fnr = fnr,
+                        inntektsaar = 2025,
+                    ),
+                )
+
+            bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
+
+            val bestillingsbatchList = tx(DBTestUtils::getAllBestillingsbatch)
+            val skattekortDataList = tx { SkattekortDataRepository.getUnprocessedSkattekortData(it) }
+
+            assertSoftly {
+                bestillingsbatchList shouldNotBeNull {
+                    size shouldBe 1
+                    first().status shouldBe FERDIG
+                }
+                skattekortDataList.size shouldBe 1
+            }
+        }
+
+        test("kildeskatt på pensjon 15 prosent skal lagres som skattekortinformasjon") {
+            val personId = 2L
+            val fnr = "01010100002"
+            val batchId = 2L
+
+            databaseHas(
+                aPerson(personId),
+                afoedselsnummer(personId = personId, fnr = fnr),
+                anAbonnement(personId, personId = personId, inntektsaar = 2025),
+                aBestillingsbatch(batchId, "ref$batchId", NY),
+                aBestilling(personId = personId, fnr = fnr, inntektsaar = 2025, batchId = batchId),
+            )
+
+            coEvery { skatteetatenClient.hentSkattekort(any()) } returns
+                aHentSkattekortResponse(
+                    anArbeidstaker(
+                        resultat = ResultatForSkattekort.TrekkEtterReglerOmKildeskattPaaPensjon15Prosent,
+                        fnr = fnr,
+                        inntektsaar = 2025,
+                    ),
+                )
+
+            bestillingService.hentBestillingsbatcher(BestillingsbatchType.BESTILLING)
+
+            val bestillingsbatchList = tx(DBTestUtils::getAllBestillingsbatch)
+            val skattekortDataList = tx { SkattekortDataRepository.getUnprocessedSkattekortData(it) }
+
+            assertSoftly {
+                bestillingsbatchList shouldNotBeNull {
+                    size shouldBe 1
+                    first().status shouldBe FERDIG
+                }
+                skattekortDataList.size shouldBe 1
+            }
+        }
     })

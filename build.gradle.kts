@@ -50,6 +50,7 @@ val postgresVersion = "42.7.14"
 val activemqVersion = "2.57.0"
 val ibmmqVersion = "10.0.0.5"
 val opentelemetryVersion = "2.32.0"
+val opentelemetryApiVersion = "1.67.0"
 val swaggerRequestValidatorVersion = "3.0.0"
 val kafkaClientsVersion = "4.4.0"
 val avroVersion = "1.12.2"
@@ -119,6 +120,11 @@ dependencies {
 
     // Opentelemetry
     implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$opentelemetryVersion")
+    constraints {
+        implementation("io.opentelemetry:opentelemetry-api:$opentelemetryApiVersion") {
+            because("Fix CVE-2026-118259: excessive CPU consumption when parsing crafted tracestate headers")
+        }
+    }
 
     // Feature switches
     implementation("io.getunleash:unleash-client-java:$unleashedVersion")

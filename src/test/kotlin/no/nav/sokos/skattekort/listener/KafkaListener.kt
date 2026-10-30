@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializer
+import io.confluent.kafka.serializers.subject.TopicNameStrategy
 import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.spec.Spec
 import mu.KotlinLogging
@@ -89,6 +90,7 @@ object KafkaListener : BeforeSpecListener {
                 put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java.name)
                 put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer::class.java.name)
                 put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY_URL)
+                put(AbstractKafkaSchemaSerDeConfig.VALUE_SUBJECT_NAME_STRATEGY, TopicNameStrategy::class.java.name)
             },
         )
     }

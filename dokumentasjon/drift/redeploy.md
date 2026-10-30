@@ -1,48 +1,89 @@
-# Redeploy på annen infrastruktur
+# Deploy, tilbakeføring og gjenoppretting
 
 ## Forutsetninger
 
-Løsningen forutsetter et fungerende NAIS-oppsett som kan deploye til fungerende infrastruktur.
+Deploy krever tilgang til repositoryets GitHub Actions og målmiljøet i Nais.
+Manuelle produksjonstiltak skal ha ansvarlig, avklart konsekvens og sporbar godkjenning etter teamets rutiner.
+Ikke kjør øvelser eller gjenoppretting direkte mot produksjon uten særskilt avklaring.
 
-Løsningen forutsetter at utviklere kan logge inn på sitt utstyr, og aksessere drifts- og utviklingsverktøyene det er behov for derfra.
+## Ordinær deploy
 
-## Database
+[Deploy-workflowen](../../.github/workflows/deploy.yaml) kjører for relevante endringer på `main`.
+Den bygger/tester, lager miljøtilpassede containerbilder og deployer til Q2, deretter Q1 og til slutt produksjon.
+Dokumentasjonsendringer er unntatt.
+[Manuell deploy](../../.github/workflows/manual-deploy.yaml) kan velge Q2 (`dev`) eller Q1 fra en valgt branch.
+Den har ikke et produksjonsvalg.
 
-### Gjenoppretting av database på ny infrastruktur
+Flyway kjøres ved applikasjonsoppstart. Kontroller derfor migreringer og bakoverkompatibilitet før deploy,
+ikke bare at applikasjonskoden kan rulles tilbake.
 
-### Restore av database
+## Kontroll før produksjonssetting
 
-## Deploy av applikasjon på ny infrastruktur
+1. Kjør `./gradlew build` med Java 25 og Docker tilgjengelig.
+2. Vurder endringer i grensesnitt, datamodell, rettigheter, årsregler og eksterne klientbiblioteker.
+3. Kontroller relevant flyt i test: mottak, bestillingsreferanse, henting, skattekort, utsending og status.
+   Bruk bare godkjente testidentifikatorer og riktige miljøkøer.
+4. Ved endringer i IBM MQ-klient eller formatter: verifiser mot IBM MQ og avklar format med Oppdrag Z.
+   Testene bruker ActiveMQ Artemis og dokumenterer ikke full kompatibilitet med IBM MQ.
+5. Ved årsskifte: kontroller neste års støtte, Svalbardsatser, planlagte volum og bemanning.
+6. Avklar forventet effekt, observasjonstid og eventuell tilbakeføring med berørte konsumenter.
 
-### Opprett ny infrastruktur
+## Kontroll etter deploy
 
-#### Plattform
+- Bekreft at riktig image er deployet og at podene blir klare uten gjentatte restarter.
+- Kontroller Flyway-logg og at forventede tjenester, MQ-lytter og Kafka-konsument er startet.
+- Kontroller funksjonsbrytere, tokenhenting og tilgang til avhengighetene.
+- Følg gjennomføringen av relevante bestillinger og leveranser, ikke bare HTTP-helse.
+- Kontroller Grafana, logger, backout-kø og feiltellere. Dokumenter avvik og tiltak.
 
-#### Tilgang til Kafka/PDL
+## Restart og tilbakeføring
 
-#### Tilgang til skatteetaten
+Restart kan avbryte bakgrunnsbehandling. En bulkbestilling har ikke en varig importjobb som garanterer at resten
+gjenopptas etter restart. Kontroller slike bestillinger før og etter tiltaket.
 
-#### Tilgang til IBM MQ
+Ved en feilaktig release: identifiser sist kjente fungerende image og sammenlign databaseendringer.
+Bruk teamets godkjente Nais-deployrutine for det konkrete miljøet og manifestet.
+Repositoryet har ikke en egen produksjonsworkflow for rollback; ikke anta at manuell testdeploy kan brukes til dette.
 
-### Rekonfigurer github-deployment-actions til å peke på ny infrastruktur
+Ikke reverser eller rediger allerede kjørte Flyway-migreringer.
+Hvis gammel kode ikke er kompatibel med dagens skjema, må en fremoverrettet feilretting eller særskilt
+migreringsplan vurderes. Undersøk mulige eksterne sideeffekter før meldinger eller batcher kjøres på nytt.
 
-### Varsle klienter av tjenester om eventuelt nye endepunkter for tjenester
+## Databasegjenoppretting
 
-## Overvåkning og varsling
+Produksjonsmanifestet konfigurerer Cloud SQL med høy tilgjengelighet og point-in-time recovery.
+Dette er ikke i seg selv en testet gjenopprettingsprosedyre eller et løfte om gjenopprettingstid.
+Faktiske sikkerhetskopier, tilgjengelig gjenopprettingsvindu og tilgang må kontrolleres i målmiljøet.
 
-### Verifiser logg-tilgang i loggverktøy
+Ved behov for restore:
 
-Applikasjonen har to typer logger - "normale" og "sikre". Disse er en sentral del av driftsoppsettet, og det er viktig at logger kommer inn i logghåndteringssystemene våre.
+1. Avklar hendelsesomfang, målpunkt og akseptabelt datatap med teamet og forretningsansvarlig.
+2. Avklar stans av skrivende prosesser og mottak. Funksjonsbrytere alene stopper ikke all skriving.
+3. Bevar opprinnelig database og gjenopprett til en separat instans etter gjeldende Nais/Cloud SQL-prosedyre,
+   med hjelp fra plattformansvarlige ved behov.
+4. Kontroller skjema, Flyway-historikk, radantall, siste behandlingspunkter og forventede fagdata i et isolert oppsett.
+5. Avstem tilstanden mot Skatteetaten og MQ før gjenopptakelse. En database-restore ruller ikke tilbake eksterne
+   bestillinger eller meldinger som allerede er levert.
+6. Avklar tilkoblingsbytte og start behandling kontrollert. Følg restanser, duplikater og leveranser.
+7. Dokumenter faktisk datatap, tidsbruk, kontroller og eventuelle avvik.
 
-### Gjenopprett grafana-board, rekonfigurer datakilder
+Mål for gjenopprettingstid (RTO), akseptabelt datatap (RPO) og resultat fra restore-øvelser er ikke dokumentert her.
+Disse må fastsettes og prøves sammen med forretning og drift før beredskapen kan regnes som verifisert.
 
-### Gjenopprett logg-varslinger
+## Flytting til annen infrastruktur
 
-Applikasjonen varsler om logginnslag på #team-mob-alerts-dev og #team-mob-alerts-prod. Dette oppsettet må gjenskapes eller eventuelt pekes i retning av ny logghåndteringsløsning/database
+Flytting krever en egen gjennomføringsplan. Før trafikk flyttes, kontroller:
 
-## Støttende infrastruktur
+| Område | Nødvendig avklaring |
+|--------|--------------------|
+| Plattform og database | Nais-ressurser, versjon, kapasitet, restore og kompatibelt skjema |
+| Identitet og tilgang | Azure-klient, scopes/roller, innkommende klienter og Tilgangsmaskinen |
+| Skatteetaten | Maskinporten, systembruker, organisasjonsnummer og nettverk |
+| MQ | Tilkobling, credentials, inngangs-/leveransekøer og backout-kø |
+| PDL og Kafka | Miljø, topic, consumer group, offset og sertifikater; ingen ukontrollert offset-reset |
+| Unleash | API-tilgang, appnavnprefiks og riktige brytere |
+| Observabilitet | Vanlige og sikre logger, metrikker, Grafana-datakilder, alarmer og varslingskanaler |
+| Konsumenter og deploy | Endepunkter, kontrakter, manifeststier, workflow-mål og avtalt overgang |
 
-### Unleash/feature switches
-
-- Applikasjonen trenger tilgang til en unleash-instans. Denne deployes fra NAIS-konsollet, fra menyen på venstre side.
-- Alle feature switchene i applikasjonen må konfigureres i Unleash. For sokos-skattekort vil klassen UnleashIntegration inneholde nok informasjon til å kunne rekonfigurere tjenesten.
+Start ikke gammel og ny installasjon parallelt mot samme køer eller skrivende datagrunnlag uten en avklart plan.
+Se [konfigurasjonsoversikten](konfigurasjon.md) og [avhengighetskartet](../arkitektur/arkitektur.md).

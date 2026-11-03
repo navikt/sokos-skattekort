@@ -32,24 +32,24 @@ repositories {
 val resilience4jVersion = "2.4.0"
 val ktorVersion = "3.6.0"
 val nimbusVersion = "10.10"
-val logbackVersion = "1.6.5"
+val logbackVersion = "1.6.6"
 val logstashVersion = "9.0"
-val micrometerVersion = "1.17.1"
+val micrometerVersion = "1.17.2"
 val dbSchedulerVersion = "16.12.0"
 val kotlinLoggingVersion = "3.0.5"
 val kotestVersion = "6.2.6"
 val kotlinxSerializationVersion = "1.12.0"
 val kotlinxDatetimeVersion = "0.8.0-0.6.x-compat"
-val mockOAuth2ServerVersion = "6.1.2"
+val mockOAuth2ServerVersion = "6.1.3"
 val mockkVersion = "1.14.11"
 val hikariVersion = "7.1.0"
 val kotliqueryVersion = "2.1.1"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "13.10.3"
+val flywayVersion = "13.11.1"
 val postgresVersion = "42.7.14"
 val activemqVersion = "2.57.0"
-val ibmmqVersion = "10.0.0.5"
-val opentelemetryVersion = "2.32.0"
+val ibmmqVersion = "10.0.1.0"
+val opentelemetryVersion = "2.33.1"
 val opentelemetryApiVersion = "1.67.0"
 val swaggerRequestValidatorVersion = "3.0.0"
 val kafkaClientsVersion = "4.4.0"
@@ -57,7 +57,7 @@ val avroVersion = "1.12.2"
 val kafkaAvroSerializerVersion = "8.4.0"
 val graphqlClientVersion = "11.0.0"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "12.3.0"
+val unleashedVersion = "12.3.1"
 
 dependencies {
 
@@ -152,7 +152,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group in setOf("org.lz4", "at.yawk.lz4") && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.12.0")
+                useTarget("at.yawk.lz4:lz4-java:1.12.1")
                 because("Fix CVE-2026-106451 using the patched fork")
             }
             if (requested.group == "io.netty") {

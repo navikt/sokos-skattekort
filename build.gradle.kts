@@ -58,6 +58,14 @@ val kafkaAvroSerializerVersion = "8.4.0"
 val graphqlClientVersion = "11.0.0"
 val wiremockVersion = "3.13.2"
 val unleashedVersion = "12.3.0"
+val nettyVersion = "4.2.18.Final"
+val lz4Version = "1.12.0"
+val guavaVersion = "33.7.2-jre"
+val jacksonCoreVersion = "2.22.4"
+val jacksonVersion = "3.2.3"
+val bouncycastleVersion = "1.85"
+val httpcoreVersion = "5.4.3"
+val httpclientVersion = "5.6.4"
 
 dependencies {
 
@@ -109,6 +117,16 @@ dependencies {
     implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
     implementation("org.apache.avro:avro:$avroVersion")
     implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
+    runtimeOnly("at.yawk.lz4:lz4-java:$lz4Version")
+    modules {
+        module("org.lz4:lz4-java") {
+            replacedBy("at.yawk.lz4:lz4-java", "Fix CVE-2026-106451 using the patched fork")
+        }
+    }
+
+    implementation(platform("io.netty:netty-bom:$nettyVersion")) {
+        because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.17.Final")
+    }
 
     // Scheduler
     implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
@@ -121,9 +139,26 @@ dependencies {
     // Opentelemetry
     implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$opentelemetryVersion")
     constraints {
-        implementation("io.opentelemetry:opentelemetry-api:$opentelemetryApiVersion") {
-            because("Fix CVE-2026-118259: excessive CPU consumption when parsing crafted tracestate headers")
-        }
+        implementation("io.opentelemetry:opentelemetry-api:$opentelemetryApiVersion")
+            .because("Fix CVE-2026-118259: excessive CPU consumption when parsing crafted tracestate headers")
+        implementation("at.yawk.lz4:lz4-java:$lz4Version")
+            .because("Fix CVE-2026-106451 using the patched fork")
+        implementation("com.google.guava:guava:$guavaVersion")
+            .because("Fix CVE-2026-102554: uncontrolled memory allocation during collection deserialization")
+        implementation("com.fasterxml.jackson.core:jackson-core:$jacksonCoreVersion")
+            .because("Fix CVE-2026-89407: quadratic backtracking in NumberInput.looksLikeValidNumber()")
+        implementation("tools.jackson.core:jackson-core:$jacksonVersion")
+            .because("Fix CVE-2026-89407 and CVE-2026-91777")
+        implementation("tools.jackson.core:jackson-databind:$jacksonVersion")
+            .because("Fix CVE-2026-89407 and CVE-2026-91777")
+        implementation("org.bouncycastle:bcprov-jdk18on:$bouncycastleVersion")
+            .because("Fix CVE-2026-8763")
+        implementation("org.apache.httpcomponents.core5:httpcore5:$httpcoreVersion")
+            .because("Fix CVE-2026-54399")
+        implementation("org.apache.httpcomponents.core5:httpcore5-h2:$httpcoreVersion")
+            .because("Fix CVE-2026-54399")
+        implementation("org.apache.httpcomponents.client5:httpclient5:$httpclientVersion")
+            .because("Fix CVE-2026-64607")
     }
 
     // Feature switches
@@ -144,47 +179,6 @@ dependencies {
     testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("org.wiremock:wiremock:$wiremockVersion")
-}
-
-// Transitive dependencvy lz4-java is fixed only in fork at.yawk, therefore this reference
-// Remove when fixed in next release of org.apache.kafka:kafka-clients
-configurations.all {
-    resolutionStrategy {
-        eachDependency {
-            if (requested.group in setOf("org.lz4", "at.yawk.lz4") && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.12.0")
-                because("Fix CVE-2026-106451 using the patched fork")
-            }
-            if (requested.group == "io.netty") {
-                useVersion("4.2.18.Final")
-                because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.17.Final")
-            }
-            if (requested.group == "com.google.guava" && requested.name == "guava") {
-                useVersion("33.7.2-jre")
-                because("Fix CVE-2026-102554: uncontrolled memory allocation during collection deserialization")
-            }
-            if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
-                useVersion("2.22.4")
-                because("Fix CVE-2026-89407: quadratic backtracking in NumberInput.looksLikeValidNumber()")
-            }
-            if (requested.group == "tools.jackson.core" && requested.name in setOf("jackson-core", "jackson-databind")) {
-                useVersion("3.2.3")
-                because("Fix CVE-2026-89407 and CVE-2026-91777")
-            }
-            if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
-                useVersion("1.85")
-                because("Fix CVE-2026-8763")
-            }
-            if (requested.group == "org.apache.httpcomponents.core5" && requested.name in setOf("httpcore5", "httpcore5-h2")) {
-                useVersion("5.4.3")
-                because("Fix CVE-2026-54399")
-            }
-            if (requested.group == "org.apache.httpcomponents.client5" && requested.name == "httpclient5") {
-                useVersion("5.6.4")
-                because("Fix CVE-2026-64607")
-            }
-        }
-    }
 }
 
 application {

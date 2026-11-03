@@ -1,7 +1,16 @@
 version: 2
+registries:
+  nav-maven:
+    type: maven-repository
+    url: https://github-package-registry-mirror.gc.nav.no/cached/maven-release
+    username: x-access-token
+    password: no-secret-required
+
 updates:
   - package-ecosystem: gradle
     directory: "/"
+    registries:
+      - nav-maven
     schedule:
       interval: "weekly"
       day: "tuesday"

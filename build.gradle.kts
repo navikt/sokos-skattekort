@@ -165,6 +165,12 @@ dependencies {
             .because("Fix CVE-2026-89407 and CVE-2026-91777")
         implementation("tools.jackson.core:jackson-databind:$jacksonVersion")
             .because("Fix CVE-2026-89407 and CVE-2026-91777")
+        listOf("graphqlSDL", "graphqlGraalVM", "graphqlClient").forEach { configuration ->
+            add(configuration, "tools.jackson.core:jackson-core:$jacksonVersion")
+                .because("Fix CVE-2026-89407 and CVE-2026-91777")
+            add(configuration, "tools.jackson.core:jackson-databind:$jacksonVersion")
+                .because("Fix CVE-2026-89407 and CVE-2026-91777")
+        }
         implementation("org.bouncycastle:bcprov-jdk18on:$bouncycastleVersion")
             .because("Fix CVE-2026-8763")
         implementation("org.apache.httpcomponents.core5:httpcore5:$httpcoreVersion")

@@ -8,12 +8,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-    kotlin("jvm") version "2.4.20"
-    kotlin("plugin.serialization") version "2.4.20"
+    kotlin("jvm") version "2.4.21"
+    kotlin("plugin.serialization") version "2.4.21"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.11"
     id("io.github.androa.gradle.plugin.avro") version "0.0.12"
-    id("com.expediagroup.graphql") version "10.2.2"
+    id("com.expediagroup.graphql") version "11.0.0"
     id("org.openapi.generator") version "7.26.0"
 
     application
@@ -24,39 +24,62 @@ group = "no.nav.sokos"
 repositories {
     mavenCentral()
 
-    maven { url = uri("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
-    maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
+    val githubToken = System.getenv("GITHUB_TOKEN")
+    if (githubToken.isNullOrEmpty()) {
+        maven {
+            name = "external-mirror-github-navikt"
+            url = uri("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
+        }
+    } else {
+        maven {
+            name = "github-package-registry-navikt"
+            url = uri("https://maven.pkg.github.com/navikt/maven-release")
+            credentials {
+                username = "token"
+                password = githubToken
+            }
+        }
+    }
     maven { url = uri("https://packages.confluent.io/maven/") }
 }
 
 val resilience4jVersion = "2.4.0"
-val ktorVersion = "3.5.2"
+val ktorVersion = "3.6.0"
 val nimbusVersion = "10.10"
-val logbackVersion = "1.6.5"
+val logbackVersion = "1.6.6"
 val logstashVersion = "9.0"
-val micrometerVersion = "1.17.1"
+val micrometerVersion = "1.17.2"
 val dbSchedulerVersion = "16.12.0"
 val kotlinLoggingVersion = "3.0.5"
-val kotestVersion = "6.2.5"
-val kotlinxSerializationVersion = "1.11.0"
+val kotestVersion = "6.2.6"
+val kotlinxSerializationVersion = "1.12.0"
 val kotlinxDatetimeVersion = "0.8.0-0.6.x-compat"
-val mockOAuth2ServerVersion = "6.0.5"
+val mockOAuth2ServerVersion = "6.1.3"
 val mockkVersion = "1.14.11"
 val hikariVersion = "7.1.0"
-val kotliqueryVersion = "2.1.1"
+val kotliqueryVersion = "2.1.2"
 val testcontainersVersion = "1.21.4"
-val flywayVersion = "13.10.0"
+val flywayVersion = "13.11.1"
 val postgresVersion = "42.7.14"
 val activemqVersion = "2.57.0"
-val ibmmqVersion = "10.0.0.5"
-val opentelemetryVersion = "2.32.0"
+val ibmmqVersion = "10.0.1.0"
+val opentelemetryVersion = "2.33.1"
+val opentelemetryApiVersion = "1.67.0"
 val swaggerRequestValidatorVersion = "3.0.0"
-val kafkaClientsVersion = "4.3.1"
+val kafkaClientsVersion = "4.4.0"
 val avroVersion = "1.12.2"
-val kafkaAvroSerializerVersion = "8.1.1"
-val graphqlClientVersion = "10.2.2"
+val kafkaAvroSerializerVersion = "8.4.0"
+val graphqlClientVersion = "11.0.0"
 val wiremockVersion = "3.13.2"
-val unleashedVersion = "12.3.0"
+val unleashedVersion = "12.3.1"
+val nettyVersion = "4.2.19.Final"
+val lz4Version = "1.12.1"
+val guavaVersion = "33.7.2-jre"
+val jacksonCoreVersion = "2.22.4"
+val jacksonVersion = "3.2.4"
+val bouncycastleVersion = "1.86"
+val httpcoreVersion = "5.4.4"
+val httpclientVersion = "5.6.5"
 
 dependencies {
 
@@ -108,6 +131,16 @@ dependencies {
     implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
     implementation("org.apache.avro:avro:$avroVersion")
     implementation("io.confluent:kafka-avro-serializer:$kafkaAvroSerializerVersion")
+    runtimeOnly("at.yawk.lz4:lz4-java:$lz4Version")
+    modules {
+        module("org.lz4:lz4-java") {
+            replacedBy("at.yawk.lz4:lz4-java", "Fix CVE-2026-106451 using the patched fork")
+        }
+    }
+
+    implementation(platform("io.netty:netty-bom:$nettyVersion")) {
+        because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.17.Final")
+    }
 
     // Scheduler
     implementation("com.github.kagkarlsson:db-scheduler:$dbSchedulerVersion")
@@ -119,6 +152,34 @@ dependencies {
 
     // Opentelemetry
     implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$opentelemetryVersion")
+    constraints {
+        implementation("io.opentelemetry:opentelemetry-api:$opentelemetryApiVersion")
+            .because("Fix CVE-2026-118259: excessive CPU consumption when parsing crafted tracestate headers")
+        implementation("at.yawk.lz4:lz4-java:$lz4Version")
+            .because("Fix CVE-2026-106451 using the patched fork")
+        implementation("com.google.guava:guava:$guavaVersion")
+            .because("Fix CVE-2026-102554: uncontrolled memory allocation during collection deserialization")
+        implementation("com.fasterxml.jackson.core:jackson-core:$jacksonCoreVersion")
+            .because("Fix CVE-2026-89407: quadratic backtracking in NumberInput.looksLikeValidNumber()")
+        implementation("tools.jackson.core:jackson-core:$jacksonVersion")
+            .because("Fix CVE-2026-89407 and CVE-2026-91777")
+        implementation("tools.jackson.core:jackson-databind:$jacksonVersion")
+            .because("Fix CVE-2026-89407 and CVE-2026-91777")
+        listOf("graphqlSDL", "graphqlGraalVM", "graphqlClient").forEach { configuration ->
+            add(configuration, "tools.jackson.core:jackson-core:$jacksonVersion")
+                .because("Fix CVE-2026-89407 and CVE-2026-91777")
+            add(configuration, "tools.jackson.core:jackson-databind:$jacksonVersion")
+                .because("Fix CVE-2026-89407 and CVE-2026-91777")
+        }
+        implementation("org.bouncycastle:bcprov-jdk18on:$bouncycastleVersion")
+            .because("Fix CVE-2026-8763")
+        implementation("org.apache.httpcomponents.core5:httpcore5:$httpcoreVersion")
+            .because("Fix CVE-2026-54399")
+        implementation("org.apache.httpcomponents.core5:httpcore5-h2:$httpcoreVersion")
+            .because("Fix CVE-2026-54399")
+        implementation("org.apache.httpcomponents.client5:httpclient5:$httpclientVersion")
+            .because("Fix CVE-2026-64607")
+    }
 
     // Feature switches
     implementation("io.getunleash:unleash-client-java:$unleashedVersion")
@@ -138,43 +199,6 @@ dependencies {
     testImplementation("com.atlassian.oai:swagger-request-validator-restassured:$swaggerRequestValidatorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("org.wiremock:wiremock:$wiremockVersion")
-}
-
-// Transitive dependencvy lz4-java is fixed only in fork at.yawk, therefore this reference
-// Remove when fixed in next release of org.apache.kafka:kafka-clients
-configurations.all {
-    resolutionStrategy {
-        eachDependency {
-            if (requested.group == "org.lz4" && requested.name == "lz4-java") {
-                useTarget("at.yawk.lz4:lz4-java:1.12.0")
-                because("Prefer the patched fork for vulnerability fix")
-            }
-            if (requested.group == "io.netty") {
-                useVersion("4.2.18.Final")
-                because("Multiple versions of netty has vulnerable dependencies. Affected version < 4.2.17.Final")
-            }
-            if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-core") {
-                useVersion("2.22.1")
-                because("jackson-core: Number Length Constraint Bypass in Async Parser Leads to Potential DoS Condition. Affected version >= 2.19.0, < 2.21.1")
-            }
-            if (requested.group == "tools.jackson.core" && requested.name == "jackson-core") {
-                useVersion("3.2.1")
-                because("Jackson Core: Document length constraint bypass in blocking, async, and DataInput parsers. Affected version >= 3.0.0, <= 3.1.0")
-            }
-            if (requested.group == "org.bouncycastle" && requested.name == "bcprov-jdk18on") {
-                useVersion("1.85")
-                because("Fix CVE-2026-8763")
-            }
-            if (requested.group == "org.apache.httpcomponents.core5" && requested.name in setOf("httpcore5", "httpcore5-h2")) {
-                useVersion("5.4.3")
-                because("Fix CVE-2026-54399")
-            }
-            if (requested.group == "org.apache.httpcomponents.client5" && requested.name == "httpclient5") {
-                useVersion("5.6.4")
-                because("Fix CVE-2026-64607")
-            }
-        }
-    }
 }
 
 application {

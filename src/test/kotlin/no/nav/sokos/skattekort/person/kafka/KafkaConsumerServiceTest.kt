@@ -45,7 +45,7 @@ class KafkaConsumerServiceTest :
 
             try {
                 When("det publiseres en Personhendelse med opprettet folkeregisteridentifikator på topicet") {
-                    kafkaProducer.send(ProducerRecord(topic, null, personHendelse())).get()
+                    kafkaProducer.send(ProducerRecord(topic, null, createPersonhendelse())).get()
 
                     Then("skal hendelsen konsumeres og identifikatorendringen prosesseres") {
                         eventually(eventuallyConfiguration) {
@@ -76,7 +76,7 @@ class KafkaConsumerServiceTest :
         }
     })
 
-private fun personHendelse() =
+private fun createPersonhendelse() =
     Personhendelse
         .newBuilder()
         .setHendelseId("aba9b36f-43cd-4b5b-b4e8-f991af902bbe")

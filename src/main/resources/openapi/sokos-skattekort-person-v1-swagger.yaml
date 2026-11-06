@@ -147,6 +147,8 @@ components:
             - skattekortopplysningerOK
             - ikkeSkattekort
             - ikkeTrekkplikt
+            - registrertSomDoed
+            - trekkEtterReglerOmKildeskattPaaPensjon15Prosent
         forskuddstrekkList:
           type: array
           items:

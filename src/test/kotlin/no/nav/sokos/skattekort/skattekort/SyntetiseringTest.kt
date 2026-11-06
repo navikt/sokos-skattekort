@@ -314,4 +314,39 @@ class SyntetiseringTest :
                 }
             }
         }
+
+        test("Fyll inn manglende PENSJON_FRA_NAV når resultatet er kildeskatt på pensjon 15 prosent") {
+            val sk =
+                Skattekort(
+                    resultatForSkattekort = ResultatForSkattekort.TrekkEtterReglerOmKildeskattPaaPensjon15Prosent,
+                    personId = PersonId(1),
+                    utstedtDato = null,
+                    identifikator = null,
+                    inntektsaar = 2025,
+                    kilde = "BOGUS",
+                )
+            val resultat: Pair<Skattekort, String>? =
+                Syntetisering.evtSyntetiserSkattekort(
+                    skattekort = sk,
+                    id =
+                        SkattekortId(
+                            1,
+                        ),
+                )
+            assertSoftly {
+                resultat shouldNotBeNull {
+                    first.forskuddstrekkList shouldContainAll
+                        listOf(
+                            Prosentkort(
+                                trekkode = Trekkode.UFOERETRYGD_FRA_NAV,
+                                prosentSats = BigDecimal("15.00"),
+                            ),
+                            Prosentkort(
+                                trekkode = Trekkode.PENSJON_FRA_NAV,
+                                prosentSats = BigDecimal("15.00"),
+                            ),
+                        )
+                }
+            }
+        }
     })

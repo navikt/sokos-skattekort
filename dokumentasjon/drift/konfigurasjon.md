@@ -1,65 +1,98 @@
-# Konfigurasjonssettinger
+# Konfigurasjon
 
-Denne seksjonen dokumenterer konfigurasjonssettinger fra application*.conf-filene til applikasjonen
+Konfigurasjonen leses gjennom
+[PropertiesConfig](../../src/main/kotlin/no/nav/sokos/skattekort/config/PropertiesConfig.kt).
+Tabellene beskriver nøkler og miljøvariabler, ikke hemmelige verdier.
 
-| Generell konfigurasjon | Beskrivelse                                                                                                                            |
-|------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| NAIS_APP_NAME          | Applikasjonens navn, levert fra NAIS                                                                                                   |
-| NAIS_POD_NAME          | Applikasjonens pod-navn, levert fra NAIS                                                                                               |
-| ENVIRONMENT            | En setting som styrer hvordan applikasjonen laster konfigurasjon. Styrer hvilken fil som lastes "først", f.eks. application-local.conf |
-| MQ_LISTENER_ENABLED    | Konfigurasjonssetting som styrer hvorvidt applikasjonen skal forsøke å koble seg til JMS.                                              |
-| SCHEDULER_ENABLED      | Styrer hvorvidt applikasjonen starter cron-jobber                                                                                      |
-| KAFKA_CONSUMER_ENABLED | Styrer hvorvidt applikasjonen forsøker å koble seg til Kafka, som brukes til å interagere med PDL                                      |
+## Profiler og prioritet
 
-| Konfigurasjon av funksjonalitet | Beskrivelse                                                                                                                                                                          |
-|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| GYLDIGE_FNR                     | Styrer hvilke fødselsnummer som godtas av applikasjonen, settes til en av verdiene i Foedselsnummerkategori. Brukes for å filtrere ut fødselsnummer som er invalide i et environment |
-| BESTILLING_ORGNR                | Styrer hvilket organisasjonsnummer vi bestiller skattekort under. Økonomilinjas orgnummer brukes i produksjon for å ikke kollidere med henting av skattekort i lønnssystemet.        |
+`APPLICATION_ENV` velger profil. Verdien leses fra miljøvariabel, deretter JVM-systemegenskap,
+deretter `NAIS_CLUSTER_NAME` fra miljø eller systemegenskap, og til slutt `APPLICATION_ENV` i innlest konfigurasjon.
+Navnet normaliseres til små bokstaver og delen før `-`, slik at `dev-gcp` gir `dev`.
+Uten verdi brukes `local`.
 
-| Konfigurasjon av infrastruktur                   | Beskrivelse                                                                                                                                                                         |
-|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AZURE_APP_PROVIDER_NAME                          | Navnet på OAuth-provider. Siden vi bruker azure entra er denne "azureAD" i produksjon. I test-modus bruker vi "default", som er default i MockOAuth2Server                          |
-| AZURE_APP_WELL_KNOWN_URL                         | Well known url til Azure entra. Settes av Nais, overrides til å peke på MockOAuth2Server i test.                                                                                    |
-| AZURE_APP_TENANT_ID                              | Azure entra tenant ID. Settes av Nais                                                                                                                                               |
-| AZURE_APP_CLIENT_SECRET                          | Azure application client secret. Settes av Nais                                                                                                                                     |
-| AZURE_APP_AUTH_PROVIDER_NAME                     | Azure application authentication provider name. Settes av Nais                                                                                                                      |
-| MASKINPORTEN_SYSTEM_BRUKER_CLAIM                 | Organisasjonsnummer i claim for å skape token knyttet til systembrukeren vår, brukes under bestilling av skattekort fra Skatteetaten. Må settes til samme verdi som BESTILLING_ORGNR |
-| MASKINPORTEN_CLIENT_ID                           | Maskinporten client id, UUID. Settes av Nais                                                                                                                                        |
-| MASKINPORTEN_WELL_KNOWN_URL                      | Maskinporten oidc endpoint. Settes av Nais                                                                                                                                          |
-| MASKINPORTEN_CLIENT_JWK                          | Maskinporten client JWK. Settes av Nais                                                                                                                                             |
-| MASKINPORTEN_SCOPES                              | Maskinporten scopes. Settes av Nais                                                                                                                                                 |
-| SEND_BESTILLING_BATCH_CRON_EXPRESSION            | Spring cron expression-format styring av hvor ofte bestillings-prosessen trigges                                                                                                    |
-| SEND_UTSENDING_CRON_EXPRESSION                   | Spring cron expression-format styring av hvor ofte utsendings-prosessen trigges                                                                                                     |
-| HENT_OPPDATERTE_SKATTEKORT_BATCH_CRON_EXPRESSION | Spring cron expression-format styring av hvor ofte oppdaterte skattekort blir etterspurt                                                                                            |
-| FETCH_METRICS_CRON_EXPRESSION                    | Spring cron expression-format styring av hvor ofte metrikker blir oppdatert                                                                                                         |
-| FORESPOERSEL_INPUT_CRON_EXPRESSION               | Spring cron expression-format styring av hvor ofte tabellen som tillater å sende forespørsler som rader i en databasetabell skal kjøre                                              |
-| KAFKA_CONSUMER_GROUP_ID                          | Konfigurerer tilkobling til kafka: consumer group                                                                                                                                   |
-| KAFKA_CONSUMER_TOPIC                             | Konfigurerer tilkobling til kafka: topic                                                                                                                                            |
-| KAFKA_CONSUMER_OFFSET_RESET                      | Konfigurerer håndtering av gamle meldinger, se "auto.offset.reset" i Kafka-dokumentasjonen. I vanlig drift settes denne til "latest"                                                |
-| KAFKA_BROKERS                                    | Kafka brokers. Settes av Nais                                                                                                                                                       |
-| KAFKA_SCHEMA_REGISTRY                            | Kafka schema registry. Settes av Nais                                                                                                                                               |
-| KAFKA_SCHEMA_REGISTRY_USER                       | Kafka schema registry user. Settes av Nais                                                                                                                                          |
-| KAFKA_SCHEMA_REGISTRY_PASSWORD                   | Kafka schema registry password. Settes av Nais                                                                                                                                      |
-| KAFKA_TRUSTSTORE_PATH                            | Kafka truststore. Settes av Nais                                                                                                                                                    |
-| KAFKA_CREDSTORE_PASSWORD                         | Kafka credentials store password. Settes av Nais.                                                                                                                                   |
-| KAFKA_KEYSTORE_PATH                              | Kafka keystore path. Settes av Nais.                                                                                                                                                |
-| UNLEASH_SERVER_API_URL                           | Unleash URL, levert fra NAIS                                                                                                                                                        |
-| UNLEASH_SERVER_API_TOKEN                         | Unleash token, levert fra NAIS                                                                                                                                                      |
-| UNLEASH_SERVER_API_ENV                           | Unleash environment, brukes til styring av hvilken setting av en feature switch applikasjoen skal bruke                                                                             |
-| MQ_HOSTNAME                                      | IBM MQ server hostname                                                                                                                                                              |
-| MQ_PORT                                          | IBM MQ server portnummer                                                                                                                                                            |
-| MQ_QUEUE_MANAGER_NAME                            | IBM MQ server queue manager name                                                                                                                                                    |
-| MQ_CHANNEL_NAME                                  | IBM MQ server channel name                                                                                                                                                          |
-| MQ_USERNAME                                      | IBM MQ server username. Settes av Nais                                                                                                                                              |
-| MQ_PASSWORD                                      | IBM MQ server username. Settes av Nais                                                                                                                                              |
-| MQ_FRA_FORSYSTEM_QUEUE_NAME                      | IBM MQ kø for bestillinger fra Oppdrag Z                                                                                                                                            |
-| MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT              | IBM MQ kø for leveranser av skattekort til Oppdrag Z                                                                                                                                |
-| SKATTEETATEN_API_URL                             | Base-URL til skatteetatens API for å bestille skattekort                                                                                                                            |
-| PDL_URL                                          | URL til PDL-API                                                                                                                                                                     |
-| PDL_SCOPE                                        | Scope for tilkobling til PDL-API                                                                                                                                                    |
-| DB_DATABASE                                      | Navn på database, typisk avarter av "sokos-skattekort". I produksjon vil databasenavnet være mer komplisert. Settes av Nais                                                         |
-| DB_HOST                                          | Hostnavn/ipadresse til databaseserver. Settes av Nais                                                                                                                               |
-| DB_JDBC_URL                                      | JDBC URL til databaseserver. Settes av Nais                                                                                                                                         |
-| DB_USERNAME                                      | Brukernavn til databaseserver. Settes av Nais.                                                                                                                                      |
-| DB_PASSWORD                                      | Passord til databaeserver. Settes av Nais.                                                                                                                                          |
-| DB_PORT                                          | Portnummer til databaseserver. Settes av Nais.                                                                                                                                      |
+Ved oppløsning har miljøvariabler prioritet over JVM-systemegenskaper, deretter valgt profil og grunnkonfigurasjon.
+Miljøvariabler brukes gjennom substitusjonene som er deklarert i HOCON; navn i en gammel dokumentasjonstabell
+oppretter ikke automatisk en slik kobling.
+
+| Profil | Fil | Bruk |
+|--------|-----|------|
+| `dev` | [application-dev.conf](../../src/main/resources/application-dev.conf) | Q2, kunstige identifikatorer, Skatteetatens test-API |
+| `q1` | [application-q1.conf](../../src/main/resources/application-q1.conf) | Q1, egne MQ-køer og PDL Q1 |
+| `prod` | [application-prod.conf](../../src/main/resources/application-prod.conf) | Reelle identifikatorer og produksjonstjenester |
+| `local` | [application-local.conf](../../src/main/resources/application-local.conf) | Arver `dev`, leser `defaults.properties`, deaktiverer Kafka |
+| `test` | [application-test.conf](../../src/main/resources/application-test.conf) | Automatiserte tester med testavhengigheter |
+
+Grunnverdier ligger i [application.conf](../../src/main/resources/application.conf).
+Lokalt oppsett kan kontakte delte utviklingstjenester; se [README](../../README.md#lokal-utvikling).
+Ikke commit `defaults.properties`, tokens eller passord.
+
+## Applikasjon og behandling
+
+| HOCON-nøkkel | Overstyring / standard | Beskrivelse |
+|--------------|-----------------------|-------------|
+| `application.appName` | `NAIS_APP_NAME`, ellers `sokos-skattekort` | Brukes blant annet som prefiks på funksjonsbrytere |
+| `application.podName` | `NAIS_POD_NAME` | Identifiserer instansen |
+| `application.gyldigeFnr` | `GYLDIGE_FNR`, ellers profilens verdi | `ALLE`, `GYLDIGE` eller `KUNSTIGE_FNR`, se `Foedselsnummerkategori` |
+| `application.bestillingOrgnr` | Verdi i profil | Organisasjonen bestillingene gjøres for; produksjon er forskjellig fra test |
+| `application.mqListenerEnabled` | Finnes i modellen | Oppstarten styrer faktisk MQ-lytter gjennom Unleash; ikke bruk denne som driftsbryter |
+| `scheduler.enabled` | `true` i grunnkonfigurasjonen | Om scheduler opprettes ved oppstart |
+| `kafka.enabled` | `true` i grunnkonfigurasjonen, `false` lokalt | Om Kafka-konsumenten opprettes |
+
+`ENVIRONMENT`, `SCHEDULER_ENABLED`, `MQ_LISTENER_ENABLED`, `KAFKA_CONSUMER_ENABLED` og `BESTILLING_ORGNR`
+er ikke deklarert som miljøvariabelsubstitusjoner i dagens HOCON-filer.
+Bruk de faktiske konfigurasjonsnøklene og kontroller resultatet, ikke tidligere dokumenterte variabelnavn.
+
+## Periodiske jobber
+
+Se [kjøreplanen](../arkitektur/workflows.md#kjøreplan) for registrerte jobber og standard cron-uttrykk.
+Tidspunktene ligger under `scheduler.cronBestilling`, `cronUtsending`, `cronHentOppdaterte`, `cronFetchMetrics`
+og `cronDeleteSkattekort`.
+
+Det er ikke deklarert miljøvariabler som `SEND_BESTILLING_BATCH_CRON_EXPRESSION` for disse nøklene.
+`scheduler.cronHentSkattekort` finnes i modellen uten en separat registrert jobb.
+`FORESPOERSEL_INPUT_CRON_EXPRESSION` har ingen innkoblet jobb.
+
+## Integrasjoner og hemmeligheter
+
+| Område | Deklarerte miljøvariabler i grunnkonfigurasjonen | Merknad |
+|--------|-------------------------|---------|
+| Azure AD / Entra ID | `AZURE_APP_CLIENT_ID`, `AZURE_APP_WELL_KNOWN_URL`, `AZURE_APP_TENANT_ID`, `AZURE_APP_CLIENT_SECRET` | Leveres av Nais. Providernavn er konfigurert som `azureAd` |
+| Maskinporten | `MASKINPORTEN_CLIENT_ID`, `MASKINPORTEN_WELL_KNOWN_URL`, `MASKINPORTEN_CLIENT_JWK`, `MASKINPORTEN_SCOPES`, `MASKINPORTEN_SYSTEM_BRUKER_CLAIM` | Systembrukerclaim settes også i profilene og må samsvare med bestillingsorganisasjonen |
+| PostgreSQL | `DB_JDBC_URL`, `DB_DATABASE`, `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` | Cloud SQL-oppsett med prefiks `DB` i Nais. Lokal profil bruker host/port/navn og bruker/passord, ikke bare JDBC-URL |
+| IBM MQ-tilkobling | `MQ_HOSTNAME`, `MQ_PORT`, `MQ_QUEUE_MANAGER_NAME`, `MQ_CHANNEL_NAME`, `MQ_SERVICE_USERNAME`, `MQ_SERVICE_PASSWORD` | Vert, port og kanal har profilverdier; brukernavn/passord hentes fra secret |
+| IBM MQ-køer | `MQ_FRA_FORSYSTEM_QUEUE_NAME`, `MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT`, `MQ_LEVERANSEKOE_OPPDRAGZ_SKATTEKORT_STOR` | Kønavn er miljøspesifikke |
+| Skatteetaten | `SKATTEETATEN_API_URL` | Profilene angir test- eller produksjonsvert |
+| PDL | `PDL_URL`, `PDL_SCOPE` | Profilene angir miljø og token-scope |
+| Tilgangsmaskinen | `TILGANGSMASKIN_URL`, `TILGANGSMASKIN_SCOPE` | Brukes til personrelatert tilgangskontroll |
+| DARE POC | `DAREPOC_URL`, `DAREPOC_SCOPE` | Klienten opprettes bare utenfor produksjon |
+| Kafka | `KAFKA_BROKERS`, `KAFKA_SCHEMA_REGISTRY`, `KAFKA_SCHEMA_REGISTRY_USER`, `KAFKA_SCHEMA_REGISTRY_PASSWORD`, `KAFKA_TRUSTSTORE_PATH`, `KAFKA_CREDSTORE_PASSWORD`, `KAFKA_KEYSTORE_PATH` | Infrastrukturverdier fra Nais |
+| Unleash | `UNLEASH_SERVER_API_URL`, `UNLEASH_SERVER_API_TOKEN`, `UNLEASH_SERVER_API_ENV` | `environment` leses i modellen, men settes ikke eksplisitt på Unleash-klienten i `UnleashIntegration`; verifiser faktisk miljø/token ved endringer |
+
+Profilene kan erstatte grunnkonfigurasjonens substitusjoner med faste verdier, blant annet for MQ, API-verter og scopes.
+En variabel i tabellen er derfor ikke nødvendigvis en virksom overstyring i alle profiler.
+Kontroller den ferdig oppløste konfigurasjonen uten å skrive hemmeligheter til logg.
+
+Kafka-topic er som standard `pdl.leesah-v1`, consumer group er `sokos-skattekort-group-id`, og `offsetReset` er
+`earliest`. Disse er HOCON-nøkler under `kafka`, ikke substitusjoner for `KAFKA_CONSUMER_*`.
+
+## Funksjonsbrytere
+
+Bryterne finnes i [Unleash](https://okonomi-unleash-web.iap.nav.cloud.nais.io/projects/default?query=sokos-skattekort).
+Det fulle navnet er `<application.appName>.<suffiks>`. Q1 bruker derfor prefikset `sokos-skattekort-q1`,
+mens Q2 og produksjon bruker `sokos-skattekort`.
+
+| Suffiks | Virkning |
+|---------|----------|
+| `forespoersel-listener.enabled` | Starter eller stopper MQ-lytter |
+| `bestillinger.enabled` | Tillater nye ordinære bestillinger mot Skatteetaten |
+| `oppdateringer.enabled` | Tillater nye oppdateringsbestillinger |
+| `utsendinger.enabled` | Tillater behandling og utsending av ventende utsendinger |
+| `lagre-mottatte-bestillinger.enabled` | Lagrer i tillegg hele mottatte batchsvaret i `bestillingsbatcher.data_mottatt` |
+
+Bryterne for nye bestillinger og oppdateringer stopper ikke henting av eksisterende batcher.
+De stopper heller ikke konvertering av mottatte data. MQ-bryteren stopper ikke REST-mottak.
+Ingen av disse bryterne er en generell pause av hele applikasjonen.
+
+Kilde: [UnleashIntegration](../../src/main/kotlin/no/nav/sokos/skattekort/infrastructure/UnleashIntegration.kt).
+Den tidligere dokumenterte bryteren `forespoerselinput.enabled` er ikke implementert i denne klassen.

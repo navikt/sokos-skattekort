@@ -44,7 +44,6 @@ class SkattekortService(
         inntektsaar: Int? = null,
         saksbehandler: Saksbehandler? = null,
     ): Either<ProblemDetailResponse, List<Skattekort>> {
-        val adminRole = false
         logger.info(marker = TEAM_LOGS_MARKER) { "Henter skattekort for person: $fnr, for år: $inntektsaar" }
         saksbehandler?.let {
             tilgangsmaskinClientService.checkSaksbehandlerAccess(it.ident, fnr)?.let { response ->

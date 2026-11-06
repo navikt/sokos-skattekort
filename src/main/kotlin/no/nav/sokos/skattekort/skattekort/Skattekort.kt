@@ -21,6 +21,8 @@ enum class ResultatForSkattekort(
     UgyldigOrganisasjonsnummer(value = "ugyldigOrganisasjonsnummer"),
     UgyldigFoedselsEllerDnummer(value = "ugyldigFoedselsEllerDnummer"),
     UtgaattDnummerSkattekortForFoedselsnummerErLevert(value = "utgaattDnummerSkattekortForFoedselsnummerErLevert"),
+    RegistrertSomDoed(value = "registrertSomDoed"),
+    TrekkEtterReglerOmKildeskattPaaPensjon15Prosent(value = "trekkEtterReglerOmKildeskattPaaPensjon15Prosent"),
     ;
 
     companion object {

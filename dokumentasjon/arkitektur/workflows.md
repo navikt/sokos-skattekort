@@ -1,124 +1,120 @@
-## Funksjonell workflow
+# Funksjonelle prosesser
+
+## 1. Motta forespørsel
+
+[ForespoerselService](../../src/main/kotlin/no/nav/sokos/skattekort/forespoersel/ForespoerselService.kt)
+behandler forespørsler fra MQ og REST. Tjenesten validerer identifikatorer for miljøet, avklarer personer via PDL
+og lagrer forespørsel og abonnementer. Har personen allerede skattekort for året, opprettes utsending.
+Ellers opprettes bestilling hvis identifikatoren og inntektsåret tillater innhenting fra Skatteetaten.
+
+```mermaid
+flowchart TD
+    Mottak["MQ / REST"] --> Valider["Valider identifikator og avklar person"]
+    Valider --> Interesse["Lagre forespørsel og abonnement"]
+    Interesse --> Finnes{"Skattekort finnes?"}
+    Finnes -->|Ja| Send["Opprett utsending"]
+    Finnes -->|Nei| Tillatt{"Kan bestilles?"}
+    Tillatt -->|Ja| Bestill["Opprett bestilling"]
+    Tillatt -->|Nei| Vent["Ingen ekstern bestilling; følg opp årsak"]
+```
+
+Fra 15. desember kan ordinære forespørsler for inneværende år også behandles for neste år.
+`OS_STOR` er unntatt denne utvidelsen.
+
+## 2. Bestille, hente og behandle skattekort
+
+Jobben `sendBestilling` utfører følgende trinn i denne rekkefølgen:
+
+1. [BestillingService](../../src/main/kotlin/no/nav/sokos/skattekort/skattekorthenting/BestillingService.kt)
+   henter svar på uferdige batcher av type `BESTILLING`.
+2. [SkattekortDataService](../../src/main/kotlin/no/nav/sokos/skattekort/skattekortdata/SkattekortDataService.kt)
+   behandler ubehandlede mottatte data, lagrer skattekort og eventuelle syntetiserte kort og oppretter utsendinger.
+3. [BestillingsbatchService](../../src/main/kotlin/no/nav/sokos/skattekort/skattekortbestilling/BestillingsbatchService.kt)
+   samler ventende bestillinger, sender til Skatteetaten og lagrer referansen i en ny batch.
 
 ```mermaid
 flowchart LR
-    Start --> OppdragZBestilling
-    Start --> PocBestilling
-    OppdragZBestilling -- JMS - bestilling i copybook - format --> SkattekortbestillingsService
-    PocBestilling -- Kaller REST-endepunkt --> SkattekortbestillingsService
-    SkattekortbestillingsService -- bestilling --> BestDb[(BestDb)]
-    SkattekortbestillingsService -- systeminteresse --> person[(person)]
-    BestDb -- Samler opp og batcher bestillinger --> Bestiller
-    Bestiller -- Lagrer bestillingsreferanse --> BestDb
-    Bestiller -- eksternt kall --> Skatt
-    Bestiller -- teknisk status --> Micrometer
-    BestDb --> Henter
-    Henter -- eksternt kall --> Skatt
-    Henter -- lagrer bevisdata --> KortDb[(KortDb)]
-    Henter -- teknisk status --> Micrometer
-    KortDb -- feil fra skatt --> AdminGui
-    KortDb -- ok skattekort --> Sender
-    Sender --> SKDb[(SkatteKortDb)]
-    person -- systeminteresse --> Sender
-    Sender -- JMS --> OppdragZ
-    Sender -- hvis poc - interesse, JMS? Rest? --> POC
-    SkatteKortDb --> AdminGui
-    BestDb --> AdminGui
-    person --> AdminGui
+    Bestilling["Bestillinger uten batch"] --> Send["Bestill hos Skatteetaten"]
+    Send --> Batch["Lagre referanse og knytt bestillinger til batch"]
+    Batch --> Hent["Hent svar ved senere kjøring"]
+    Hent --> Data["Lagre skattekort_data"]
+    Data --> Konverter["Opprett skattekort og eventuelle syntetiserte kort"]
+    Konverter --> Utsending["Opprett utsendinger for abonnenter"]
 ```
 
-## Workflows
+Skatteetatens HTTP 204 og 503 ved henting tolkes som at svaret ikke er klart. Batchen blir liggende til senere kjøring.
+`NY` og `RETRY` behandles automatisk; `FEILET` krever vurdering før nytt forsøk.
+Se [feilsituasjoner](../drift/feil.md).
 
-1. [Deploy alerts](.github/workflows/alerts.yaml) -> For å pushe alarmer for dev og prod
-    1. Denne workflow trigges bare hvis det gjøres endringer i [alerts-dev.yaml](.nais/alerts-dev.yaml) og [alerts-prod.yaml](.nais/alerts-prod.yaml)
-2. [Deploy application](.github/workflows/deploy.yaml) -> For å bygge/teste prosjektet, bygge/pushe Docker image og deploy til dev og prod
-    1. Denne workflow trigges når kode pushes i `main` branch
-3. [Build/test PR](.github/workflows/build-pr.yaml) -> For å bygge og teste alle PR som blir opprettet og gjør en sjekk på branch prefix og title
-    1. Denne workflow kjøres kun når det opprettes pull requester
-4. [Security](.github/workflows/codeql-scan.yaml) -> For å skanne kode for sårbarheter. Kjøres hver morgen kl 06:00
-    1. Denne kjøres når [Deploy application](.github/workflows/deploy.yaml) har kjørt ferdig
-5. [Deploy application manual](.github/workflows/manual-deploy.yaml) -> For å deploye applikasjonen manuelt til ulike miljøer
-    1. Denne workflow trigges manuelt basert på branch og miljø
+## 3. Bestille og hente oppdateringer
 
-## Prosess 1: Motta forespørsler og opprette Personer, Abonnementer, Bestillinger og Utsendinger
+Jobben `hentOppdaterteSkattekort` henter først svar på batcher av type `OPPDATERING`, deretter forsøker den å bestille nye
+oppdateringer når funksjonsbryteren tillater det. Eksisterende batcher med status `NY` eller `RETRY` hindrer ikke
+nye oppdateringsbestillinger i dagens implementasjon.
+Oppdateringene gjelder inneværende og eventuelt neste år etter årsreglene.
 
-```mermaid
-flowchart LR
-    Start(Start) --> FNR{Finnes \nperson?}
-    FNR -->|Nei| OPPRETT_PERSONID(Opprett person) --> OPPRETT_ABONNEMENT
-    FNR -->|Ja| OPPRETT_ABONNEMENT(Opprett abonnement) --> SJEKK_SKATTEKORT{Har Skattekort?}
-    SJEKK_SKATTEKORT -->|Ja| OPPRETT_UTSENDING(Opprett utsending)
-    SJEKK_SKATTEKORT -->|Nei| FNR_KAN_BESTILLE{FNR kan bestille \nfra Skatteetaten?}
-    FNR_KAN_BESTILLE --> |Nei| VENT_PAA_MANUELT_SKATTEKORT(Vent til noen legger \ninn skattekort manuelt)
-    FNR_KAN_BESTILLE --> |Ja| OPPRETT_BESTILLING(Opprett bestilling)
-```
+Mottatte oppdateringsdata behandles av `SkattekortDataService` i `sendBestilling`.
+Det opprettes utsendinger til abonnenter. Oppdateringer for `OS_STOR` sendes til ordinær OS-kø.
+Status `INGEN_ENDRINGER` avslutter batchen uten nye skattekort.
 
-## Prosess 2: Bestille skattekort fra skatteetaten
+## 4. Sende til forsystem
 
-```mermaid
-flowchart TD
-    B["Plukk ut n Bestillinger (unike på fnr/inntektsår)"] --> BB(Opprett Bestillingsbatch og få bestillingsreferanse fra SKD) --> OB(Oppdater Bestillinger med Bestillingsbatchid)
-```
+[UtsendingService](../../src/main/kotlin/no/nav/sokos/skattekort/utsending/UtsendingService.kt) leser utsendinger
+med `fail_count < 3` og bruker det konkrete `skattekort_id` som er lagret på utsendingen.
 
-## Prosess 2.5: Bestill oppdateringer
+| Forsystem | Behandling |
+|-----------|------------|
+| `OS` | Formater og send til ordinær MQ-kø |
+| `OS_STOR` | Formater og send til stor MQ-kø |
+| `MANUELL` | Fjern utsendingen uten ekstern leveranse |
+| `DARE_POC` | Send via REST i ikke-produksjonsmiljø |
 
-```mermaid
-flowchart TD
-    A[Sjekk om det finnes en oppdateringsbatch som er NY, RERUN eller FEILET] -->|Hvis nei| B[Bestill oppdateringer]
-```
+Ved vellykket behandling slettes utsendingene. Kort uten representerbart MQ-innhold blir ikke sendt;
+årsaken registreres i personhistorikken og utsendingen fjernes.
+Ved feil økes `fail_count`. Utsendinger med minst tre feil tas ikke med i automatisk behandling.
+MQ og PostgreSQL har ikke en felles transaksjon; ved avbrudd må mulig dobbeltleveranse vurderes før rekjøring.
 
-## Prosess 3: Hent skattekort fra skatteetaten
+## 5. Identifikatorendringer
 
-```mermaid
-flowchart LR
-    BB[Ta tak i en \nBestillingsbatch \nmed status NY] --> HS(Kall endepunktet \nskattekortTilArbeidsgiver/svar\nhos Skatteetaten) -->
-    SVAR{Responskode} -->|200 OK| OK -->|For hvert mottatte skattekort| L(Lagre Skattekort \ni skattekortdata)
-    SVAR -->|Andre| FEIL(Feil som må \nundersøkes)
-```
+Kafka-konsumenten leser PDL-hendelser fra `pdl.leesah-v1` og lar
+[IdentifikatorEndringService](../../src/main/kotlin/no/nav/sokos/skattekort/person/kafka/IdentifikatorEndringService.kt)
+behandle identifikatorendringer. Dette holder koblingen mellom person og identifikatorer ajour.
+Konsumenten er slått av i lokal profil. Ved feil logger den avviket, melder seg av og forsøker igjen etter 60 sekunder.
 
-## Prosess 3.5: Ta Skattekortdata og lag skattekort
-```mermaid
-flowchart TD
-    B["For hver skattekortdata"] --> BB(Opprett skattekort) --> OB(Opprett utsendinger til alle abonnenter)
-```
+## 6. Historikk og sletting
 
-## Prosess 4: Send skattekort til Forsystem
+Skattekort lagres som nye versjoner i stedet for å overskrive eksisterende kort.
+Jobben `deleteSkattekort` sletter som standard skattekort for inneværende år minus to.
+Den er implementert og kjører årlig 15. januar etter standardkonfigurasjonen.
+Se [datamodell og sletting](../database/main.md) for avgrensningen og kaskadesletting.
 
-```mermaid
-flowchart TD
-    U(Hent utsendinger) --> S(Hent skattekortene som vi vet vi har)
-    S --> SO(Send skattekort forsystemet) --> SLETT(Slett Utsendinger som vi har sendt Skattekort for)
-```
+## Kjøreplan
 
-## Prosess 5: Motta oppdaterte skattekort
+Planen kommer fra [JobTaskConfig](../../src/main/kotlin/no/nav/sokos/skattekort/config/JobTaskConfig.kt)
+og `scheduler` i [application.conf](../../src/main/resources/application.conf).
+Tidspunktene under er konfigurerte standardverdier, ikke garantier for ferdigstillelse.
+Cron-uttrykkene har seks felt; kontroller faktisk tidssone i kjørende miljø.
 
-```mermaid
-flowchart TD
-    SKD(For hvert skattekort vi får som svar på oppdateringsbatch) --> L(Lagre Skattekortdata)
-```
+| Jobb | Konfigurasjonsnøkkel | Standard cron | Betydning |
+|------|---------------------|---------------|-----------|
+| `sendBestilling` | `scheduler.cronBestilling` | `*/5 * * * * *` | Hvert femte sekund |
+| `sendUtsending` | `scheduler.cronUtsending` | `20 * * * * *` | Hvert minutt, sekund 20 |
+| `hentOppdaterteSkattekort` | `scheduler.cronHentOppdaterte` | `45 */30 * * * *` | Hver halvtime, sekund 45 |
+| `fetchMetrics` | `scheduler.cronFetchMetrics` | `50 0/10 * * * *` | Hvert tiende minutt, sekund 50 |
+| `deleteSkattekort` | `scheduler.cronDeleteSkattekort` | `0 0 0 15 1 *` | 15. januar ved midnatt |
 
-## Prosess 7: Slette gamle data (Ikke laget ennå!)
+`scheduler.cronHentSkattekort` finnes i konfigurasjonen, men har ingen egen registrert jobb.
+Det finnes heller ingen registrert jobb som leser `forespoersel_input`.
 
-1. Delete from skattekort where inntektsaar < currentYear - 1
-2. Delete from abonnementer where inntektsaar < currentYear - 1
-3. Delete from person where not exists (select 1 from abonnementer where abonnementer.fnr = person.fnr)
-4. etc
+## Bygg- og deploy-workflows
 
-## Sjekk bestillingsstatus for FNR og inntektsår
+| Workflow | Utløser og ansvar |
+|----------|-------------------|
+| [Build & test PR](../../.github/workflows/build-pr.yaml) | Pull request, med unntak for blant annet dokumentasjon og Nais-filer |
+| [Deploy application](../../.github/workflows/deploy.yaml) | Relevante endringer på `main`; bygger/tester og deployer Q2, Q1 og produksjon |
+| [Deploy application manually](../../.github/workflows/manual-deploy.yaml) | Manuell kjøring for Q2 (`dev`) eller Q1 |
+| [CodeQL Scan](../../.github/workflows/codeql-scan.yaml) | Mandager kl. 06:00 UTC og manuell kjøring |
+| [Deploy Unleash](../../.github/workflows/unleash.yaml) | Endringer på `main` i workflow eller Unleash-manifestene |
 
-```mermaid
-flowchart LR
-    Start(Start) --> FNR{Finnes \nperson?}
-    FNR -->|Nei| IKKE_FORESPURT[IKKE_FORESPURT]
-    FNR -->|Ja| SJEKK_SKATTEKORT{Har Skattekort}
-    SJEKK_SKATTEKORT -->|Ja| SJEKK_UTSENDING{Finnes Utsending?}
-    SJEKK_UTSENDING -->|Nei| SJEKK_ABONNEMENT{Finnes Abonnement?}
-    SJEKK_UTSENDING -->|Ja| VENTER_UTSENDING
-    SJEKK_ABONNEMENT -->|Nei| ABONNERER_IKKE[ABONNERER_IKKE]
-    SJEKK_ABONNEMENT -->|Ja| ABONNERER
-    SJEKK_SKATTEKORT -->|Nei| SJEKK_BESTILLING{Finnes bestilling?}
-    SJEKK_BESTILLING -->|Ja| SJEKK_BATCH{Finnes batch?}
-    SJEKK_BATCH -->|Ja| BESTILT
-    SJEKK_BATCH -->|Nei| IKKE_BESTILT
-    SJEKK_BESTILLING -->|Nei| SJEKK_ABONNEMENT
-```
+Grafana-alarmer forvaltes via Grafana. Repositoryet har ikke workflowen `alerts.yaml` eller egne `alerts-dev.yaml`/
+`alerts-prod.yaml`. Se [driftshåndboken](../drift/main.md).

@@ -27,7 +27,9 @@ import no.nav.sokos.skattekort.skattekort.ResponseStatus
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeSkattekort
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.IkkeTrekkplikt
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.RegistrertSomDoed
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.SkattekortopplysningerOK
+import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.TrekkEtterReglerOmKildeskattPaaPensjon15Prosent
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UgyldigFoedselsEllerDnummer
 import no.nav.sokos.skattekort.skattekort.ResultatForSkattekort.UtgaattDnummerSkattekortForFoedselsnummerErLevert
 import no.nav.sokos.skattekort.skattekortbestilling.BestillingsbatchRepository
@@ -187,7 +189,7 @@ class BestillingService(
     ) {
         val inntektsaar = arbeidstaker.inntektsaar
         when (ResultatForSkattekort.fromValue(arbeidstaker.resultatForSkattekort)) {
-            IkkeSkattekort, IkkeTrekkplikt, SkattekortopplysningerOK, UtgaattDnummerSkattekortForFoedselsnummerErLevert -> {
+            IkkeSkattekort, IkkeTrekkplikt, SkattekortopplysningerOK, UtgaattDnummerSkattekortForFoedselsnummerErLevert, RegistrertSomDoed, TrekkEtterReglerOmKildeskattPaaPensjon15Prosent -> {
                 SkattekortDataRepository.insert(tx, Json.encodeToString(arbeidstaker), inntektsaar, arbeidstaker.arbeidstakeridentifikator, type)
                 AuditRepository.insert(tx, AuditTag.SKATTEKORTINFORMASJON_MOTTATT, personId, "Mottatt skattekortinformasjon for inntektsår $inntektsaar")
             }

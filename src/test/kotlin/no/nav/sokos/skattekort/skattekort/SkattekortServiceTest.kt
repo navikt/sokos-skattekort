@@ -17,7 +17,6 @@ import no.nav.sokos.skattekort.infrastructure.tilgangsmaskin.TilgangsmaskinClien
 import no.nav.sokos.skattekort.listener.DbListener
 import no.nav.sokos.skattekort.person.PersonService
 import no.nav.sokos.skattekort.skattekort.Forskuddstrekk.Companion.ForskuddstrekkType
-import no.nav.sokos.skattekort.util.audit.AuditLogger
 import no.nav.sokos.skattekort.utils.TestUtils.tx
 
 @OptIn(ExperimentalAtomicApi::class)
@@ -25,7 +24,6 @@ class SkattekortServiceTest :
     FunSpec({
         extensions(DbListener)
 
-        val mockAuditLogger: AuditLogger = mockk<AuditLogger>()
         val tilgangsmaskinClientService = mockk<TilgangsmaskinClientService>(relaxed = true)
 
         val skattekortService: SkattekortService by lazy {
